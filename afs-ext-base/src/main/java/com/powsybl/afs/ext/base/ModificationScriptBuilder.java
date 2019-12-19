@@ -87,7 +87,7 @@ public class ModificationScriptBuilder implements ProjectFileBuilder<Modificatio
         ModificationScript modificationScript = new ModificationScript(new ProjectFileCreationContext(info, context.getStorage(), context.getProject()));
 
         context.getStorage().getEventsBus().pushEvent(new ScriptModified(info.getId(),
-                context.getFolderInfo().getId(), modificationScript.getPath().toString()), ScriptModified.TYPE);
+                context.getFolderInfo().getId(), modificationScript.getPath().toString()), ScriptModified.TYPENAME);
 
         return modificationScript;
     }

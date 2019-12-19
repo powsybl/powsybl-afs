@@ -499,7 +499,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
         }
 
         getSession().execute(batchStatement);
-        pushEvent(new NodeMetadataUpdated(nodeId, newMetadata), NODE_DESCRIPTION_UPDATED);
+        pushEvent(new NodeMetadataUpdated(nodeId, newMetadata), APPSTORAGE_NODE_TOPIC);
     }
 
     @Override

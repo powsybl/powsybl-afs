@@ -9,7 +9,6 @@ package com.powsybl.afs.ext.base;
 import com.powsybl.afs.ext.base.events.CaseImported;
 import com.powsybl.afs.ext.base.events.ScriptModified;
 import com.powsybl.afs.ext.base.events.VirtualCaseCreated;
-import com.powsybl.afs.storage.events.*;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -26,7 +25,7 @@ public class EventsTest {
     public void caseImportedTest() throws IOException {
         CaseImported caseImported = new CaseImported("a", "b", Paths.get("/tmp/foo").toString());
         assertEquals("a", caseImported.getId());
-        assertEquals(CaseImported.TYPE, caseImported.getType());
+        assertEquals(CaseImported.TYPENAME, caseImported.getType());
         assertEquals("b", caseImported.getParentId());
         assertNotNull(caseImported.toString());
         assertEquals(Paths.get("/tmp/foo").toString(), caseImported.getPath());
@@ -41,7 +40,7 @@ public class EventsTest {
     public void scriptModifiedTest() throws IOException {
         ScriptModified scriptModified = new ScriptModified("a", "b", Paths.get("/tmp/foo").toString());
         assertEquals("a", scriptModified.getId());
-        assertEquals(ScriptModified.TYPE, scriptModified.getType());
+        assertEquals(ScriptModified.TYPENAME, scriptModified.getType());
         assertEquals("b", scriptModified.getParentId());
         assertNotNull(scriptModified.toString());
 
@@ -56,7 +55,7 @@ public class EventsTest {
     public void virtualCaseCreatedTest() throws IOException {
         VirtualCaseCreated virtualCaseCreated = new VirtualCaseCreated("a", "b", Paths.get("/tmp/foo").toString());
         assertEquals("a", virtualCaseCreated.getId());
-        assertEquals(VirtualCaseCreated.TYPE, virtualCaseCreated.getType());
+        assertEquals(VirtualCaseCreated.TYPENAME, virtualCaseCreated.getType());
         assertEquals("b", virtualCaseCreated.getParentId());
         assertNotNull(virtualCaseCreated.toString());
         assertEquals(Paths.get("/tmp/foo").toString(), virtualCaseCreated.getPath());

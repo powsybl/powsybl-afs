@@ -49,13 +49,11 @@ public class InMemoryEventsBus implements EventsBus {
         lock.lock();
         try {
             listeners.log();
-            listeners.notify(l -> {
-                topics.forEach(nodeEventList -> {
-                    if (l.topics() == null || l.topics().contains(nodeEventList.getTopic())) {
-                        l.onEvents(nodeEventList);
-                    }
-                });
-            });
+            listeners.notify(l -> topics.forEach(nodeEventList -> {
+                if (l.topics().isEmpty() || l.topics().contains(nodeEventList.getTopic())) {
+                    l.onEvents(nodeEventList);
+                }
+            }));
             topics.clear();
         } finally {
             lock.unlock();

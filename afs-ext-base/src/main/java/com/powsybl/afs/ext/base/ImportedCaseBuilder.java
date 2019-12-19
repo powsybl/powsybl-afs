@@ -156,7 +156,7 @@ public class ImportedCaseBuilder implements ProjectFileBuilder<ImportedCase> {
                                 importersLoader);
 
         context.getStorage().getEventsBus().pushEvent(new CaseImported(info.getId(),
-                context.getFolderInfo().getId(), ic.getPath().toString()), CaseImported.TYPE);
+                context.getFolderInfo().getId(), ic.getPath().toString()), CaseImported.TYPENAME);
 
         return ic;
     }

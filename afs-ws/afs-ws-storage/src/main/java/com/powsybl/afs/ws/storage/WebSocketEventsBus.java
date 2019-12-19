@@ -72,6 +72,6 @@ public class WebSocketEventsBus implements EventsBus {
 
     @Override
     public void flush() {
-
+        // Noop
     }
 }

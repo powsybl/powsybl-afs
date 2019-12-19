@@ -16,11 +16,11 @@ import java.util.Objects;
  */
 public class ScriptModified extends BusinessEvent {
 
-    public static final String TYPE = "SCRIPT_MODIFIED";
+    public static final String TYPENAME = "SCRIPT_MODIFIED";
 
     @JsonCreator
     public ScriptModified(@JsonProperty("id") String id, @JsonProperty("parentId") String parentId, @JsonProperty("path") String path) {
-        super(id, parentId, path, TYPE);
+        super(id, parentId, path, TYPENAME);
     }
 
     @Override

@@ -60,7 +60,7 @@ public class NodeEventClient {
                 session.getId(), fileSystemName, nodeEventList);
         listeners.log();
         listeners.notify(l -> {
-            if (l.topics() == null || l.topics().contains(nodeEventList.getTopic())) {
+            if (l.topics().isEmpty() || l.topics().contains(nodeEventList.getTopic())) {
                 l.onEvents(nodeEventList);
             }
         });

@@ -43,7 +43,7 @@ public abstract class AbstractScript<T extends AbstractScript> extends ProjectFi
 
     private void processEvents(List<NodeEvent> events, String nodeId, List<ScriptListener> listeners) {
         for (NodeEvent event : events) {
-            if (NodeDataUpdated.TYPE.equals(event.getType())) {
+            if (NodeDataUpdated.TYPENAME.equals(event.getType())) {
                 NodeDataUpdated dataUpdated = (NodeDataUpdated) event;
                 if (dataUpdated.getId().equals(nodeId) && scriptContentName.equals(dataUpdated.getDataName())) {
                     for (ScriptListener listener : listeners) {

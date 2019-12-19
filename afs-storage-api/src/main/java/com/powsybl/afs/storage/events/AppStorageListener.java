@@ -6,6 +6,7 @@
  */
 package com.powsybl.afs.storage.events;
 
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -16,6 +17,6 @@ public interface AppStorageListener {
     void onEvents(NodeEventList eventList);
 
     default Set<String> topics() {
-        return null;
+        return Collections.emptySet();
     }
 }

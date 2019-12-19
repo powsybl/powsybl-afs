@@ -16,14 +16,14 @@ import java.util.Objects;
  */
 public class NodeCreated extends NodeEvent {
 
-    public static final String TYPE = "NODE_CREATED";
+    public static final String TYPENAME = "NODE_CREATED";
 
     @JsonProperty("parentId")
     protected final String parentId;
 
     @JsonCreator
     public NodeCreated(@JsonProperty("id") String id, @JsonProperty("parentId") String parentId) {
-        super(id, TYPE);
+        super(id, TYPENAME);
         this.parentId = parentId;
     }
 

@@ -14,11 +14,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class ParentChanged extends NodeEvent {
 
-    public static final String TYPE = "PARENT_CHANGED";
+    public static final String TYPENAME = "PARENT_CHANGED";
 
     @JsonCreator
     public ParentChanged(@JsonProperty("id") String id) {
-        super(id, TYPE);
+        super(id, TYPENAME);
     }
 
     @Override

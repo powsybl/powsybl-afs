@@ -94,7 +94,7 @@ public class VirtualCaseBuilder implements ProjectFileBuilder<VirtualCase> {
         VirtualCase virtualCase = new VirtualCase(new ProjectFileCreationContext(info, context.getStorage(), context.getProject()));
 
         context.getStorage().getEventsBus().pushEvent(new VirtualCaseCreated(info.getId(),
-                context.getFolderInfo().getId(), virtualCase.getPath().toString()), VirtualCaseCreated.TYPE);
+                context.getFolderInfo().getId(), virtualCase.getPath().toString()), VirtualCaseCreated.TYPENAME);
 
         return virtualCase;
     }
