@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
@@ -135,5 +136,7 @@ public class ModificationScriptTest extends AbstractProjectFileTest {
         assertEquals(includes.size(), 2);
         assertEquals(includes.get(0).getId(), include1.getId());
         assertEquals(includes.get(1).getId(), include3.getId());
+
+        assertThatCode(() -> script.addScript(script)).isInstanceOf(AfsCircularDependencyException.class);
     }
 }

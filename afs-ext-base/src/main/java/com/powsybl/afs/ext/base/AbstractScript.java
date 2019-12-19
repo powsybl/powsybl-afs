@@ -7,6 +7,7 @@
 package com.powsybl.afs.ext.base;
 
 import com.google.common.io.CharStreams;
+import com.powsybl.afs.AfsCircularDependencyException;
 import com.powsybl.afs.OrderedDependencyManager;
 import com.powsybl.afs.ProjectFile;
 import com.powsybl.afs.ProjectFileCreationContext;
@@ -59,10 +60,16 @@ public abstract class AbstractScript<T extends AbstractScript> extends ProjectFi
     }
 
     public void addGenericScript(GenericScript genericScript) {
+        if (genericScript.hasDeepDependency(this) || getId().equals(genericScript.getId())) {
+            throw new AfsCircularDependencyException();
+        }
         orderedDependencyManager.appendDependencies(INCLUDED_SCRIPTS_DEPENDENCY_NAME, Collections.singletonList(genericScript));
     }
 
     public void addScript(T includeScript) {
+        if (includeScript.hasDeepDependency(this) || getId().equals(includeScript.getId())) {
+            throw new AfsCircularDependencyException();
+        }
         orderedDependencyManager.appendDependencies(INCLUDED_SCRIPTS_DEPENDENCY_NAME, Collections.singletonList(includeScript));
     }
 

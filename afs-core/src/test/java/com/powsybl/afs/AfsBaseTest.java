@@ -335,4 +335,19 @@ public class AfsBaseTest {
         checkResult.accept(projectFolder, afs.fetchNode(projectFolder.getId()));
     }
 
+    @Test
+    public void hasDeepDependencyTest() {
+        Project project = afs.getRootFolder().createProject("test");
+        FooFile createdFile = project.getRootFolder().fileBuilder(FooFileBuilder.class)
+                .withName("foo")
+                .build();
+        FooFile otherFile = project.getRootFolder().fileBuilder(FooFileBuilder.class)
+                .withName("bar")
+                .build();
+        createdFile.setDependencies("dep", Collections.singletonList(otherFile));
+        assertTrue(createdFile.hasDeepDependency(otherFile));
+        assertFalse(createdFile.hasDeepDependency(createdFile));
+        otherFile.setDependencies("dep", Collections.singletonList(createdFile));
+        assertTrue(createdFile.hasDeepDependency(createdFile, "dep"));
+    }
 }
