@@ -439,7 +439,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
                                                                      .value(CMI, genericMetadata.getInts())
                                                                      .value(CMB, genericMetadata.getBooleans()));
         }
-        pushEvent(new NodeCreated(nodeUuid.toString(), parentNodeUuid != null ? parentNodeUuid.toString() : null), NODE_CREATED);
+        pushEvent(new NodeCreated(nodeUuid.toString(), parentNodeUuid != null ? parentNodeUuid.toString() : null), APPSTORAGE_NODE_TOPIC);
         return new NodeInfo(nodeUuid.toString(), name, nodePseudoClass, description, creationTime, creationTime, version, genericMetadata);
     }
 
@@ -536,7 +536,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
             getSession().execute(update(CHILDREN_BY_NAME_AND_CLASS).with(set(NAME, name))
                     .where(eq(ID, nodeUuid)));
         });
-        pushEvent(new NodeNameUpdated(nodeId, name), NODE_NAME_UPDATED);
+        pushEvent(new NodeNameUpdated(nodeId, name), APPSTORAGE_NODE_TOPIC);
     }
 
     private static UUID checkNodeId(String nodeId) {
@@ -597,7 +597,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
     @Override
     public void setDescription(String nodeId, String description) {
         setAttribute(nodeId, DESCRIPTION, CHILD_DESCRIPTION, description);
-        pushEvent(new NodeDescriptionUpdated(nodeId, description), NODE_DESCRIPTION_UPDATED);
+        pushEvent(new NodeDescriptionUpdated(nodeId, description), APPSTORAGE_NODE_TOPIC);
     }
 
     @Override
@@ -605,7 +605,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
         // flush buffer to keep change order
         changeBuffer.flush();
         setAttribute(nodeId, CONSISTENT, CHILD_CONSISTENT, true);
-        pushEvent(new NodeConsistent(nodeId), NODE_CONSISTENT);
+        pushEvent(new NodeConsistent(nodeId), APPSTORAGE_NODE_TOPIC);
     }
 
     @Override
@@ -760,7 +760,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
                                                                    .value(CMB, nodeInfo.getGenericMetadata().getBooleans()));
         getSession().execute(batchStatement);
 
-        pushEvent(new ParentChanged(nodeId), PARENT_CHANGED);
+        pushEvent(new ParentChanged(nodeId), APPSTORAGE_NODE_TOPIC);
     }
 
     @Override
@@ -998,8 +998,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
         Objects.requireNonNull(name);
         // flush buffer to keep change order
         changeBuffer.flush();
-        pushEvent(new NodeDataUpdated(nodeId, name),
-                String.valueOf(NODE_DATA_UPDATED));
+        pushEvent(new NodeDataUpdated(nodeId, name), APPSTORAGE_NODE_TOPIC);
         return new BinaryDataOutputStream(nodeUuid, name);
     }
 
@@ -1041,8 +1040,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
                 .from(NODE_DATA_NAMES)
                 .where(eq(ID, nodeUuid))
                 .and(eq(NAME, name)));
-        pushEvent(new NodeDataRemoved(nodeUuid.toString(), name),
-                String.valueOf(NODE_DATA_REMOVED));
+        pushEvent(new NodeDataRemoved(nodeUuid.toString(), name), APPSTORAGE_NODE_TOPIC);
     }
 
     private void removeAllData(UUID nodeUuid, List<Statement> statements) {
@@ -1082,7 +1080,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
     public void createTimeSeries(String nodeId, TimeSeriesMetadata metadata) {
         changeBuffer.createTimeSeries(nodeId, metadata);
         pushEvent(new TimeSeriesCreated(nodeId, metadata.getName()),
-                String.valueOf(TIME_SERIES_CREATED));
+                String.valueOf(APPSTORAGE_TIMESERIES_TOPIC));
     }
 
     @Override
@@ -1248,15 +1246,13 @@ public class CassandraAppStorage extends AbstractAppStorage {
     @Override
     public void addDoubleTimeSeriesData(String nodeId, int version, String timeSeriesName, List<DoubleDataChunk> chunks) {
         changeBuffer.addDoubleTimeSeriesData(nodeId, version, timeSeriesName, chunks);
-        pushEvent(new TimeSeriesDataUpdated(nodeId, timeSeriesName),
-                String.valueOf(TIME_SERIES_DATA_UPDATED));
+        pushEvent(new TimeSeriesDataUpdated(nodeId, timeSeriesName), APPSTORAGE_TIMESERIES_TOPIC);
     }
 
     @Override
     public void addStringTimeSeriesData(String nodeId, int version, String timeSeriesName, List<StringDataChunk> chunks) {
         changeBuffer.addStringTimeSeriesData(nodeId, version, timeSeriesName, chunks);
-        pushEvent(new TimeSeriesDataUpdated(nodeId, timeSeriesName),
-                String.valueOf(TIME_SERIES_DATA_UPDATED));
+        pushEvent(new TimeSeriesDataUpdated(nodeId, timeSeriesName), APPSTORAGE_TIMESERIES_TOPIC);
     }
 
     private void clearTimeSeries(UUID nodeUuid, List<Statement> statements) {
@@ -1308,8 +1304,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
         for (Statement statement : statements) {
             getSession().execute(statement);
         }
-        pushEvent(new TimeSeriesCleared(nodeUuid.toString()),
-                String.valueOf(TIME_SERIES_CLEARED));
+        pushEvent(new TimeSeriesCleared(nodeUuid.toString()), APPSTORAGE_TIMESERIES_TOPIC);
     }
 
     @Override
@@ -1332,9 +1327,9 @@ public class CassandraAppStorage extends AbstractAppStorage {
                                                             .value(FROM_ID, nodeUuid));
         getSession().execute(batchStatement);
         pushEvent(new DependencyAdded(nodeId, name),
-                String.valueOf(DEPENDENCY_ADDED));
+                String.valueOf(APPSTORAGE_DEPENDENCY_TOPIC));
         pushEvent(new BackwardDependencyAdded(toNodeId, name),
-                String.valueOf(BACKWARD_DEPENDENCY_ADDED));
+                String.valueOf(APPSTORAGE_DEPENDENCY_TOPIC));
     }
 
     private List<UUID> getDependencyNodeUuids(UUID nodeUuid) {
@@ -1423,8 +1418,8 @@ public class CassandraAppStorage extends AbstractAppStorage {
                 .and(eq(FROM_ID, nodeUuid)));
 
         getSession().execute(batchStatement);
-        pushEvent(new DependencyRemoved(nodeId, name), DEPENDENCY_REMOVED);
-        pushEvent(new BackwardDependencyRemoved(toNodeId, name), BACKWARD_DEPENDENCY_REMOVED);
+        pushEvent(new DependencyRemoved(nodeId, name), APPSTORAGE_DEPENDENCY_TOPIC);
+        pushEvent(new BackwardDependencyRemoved(toNodeId, name), APPSTORAGE_DEPENDENCY_TOPIC);
     }
 
     @Override
