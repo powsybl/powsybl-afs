@@ -100,8 +100,8 @@ class RemoteNetworkCacheService implements NetworkCacheService {
         Objects.requireNonNull(scriptType);
         Objects.requireNonNull(scriptContent);
 
-        LOGGER.info("queryNetwork(fileSystemName={}, nodeId={}, scriptContent=...)",
-                projectCase.getFileSystem().getName(), projectCase.getId());
+        LOGGER.info("queryNetwork(fileSystemName={}, nodeId={}, scriptType={}, scriptContent=...)",
+                projectCase.getFileSystem().getName(), projectCase.getId(), scriptType);
 
         Client client = ClientUtils.createClient();
         try {
