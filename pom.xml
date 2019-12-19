@@ -64,7 +64,6 @@
         <module>afs-security-analysis-local</module>
         <module>afs-storage-api</module>
         <module>afs-ws</module>
-        <module>distribution-afs</module>
     </modules>
 
     <properties>
