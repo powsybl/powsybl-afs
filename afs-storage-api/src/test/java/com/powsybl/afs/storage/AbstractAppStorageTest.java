@@ -568,6 +568,13 @@ public abstract class AbstractAppStorageTest {
         assertThat(eventsCatched.get().getEvents()).hasSize(1);
         assertThat(eventsCatched.get().getEvents().get(0)).isEqualTo(eventToCatch);
         assertEventStack(eventNotToCatch, eventToCatch);
+
+        nextDependentTests();
+    }
+
+    protected void nextDependentTests() {
+        // Noop
+        // allow sub classes to continue tests using created node root
     }
 
     protected void testUpdateNodeMetadata(NodeInfo rootFolderInfo, AppStorage storage) throws InterruptedException {

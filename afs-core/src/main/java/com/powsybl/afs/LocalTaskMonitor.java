@@ -6,7 +6,11 @@
  */
 package com.powsybl.afs;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.*;
+import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
@@ -16,6 +20,7 @@ import java.util.stream.Collectors;
  */
 public class LocalTaskMonitor implements TaskMonitor {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(LocalTaskMonitor.class);
     private final Map<UUID, Task> tasks = new HashMap<>();
 
     private long revision = 0L;
@@ -83,6 +88,11 @@ public class LocalTaskMonitor implements TaskMonitor {
     }
 
     @Override
+    public boolean cancelTaskComputation(UUID id) {
+        return tasks.get(id).cancel();
+    }
+
+    @Override
     public void updateTaskMessage(UUID id, String message) {
         Objects.requireNonNull(id);
         lock.lock();
@@ -127,6 +137,26 @@ public class LocalTaskMonitor implements TaskMonitor {
         lock.lock();
         try {
             listeners.remove(listener);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
+    public void updateTaskFuture(UUID taskId, Future future) {
+        Objects.requireNonNull(taskId);
+        lock.lock();
+        try {
+            Task task = tasks.get(taskId);
+            if (task == null) {
+                throw new IllegalArgumentException("Task '" + taskId + "' not found");
+            }
+            revision++;
+            task.setFuture(future);
+            task.setRevision(revision);
+
+            // notification
+            notifyListeners(new TaskCancellableStatusChangeEvent(taskId, revision, task.isCancellable()), task.getProjectId());
         } finally {
             lock.unlock();
         }

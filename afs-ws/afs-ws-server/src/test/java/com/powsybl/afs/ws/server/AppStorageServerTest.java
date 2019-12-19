@@ -38,7 +38,9 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.when;
 
@@ -106,7 +108,9 @@ public class AppStorageServerTest extends AbstractAppStorageTest {
         assertEquals(Collections.singletonList(AppDataBeanMock.TEST_FS_NAME), fileSystemNames);
     }
 
-    public void createTaskRemoteTest() {
+    @Override
+    protected void nextDependentTests() {
+        super.nextDependentTests();
         RemoteTaskMonitor taskMonitor = new RemoteTaskMonitor(AppDataBeanMock.TEST_FS_NAME, getRestUri(), userSession.getToken());
         NodeInfo root = storage.createRootNodeIfNotExists(storage.getFileSystemName(), Folder.PSEUDO_CLASS);
         NodeInfo projectNode = storage.createNode(root.getId(), "project", Project.PSEUDO_CLASS, "test project", 0, new NodeGenericMetadata());
@@ -118,7 +122,11 @@ public class AppStorageServerTest extends AbstractAppStorageTest {
         TaskMonitor.Snapshot snapshot = taskMonitor.takeSnapshot(project.getId());
         assertTrue(snapshot.getTasks().stream().anyMatch(t -> t.getId().equals(task.getId())));
 
+        assertThatCode(() -> taskMonitor.updateTaskFuture(task.getId(), CompletableFuture.runAsync(() -> { }))).isInstanceOf(TaskMonitor.NotACancellableTaskMonitor.class);
+        assertFalse(taskMonitor.cancelTaskComputation(task.getId()));
+
         // cleanup
         storage.deleteNode(projectNode.getId());
+        eventStack.clear();
     }
 }
