@@ -11,7 +11,6 @@ import com.powsybl.afs.storage.NodeGenericMetadata;
 import com.powsybl.afs.storage.NodeInfo;
 import org.cassandraunit.CassandraCQLUnit;
 import org.cassandraunit.dataset.cql.ClassPathCQLDataSet;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -24,7 +23,6 @@ import static org.junit.Assert.assertNotEquals;
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  */
-@Ignore
 public class CassandraRemoveCreateFolderIssueTest {
 
     @Rule
@@ -41,6 +39,7 @@ public class CassandraRemoveCreateFolderIssueTest {
         storage.deleteNode(nodeInfo.getId());
         storage.flush();
         NodeInfo nodeInfo2 = storage.createNode(rootNodeId.getId(), "test1", "folder", "", 0, new NodeGenericMetadata());
+        storage.setConsistent(nodeInfo2.getId());
         storage.flush();
         assertNotEquals(nodeInfo.getId(), nodeInfo2.getId());
         assertEquals(Collections.singletonList(nodeInfo2.getId()), storage.getChildNodes(rootNodeId.getId()).stream().map(NodeInfo::getId).collect(Collectors.toList()));
