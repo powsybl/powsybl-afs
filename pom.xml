@@ -54,6 +54,7 @@
         <module>afs-cassandra</module>
         <module>afs-contingency</module>
         <module>afs-core</module>
+        <module>afs-distribution</module>
         <module>afs-ext-base</module>
         <module>afs-local</module>
         <module>afs-mapdb</module>
@@ -64,7 +65,6 @@
         <module>afs-security-analysis-local</module>
         <module>afs-storage-api</module>
         <module>afs-ws</module>
-        <module>afs-distribution</module>
     </modules>
 
     <properties>
