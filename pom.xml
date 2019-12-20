@@ -97,6 +97,11 @@
         <maven.templating.version>1.0.0</maven.templating.version>
         <maven.versions.version>2.7</maven.versions.version>
 
+        <sonar.coverage.jacoco.xmlReportPaths>
+            ../afs-distribution/target/site/jacoco-aggregate/jacoco.xml,
+            ../../afs-distribution/target/site/jacoco-aggregate/jacoco.xml,
+        </sonar.coverage.jacoco.xmlReportPaths>
+
         <sonar.exclusions>
             **/generated/**/*
         </sonar.exclusions>
