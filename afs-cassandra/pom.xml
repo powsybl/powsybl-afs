@@ -44,10 +44,7 @@
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-<<<<<<< HEAD
-=======
             <scope>test</scope>
->>>>>>> sonar corrections
         </dependency>
         <dependency>
             <groupId>org.cassandraunit</groupId>
