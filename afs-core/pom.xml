@@ -90,15 +90,14 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>com.powsybl</groupId>
             <artifactId>powsybl-iidm-api</artifactId>
-            <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>com.powsybl</groupId>
             <artifactId>powsybl-tools</artifactId>
-            <version>${project.version}</version>
+            <version>${powsyblcore.version}</version>
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>

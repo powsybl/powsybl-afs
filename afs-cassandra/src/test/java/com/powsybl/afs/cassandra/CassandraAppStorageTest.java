@@ -11,13 +11,11 @@ import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.InMemoryEventsBus;
 import org.cassandraunit.CassandraCQLUnit;
 import org.cassandraunit.dataset.cql.ClassPathCQLDataSet;
-import org.junit.Ignore;
 import org.junit.Rule;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  */
-@Ignore
 public class CassandraAppStorageTest extends AbstractAppStorageTest {
 
     @Rule

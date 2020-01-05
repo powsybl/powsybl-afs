@@ -12,7 +12,10 @@ import com.powsybl.afs.storage.NodeInfo;
 import com.powsybl.timeseries.*;
 import org.cassandraunit.CassandraCQLUnit;
 import org.cassandraunit.dataset.cql.ClassPathCQLDataSet;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.threeten.extra.Interval;
 
 import java.time.Duration;
@@ -25,7 +28,6 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  */
-@Ignore
 public class TimeSeriesIssueTest {
 
     @Rule

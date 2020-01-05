@@ -54,6 +54,7 @@
         <module>afs-cassandra</module>
         <module>afs-contingency</module>
         <module>afs-core</module>
+        <module>afs-distribution</module>
         <module>afs-ext-base</module>
         <module>afs-local</module>
         <module>afs-mapdb</module>
@@ -95,6 +96,11 @@
         <maven.surefire.version>2.22.1</maven.surefire.version>
         <maven.templating.version>1.0.0</maven.templating.version>
         <maven.versions.version>2.7</maven.versions.version>
+
+        <sonar.coverage.jacoco.xmlReportPaths>
+            ../afs-distribution/target/site/jacoco-aggregate/jacoco.xml,
+            ../../afs-distribution/target/site/jacoco-aggregate/jacoco.xml,
+        </sonar.coverage.jacoco.xmlReportPaths>
 
         <sonar.exclusions>
             **/generated/**/*
@@ -521,6 +527,16 @@
                 <version>${powsyblcore.version}</version>
             </dependency>
             <dependency>
+                <groupId>com.powsybl</groupId>
+                <artifactId>powsybl-iidm-api</artifactId>
+                <version>${powsyblcore.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.powsybl</groupId>
+                <artifactId>powsybl-tools</artifactId>
+                <version>${powsyblcore.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>io.jsonwebtoken</groupId>
                 <artifactId>jjwt</artifactId>
                 <version>${jjwt.version}</version>
@@ -579,6 +595,12 @@
             </dependency>
 
             <!-- Test dependencies -->
+            <dependency>
+                <groupId>com.powsybl</groupId>
+                <artifactId>powsybl-config-test</artifactId>
+                <version>${powsyblcore.version}</version>
+                <scope>test</scope>
+            </dependency>
             <dependency>
                 <groupId>com.powsybl</groupId>
                 <artifactId>powsybl-iidm-impl</artifactId>
