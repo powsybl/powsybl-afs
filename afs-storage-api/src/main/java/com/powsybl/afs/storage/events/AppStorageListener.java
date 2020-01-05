@@ -6,10 +6,17 @@
  */
 package com.powsybl.afs.storage.events;
 
+import java.util.Collections;
+import java.util.Set;
+
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  */
 public interface AppStorageListener {
 
     void onEvents(NodeEventList eventList);
+
+    default Set<String> topics() {
+        return Collections.emptySet();
+    }
 }

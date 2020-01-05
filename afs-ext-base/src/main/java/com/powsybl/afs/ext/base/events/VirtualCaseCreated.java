@@ -16,12 +16,12 @@ import java.util.Objects;
  */
 public class VirtualCaseCreated extends BusinessEvent {
 
-    private static final String VIRTUAL_CASE_CREATED = "VIRTUAL_CASE_CREATED";
+    public static final String TYPENAME = "VIRTUAL_CASE_CREATED";
 
     @JsonCreator
     public VirtualCaseCreated(@JsonProperty("id") String id, @JsonProperty("parentId") String parentId,
                               @JsonProperty("path") String path) {
-        super(id, parentId, path, VIRTUAL_CASE_CREATED);
+        super(id, parentId, path, TYPENAME);
     }
 
     @Override
