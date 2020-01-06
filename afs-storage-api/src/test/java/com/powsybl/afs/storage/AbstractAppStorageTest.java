@@ -538,7 +538,7 @@ public abstract class AbstractAppStorageTest {
         assertNotNull(storage.getEventsBus());
 
         storage.flush();
-        eventStack.clear();
+        Thread.sleep(200);
 
         String topic = "some topic";
         CountDownLatch eventReceived = new CountDownLatch(1);
@@ -558,6 +558,9 @@ public abstract class AbstractAppStorageTest {
 
         NodeEvent eventToCatch = new NodeCreated("test2", "test");
         NodeEvent eventNotToCatch = new NodeCreated("test1", "test");
+
+        eventStack.clear();
+
         storage.getEventsBus().pushEvent(eventNotToCatch, "other topic");
         storage.getEventsBus().pushEvent(eventToCatch, topic);
         storage.flush();
@@ -633,6 +636,7 @@ public abstract class AbstractAppStorageTest {
 
         storage.deleteNode(node.getId());
         storage.flush();
+        eventStack.clear();
     }
 
     private void checkMetadataEquality(NodeGenericMetadata source, NodeGenericMetadata target) {

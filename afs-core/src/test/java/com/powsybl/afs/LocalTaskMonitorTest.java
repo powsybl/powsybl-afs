@@ -113,8 +113,8 @@ public class LocalTaskMonitorTest extends AbstractProjectFileTest {
                     waitIndefinitely.await();
                     fail();
                 } catch (InterruptedException exc) {
-                    waitForInterruption.countDown();
                     interrupted.set(true);
+                    waitForInterruption.countDown();
                 }
                 return null;
             }, Executors.newSingleThreadExecutor());
