@@ -38,7 +38,7 @@ public class VirtualCase extends ProjectFile implements ProjectCase {
 
     public void setCase(ProjectFile aCase) {
         Objects.requireNonNull(aCase);
-        if (aCase.hasDeepDependency(this, CASE_DEPENDENCY_NAME) || getId().equals(aCase.getId())) {
+        if (getId().equals(aCase.getId()) || aCase.hasDeepDependency(this, CASE_DEPENDENCY_NAME)) {
             throw new AfsCircularDependencyException();
         }
         setDependencies(CASE_DEPENDENCY_NAME, Collections.singletonList(aCase));

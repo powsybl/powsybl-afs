@@ -60,14 +60,14 @@ public abstract class AbstractScript<T extends AbstractScript> extends ProjectFi
     }
 
     public void addGenericScript(GenericScript genericScript) {
-        if (genericScript.hasDeepDependency(this) || getId().equals(genericScript.getId())) {
+        if (getId().equals(genericScript.getId()) || genericScript.hasDeepDependency(this)) {
             throw new AfsCircularDependencyException();
         }
         orderedDependencyManager.appendDependencies(INCLUDED_SCRIPTS_DEPENDENCY_NAME, Collections.singletonList(genericScript));
     }
 
     public void addScript(T includeScript) {
-        if (includeScript.hasDeepDependency(this) || getId().equals(includeScript.getId())) {
+        if (getId().equals(includeScript.getId()) || includeScript.hasDeepDependency(this)) {
             throw new AfsCircularDependencyException();
         }
         orderedDependencyManager.appendDependencies(INCLUDED_SCRIPTS_DEPENDENCY_NAME, Collections.singletonList(includeScript));
