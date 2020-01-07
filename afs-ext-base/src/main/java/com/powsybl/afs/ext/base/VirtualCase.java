@@ -43,6 +43,7 @@ public class VirtualCase extends ProjectFile implements ProjectCase {
         }
         setDependencies(CASE_DEPENDENCY_NAME, Collections.singletonList(aCase));
         projectCaseDependency.invalidate();
+        invalidate();
     }
 
     public Optional<ModificationScript> getScript() {
@@ -53,6 +54,7 @@ public class VirtualCase extends ProjectFile implements ProjectCase {
         Objects.requireNonNull(aScript);
         setDependencies(SCRIPT_DEPENDENCY_NAME, Collections.singletonList(aScript));
         modificationScriptDependency.invalidate();
+        invalidate();
     }
 
     @Override
