@@ -7,7 +7,6 @@
 package com.powsybl.afs;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
@@ -47,9 +46,6 @@ public interface TaskMonitor extends AutoCloseable {
         @JsonProperty("projectId")
         private final String projectId;
 
-        @JsonIgnore
-        private Future future;
-
         @JsonProperty("cancellable")
         private boolean cancellable;
 
@@ -82,16 +78,14 @@ public interface TaskMonitor extends AutoCloseable {
             revision = other.revision;
             projectId = other.projectId;
             cancellable = other.cancellable;
-            future = other.future;
-        }
-
-        void setFuture(Future future) {
-            this.future = future;
-            this.cancellable = future != null;
         }
 
         public boolean isCancellable() {
             return cancellable;
+        }
+
+        void setCancellable(boolean cancellable) {
+            this.cancellable = cancellable;
         }
 
         public UUID getId() {
@@ -136,13 +130,6 @@ public interface TaskMonitor extends AutoCloseable {
                         && Objects.equals(message, other.message)
                         && revision == other.revision
                         && projectId.equals(other.projectId);
-            }
-            return false;
-        }
-
-        boolean cancel() {
-            if (future != null) {
-                return future.cancel(true);
             }
             return false;
         }

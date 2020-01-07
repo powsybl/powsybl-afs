@@ -22,6 +22,7 @@ public class LocalTaskMonitor implements TaskMonitor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LocalTaskMonitor.class);
     private final Map<UUID, Task> tasks = new HashMap<>();
+    private final Map<UUID, Future> tasksFuture = new HashMap<>();
 
     private long revision = 0L;
 
@@ -67,6 +68,9 @@ public class LocalTaskMonitor implements TaskMonitor {
             }
             revision++;
 
+            // remove optional related future
+            tasksFuture.remove(id);
+
             // notification
             notifyListeners(new StopTaskEvent(id, revision), task.getProjectId());
         } finally {
@@ -79,9 +83,9 @@ public class LocalTaskMonitor implements TaskMonitor {
         lock.lock();
         try {
             return new Snapshot(tasks.values().stream()
-                                              .filter(task -> projectId == null || task.getProjectId().equals(projectId))
-                                              .map(Task::new).collect(Collectors.toList()),
-                                revision);
+                    .filter(task -> projectId == null || task.getProjectId().equals(projectId))
+                    .map(Task::new).collect(Collectors.toList()),
+                    revision);
         } finally {
             lock.unlock();
         }
@@ -89,7 +93,10 @@ public class LocalTaskMonitor implements TaskMonitor {
 
     @Override
     public boolean cancelTaskComputation(UUID id) {
-        return tasks.get(id).cancel();
+        if (tasksFuture.containsKey(id)) {
+            return tasksFuture.get(id).cancel(true);
+        }
+        return false;
     }
 
     @Override
@@ -151,8 +158,9 @@ public class LocalTaskMonitor implements TaskMonitor {
             if (task == null) {
                 throw new IllegalArgumentException("Task '" + taskId + "' not found");
             }
+            tasksFuture.put(taskId, future);
+            task.setCancellable(future != null);
             revision++;
-            task.setFuture(future);
             task.setRevision(revision);
 
             // notification
