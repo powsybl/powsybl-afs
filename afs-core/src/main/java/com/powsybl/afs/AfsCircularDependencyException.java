@@ -8,13 +8,12 @@
 
 package com.powsybl.afs;
 
+import com.powsybl.commons.PowsyblException;
+
 /**
  * @author Paul Bui-Quang <paul.buiquang at rte-france.com>
  */
-public class AfsCircularDependencyException extends AfsException {
-    public AfsCircularDependencyException(String message) {
-        super(message);
-    }
+public class AfsCircularDependencyException extends PowsyblException {
 
     public AfsCircularDependencyException() {
         super("Circular dependency detected");

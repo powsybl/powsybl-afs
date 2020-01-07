@@ -11,6 +11,8 @@ import com.powsybl.afs.*;
 import com.powsybl.afs.mapdb.storage.MapDbAppStorage;
 import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.InMemoryEventsBus;
+import com.powsybl.afs.storage.NodeGenericMetadata;
+import com.powsybl.afs.storage.NodeInfo;
 import org.junit.Test;
 
 import java.util.List;
@@ -138,5 +140,15 @@ public class ModificationScriptTest extends AbstractProjectFileTest {
         assertEquals(includes.get(1).getId(), include3.getId());
 
         assertThatCode(() -> script.addScript(script)).isInstanceOf(AfsCircularDependencyException.class);
+
+        NodeInfo genScript1NodeInfo = storage.createNode(rootFolder.getId(), "genScript1", GenericScript.PSEUDO_CLASS, "", GenericScript.VERSION, new NodeGenericMetadata());
+        ProjectFileCreationContext projectFileCreationContext = new ProjectFileCreationContext(genScript1NodeInfo, storage, project);
+        GenericScript genericScript1 = new GenericScript(projectFileCreationContext);
+        storage.setConsistent(genScript1NodeInfo.getId());
+        genericScript1.writeScript("list of things");
+        storage.flush();
+        script.addGenericScript(genericScript1);
+
+        assertThatCode(() -> genericScript1.addGenericScript(genericScript1)).isInstanceOf(AfsCircularDependencyException.class);
     }
 }
