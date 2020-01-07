@@ -160,5 +160,10 @@ public class ModificationScriptTest extends AbstractProjectFileTest {
 
         assertThatCode(() -> script.switchIncludedDependencies(0, -1)).isInstanceOf(AfsException.class);
         assertThatCode(() -> script.switchIncludedDependencies(1, 2)).isInstanceOf(AfsException.class);
+
+        assertThatCode(() -> rootFolder.fileBuilder(GenericScriptBuilder.class).build()).isInstanceOf(AfsException.class).hasMessage("Name is not set");
+        assertThatCode(() -> rootFolder.fileBuilder(GenericScriptBuilder.class).withName("foo").build()).isInstanceOf(AfsException.class).hasMessage("Script type is not set");
+        assertThatCode(() -> rootFolder.fileBuilder(GenericScriptBuilder.class).withName("foo").withType(ScriptType.GROOVY).build()).isInstanceOf(AfsException.class).hasMessage("Content is not set");
+        assertThatCode(() -> rootFolder.fileBuilder(GenericScriptBuilder.class).withName("include_script2").withType(ScriptType.GROOVY).withContent("hello").build()).isInstanceOf(AfsException.class).hasMessage("Parent folder already contains a 'include_script2' node");
     }
 }
