@@ -11,8 +11,6 @@ import com.powsybl.afs.*;
 import com.powsybl.afs.mapdb.storage.MapDbAppStorage;
 import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.InMemoryEventsBus;
-import com.powsybl.afs.storage.NodeGenericMetadata;
-import com.powsybl.afs.storage.NodeInfo;
 import org.junit.Test;
 
 import java.util.List;
@@ -141,6 +139,18 @@ public class ModificationScriptTest extends AbstractProjectFileTest {
 
         assertThatCode(() -> script.addScript(script)).isInstanceOf(AfsCircularDependencyException.class);
 
+        GenericScript genericScript = rootFolder.fileBuilder(GenericScriptBuilder.class)
+                .withContent("some list")
+                .withType(ScriptType.GROOVY)
+                .withName("genericScript")
+                .build();
+
+        assertEquals("some list", genericScript.readScript());
+        script.addGenericScript(genericScript);
+        assertEquals("var foo=\"bar\"\n\nvar p0=1\n\nvar pmax=2\n\nsome list\n\nprintln 'bye'", script.readScript(true));
+        assertThatCode(() -> genericScript.addGenericScript(genericScript)).isInstanceOf(AfsCircularDependencyException.class);
+        script.removeScript(genericScript.getId());
+
         script.switchIncludedDependencies(0, 1);
 
         List<AbstractScript> includedScripts = script.getIncludedScripts();
@@ -150,15 +160,5 @@ public class ModificationScriptTest extends AbstractProjectFileTest {
 
         assertThatCode(() -> script.switchIncludedDependencies(0, -1)).isInstanceOf(AfsException.class);
         assertThatCode(() -> script.switchIncludedDependencies(1, 2)).isInstanceOf(AfsException.class);
-
-        NodeInfo genScript1NodeInfo = storage.createNode(rootFolder.getId(), "genScript1", GenericScript.PSEUDO_CLASS, "", GenericScript.VERSION, new NodeGenericMetadata());
-        ProjectFileCreationContext projectFileCreationContext = new ProjectFileCreationContext(genScript1NodeInfo, storage, project);
-        GenericScript genericScript1 = new GenericScript(projectFileCreationContext);
-        storage.setConsistent(genScript1NodeInfo.getId());
-        genericScript1.writeScript("list of things");
-        storage.flush();
-        script.addGenericScript(genericScript1);
-
-        assertThatCode(() -> genericScript1.addGenericScript(genericScript1)).isInstanceOf(AfsCircularDependencyException.class);
     }
 }
