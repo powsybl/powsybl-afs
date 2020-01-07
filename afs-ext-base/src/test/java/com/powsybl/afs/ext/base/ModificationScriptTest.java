@@ -18,8 +18,8 @@ import org.junit.Test;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.junit.Assert.*;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.junit.Assert.*;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
@@ -38,7 +38,7 @@ public class ModificationScriptTest extends AbstractProjectFileTest {
 
     @Override
     protected List<ProjectFileExtension> getProjectFileExtensions() {
-        return ImmutableList.of(new ModificationScriptExtension());
+        return ImmutableList.of(new ModificationScriptExtension(), new GenericScriptExtension());
     }
 
     @Test
