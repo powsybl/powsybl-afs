@@ -538,7 +538,6 @@ public abstract class AbstractAppStorageTest {
         assertNotNull(storage.getEventsBus());
 
         storage.flush();
-        eventStack.clear();
 
         String topic = "some topic";
         CountDownLatch eventReceived = new CountDownLatch(1);
@@ -558,6 +557,7 @@ public abstract class AbstractAppStorageTest {
 
         NodeEvent eventToCatch = new NodeCreated("test2", "test");
         NodeEvent eventNotToCatch = new NodeCreated("test1", "test");
+
         storage.getEventsBus().pushEvent(eventNotToCatch, "other topic");
         storage.getEventsBus().pushEvent(eventToCatch, topic);
         storage.flush();
@@ -568,6 +568,13 @@ public abstract class AbstractAppStorageTest {
         assertThat(eventsCatched.get().getEvents()).hasSize(1);
         assertThat(eventsCatched.get().getEvents().get(0)).isEqualTo(eventToCatch);
         assertEventStack(eventNotToCatch, eventToCatch);
+
+        nextDependentTests();
+    }
+
+    protected void nextDependentTests() throws InterruptedException {
+        // Noop
+        // allow sub classes to continue tests using created node root
     }
 
     protected void testUpdateNodeMetadata(NodeInfo rootFolderInfo, AppStorage storage) throws InterruptedException {
@@ -626,6 +633,8 @@ public abstract class AbstractAppStorageTest {
 
         storage.deleteNode(node.getId());
         storage.flush();
+        // clean delete node event
+        eventStack.take();
     }
 
     private void checkMetadataEquality(NodeGenericMetadata source, NodeGenericMetadata target) {

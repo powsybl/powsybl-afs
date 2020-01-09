@@ -6,7 +6,11 @@
  */
 package com.powsybl.afs;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.*;
+import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
@@ -16,7 +20,9 @@ import java.util.stream.Collectors;
  */
 public class LocalTaskMonitor implements TaskMonitor {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(LocalTaskMonitor.class);
     private final Map<UUID, Task> tasks = new HashMap<>();
+    private final Map<UUID, Future> tasksFuture = new HashMap<>();
 
     private long revision = 0L;
 
@@ -62,6 +68,9 @@ public class LocalTaskMonitor implements TaskMonitor {
             }
             revision++;
 
+            // remove optional related future
+            tasksFuture.remove(id);
+
             // notification
             notifyListeners(new StopTaskEvent(id, revision), task.getProjectId());
         } finally {
@@ -74,12 +83,20 @@ public class LocalTaskMonitor implements TaskMonitor {
         lock.lock();
         try {
             return new Snapshot(tasks.values().stream()
-                                              .filter(task -> projectId == null || task.getProjectId().equals(projectId))
-                                              .map(Task::new).collect(Collectors.toList()),
-                                revision);
+                    .filter(task -> projectId == null || task.getProjectId().equals(projectId))
+                    .map(Task::new).collect(Collectors.toList()),
+                    revision);
         } finally {
             lock.unlock();
         }
+    }
+
+    @Override
+    public boolean cancelTaskComputation(UUID id) {
+        if (tasksFuture.containsKey(id)) {
+            return tasksFuture.get(id).cancel(true);
+        }
+        return false;
     }
 
     @Override
@@ -127,6 +144,27 @@ public class LocalTaskMonitor implements TaskMonitor {
         lock.lock();
         try {
             listeners.remove(listener);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
+    public void updateTaskFuture(UUID taskId, Future future) {
+        Objects.requireNonNull(taskId);
+        lock.lock();
+        try {
+            Task task = tasks.get(taskId);
+            if (task == null) {
+                throw new IllegalArgumentException("Task '" + taskId + "' not found");
+            }
+            tasksFuture.put(taskId, future);
+            task.setCancellable(future != null);
+            revision++;
+            task.setRevision(revision);
+
+            // notification
+            notifyListeners(new TaskCancellableStatusChangeEvent(taskId, revision, task.isCancellable()), task.getProjectId());
         } finally {
             lock.unlock();
         }
