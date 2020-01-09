@@ -104,6 +104,17 @@ public class ProjectFile extends ProjectNode {
         storage.flush();
     }
 
+    public boolean hasDeepDependency(ProjectFile candidateDependency) {
+        return hasDeepDependency(candidateDependency, null);
+    }
+
+    public boolean hasDeepDependency(ProjectFile candidateDependency, String dependencyName) {
+        List<ProjectFile> dependencies = (dependencyName != null) ?
+                getDependencies(dependencyName, ProjectFile.class) :
+                getDependencies().stream().map(ProjectDependency::getProjectNode).filter(dep -> ProjectFile.class.isAssignableFrom(dep.getClass())).map(ProjectFile.class::cast).collect(Collectors.toList());
+        return dependencies.stream().anyMatch(dep -> dep.getId().equals(candidateDependency.getId()) || dep.hasDeepDependency(candidateDependency, dependencyName));
+    }
+
     public boolean mandatoryDependenciesAreMissing() {
         return false;
     }

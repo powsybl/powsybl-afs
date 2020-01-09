@@ -6,10 +6,7 @@
  */
 package com.powsybl.afs.ext.base;
 
-import com.powsybl.afs.AfsException;
-import com.powsybl.afs.DependencyCache;
-import com.powsybl.afs.ProjectFile;
-import com.powsybl.afs.ProjectFileCreationContext;
+import com.powsybl.afs.*;
 import com.powsybl.iidm.network.Network;
 
 import java.util.Collections;
@@ -41,8 +38,12 @@ public class VirtualCase extends ProjectFile implements ProjectCase {
 
     public void setCase(ProjectFile aCase) {
         Objects.requireNonNull(aCase);
+        if (getId().equals(aCase.getId()) || aCase.hasDeepDependency(this, CASE_DEPENDENCY_NAME)) {
+            throw new AfsCircularDependencyException();
+        }
         setDependencies(CASE_DEPENDENCY_NAME, Collections.singletonList(aCase));
         projectCaseDependency.invalidate();
+        invalidate();
     }
 
     public Optional<ModificationScript> getScript() {
@@ -53,6 +54,7 @@ public class VirtualCase extends ProjectFile implements ProjectCase {
         Objects.requireNonNull(aScript);
         setDependencies(SCRIPT_DEPENDENCY_NAME, Collections.singletonList(aScript));
         modificationScriptDependency.invalidate();
+        invalidate();
     }
 
     @Override

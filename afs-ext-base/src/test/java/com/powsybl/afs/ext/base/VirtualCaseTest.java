@@ -22,6 +22,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.junit.Assert.*;
 
 /**
@@ -190,5 +191,7 @@ public class VirtualCaseTest extends AbstractProjectFileTest {
 
         assertNotEquals(importedCase2.getName(), virtualCase3.getCase().map(ProjectFile::getName).orElse(null));
         assertEquals(importedCase3.getName(), virtualCase3.getCase().map(ProjectFile::getName).orElse(null));
+
+        assertThatCode(() -> virtualCase3.setCase(virtualCase3)).isInstanceOf(AfsCircularDependencyException.class);
     }
 }
