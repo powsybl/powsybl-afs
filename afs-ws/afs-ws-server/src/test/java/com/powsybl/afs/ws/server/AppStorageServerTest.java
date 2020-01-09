@@ -109,7 +109,7 @@ public class AppStorageServerTest extends AbstractAppStorageTest {
     }
 
     @Override
-    protected void nextDependentTests() {
+    protected void nextDependentTests() throws InterruptedException {
         super.nextDependentTests();
         RemoteTaskMonitor taskMonitor = new RemoteTaskMonitor(AppDataBeanMock.TEST_FS_NAME, getRestUri(), userSession.getToken());
         NodeInfo root = storage.createRootNodeIfNotExists(storage.getFileSystemName(), Folder.PSEUDO_CLASS);
@@ -127,6 +127,10 @@ public class AppStorageServerTest extends AbstractAppStorageTest {
 
         // cleanup
         storage.deleteNode(projectNode.getId());
-        eventStack.clear();
+
+        // clear events
+        eventStack.take();
+        eventStack.take();
+
     }
 }

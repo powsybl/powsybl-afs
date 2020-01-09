@@ -558,8 +558,6 @@ public abstract class AbstractAppStorageTest {
         NodeEvent eventToCatch = new NodeCreated("test2", "test");
         NodeEvent eventNotToCatch = new NodeCreated("test1", "test");
 
-        eventStack.clear();
-
         storage.getEventsBus().pushEvent(eventNotToCatch, "other topic");
         storage.getEventsBus().pushEvent(eventToCatch, topic);
         storage.flush();
@@ -574,7 +572,7 @@ public abstract class AbstractAppStorageTest {
         nextDependentTests();
     }
 
-    protected void nextDependentTests() {
+    protected void nextDependentTests() throws InterruptedException {
         // Noop
         // allow sub classes to continue tests using created node root
     }
