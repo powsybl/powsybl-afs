@@ -11,12 +11,15 @@ import com.powsybl.afs.*;
 import com.powsybl.afs.mapdb.storage.MapDbAppStorage;
 import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.InMemoryEventsBus;
+import com.powsybl.afs.storage.NodeGenericMetadata;
+import com.powsybl.afs.storage.NodeInfo;
 import org.junit.Test;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
@@ -135,5 +138,17 @@ public class ModificationScriptTest extends AbstractProjectFileTest {
         assertEquals(includes.size(), 2);
         assertEquals(includes.get(0).getId(), include1.getId());
         assertEquals(includes.get(1).getId(), include3.getId());
+
+        assertThatCode(() -> script.addScript(script)).isInstanceOf(AfsCircularDependencyException.class);
+
+        NodeInfo genScript1NodeInfo = storage.createNode(rootFolder.getId(), "genScript1", GenericScript.PSEUDO_CLASS, "", GenericScript.VERSION, new NodeGenericMetadata());
+        ProjectFileCreationContext projectFileCreationContext = new ProjectFileCreationContext(genScript1NodeInfo, storage, project);
+        GenericScript genericScript1 = new GenericScript(projectFileCreationContext);
+        storage.setConsistent(genScript1NodeInfo.getId());
+        genericScript1.writeScript("list of things");
+        storage.flush();
+        script.addGenericScript(genericScript1);
+
+        assertThatCode(() -> genericScript1.addGenericScript(genericScript1)).isInstanceOf(AfsCircularDependencyException.class);
     }
 }
