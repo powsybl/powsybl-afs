@@ -6,8 +6,10 @@
  */
 package com.powsybl.afs.ws.client.utils;
 
+import com.google.common.collect.Lists;
 import com.powsybl.afs.storage.AfsStorageException;
 import com.powsybl.afs.ws.utils.JsonProvider;
+import com.powsybl.afs.ws.utils.exceptions.RegisteredExceptionForwards;
 import com.powsybl.commons.net.UserProfile;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.slf4j.Logger;
@@ -20,8 +22,8 @@ import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import java.net.URI;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
@@ -29,6 +31,12 @@ import java.util.Optional;
 public final class ClientUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientUtils.class);
+
+    private static Set<Class<? extends RuntimeException>> REGISTERED_EXCEPTIONS_FORWARDS = Lists
+            .newArrayList(ServiceLoader.load(RegisteredExceptionForwards.class))
+            .stream()
+            .flatMap(registeredExceptionForwards -> registeredExceptionForwards.getExceptionClasses().stream())
+            .collect(Collectors.toSet());
 
     private ClientUtils() {
     }
@@ -51,7 +59,14 @@ public final class ClientUtils {
         Response.Status status = Response.Status.fromStatusCode(response.getStatus());
         if (status != Response.Status.OK) {
             if (status == Response.Status.INTERNAL_SERVER_ERROR) {
-                throw createServerErrorException(response);
+                try {
+                    Class exceptionClass = Class.forName(response.getHeaderString("java-exception"));
+                    if (REGISTERED_EXCEPTIONS_FORWARDS.contains(exceptionClass)) {
+                        throw (RuntimeException) exceptionClass.newInstance();
+                    }
+                } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+                    throw createServerErrorException(response);
+                }
             } else {
                 throw createUnexpectedResponseStatus(status);
             }
