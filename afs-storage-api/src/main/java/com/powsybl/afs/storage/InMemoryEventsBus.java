@@ -10,6 +10,8 @@ import com.powsybl.afs.storage.events.AppStorageListener;
 import com.powsybl.afs.storage.events.NodeEvent;
 import com.powsybl.afs.storage.events.NodeEventList;
 import com.powsybl.commons.util.WeakListenerList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +23,8 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author Chamseddine Benhamed <chamseddine.benhamed at rte-france.com>
  */
 public class InMemoryEventsBus implements EventsBus {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(InMemoryEventsBus.class);
 
     private final List<NodeEventList> topics = new ArrayList<>();
 
@@ -51,7 +55,11 @@ public class InMemoryEventsBus implements EventsBus {
             listeners.log();
             listeners.notify(l -> topics.forEach(nodeEventList -> {
                 if (l.topics().isEmpty() || l.topics().contains(nodeEventList.getTopic())) {
-                    l.onEvents(nodeEventList);
+                    try {
+                        l.onEvents(nodeEventList);
+                    } catch (Exception e) {
+                        LOGGER.error("consuming failed ", e);
+                    }
                 }
             }));
             topics.clear();
