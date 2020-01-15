@@ -77,6 +77,17 @@ public abstract class AbstractScript<T extends AbstractScript> extends ProjectFi
         orderedDependencyManager.removeDependencies(INCLUDED_SCRIPTS_DEPENDENCY_NAME, Collections.singletonList(scriptNodeId));
     }
 
+    public void switchDependencies(int dependencyIndex1, int dependencyIndex2) {
+        List<AbstractScript> includedScripts = getIncludedScripts();
+        List<AbstractScript> reOrderedIncludedScripts = new ArrayList<>(includedScripts);
+        try {
+            reOrderedIncludedScripts.set(dependencyIndex1, includedScripts.get(dependencyIndex2));
+            reOrderedIncludedScripts.set(dependencyIndex2, includedScripts.get(dependencyIndex1));
+        } catch (IndexOutOfBoundsException ignored) {
+        }
+        orderedDependencyManager.setDependencies(INCLUDED_SCRIPTS_DEPENDENCY_NAME, Collections.unmodifiableList(reOrderedIncludedScripts));
+    }
+
     @Override
     public String readScript(boolean withIncludes) {
         String ownContent = readScript();
