@@ -32,7 +32,7 @@ public final class ClientUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientUtils.class);
 
-    private static Set<Class<? extends RuntimeException>> REGISTERED_EXCEPTIONS_FORWARDS = Lists
+    private static final Set<Class<? extends RuntimeException>> REGISTERED_EXCEPTIONS_FORWARDS = Lists
             .newArrayList(ServiceLoader.load(RegisteredExceptionForwards.class))
             .stream()
             .flatMap(registeredExceptionForwards -> registeredExceptionForwards.getExceptionClasses().stream())
@@ -47,7 +47,18 @@ public final class ClientUtils {
                 .build();
     }
 
-    private static AfsStorageException createServerErrorException(Response response) {
+    private static RuntimeException createServerErrorException(Response response) {
+        try {
+            String javaException = response.getHeaderString("java-exception");
+            if (javaException != null) {
+                Class exceptionClass = Class.forName(javaException);
+                if (REGISTERED_EXCEPTIONS_FORWARDS.contains(exceptionClass)) {
+                    return (RuntimeException) exceptionClass.newInstance();
+                }
+            }
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+            LOGGER.warn("Failed to handle registered exception", e);
+        }
         return new AfsStorageException(response.readEntity(String.class));
     }
 
@@ -59,14 +70,7 @@ public final class ClientUtils {
         Response.Status status = Response.Status.fromStatusCode(response.getStatus());
         if (status != Response.Status.OK) {
             if (status == Response.Status.INTERNAL_SERVER_ERROR) {
-                try {
-                    Class exceptionClass = Class.forName(response.getHeaderString("java-exception"));
-                    if (REGISTERED_EXCEPTIONS_FORWARDS.contains(exceptionClass)) {
-                        throw (RuntimeException) exceptionClass.newInstance();
-                    }
-                } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
-                    throw createServerErrorException(response);
-                }
+                throw createServerErrorException(response);
             } else {
                 throw createUnexpectedResponseStatus(status);
             }

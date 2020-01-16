@@ -9,10 +9,7 @@ package com.powsybl.afs.ws.server;
 import com.powsybl.afs.Folder;
 import com.powsybl.afs.Project;
 import com.powsybl.afs.TaskMonitor;
-import com.powsybl.afs.storage.AbstractAppStorageTest;
-import com.powsybl.afs.storage.AppStorage;
-import com.powsybl.afs.storage.NodeGenericMetadata;
-import com.powsybl.afs.storage.NodeInfo;
+import com.powsybl.afs.storage.*;
 import com.powsybl.afs.ws.client.utils.ClientUtils;
 import com.powsybl.afs.ws.client.utils.UserSession;
 import com.powsybl.afs.ws.server.utils.AppDataBean;
@@ -38,6 +35,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -122,7 +120,8 @@ public class AppStorageServerTest extends AbstractAppStorageTest {
         TaskMonitor.Snapshot snapshot = taskMonitor.takeSnapshot(project.getId());
         assertTrue(snapshot.getTasks().stream().anyMatch(t -> t.getId().equals(task.getId())));
 
-        assertThatCode(() -> taskMonitor.updateTaskFuture(task.getId(), CompletableFuture.runAsync(() -> { }))).isInstanceOf(TaskMonitor.NotACancellableTaskMonitor.class);
+        assertThatCode(() -> taskMonitor.updateTaskFuture(task.getId(), CompletableFuture.runAsync(() -> {
+        }))).isInstanceOf(TaskMonitor.NotACancellableTaskMonitor.class);
         assertFalse(taskMonitor.cancelTaskComputation(task.getId()));
 
         // cleanup
@@ -133,4 +132,11 @@ public class AppStorageServerTest extends AbstractAppStorageTest {
         eventStack.take();
 
     }
+
+    @Test
+    public void handleRegisteredErrorTest() {
+        assertThatCode(() -> ClientUtils.checkOk(ClientUtils.createClient().target(getRestUri()).path("/rest/dummy/registeredError").request().get())).isInstanceOf(CancellationException.class);
+        assertThatCode(() -> ClientUtils.checkOk(ClientUtils.createClient().target(getRestUri()).path("/rest/dummy/unregisteredError").request().get())).isInstanceOf(AfsStorageException.class);
+    }
+
 }
