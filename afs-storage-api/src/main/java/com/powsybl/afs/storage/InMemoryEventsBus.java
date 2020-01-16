@@ -58,7 +58,7 @@ public class InMemoryEventsBus implements EventsBus {
                     try {
                         l.onEvents(nodeEventList);
                     } catch (Exception e) {
-                        LOGGER.error("consuming failed ", e);
+                        LOGGER.error("Handler failed to consume events {}", nodeEventList, e);
                     }
                 }
             }));
