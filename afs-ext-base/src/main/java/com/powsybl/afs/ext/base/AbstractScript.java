@@ -77,7 +77,7 @@ public abstract class AbstractScript<T extends AbstractScript> extends ProjectFi
     public void switchIncludedDependencies(int dependencyIndex1, int dependencyIndex2) {
         List<AbstractScript> includedScripts = getIncludedScripts();
         if (dependencyIndex1 < 0 || dependencyIndex1 >= includedScripts.size() || dependencyIndex2 < 0 || dependencyIndex2 >= includedScripts.size()) {
-            throw new AfsException("One or both Indexes values are out of bounds");
+            throw new AfsException("One or both indexes values are out of bounds");
         }
         List<AbstractScript> reOrderedIncludedScripts = new ArrayList<>(includedScripts);
         reOrderedIncludedScripts.set(dependencyIndex1, includedScripts.get(dependencyIndex2));
