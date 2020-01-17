@@ -40,21 +40,18 @@ public class OrderedDependencyManager {
         List<ProjectNode> nodes = getDependencies(name);
         nodes.addAll(projectNodes);
         setDependencies(name, nodes);
-        dependencyCache = null;
     }
 
     public void insertDependencies(String name, int index, List<ProjectNode> projectNodes) {
         List<ProjectNode> nodes = getDependencies(name);
         nodes.addAll(index, projectNodes);
         setDependencies(name, nodes);
-        dependencyCache = null;
     }
 
     public void removeDependency(String name, int index) {
         List<ProjectNode> nodes = getDependencies(name);
         nodes.remove(index);
         setDependencies(name, nodes);
-        dependencyCache = null;
     }
 
     public void removeDependencies(String name, List<String> nodeIds) {
@@ -63,7 +60,6 @@ public class OrderedDependencyManager {
                 .filter(dep -> !nodeIds.contains(dep.getId()))
                 .collect(Collectors.toList());
         setDependencies(name, nodes);
-        dependencyCache = null;
     }
 
     public void setDependencies(String name, List<ProjectNode> projectNodes) {
