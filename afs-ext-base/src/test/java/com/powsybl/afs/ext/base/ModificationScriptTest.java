@@ -135,11 +135,21 @@ public class ModificationScriptTest extends AbstractProjectFileTest {
         assertEquals(contentWithInclude, "var foo=\"bar\"\n\nvar p0=1\n\nvar pmax=2\n\nprintln 'bye'");
 
         List<AbstractScript> includes = script.getIncludedScripts();
-        assertEquals(includes.size(), 2);
+        assertEquals(2, includes.size());
         assertEquals(includes.get(0).getId(), include1.getId());
         assertEquals(includes.get(1).getId(), include3.getId());
 
         assertThatCode(() -> script.addScript(script)).isInstanceOf(AfsCircularDependencyException.class);
+
+        script.switchIncludedDependencies(0, 1);
+
+        List<AbstractScript> includedScripts = script.getIncludedScripts();
+        assertEquals(2, includes.size());
+        assertEquals(includedScripts.get(0).getId(), include3.getId());
+        assertEquals(includedScripts.get(1).getId(), include1.getId());
+
+        assertThatCode(() -> script.switchIncludedDependencies(0, -1)).isInstanceOf(AfsException.class);
+        assertThatCode(() -> script.switchIncludedDependencies(1, 2)).isInstanceOf(AfsException.class);
 
         NodeInfo genScript1NodeInfo = storage.createNode(rootFolder.getId(), "genScript1", GenericScript.PSEUDO_CLASS, "", GenericScript.VERSION, new NodeGenericMetadata());
         ProjectFileCreationContext projectFileCreationContext = new ProjectFileCreationContext(genScript1NodeInfo, storage, project);

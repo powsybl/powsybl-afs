@@ -7,10 +7,7 @@
 package com.powsybl.afs.ext.base;
 
 import com.google.common.io.CharStreams;
-import com.powsybl.afs.AfsCircularDependencyException;
-import com.powsybl.afs.OrderedDependencyManager;
-import com.powsybl.afs.ProjectFile;
-import com.powsybl.afs.ProjectFileCreationContext;
+import com.powsybl.afs.*;
 import com.powsybl.afs.storage.events.AppStorageListener;
 import com.powsybl.afs.storage.events.NodeDataUpdated;
 import com.powsybl.afs.storage.events.NodeEvent;
@@ -75,6 +72,17 @@ public abstract class AbstractScript<T extends AbstractScript> extends ProjectFi
 
     public void removeScript(String scriptNodeId) {
         orderedDependencyManager.removeDependencies(INCLUDED_SCRIPTS_DEPENDENCY_NAME, Collections.singletonList(scriptNodeId));
+    }
+
+    public void switchIncludedDependencies(int dependencyIndex1, int dependencyIndex2) {
+        List<AbstractScript> includedScripts = getIncludedScripts();
+        if (dependencyIndex1 < 0 || dependencyIndex1 >= includedScripts.size() || dependencyIndex2 < 0 || dependencyIndex2 >= includedScripts.size()) {
+            throw new AfsException("One or both indexes values are out of bounds");
+        }
+        List<AbstractScript> reOrderedIncludedScripts = new ArrayList<>(includedScripts);
+        reOrderedIncludedScripts.set(dependencyIndex1, includedScripts.get(dependencyIndex2));
+        reOrderedIncludedScripts.set(dependencyIndex2, includedScripts.get(dependencyIndex1));
+        orderedDependencyManager.setDependencies(INCLUDED_SCRIPTS_DEPENDENCY_NAME, Collections.unmodifiableList(reOrderedIncludedScripts));
     }
 
     @Override
