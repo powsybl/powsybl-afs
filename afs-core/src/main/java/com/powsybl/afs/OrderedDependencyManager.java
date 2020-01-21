@@ -67,6 +67,7 @@ public class OrderedDependencyManager {
         for (int i = 0; i < projectNodes.size(); i++) {
             projectFile.setDependencies(name + "_" + i, Collections.singletonList(projectNodes.get(i)));
         }
+        dependencyCache = null;
     }
 
     public List<ProjectNode> getDependencies(String name) {
