@@ -206,6 +206,19 @@ public class AppStorageArchive {
         }
     }
 
+    public void archiveDependencies(NodeInfo nodeInfo, Path nodeDir) throws IOException {
+        Objects.requireNonNull(nodeInfo);
+        Objects.requireNonNull(nodeDir);
+        Set<NodeDependency> DependencyNodeInfos = storage.getDependencies(nodeInfo.getId());
+        if (!DependencyNodeInfos.isEmpty()) {
+            Path dependeciesDir = nodeDir.resolve("dependencies");
+            Files.createDirectory(dependeciesDir);
+            for (NodeDependency DependencyNodeInfo : DependencyNodeInfos) {
+                archive(DependencyNodeInfo.getNodeInfo(), dependeciesDir);
+            }
+        }
+    }
+
     public void archive(String nodeId, Path parentDir) {
         Objects.requireNonNull(nodeId);
         Objects.requireNonNull(parentDir);
@@ -215,6 +228,7 @@ public class AppStorageArchive {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+
     }
 
     public void archive(NodeInfo nodeInfo, Path parentDir) throws IOException {
@@ -235,6 +249,8 @@ public class AppStorageArchive {
         writeTimeSeries(nodeInfo, nodeDir);
 
         archiveChildren(nodeInfo, nodeDir);
+
+        archiveDependencies(nodeInfo, nodeDir);
     }
 
     private NodeInfo readNodeInfo(NodeInfo parentNodeInfo, Path nodeDir, UnarchiveContext context) throws IOException {
@@ -392,6 +408,7 @@ public class AppStorageArchive {
             }
         }
     }
+
 
     public void unarchive(Path nodeDir) {
         unarchive(null, nodeDir);

@@ -6,12 +6,16 @@
  */
 package com.powsybl.afs;
 
+import com.google.common.io.ByteStreams;
 import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.AppStorageArchive;
 import com.powsybl.afs.storage.NodeInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
+import java.io.*;
+import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -20,6 +24,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Base class for all node objects stored in an AFS tree.
@@ -33,6 +39,8 @@ public abstract class AbstractNodeBase<F> {
     protected final AppStorage storage;
 
     protected int codeVersion;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractNodeBase.class);
 
     public AbstractNodeBase(NodeInfo info, AppStorage storage, int codeVersion) {
         this.info = Objects.requireNonNull(info);
@@ -175,13 +183,66 @@ public abstract class AbstractNodeBase<F> {
         return childNodes.stream().filter(nodeInfo -> !nodeInfo.getId().equals(getId())).anyMatch(nodeInfo -> nodeInfo.getName().equals(name));
     }
 
-    public void archive(Path dir) {
+    public void archive(Path dir){
         Objects.requireNonNull(dir);
         try {
             new AppStorageArchive(storage).archive(info, dir);
+            zipDirectory(dir, info);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    public void zipDirectory(Path nodeDir, NodeInfo info) throws IOException,
+            IllegalArgumentException{
+        Path zipPath = nodeDir.resolve(info.getId() + ".zip");
+        try (FileOutputStream fos = new FileOutputStream(zipPath.toFile());
+             ZipOutputStream zos = new ZipOutputStream(fos)) {
+            Files.walk(nodeDir.resolve(info.getId()))
+                    .filter(someFileToZip -> !someFileToZip.equals(nodeDir.resolve(info.getId())))
+                    .forEach(
+                            someFileToZip -> {
+                                Path pathInZip = nodeDir.resolve(info.getId()).relativize(someFileToZip);
+                                if (Files.isDirectory(someFileToZip)) {
+                                    addDirectory(zos, pathInZip);
+                                } else {
+                                    addFile(zos, someFileToZip, pathInZip);
+                                }
+                            });
+        } catch (IOException e) {
+            LOGGER.error("The file can't be added to the zip", e);
+        }
+        deleteDirectory(new File(nodeDir.resolve(info.getId()).toString()));
+    }
+
+    private void addDirectory(ZipOutputStream zos, Path relativeFilePath) {
+        try {
+            ZipEntry entry = new ZipEntry(relativeFilePath.toString() + "/");
+            zos.putNextEntry(entry);
+            zos.closeEntry();
+        } catch (IOException e) {
+            LOGGER.error("Unable to add directory {} to zip", relativeFilePath, e);
+        }
+    }
+
+    private void addFile(ZipOutputStream zos, Path filePath, Path zipFilePath) {
+        try (FileInputStream fis = new FileInputStream(filePath.toFile())) {
+            ZipEntry entry = new ZipEntry(zipFilePath.toString());
+            zos.putNextEntry(entry);
+            ByteStreams.copy(fis, zos);
+        } catch (IOException e) {
+            LOGGER.error("Unable to add file {} to zip", zipFilePath, e);
+        }
+    }
+
+    boolean deleteDirectory(File directoryToBeDeleted) {
+        File[]allContents = directoryToBeDeleted.listFiles();
+        if (allContents != null) {
+            for (File file : allContents) {
+                deleteDirectory(file);
+            }
+        }
+        return directoryToBeDeleted.delete();
     }
 
     public void unarchive(Path dir) {
