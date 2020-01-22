@@ -385,6 +385,36 @@ public class AppStorageArchive {
         }
     }
 
+    public void unarchiveDependencies(NodeInfo parentNodeInfo, Path nodeDir, UnarchiveContext context) throws IOException {
+        Objects.requireNonNull(parentNodeInfo);
+        Objects.requireNonNull(nodeDir);
+        Objects.requireNonNull(context);
+        Path dependenciesDir = nodeDir.resolve("dependencies");
+        if (Files.exists(dependenciesDir)) {
+            try (Stream<Path> stream = Files.list(dependenciesDir)) {
+                stream.forEach(dependencyNodeDir -> {
+                    try {
+                        unarchive(parentNodeInfo, dependencyNodeDir, context);
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                });
+            }
+        }
+    }
+
+    public void unarchiveDependencies(NodeInfo parentNodeInfo, Path nodeDir) {
+        Objects.requireNonNull(parentNodeInfo);
+        Objects.requireNonNull(nodeDir);
+        try {
+            UnarchiveContext context = new UnarchiveContext();
+            unarchiveDependencies(parentNodeInfo, nodeDir, context);
+            resolveDependencies(context);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
     private void unarchive(NodeInfo parentNodeInfo, Path nodeDir, UnarchiveContext context) throws IOException {
         NodeInfo newNodeInfo = readNodeInfo(parentNodeInfo, nodeDir, context);
 
@@ -398,6 +428,8 @@ public class AppStorageArchive {
         storage.flush();
 
         unarchiveChildren(newNodeInfo, nodeDir, context);
+
+        unarchiveDependencies(newNodeInfo, nodeDir, context);
     }
 
     private void resolveDependencies(UnarchiveContext context) {
