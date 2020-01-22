@@ -6,10 +6,8 @@
  */
 package com.powsybl.afs.ws.client.utils;
 
-import com.google.common.collect.Lists;
 import com.powsybl.afs.storage.AfsStorageException;
 import com.powsybl.afs.ws.utils.JsonProvider;
-import com.powsybl.afs.ws.utils.exceptions.RegisteredExceptionForwards;
 import com.powsybl.commons.net.UserProfile;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.slf4j.Logger;
@@ -23,7 +21,6 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
@@ -31,12 +28,6 @@ import java.util.stream.Collectors;
 public final class ClientUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientUtils.class);
-
-    private static final Set<Class<? extends RuntimeException>> REGISTERED_EXCEPTIONS_FORWARDS = Lists
-            .newArrayList(ServiceLoader.load(RegisteredExceptionForwards.class))
-            .stream()
-            .flatMap(registeredExceptionForwards -> registeredExceptionForwards.getExceptionClasses().stream())
-            .collect(Collectors.toSet());
 
     private ClientUtils() {
     }
@@ -52,7 +43,7 @@ public final class ClientUtils {
             String javaException = response.getHeaderString("java-exception");
             if (javaException != null) {
                 Class exceptionClass = Class.forName(javaException);
-                if (REGISTERED_EXCEPTIONS_FORWARDS.contains(exceptionClass)) {
+                if (RuntimeException.class.isAssignableFrom(exceptionClass)) {
                     return (RuntimeException) exceptionClass.newInstance();
                 }
             }

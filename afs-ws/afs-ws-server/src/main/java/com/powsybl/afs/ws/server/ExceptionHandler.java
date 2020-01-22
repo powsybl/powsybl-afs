@@ -8,15 +8,9 @@
 
 package com.powsybl.afs.ws.server;
 
-import com.google.common.collect.Lists;
-import com.powsybl.afs.ws.utils.exceptions.RegisteredExceptionForwards;
-
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
-import java.util.ServiceLoader;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * @author Paul Bui-Quang <paul.buiquang at rte-france.com>
@@ -24,20 +18,9 @@ import java.util.stream.Collectors;
 @Provider
 public class ExceptionHandler implements ExceptionMapper<Exception> {
 
-    private static final Set<Class<? extends RuntimeException>> REGISTERED_EXCEPTIONS_FORWARDS = Lists
-            .newArrayList(ServiceLoader.load(RegisteredExceptionForwards.class))
-            .stream()
-            .flatMap(registeredExceptionForwards -> registeredExceptionForwards.getExceptionClasses().stream())
-            .collect(Collectors.toSet());
-
     @Override
     public Response toResponse(Exception exception) {
         Response.ResponseBuilder responseBuilder = Response.status(500);
-        REGISTERED_EXCEPTIONS_FORWARDS
-                .stream()
-                .filter(exceptionClass -> exceptionClass.equals(exception.getClass()))
-                .findFirst()
-                .ifPresent(exceptionClass -> responseBuilder.header("java-exception", exceptionClass.getCanonicalName()));
-        return responseBuilder.build();
+        return responseBuilder.header("java-exception", exception.getClass().getCanonicalName()).build();
     }
 }
