@@ -8,10 +8,10 @@ package com.powsybl.afs;
 
 import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.AppStorageArchive;
+import com.powsybl.afs.storage.Utils;
 import com.powsybl.afs.storage.NodeInfo;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -179,6 +179,7 @@ public abstract class AbstractNodeBase<F> {
         Objects.requireNonNull(dir);
         try {
             new AppStorageArchive(storage).archive(info, dir);
+            zipDirectory(dir, info);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
