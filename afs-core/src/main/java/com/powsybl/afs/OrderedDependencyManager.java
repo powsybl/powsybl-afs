@@ -67,7 +67,7 @@ public class OrderedDependencyManager {
         for (int i = 0; i < projectNodes.size(); i++) {
             projectFile.setDependencies(name + "_" + i, Collections.singletonList(projectNodes.get(i)));
         }
-        dependencyCache = null;
+        clearCache();
     }
 
     public List<ProjectNode> getDependencies(String name) {
@@ -104,6 +104,10 @@ public class OrderedDependencyManager {
                     return null;
                 })
                 .filter(Objects::nonNull);
+    }
+
+    public void clearCache() {
+        dependencyCache = null;
     }
 
 }
