@@ -16,6 +16,7 @@ import com.powsybl.afs.ws.server.utils.AppDataBean;
 import com.powsybl.afs.ws.storage.RemoteAppStorage;
 import com.powsybl.afs.ws.storage.RemoteTaskMonitor;
 import com.powsybl.commons.exceptions.UncheckedUriSyntaxException;
+import org.apache.commons.lang3.NotImplementedException;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
@@ -137,6 +138,7 @@ public class AppStorageServerTest extends AbstractAppStorageTest {
     public void handleRegisteredErrorTest() {
         assertThatCode(() -> ClientUtils.checkOk(ClientUtils.createClient().target(getRestUri()).path("/rest/dummy/registeredError").request().get())).isInstanceOf(CancellationException.class);
         assertThatCode(() -> ClientUtils.checkOk(ClientUtils.createClient().target(getRestUri()).path("/rest/dummy/unregisteredError").request().get())).isInstanceOf(AfsStorageException.class);
+        assertThatCode(() -> ClientUtils.checkOk(ClientUtils.createClient().target(getRestUri()).path("/rest/dummy/registeredErrorWithMessage").request().get())).isInstanceOf(NotImplementedException.class).hasMessage("hello");
     }
 
 }

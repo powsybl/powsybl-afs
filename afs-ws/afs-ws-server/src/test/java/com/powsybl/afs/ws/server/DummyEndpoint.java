@@ -8,6 +8,8 @@
 
 package com.powsybl.afs.ws.server;
 
+import org.apache.commons.lang3.NotImplementedException;
+
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Named;
 import javax.ws.rs.GET;
@@ -40,4 +42,10 @@ public class DummyEndpoint {
         throw new IOException();
     }
 
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("registeredErrorWithMessage")
+    public Response registeredErrorWithMessage() {
+        throw new NotImplementedException("hello");
+    }
 }

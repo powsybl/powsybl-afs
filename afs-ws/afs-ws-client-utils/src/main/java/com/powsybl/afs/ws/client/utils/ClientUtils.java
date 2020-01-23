@@ -6,7 +6,9 @@
  */
 package com.powsybl.afs.ws.client.utils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.afs.storage.AfsStorageException;
+import com.powsybl.afs.ws.utils.ExceptionDetail;
 import com.powsybl.afs.ws.utils.JsonProvider;
 import com.powsybl.commons.net.UserProfile;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
@@ -20,7 +22,8 @@ import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import java.net.URI;
-import java.util.*;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
@@ -39,18 +42,23 @@ public final class ClientUtils {
     }
 
     private static RuntimeException createServerErrorException(Response response) {
+        String body = response.readEntity(String.class);
         try {
-            String javaException = response.getHeaderString("java-exception");
+            ExceptionDetail exceptionDetail = new ObjectMapper().readValue(body, ExceptionDetail.class);
+            String javaException = exceptionDetail.getJavaException();
             if (javaException != null) {
                 Class exceptionClass = Class.forName(javaException);
                 if (RuntimeException.class.isAssignableFrom(exceptionClass)) {
+                    if (exceptionDetail.getMessage() != null) {
+                        return (RuntimeException) exceptionClass.getConstructor(String.class).newInstance(exceptionDetail.getMessage());
+                    }
                     return (RuntimeException) exceptionClass.newInstance();
                 }
             }
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+        } catch (Exception e) {
             LOGGER.warn("Failed to handle registered exception", e);
         }
-        return new AfsStorageException(response.readEntity(String.class));
+        return new AfsStorageException(body);
     }
 
     private static AfsStorageException createUnexpectedResponseStatus(Response.Status status) {

@@ -1,0 +1,41 @@
+/*
+ * Copyright (c) 2020, RTE (http://www.rte-france.com)
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ */
+
+package com.powsybl.afs.ws.utils;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+/**
+ * @author Paul Bui-Quang <paul.buiquang at rte-france.com>
+ */
+public class ExceptionDetail {
+
+    private String javaException;
+    private String message;
+
+    public ExceptionDetail(@JsonProperty("javaException") String javaException, @JsonProperty("message") String message) {
+        this.javaException = javaException;
+        this.message = message;
+    }
+
+    public String getJavaException() {
+        return javaException;
+    }
+
+    public void setJavaException(String javaException) {
+        this.javaException = javaException;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+}
