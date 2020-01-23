@@ -1,18 +1,24 @@
-/**
- * Copyright (c) 2017, RTE (http://www.rte-france.com)
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+/*
+  Copyright (c) 2017, RTE (http://www.rte-france.com)
+  This Source Code Form is subject to the terms of the Mozilla Public
+  License, v. 2.0. If a copy of the MPL was not distributed with this
+  file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
+
 package com.powsybl.afs;
 
 import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.AppStorageArchive;
 import com.powsybl.afs.storage.Utils;
 import com.powsybl.afs.storage.NodeInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.io.File;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -27,6 +33,10 @@ import java.util.Optional;
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  */
 public abstract class AbstractNodeBase<F> {
+
+    private static final long MIN_DISK_SPACE_THRESHOLD = 10;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractNodeBase.class);
 
     protected final NodeInfo info;
 
@@ -175,17 +185,47 @@ public abstract class AbstractNodeBase<F> {
         return childNodes.stream().filter(nodeInfo -> !nodeInfo.getId().equals(getId())).anyMatch(nodeInfo -> nodeInfo.getName().equals(name));
     }
 
-    public void archive(Path dir) {
+    public void archive(Path dir, boolean useZip){
+
+        //if it's a copy paste, this test is already done
+        if(useZip) {
+            File archiveFile = dir.toFile();
+            long freeSpacePercent = 100 * archiveFile.getFreeSpace() / archiveFile.getTotalSpace();
+            LOGGER.info("Copying into drive with {}% free space", freeSpacePercent);
+            if (freeSpacePercent < MIN_DISK_SPACE_THRESHOLD) {
+                throw new AfsException("Not enough space");
+            }
+        }
+
         Objects.requireNonNull(dir);
         try {
             new AppStorageArchive(storage).archive(info, dir);
-            zipDirectory(dir, info);
+            if(useZip){
+                Path zipPath = dir.resolve(info.getId() + ".zip");
+                Utils.zip(dir.resolve(info.getId()), zipPath);
+            }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
-    public void unarchive(Path dir) {
-        new AppStorageArchive(storage).unarchive(info, dir);
+    public void unarchive(Path dir, boolean isZipped) {
+        if(isZipped){
+            int index = dir.toString().lastIndexOf(".");
+            Path nodeDir = Paths.get(dir.toString().substring(0, index));
+            Utils.unzip(dir, nodeDir);
+            new AppStorageArchive(storage).unarchive(info, nodeDir);
+            Utils.deleteDirectory(new File(nodeDir.toString()));
+        }else{
+            new AppStorageArchive(storage).unarchive(info, dir);
+        }
+    }
+
+    public void archive(Path dir){
+        archive(dir, false);
+    }
+
+    public void unarchive(Path dir){
+        unarchive(dir, false);
     }
 }

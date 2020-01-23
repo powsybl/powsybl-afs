@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2017, RTE (http://www.rte-france.com)
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -160,7 +160,7 @@ public class AppFileSystemTool implements Tool {
                 throw new  AfsException("File system '" + fileSystemName + "' not found");
             }
             Path dir = context.getFileSystem().getPath(line.getOptionValue(DIR));
-            fs.getRootFolder().unarchive(dir);
+            fs.getRootFolder().unarchive(dir,true);
         }
     }
 
@@ -175,7 +175,7 @@ public class AppFileSystemTool implements Tool {
                 throw new  AfsException("File system '" + fileSystemName + "' not found");
             }
             Path dir = context.getFileSystem().getPath(line.getOptionValue(DIR));
-            fs.getRootFolder().archive(dir);
+            fs.getRootFolder().archive(dir, true);
         }
     }
 

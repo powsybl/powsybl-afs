@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2017, RTE (http://www.rte-france.com)
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -122,7 +122,7 @@ public class AfsBaseTest {
         project2.rename("project22");
         assertEquals("project22", project2.getName());
 
-        Project projet101 = dir2.createProject("project5");
+        dir2.createProject("project5");
         Project project102 = dir2.createProject("project6");
         try {
             project102.rename("project5");
@@ -137,7 +137,7 @@ public class AfsBaseTest {
         assertTrue(dir41.getChildren().isEmpty());
 
         Folder dir51 = dir2.createFolder("dir51");
-        Project project5 = dir51.createProject("project5");
+        dir51.createProject("project5");
         try {
             dir51.delete();
             fail();
@@ -233,6 +233,35 @@ public class AfsBaseTest {
             dir8.findService(NetworkFactoryService.class);
             fail();
         } catch (AfsException ignored) {
+        }
+    }
+
+    @Test
+    public void ArchiveWithZip(){
+        Project project = afs.getRootFolder().createProject("test");
+        ProjectFolder rootFolder = project.getRootFolder();
+        ProjectFolder dir1 = rootFolder.createFolder("dir1");
+        Path rootDir = fileSystem.getPath("/root");
+        try {
+            Files.createDirectories(rootDir);
+        } catch (IOException ignored) {
+        }
+
+        dir1.archive(rootDir,true);
+        Path child = rootDir.resolve(dir1.getId()+".zip");
+        assertTrue(Files.exists(child));
+
+        ProjectFolder dir2 = rootFolder.createFolder("dir2");
+        assertEquals(0, dir2.getChildren().size());
+        dir2.unarchive(child);
+        assertEquals(1, dir2.getChildren().size());
+        assertEquals("dir1", dir2.getChildren().get(0).getName());
+
+        Path testDirNotExists = rootDir.resolve("testDirNotExists");
+        try {
+            dir1.archive(testDirNotExists, true);
+            fail();
+        } catch (UncheckedIOException ignored) {
         }
     }
 
