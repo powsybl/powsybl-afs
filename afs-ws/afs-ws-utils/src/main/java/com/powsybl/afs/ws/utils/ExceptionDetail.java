@@ -27,15 +27,8 @@ public class ExceptionDetail {
         return javaException;
     }
 
-    public void setJavaException(String javaException) {
-        this.javaException = javaException;
-    }
-
     public String getMessage() {
         return message;
     }
 
-    public void setMessage(String message) {
-        this.message = message;
-    }
 }
