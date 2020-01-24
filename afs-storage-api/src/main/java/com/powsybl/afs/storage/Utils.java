@@ -25,9 +25,12 @@ import java.util.zip.ZipOutputStream;
  *
  * @author Valentin Berthault <valentin.berthault at rte-france.com>
  */
-public class Utils {
+public final class Utils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Utils.class);
+    private Utils() {
+        //not called
+    }
 
     /**
      * zip a directory
@@ -36,20 +39,20 @@ public class Utils {
      * @param zipPath path to the zip to create
      * @throws IllegalArgumentException IllegalArgumentException
      */
-    public static void zip(Path dir, Path zipPath) throws IllegalArgumentException{
+    public static void zip(Path dir, Path zipPath) throws IllegalArgumentException {
         try (FileOutputStream fos = new FileOutputStream(zipPath.toFile());
              ZipOutputStream zos = new ZipOutputStream(fos)) {
             Files.walk(dir)
                     .filter(someFileToZip -> !someFileToZip.equals(dir))
                     .forEach(
-                            someFileToZip -> {
-                                Path pathInZip = dir.relativize(someFileToZip);
-                                if (Files.isDirectory(someFileToZip)) {
-                                    addDirectory(zos, pathInZip);
-                                } else {
-                                    addFile(zos, someFileToZip, pathInZip);
-                                }
-                            });
+                        someFileToZip -> {
+                            Path pathInZip = dir.relativize(someFileToZip);
+                            if (Files.isDirectory(someFileToZip)) {
+                                addDirectory(zos, pathInZip);
+                            } else {
+                                addFile(zos, someFileToZip, pathInZip);
+                            }
+                        });
         } catch (IOException e) {
             LOGGER.error("The file can't be added to the zip", e);
         }
