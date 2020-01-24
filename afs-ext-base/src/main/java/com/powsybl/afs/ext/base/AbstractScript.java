@@ -61,6 +61,7 @@ public abstract class AbstractScript<T extends AbstractScript> extends ProjectFi
             throw new AfsCircularDependencyException();
         }
         orderedDependencyManager.appendDependencies(INCLUDED_SCRIPTS_DEPENDENCY_NAME, Collections.singletonList(genericScript));
+        invalidate();
     }
 
     public void addScript(T includeScript) {
@@ -68,10 +69,12 @@ public abstract class AbstractScript<T extends AbstractScript> extends ProjectFi
             throw new AfsCircularDependencyException();
         }
         orderedDependencyManager.appendDependencies(INCLUDED_SCRIPTS_DEPENDENCY_NAME, Collections.singletonList(includeScript));
+        invalidate();
     }
 
     public void removeScript(String scriptNodeId) {
         orderedDependencyManager.removeDependencies(INCLUDED_SCRIPTS_DEPENDENCY_NAME, Collections.singletonList(scriptNodeId));
+        invalidate();
     }
 
     public void switchIncludedDependencies(int dependencyIndex1, int dependencyIndex2) {

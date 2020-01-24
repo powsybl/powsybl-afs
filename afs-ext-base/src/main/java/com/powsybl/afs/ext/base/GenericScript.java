@@ -16,7 +16,8 @@ import com.powsybl.afs.ProjectFileCreationContext;
 public class GenericScript extends AbstractScript<GenericScript> {
     public static final String PSEUDO_CLASS = "genericScript";
     public static final int VERSION = 0;
-    private static final String SCRIPT_CONTENT = "scriptContent";
+    static final String SCRIPT_CONTENT = "scriptContent";
+    static final String SCRIPT_TYPE = "scriptType";
 
     public GenericScript(ProjectFileCreationContext context) {
         super(context, VERSION, SCRIPT_CONTENT);
