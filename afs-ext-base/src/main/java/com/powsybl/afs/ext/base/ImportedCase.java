@@ -85,10 +85,9 @@ public class ImportedCase extends ProjectFile implements ProjectCase {
     }
 
     @Override
-    public void delete() {
-        super.delete();
+    protected void invalidate() {
+        super.invalidate();
 
-        // also clean cache
         invalidateNetworkCache();
     }
 
