@@ -6,10 +6,12 @@
  */
 package com.powsybl.afs.ws.server.utils;
 
+import com.powsybl.afs.ws.utils.ExceptionDetail;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
@@ -30,7 +32,11 @@ public class ThrowableExceptionMapper implements ExceptionMapper<Throwable> {
         if (t instanceof WebApplicationException) {
             return ((WebApplicationException) t).getResponse();
         } else {
-            return Response.serverError().entity(t.getMessage()).build();
+            return Response
+                    .serverError()
+                    .type(MediaType.APPLICATION_JSON)
+                    .entity(new ExceptionDetail(t.getClass().getCanonicalName(), t.getMessage()))
+                    .build();
         }
     }
 }

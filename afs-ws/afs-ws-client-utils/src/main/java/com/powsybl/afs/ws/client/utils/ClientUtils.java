@@ -6,7 +6,9 @@
  */
 package com.powsybl.afs.ws.client.utils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.afs.storage.AfsStorageException;
+import com.powsybl.afs.ws.utils.ExceptionDetail;
 import com.powsybl.afs.ws.utils.JsonProvider;
 import com.powsybl.commons.net.UserProfile;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
@@ -39,8 +41,24 @@ public final class ClientUtils {
                 .build();
     }
 
-    private static AfsStorageException createServerErrorException(Response response) {
-        return new AfsStorageException(response.readEntity(String.class));
+    private static RuntimeException createServerErrorException(Response response) {
+        String body = response.readEntity(String.class);
+        try {
+            ExceptionDetail exceptionDetail = new ObjectMapper().readValue(body, ExceptionDetail.class);
+            String javaException = exceptionDetail.getJavaException();
+            if (javaException != null) {
+                Class exceptionClass = Class.forName(javaException);
+                if (RuntimeException.class.isAssignableFrom(exceptionClass)) {
+                    if (exceptionDetail.getMessage() != null) {
+                        return (RuntimeException) exceptionClass.getConstructor(String.class).newInstance(exceptionDetail.getMessage());
+                    }
+                    return (RuntimeException) exceptionClass.newInstance();
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Failed to handle registered exception", e);
+        }
+        return new AfsStorageException(body);
     }
 
     private static AfsStorageException createUnexpectedResponseStatus(Response.Status status) {
