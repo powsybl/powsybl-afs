@@ -25,7 +25,9 @@ import java.util.zip.ZipOutputStream;
 public final class Utils {
 
     private static final long MIN_DISK_SPACE_THRESHOLD = 10;
+
     private static final Logger LOGGER = LoggerFactory.getLogger(Utils.class);
+
     private Utils() throws IllegalAccessException {
         throw new IllegalAccessException();
         //not called

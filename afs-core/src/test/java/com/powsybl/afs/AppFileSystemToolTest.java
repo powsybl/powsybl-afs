@@ -60,10 +60,11 @@ public class AppFileSystemToolTest extends AbstractToolTest {
     @Override
     public void assertCommand() {
         Command command = tool.getCommand();
-        assertCommand(command, "afs", 7, 0);
+        assertCommand(command, "afs", 8, 0);
         assertOption(command.getOptions(), "ls", false, true);
         assertOption(command.getOptions(), "archive", false, true);
         assertOption(command.getOptions(), "unarchive", false, true);
+        assertOption(command.getOptions(), "zip", false, true);
         assertOption(command.getOptions(), "ls-inconsistent-nodes", false, true);
         assertOption(command.getOptions(), "fix-inconsistent-nodes", false, true);
         assertOption(command.getOptions(), "rm-inconsistent-nodes", false, true);

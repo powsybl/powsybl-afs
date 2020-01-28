@@ -92,7 +92,7 @@ public class AppFileSystemTool implements Tool {
                 topLevelOptions.addOption(Option.builder("zip")
                         .longOpt(ZIP)
                         .desc("zip file system")
-                        .hasArg(false)
+                        .hasArg(true)
                         .required(false)
                         .build());
                 topLevelOptions.addOption(Option.builder()
