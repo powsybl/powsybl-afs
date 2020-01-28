@@ -232,37 +232,6 @@ public class AfsBaseTest {
         }
     }
 
-    //@Test
-    public void archiveWithZip() {
-        Project project = afs.getRootFolder().createProject("test");
-        ProjectFolder rootFolder = project.getRootFolder();
-        ProjectFolder dir1 = rootFolder.createFolder("dir1");
-        Path rootDir = fileSystem.getPath("/root");
-        try {
-            Files.createDirectories(rootDir);
-            dir1.archive(rootDir, true);
-        } catch (IOException ignored) {
-        }
-        Path child = rootDir.resolve(dir1.getId() + ".zip");
-        assertTrue(Files.exists(child));
-
-        ProjectFolder dir2 = rootFolder.createFolder("dir2");
-        assertEquals(0, dir2.getChildren().size());
-        try {
-            dir2.unarchive(child);
-        } catch (IOException ignored) {
-        }
-        assertEquals(1, dir2.getChildren().size());
-        assertEquals("dir1", dir2.getChildren().get(0).getName());
-
-        Path testDirNotExists = rootDir.resolve("testDirNotExists");
-        try {
-            dir1.archive(testDirNotExists, true);
-            fail();
-        } catch (IOException ignored) {
-        }
-    }
-
     @Test
     public void moveToTest() {
         Project project = afs.getRootFolder().createProject("test");

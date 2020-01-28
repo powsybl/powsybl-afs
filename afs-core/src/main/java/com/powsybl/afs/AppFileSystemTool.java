@@ -171,8 +171,6 @@ public class AppFileSystemTool implements Tool {
             Path dir = context.getFileSystem().getPath(line.getOptionValue(DIR));
             boolean mustZip = line.hasOption(ZIP);
             fs.getRootFolder().unarchive(dir, mustZip);
-        } catch (IOException e) {
-            throw e;
         }
     }
 
@@ -190,8 +188,6 @@ public class AppFileSystemTool implements Tool {
             boolean mustZip = line.hasOption(ZIP);
             Utils.checkDiskSpace(dir);
             fs.getRootFolder().archive(dir, mustZip);
-        } catch (IOException e) {
-            throw e;
         }
     }
 

@@ -11,8 +11,6 @@ import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.AppStorageArchive;
 import com.powsybl.afs.storage.Utils;
 import com.powsybl.afs.storage.NodeInfo;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
@@ -34,8 +32,6 @@ import java.util.Optional;
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  */
 public abstract class AbstractNodeBase<F> {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractNodeBase.class);
 
     protected final NodeInfo info;
 
@@ -201,7 +197,7 @@ public abstract class AbstractNodeBase<F> {
 
     public void unarchive(Path dir, boolean isZipped) throws IOException {
         if (isZipped) {
-            int index = dir.toString().lastIndexOf(".");
+            int index = dir.toString().lastIndexOf('.');
             Path nodeDir = Paths.get(dir.toString().substring(0, index));
             if (Files.exists(nodeDir)) {
                 throw new FileAlreadyExistsException("Archive already exist.");

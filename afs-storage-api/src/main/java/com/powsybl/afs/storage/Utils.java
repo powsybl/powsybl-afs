@@ -41,7 +41,8 @@ public final class Utils {
      * @throws IllegalArgumentException IllegalArgumentException
      */
     public static void zip(Path dir, Path zipPath, boolean deleteDirectory) throws IOException {
-        try (FileOutputStream fos = new FileOutputStream(zipPath.toFile());
+        File file = zipPath.toFile();
+        try (FileOutputStream fos = new FileOutputStream(file);
              ZipOutputStream zos = new ZipOutputStream(fos);) {
             Files.walk(dir)
                     .filter(someFileToZip -> !someFileToZip.equals(dir))
@@ -60,8 +61,9 @@ public final class Utils {
 
                         });
         } catch (IOException | AfsStorageException e) {
-            LOGGER.error("The file can't be added to the zip", e);
             throw new IOException(e);
+        } finally {
+            Files.walk(dir).close();
         }
 
         if (deleteDirectory) {
@@ -106,7 +108,6 @@ public final class Utils {
             }
             zis.closeEntry();
         } catch (IOException e) {
-            LOGGER.error("Unable to unzip {}", zipPath, e);
             throw e;
         }
     }
@@ -117,7 +118,6 @@ public final class Utils {
             zos.putNextEntry(entry);
             zos.closeEntry();
         } catch (IOException e) {
-            LOGGER.error("Unable to add directory {} to zip", relativeFilePath, e);
             throw e;
         }
     }
@@ -128,7 +128,6 @@ public final class Utils {
             zos.putNextEntry(entry);
             ByteStreams.copy(fis, zos);
         } catch (IOException e) {
-            LOGGER.error("Unable to add file {} to zip", zipFilePath, e);
             throw e;
         }
     }
@@ -139,13 +138,13 @@ public final class Utils {
      * @param directoryToBeDeleted directory to be deleted
      * @return true if directory deleted
      */
-    public static boolean deleteDirectory(File directoryToBeDeleted) {
+    public static void deleteDirectory(File directoryToBeDeleted) throws IOException {
         File[]allContents = directoryToBeDeleted.listFiles();
         if (allContents != null) {
             for (File file : allContents) {
                 deleteDirectory(file);
             }
         }
-        return directoryToBeDeleted.delete();
+        Files.delete(directoryToBeDeleted.toPath());
     }
 }
