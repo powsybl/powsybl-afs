@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (c) 2017, RTE (http://www.rte-france.com)
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@ package com.powsybl.afs;
 
 import com.google.auto.service.AutoService;
 import com.powsybl.afs.storage.NodeInfo;
+import com.powsybl.afs.storage.Utils;
 import com.powsybl.tools.Command;
 import com.powsybl.tools.CommandLineTools;
 import com.powsybl.tools.Tool;
@@ -17,6 +18,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -30,6 +32,7 @@ public class AppFileSystemTool implements Tool {
     private static final String LS = "ls";
     private static final String ARCHIVE = "archive";
     private static final String UNARCHIVE = "unarchive";
+    private static final String ZIP = "zip";
     private static final String DIR = "dir";
     private static final String LS_INCONSISTENT_NODES = "ls-inconsistent-nodes";
     private static final String FIX_INCONSISTENT_NODES = "fix-inconsistent-nodes";
@@ -85,6 +88,12 @@ public class AppFileSystemTool implements Tool {
                         .hasArg()
                         .optionalArg(true)
                         .argName(FILE_SYSTEM_NAME)
+                        .build());
+                topLevelOptions.addOption(Option.builder("zip")
+                        .longOpt(ZIP)
+                        .desc("zip file system")
+                        .hasArg(false)
+                        .required(false)
                         .build());
                 topLevelOptions.addOption(Option.builder()
                         .longOpt(LS_INCONSISTENT_NODES)
@@ -149,7 +158,7 @@ public class AppFileSystemTool implements Tool {
         }
     }
 
-    private void runUnarchive(CommandLine line, ToolRunningContext context) {
+    private void runUnarchive(CommandLine line, ToolRunningContext context) throws IOException {
         if (!line.hasOption(DIR)) {
             throw new AfsException("dir option is missing");
         }
@@ -160,11 +169,14 @@ public class AppFileSystemTool implements Tool {
                 throw new  AfsException("File system '" + fileSystemName + "' not found");
             }
             Path dir = context.getFileSystem().getPath(line.getOptionValue(DIR));
-            fs.getRootFolder().unarchive(dir,true);
+            boolean mustZip = line.hasOption(ZIP);
+            fs.getRootFolder().unarchive(dir, mustZip);
+        } catch (IOException e) {
+            throw e;
         }
     }
 
-    private void runArchive(CommandLine line, ToolRunningContext context) {
+    private void runArchive(CommandLine line, ToolRunningContext context) throws IOException {
         if (!line.hasOption(DIR)) {
             throw new AfsException("dir option is missing");
         }
@@ -175,7 +187,11 @@ public class AppFileSystemTool implements Tool {
                 throw new  AfsException("File system '" + fileSystemName + "' not found");
             }
             Path dir = context.getFileSystem().getPath(line.getOptionValue(DIR));
-            fs.getRootFolder().archive(dir, true);
+            boolean mustZip = line.hasOption(ZIP);
+            Utils.checkDiskSpace(dir);
+            fs.getRootFolder().archive(dir, mustZip);
+        } catch (IOException e) {
+            throw e;
         }
     }
 
@@ -299,7 +315,7 @@ public class AppFileSystemTool implements Tool {
     }
 
     @Override
-    public void run(CommandLine line, ToolRunningContext context) {
+    public void run(CommandLine line, ToolRunningContext context) throws IOException {
         if (line.hasOption(LS)) {
             runLs(line, context);
         } else if (line.hasOption(ARCHIVE)) {
