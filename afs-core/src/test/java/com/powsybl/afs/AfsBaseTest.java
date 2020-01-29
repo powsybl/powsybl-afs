@@ -233,16 +233,17 @@ public class AfsBaseTest {
     }
 
     @Test
-    public void archiveAndUnarchiveTestWithZip(){
+    public void archiveAndUnarchiveTestWithZip() {
         Project project = afs.getRootFolder().createProject("test");
         ProjectFolder rootFolder = project.getRootFolder();
         ProjectFolder dir1 = rootFolder.createFolder("dir1");
-        Path child = null, rootDir = null;
+        Path child = null;
+        Path rootDir = null;
         try {
             rootDir = Files.createTempDirectory("testDir");
             Files.createDirectory(rootDir.resolve("test"));
             dir1.archive(rootDir.resolve("test"), true);
-            child = rootDir.resolve("test/"+ dir1.getId() + ".zip");
+            child = rootDir.resolve("test/" + dir1.getId() + ".zip");
             assertTrue(child.toFile().exists());
         } catch (IOException e) {
             fail();
@@ -252,7 +253,7 @@ public class AfsBaseTest {
         try {
             dir2.unarchive(child, true);
             assertEquals(1, dir2.getChildren().size());
-        } catch(IOException e) {
+        } catch (IOException e) {
             fail();
         }
 
