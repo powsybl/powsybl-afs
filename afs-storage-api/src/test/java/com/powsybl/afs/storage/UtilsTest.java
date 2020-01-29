@@ -45,15 +45,6 @@ public class UtilsTest {
     }
 
     @Test
-    public void checkDiskSpaceTest() {
-        try {
-            Utils.checkDiskSpace(rootDir);
-        } catch (IOException e) {
-            fail();
-        }
-    }
-
-    @Test
     public void deleteDirectoryTest() {
         Path rootDir2 = null;
         try {
