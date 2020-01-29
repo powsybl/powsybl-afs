@@ -14,6 +14,7 @@ import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.InMemoryEventsBus;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.iidm.network.NetworkFactoryService;
+import jdk.internal.org.objectweb.asm.tree.TryCatchBlockNode;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -245,8 +246,12 @@ public class AfsBaseTest {
         child = rootDir.resolve("test/" + dir1.getId() + ".zip");
         assertTrue(child.toFile().exists());
 
-        dir1.archive(rootDir.resolve("test"), true);
-        fail();
+        try {
+            dir1.archive(rootDir.resolve("test"), true);
+            fail();
+        } catch (IOException e) {
+
+        }
 
         ProjectFolder dir2 = rootFolder.createFolder("dir2");
         dir2.unarchive(child, true);
