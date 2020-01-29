@@ -29,47 +29,31 @@ public class UtilsTest {
     }
 
     @Test
-    public void zipAndUnzipTest() {
+    public void zipAndUnzipTest() throws IOException {
         Path zipPath = rootDir.resolve("test.zip");
-        try {
-            Utils.zip(rootDir.resolve("test"), zipPath, true);
-        } catch (IOException e) {
-            fail();
-        }
+        Utils.zip(rootDir.resolve("test"), zipPath, true);
+
         Files.exists(zipPath);
         assertTrue(Files.exists(zipPath));
 
-        try {
-            Utils.unzip(zipPath, rootDir.resolve("test"));
-        } catch (IOException e) {
-            fail();
-        }
+        Utils.unzip(zipPath, rootDir.resolve("test"));
         assertTrue(Files.exists(rootDir.resolve("test")));
     }
 
     @Test
-    public void zipWithoutDeleteDirectoryTest() {
+    public void zipWithoutDeleteDirectoryTest() throws IOException {
         Path zipPath = rootDir.resolve("test.zip");
-        try {
-            Utils.zip(rootDir.resolve("test"), zipPath, false);
-        } catch (IOException e) {
-            fail();
-        }
+        Utils.zip(rootDir.resolve("test"), zipPath, false);
         Files.exists(zipPath);
         assertTrue(Files.exists(zipPath));
         assertTrue(Files.exists(rootDir.resolve("test")));
     }
 
     @Test
-    public void deleteDirectoryTest() {
-        Path rootDir2 = null;
-        try {
-            rootDir2 = Files.createTempDirectory("test1");
-            Files.createFile(rootDir2.resolve("test"));
-            Utils.deleteDirectory(rootDir2.toFile());
-        } catch (IOException e) {
-            fail();
-        }
+    public void deleteDirectoryTest() throws IOException {
+        Path rootDir2 = Files.createTempDirectory("test1");
+        Files.createFile(rootDir2.resolve("test"));
+        Utils.deleteDirectory(rootDir2.toFile());
         assertTrue(Files.notExists(rootDir2));
     }
 

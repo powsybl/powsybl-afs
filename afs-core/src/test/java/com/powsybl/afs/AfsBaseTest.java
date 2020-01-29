@@ -233,36 +233,24 @@ public class AfsBaseTest {
     }
 
     @Test
-    public void archiveAndUnarchiveTestWithZip() {
+    public void archiveAndUnarchiveTestWithZip() throws IOException {
         Project project = afs.getRootFolder().createProject("test");
         ProjectFolder rootFolder = project.getRootFolder();
         ProjectFolder dir1 = rootFolder.createFolder("dir1");
         Path child = null;
         Path rootDir = null;
-        try {
-            rootDir = Files.createTempDirectory("testDir");
-            Files.createDirectory(rootDir.resolve("test"));
-            dir1.archive(rootDir.resolve("test"), true);
-            child = rootDir.resolve("test/" + dir1.getId() + ".zip");
-            assertTrue(child.toFile().exists());
-        } catch (IOException e) {
-            fail();
-        }
+        rootDir = Files.createTempDirectory("testDir");
+        Files.createDirectory(rootDir.resolve("test"));
+        dir1.archive(rootDir.resolve("test"), true);
+        child = rootDir.resolve("test/" + dir1.getId() + ".zip");
+        assertTrue(child.toFile().exists());
 
-        try {
-            dir1.archive(rootDir.resolve("test"), true);
-            fail();
-        } catch (IOException ignored) {
-        }
+        dir1.archive(rootDir.resolve("test"), true);
+        fail();
 
         ProjectFolder dir2 = rootFolder.createFolder("dir2");
-        try {
-            dir2.unarchive(child, true);
-            assertEquals(1, dir2.getChildren().size());
-        } catch (IOException e) {
-            fail();
-        }
-
+        dir2.unarchive(child, true);
+        assertEquals(1, dir2.getChildren().size());
     }
 
     @Test
