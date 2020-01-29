@@ -249,7 +249,7 @@ public class AfsBaseTest {
             dir1.archive(rootDir.resolve("test"), true);
             fail();
         } catch (IOException e) {
-            assertEquals(e.getMessage(), "Archive already exist");
+            assertEquals("Archive already exist", e.getMessage());
         }
 
         ProjectFolder dir2 = rootFolder.createFolder("dir2");
