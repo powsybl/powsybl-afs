@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -43,9 +44,9 @@ public final class Utils {
     public static void zip(Path dir, Path zipPath, boolean deleteDirectory) throws IOException {
         File file = zipPath.toFile();
         try (FileOutputStream fos = new FileOutputStream(file);
-             ZipOutputStream zos = new ZipOutputStream(fos);) {
-            Files.walk(dir)
-                    .filter(someFileToZip -> !someFileToZip.equals(dir))
+             ZipOutputStream zos = new ZipOutputStream(fos);
+             Stream<Path> walk = Files.walk(dir);) {
+            walk.filter(someFileToZip -> !someFileToZip.equals(dir))
                     .forEach(
                         someFileToZip -> {
                             Path pathInZip = dir.relativize(someFileToZip);
@@ -62,8 +63,6 @@ public final class Utils {
                         });
         } catch (IOException | AfsStorageException e) {
             throw new IOException(e);
-        } finally {
-            Files.walk(dir).close();
         }
 
         if (deleteDirectory) {
@@ -107,19 +106,13 @@ public final class Utils {
                 entry = zis.getNextEntry();
             }
             zis.closeEntry();
-        } catch (IOException e) {
-            throw e;
         }
     }
 
     private static void addDirectory(ZipOutputStream zos, Path relativeFilePath) throws IOException {
-        try {
-            ZipEntry entry = new ZipEntry(relativeFilePath.toString() + "/");
-            zos.putNextEntry(entry);
-            zos.closeEntry();
-        } catch (IOException e) {
-            throw e;
-        }
+        ZipEntry entry = new ZipEntry(relativeFilePath.toString() + "/");
+        zos.putNextEntry(entry);
+        zos.closeEntry();
     }
 
     private static void addFile(ZipOutputStream zos, Path filePath, Path zipFilePath) throws IOException {
@@ -127,8 +120,6 @@ public final class Utils {
             ZipEntry entry = new ZipEntry(zipFilePath.toString());
             zos.putNextEntry(entry);
             ByteStreams.copy(fis, zos);
-        } catch (IOException e) {
-            throw e;
         }
     }
 

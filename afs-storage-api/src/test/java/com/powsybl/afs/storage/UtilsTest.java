@@ -17,7 +17,10 @@ public class UtilsTest {
     @Before
     public void setup() throws IOException {
         rootDir = Files.createTempDirectory("test1");
-        Files.createFile(rootDir.resolve("test"));
+        Path folder = rootDir.resolve("test");
+        Files.createDirectory(folder);
+        Files.createDirectory(folder.resolve("subTest"));
+        Files.createFile(folder.resolve("test1"));
     }
 
     @After
@@ -56,4 +59,5 @@ public class UtilsTest {
         }
         assertTrue(Files.notExists(rootDir2));
     }
+
 }
