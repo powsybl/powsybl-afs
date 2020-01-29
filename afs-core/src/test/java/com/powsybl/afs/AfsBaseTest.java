@@ -249,6 +249,12 @@ public class AfsBaseTest {
             fail();
         }
 
+        try {
+            dir1.archive(rootDir.resolve("test"), true);
+            fail();
+        } catch (IOException ignored) {
+        }
+
         ProjectFolder dir2 = rootFolder.createFolder("dir2");
         try {
             dir2.unarchive(child, true);

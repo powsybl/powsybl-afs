@@ -20,8 +20,7 @@ import org.mockito.Mockito;
 import java.io.IOException;
 import java.util.Collections;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
@@ -64,7 +63,7 @@ public class AppFileSystemToolTest extends AbstractToolTest {
         assertOption(command.getOptions(), "ls", false, true);
         assertOption(command.getOptions(), "archive", false, true);
         assertOption(command.getOptions(), "unarchive", false, true);
-        assertOption(command.getOptions(), "zip", false, true);
+        assertOption(command.getOptions(), "zip", false, false);
         assertOption(command.getOptions(), "ls-inconsistent-nodes", false, true);
         assertOption(command.getOptions(), "fix-inconsistent-nodes", false, true);
         assertOption(command.getOptions(), "rm-inconsistent-nodes", false, true);
@@ -103,5 +102,4 @@ public class AppFileSystemToolTest extends AbstractToolTest {
                 + System.lineSeparator() + "[a-z0-9-]+ cleaned", "");
         assertCommand(new String[] {"afs", "--rm-inconsistent-nodes"}, 3, "", "IllegalArgumentException");
     }
-
 }

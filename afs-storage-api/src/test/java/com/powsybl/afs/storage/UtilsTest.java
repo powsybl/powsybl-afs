@@ -48,6 +48,19 @@ public class UtilsTest {
     }
 
     @Test
+    public void zipWithoutDeleteDirectoryTest() {
+        Path zipPath = rootDir.resolve("test.zip");
+        try {
+            Utils.zip(rootDir.resolve("test"), zipPath, false);
+        } catch (IOException e) {
+            fail();
+        }
+        Files.exists(zipPath);
+        assertTrue(Files.exists(zipPath));
+        assertTrue(Files.exists(rootDir.resolve("test")));
+    }
+
+    @Test
     public void deleteDirectoryTest() {
         Path rootDir2 = null;
         try {

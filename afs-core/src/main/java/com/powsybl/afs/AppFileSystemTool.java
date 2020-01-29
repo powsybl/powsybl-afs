@@ -8,7 +8,6 @@ package com.powsybl.afs;
 
 import com.google.auto.service.AutoService;
 import com.powsybl.afs.storage.NodeInfo;
-import com.powsybl.afs.storage.Utils;
 import com.powsybl.tools.Command;
 import com.powsybl.tools.CommandLineTools;
 import com.powsybl.tools.Tool;
@@ -92,8 +91,7 @@ public class AppFileSystemTool implements Tool {
                 topLevelOptions.addOption(Option.builder("zip")
                         .longOpt(ZIP)
                         .desc("zip file system")
-                        .hasArg(true)
-                        .required(false)
+                        .hasArg(false)
                         .build());
                 topLevelOptions.addOption(Option.builder()
                         .longOpt(LS_INCONSISTENT_NODES)
@@ -186,7 +184,6 @@ public class AppFileSystemTool implements Tool {
             }
             Path dir = context.getFileSystem().getPath(line.getOptionValue(DIR));
             boolean mustZip = line.hasOption(ZIP);
-            Utils.checkDiskSpace(dir);
             fs.getRootFolder().archive(dir, mustZip);
         }
     }
