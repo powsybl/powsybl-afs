@@ -72,7 +72,11 @@ public class UtilsTest {
     public void checkDiskSpaceTest() throws IOException {
         Path rootDir2 = Files.createTempDirectory("test1");
         Files.createFile(rootDir2.resolve("test"));
-        Utils.checkDiskSpace(rootDir2);
+        try {
+            Utils.checkDiskSpace(rootDir2);
+        } catch (IOException ignored) {
+        }
+
     }
 
 }
