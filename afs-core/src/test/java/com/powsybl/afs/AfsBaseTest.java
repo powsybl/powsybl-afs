@@ -20,6 +20,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -215,10 +216,7 @@ public class AfsBaseTest {
 
         ProjectFolder dir8 = rootFolder.createFolder("dir8");
         assertEquals(0, dir8.getChildren().size());
-        try {
-            dir8.unarchive(child);
-        } catch (IOException ignored) {
-        }
+        dir8.unarchive(child);
         assertEquals(1, dir8.getChildren().size());
         assertEquals("dir77", dir8.getChildren().get(0).getName());
 
@@ -228,7 +226,7 @@ public class AfsBaseTest {
             fail();
             dir8.findService(NetworkFactoryService.class);
             fail();
-        } catch (AfsException | IOException ignored) {
+        } catch (UncheckedIOException ignored) {
         }
     }
 
@@ -248,8 +246,8 @@ public class AfsBaseTest {
         try {
             dir1.archive(rootDir.resolve("test"), true);
             fail();
-        } catch (IOException e) {
-            assertEquals("Archive already exist", e.getMessage());
+        } catch (UncheckedIOException e) {
+            assertTrue(e.getMessage().contains("Archive already exist"));
         }
 
         ProjectFolder dir2 = rootFolder.createFolder("dir2");

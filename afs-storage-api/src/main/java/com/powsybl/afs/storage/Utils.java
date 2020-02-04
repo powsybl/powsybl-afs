@@ -37,13 +37,12 @@ public final class Utils {
     /**
      * zip a directory
      *
-     * @param dir directory path
+     * @param dir directory path to zip
      * @param zipPath path to the zip to create
      * @throws IllegalArgumentException IllegalArgumentException
      */
     public static void zip(Path dir, Path zipPath, boolean deleteDirectory) throws IOException {
-        File file = zipPath.toFile();
-        try (FileOutputStream fos = new FileOutputStream(file);
+        try (FileOutputStream fos = new FileOutputStream(zipPath.toFile());
              ZipOutputStream zos = new ZipOutputStream(fos);
              Stream<Path> walk = Files.walk(dir);) {
             walk.filter(someFileToZip -> !someFileToZip.equals(dir))

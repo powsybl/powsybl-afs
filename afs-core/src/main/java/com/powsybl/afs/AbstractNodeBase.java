@@ -1,8 +1,8 @@
 /**
-  Copyright (c) 2017, RTE (http://www.rte-france.com)
-  This Source Code Form is subject to the terms of the Mozilla Public
-  License, v. 2.0. If a copy of the MPL was not distributed with this
-  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * Copyright (c) 2017, RTE (http://www.rte-france.com)
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
 package com.powsybl.afs;
@@ -13,6 +13,7 @@ import com.powsybl.afs.storage.Utils;
 import com.powsybl.afs.storage.NodeInfo;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -25,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
  * Base class for all node objects stored in an AFS tree.
@@ -180,44 +182,52 @@ public abstract class AbstractNodeBase<F> {
         return childNodes.stream().filter(nodeInfo -> !nodeInfo.getId().equals(getId())).anyMatch(nodeInfo -> nodeInfo.getName().equals(name));
     }
 
-    public void archive(Path dir, boolean useZip) throws IOException {
+    public void archive(Path dir, boolean useZip) {
 
         Objects.requireNonNull(dir);
 
-        if (Files.exists(dir.resolve(info.getId() + ".zip"))) {
-            throw new FileAlreadyExistsException("Archive already exist");
-        }
+        try {
+            if (Files.exists(dir.resolve(info.getId() + ".zip"))) {
+                throw new FileAlreadyExistsException("Archive already exist");
+            }
 
-        new AppStorageArchive(storage).archive(info, dir);
-        if (useZip) {
-            Path zipPath = dir.resolve(info.getId() + ".zip");
-            Utils.zip(dir.resolve(info.getId()), zipPath, true);
+            new AppStorageArchive(storage).archive(info, dir);
+            if (useZip) {
+                Path zipPath = dir.resolve(info.getId() + ".zip");
+                Utils.zip(dir.resolve(info.getId()), zipPath, true);
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 
-    public void unarchive(Path dir, boolean isZipped) throws IOException {
+    public void unarchive(Path dir, boolean isZipped) {
         if (isZipped) {
-            int index = dir.toString().lastIndexOf('.');
-            Path nodeDir = Paths.get(dir.toString().substring(0, index));
-            if (Files.exists(nodeDir)) {
-                throw new FileAlreadyExistsException("Archive already exist.");
-            }
             try {
-                Utils.unzip(dir, nodeDir);
-                new AppStorageArchive(storage).unarchive(info, nodeDir);
-            } finally {
-                Utils.deleteDirectory(new File(nodeDir.toString()));
+                int index = dir.toString().lastIndexOf('.');
+                Path nodeDir = Paths.get(dir.toString().substring(0, index));
+                if (Files.exists(nodeDir)) {
+                    throw new FileAlreadyExistsException("Archive already exist.");
+                }
+                try {
+                    Utils.unzip(dir, nodeDir);
+                    new AppStorageArchive(storage).unarchive(info, nodeDir);
+                } finally {
+                    Utils.deleteDirectory(new File(nodeDir.toString()));
+                }
+            }  catch (IOException e) {
+                throw new UncheckedIOException(e);
             }
         } else {
             new AppStorageArchive(storage).unarchive(info, dir);
         }
     }
 
-    public void archive(Path dir) throws IOException {
+    public void archive(Path dir) {
         archive(dir, false);
     }
 
-    public void unarchive(Path dir) throws IOException {
+    public void unarchive(Path dir) {
         unarchive(dir, false);
     }
 }
