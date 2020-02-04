@@ -122,13 +122,12 @@ public class AfsBaseTest {
         project2.rename("project22");
         assertEquals("project22", project2.getName());
 
-        Project projet101 = dir2.createProject("project5");
+        dir2.createProject("project5");
         Project project102 = dir2.createProject("project6");
         try {
             project102.rename("project5");
             fail();
         } catch (AfsException ignored) {
-
         }
 
         Folder dir41 = dir2.createFolder("dir41");
@@ -137,7 +136,7 @@ public class AfsBaseTest {
         assertTrue(dir41.getChildren().isEmpty());
 
         Folder dir51 = dir2.createFolder("dir51");
-        Project project5 = dir51.createProject("project5");
+        dir51.createProject("project5");
         try {
             dir51.delete();
             fail();
@@ -209,10 +208,9 @@ public class AfsBaseTest {
         Path rootDir = fileSystem.getPath("/root");
         try {
             Files.createDirectories(rootDir);
+            dir7.archive(rootDir);
         } catch (IOException ignored) {
         }
-
-        dir7.archive(rootDir);
         Path child = rootDir.resolve(dir7.getId());
         assertTrue(Files.exists(child));
 
@@ -226,14 +224,35 @@ public class AfsBaseTest {
         try {
             dir7.archive(testDirNotExists);
             fail();
-        } catch (UncheckedIOException ignored) {
-        }
-
-        try {
             dir8.findService(NetworkFactoryService.class);
             fail();
-        } catch (AfsException ignored) {
+        } catch (UncheckedIOException ignored) {
         }
+    }
+
+    @Test
+    public void archiveAndUnarchiveTestWithZip() throws IOException {
+        Project project = afs.getRootFolder().createProject("test");
+        ProjectFolder rootFolder = project.getRootFolder();
+        ProjectFolder dir1 = rootFolder.createFolder("dir1");
+        Path child = null;
+        Path rootDir = null;
+        rootDir = Files.createTempDirectory("testDir");
+        Files.createDirectory(rootDir.resolve("test"));
+        dir1.archive(rootDir.resolve("test"), true);
+        child = rootDir.resolve("test/" + dir1.getId() + ".zip");
+        assertTrue(child.toFile().exists());
+
+        try {
+            dir1.archive(rootDir.resolve("test"), true);
+            fail();
+        } catch (UncheckedIOException e) {
+            assertTrue(e.getMessage().contains("Archive already exist"));
+        }
+
+        ProjectFolder dir2 = rootFolder.createFolder("dir2");
+        dir2.unarchive(child, true);
+        assertEquals(1, dir2.getChildren().size());
     }
 
     @Test

@@ -17,6 +17,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -30,6 +31,7 @@ public class AppFileSystemTool implements Tool {
     private static final String LS = "ls";
     private static final String ARCHIVE = "archive";
     private static final String UNARCHIVE = "unarchive";
+    private static final String ZIP = "zip";
     private static final String DIR = "dir";
     private static final String LS_INCONSISTENT_NODES = "ls-inconsistent-nodes";
     private static final String FIX_INCONSISTENT_NODES = "fix-inconsistent-nodes";
@@ -85,6 +87,11 @@ public class AppFileSystemTool implements Tool {
                         .hasArg()
                         .optionalArg(true)
                         .argName(FILE_SYSTEM_NAME)
+                        .build());
+                topLevelOptions.addOption(Option.builder("zip")
+                        .longOpt(ZIP)
+                        .desc("zip file system")
+                        .hasArg(false)
                         .build());
                 topLevelOptions.addOption(Option.builder()
                         .longOpt(LS_INCONSISTENT_NODES)
@@ -160,7 +167,8 @@ public class AppFileSystemTool implements Tool {
                 throw new  AfsException("File system '" + fileSystemName + "' not found");
             }
             Path dir = context.getFileSystem().getPath(line.getOptionValue(DIR));
-            fs.getRootFolder().unarchive(dir);
+            boolean mustZip = line.hasOption(ZIP);
+            fs.getRootFolder().unarchive(dir, mustZip);
         }
     }
 
@@ -175,7 +183,8 @@ public class AppFileSystemTool implements Tool {
                 throw new  AfsException("File system '" + fileSystemName + "' not found");
             }
             Path dir = context.getFileSystem().getPath(line.getOptionValue(DIR));
-            fs.getRootFolder().archive(dir);
+            boolean mustZip = line.hasOption(ZIP);
+            fs.getRootFolder().archive(dir, mustZip);
         }
     }
 
@@ -299,7 +308,7 @@ public class AppFileSystemTool implements Tool {
     }
 
     @Override
-    public void run(CommandLine line, ToolRunningContext context) {
+    public void run(CommandLine line, ToolRunningContext context) throws IOException {
         if (line.hasOption(LS)) {
             runLs(line, context);
         } else if (line.hasOption(ARCHIVE)) {
