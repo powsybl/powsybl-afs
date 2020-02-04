@@ -68,4 +68,11 @@ public class UtilsTest {
         assertTrue(Files.notExists(rootDir2));
     }
 
+    @Test
+    public void checkDiskSpaceTest() throws IOException {
+        Path rootDir2 = Files.createTempDirectory("test1");
+        Files.createFile(rootDir2.resolve("test"));
+        Utils.checkDiskSpace(rootDir2);
+    }
+
 }

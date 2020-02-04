@@ -156,7 +156,7 @@ public class AppFileSystemTool implements Tool {
         }
     }
 
-    private void runUnarchive(CommandLine line, ToolRunningContext context) throws IOException {
+    private void runUnarchive(CommandLine line, ToolRunningContext context) {
         if (!line.hasOption(DIR)) {
             throw new AfsException("dir option is missing");
         }
@@ -172,7 +172,7 @@ public class AppFileSystemTool implements Tool {
         }
     }
 
-    private void runArchive(CommandLine line, ToolRunningContext context) throws IOException {
+    private void runArchive(CommandLine line, ToolRunningContext context) {
         if (!line.hasOption(DIR)) {
             throw new AfsException("dir option is missing");
         }
