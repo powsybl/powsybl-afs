@@ -239,12 +239,12 @@ public class AfsBaseTest {
         Path rootDir = null;
         rootDir = Files.createTempDirectory("testDir");
         Files.createDirectory(rootDir.resolve("test"));
-        dir1.archive(rootDir.resolve("test"), true);
-        child = rootDir.resolve("test/" + dir1.getId() + ".zip");
+        dir1.archive(rootDir.resolve("test"), true, false);
+        child = rootDir.resolve("test.zip");
         assertTrue(child.toFile().exists());
 
         try {
-            dir1.archive(rootDir.resolve("test"), true);
+            dir1.archive(rootDir.resolve("test"), true, false);
             fail();
         } catch (UncheckedIOException e) {
             assertTrue(e.getMessage().contains("Archive already exist"));

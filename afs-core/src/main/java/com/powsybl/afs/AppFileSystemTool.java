@@ -184,7 +184,7 @@ public class AppFileSystemTool implements Tool {
             }
             Path dir = context.getFileSystem().getPath(line.getOptionValue(DIR));
             boolean mustZip = line.hasOption(ZIP);
-            fs.getRootFolder().archive(dir, mustZip);
+            fs.getRootFolder().archive(dir, mustZip, false);
         }
     }
 
