@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
  * Base class for all node objects stored in an AFS tree.
@@ -181,19 +182,25 @@ public abstract class AbstractNodeBase<F> {
         return childNodes.stream().filter(nodeInfo -> !nodeInfo.getId().equals(getId())).anyMatch(nodeInfo -> nodeInfo.getName().equals(name));
     }
 
-    public void archive(Path dir, boolean useZip) {
+    public void archive(Path dir, boolean useZip, boolean archiveDependencies) {
 
         Objects.requireNonNull(dir);
+        Path zipPath = null;
+        if (useZip) {
+            int end = dir.getNameCount() - 1;
+            Path zipDir = Paths.get("/" + dir.subpath(0, end));
+            String zipName = dir.subpath(end, dir.getNameCount()).toString();
+            zipPath = zipDir.resolve(zipName + ".zip");
+        }
 
         try {
-            if (Files.exists(dir.resolve(info.getId() + ".zip"))) {
+            if (Files.exists(dir.resolve(info.getId())) || (zipPath != null && Files.exists(zipPath))) {
                 throw new FileAlreadyExistsException("Archive already exist");
             }
 
-            new AppStorageArchive(storage).archive(info, dir);
+            new AppStorageArchive(storage).archive(info, dir, archiveDependencies);
             if (useZip) {
-                Path zipPath = dir.resolve(info.getId() + ".zip");
-                Utils.zip(dir.resolve(info.getId()), zipPath, true);
+                Utils.zip(dir, zipPath, true);
             }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -202,19 +209,23 @@ public abstract class AbstractNodeBase<F> {
 
     public void unarchive(Path dir, boolean isZipped) {
         if (isZipped) {
+            int index = dir.toString().lastIndexOf('.');
+            Path nodeDir = Paths.get(dir.toString().substring(0, index));
             try {
-                int index = dir.toString().lastIndexOf('.');
-                Path nodeDir = Paths.get(dir.toString().substring(0, index));
                 if (Files.exists(nodeDir)) {
                     throw new FileAlreadyExistsException("Archive already exist.");
                 }
                 try {
                     Utils.unzip(dir, nodeDir);
-                    new AppStorageArchive(storage).unarchive(info, nodeDir);
+                    try (Stream<Path> stream = Files.list(nodeDir)) {
+                        stream.forEach(childNodeDir -> {
+                            new AppStorageArchive(storage).unarchive(info, childNodeDir);
+                        });
+                    }
                 } finally {
                     Utils.deleteDirectory(new File(nodeDir.toString()));
                 }
-            }  catch (IOException e) {
+            } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
         } else {
@@ -223,7 +234,7 @@ public abstract class AbstractNodeBase<F> {
     }
 
     public void archive(Path dir) {
-        archive(dir, false);
+        archive(dir, false, false);
     }
 
     public void unarchive(Path dir) {
