@@ -28,6 +28,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -194,6 +195,10 @@ public class AppStorageArchive {
     }
 
     public void archiveChildren(NodeInfo nodeInfo, Path nodeDir) throws IOException {
+        archiveChildren(nodeInfo, nodeDir, false);
+    }
+
+    public void archiveChildren(NodeInfo nodeInfo, Path nodeDir, boolean archiveDependencies) throws IOException {
         Objects.requireNonNull(nodeInfo);
         Objects.requireNonNull(nodeDir);
         List<NodeInfo> childNodeInfos = storage.getChildNodes(nodeInfo.getId());
@@ -201,7 +206,7 @@ public class AppStorageArchive {
             Path childrenDir = nodeDir.resolve("children");
             Files.createDirectory(childrenDir);
             for (NodeInfo childNodeInfo : childNodeInfos) {
-                archive(childNodeInfo, childrenDir, false);
+                archive(childNodeInfo, childrenDir, archiveDependencies);
             }
         }
     }
@@ -233,10 +238,15 @@ public class AppStorageArchive {
     public void archive(NodeInfo nodeInfo, Path parentDir, boolean archiveDependencies) throws IOException {
         Objects.requireNonNull(nodeInfo);
         Objects.requireNonNull(parentDir);
+        Path directory = parentDir;
 
         LOGGER.info("Archiving node {} ({})", nodeInfo.getId(), nodeInfo.getName());
 
-        Path nodeDir = parentDir.resolve(nodeInfo.getId());
+        if (parentDir.getFileName().toString().equals("dependencies")) {
+            directory = archiveParent(nodeInfo, parentDir);
+        }
+
+        Path nodeDir = directory.resolve(nodeInfo.getId());
         Files.createDirectory(nodeDir);
 
         writeNodeInfo(nodeInfo, nodeDir);
@@ -247,11 +257,46 @@ public class AppStorageArchive {
 
         writeTimeSeries(nodeInfo, nodeDir);
 
-        archiveChildren(nodeInfo, nodeDir);
+        archiveChildren(nodeInfo, nodeDir, archiveDependencies);
 
         if (archiveDependencies) {
             archiveDependencies(nodeInfo, nodeDir);
         }
+    }
+
+    public void archiveFolder(NodeInfo nodeInfo, Path parentDir) throws IOException {
+        Objects.requireNonNull(nodeInfo);
+        Objects.requireNonNull(parentDir);
+
+        LOGGER.info("Archiving node {} ({})", nodeInfo.getId(), nodeInfo.getName());
+
+        Path nodeDir = parentDir.resolve(nodeInfo.getId());
+        if (!Files.exists(nodeDir)) {
+            Files.createDirectory(nodeDir);
+            writeNodeInfo(nodeInfo, nodeDir);
+            Path childrenDir = nodeDir.resolve("children");
+            Files.createDirectory(childrenDir);
+        }
+    }
+
+    private Path archiveParent(NodeInfo nodeInfo, Path parentNodeDir) {
+        Optional<NodeInfo> parentNodeInfo = storage.getParentNode(nodeInfo.getId());
+        AtomicReference<Path> nodePath = new AtomicReference<>();
+        parentNodeInfo.ifPresent(node -> {
+            if (!"root".equals(node.getName()) && !parentNodeDir.toString().contains(node.getId())) {
+                try {
+                    nodePath.set(archiveParent(node, parentNodeDir));
+                    archiveFolder(node, nodePath.get());
+                    Path childrenDir = nodePath.get().resolve(node.getId() + "/children");
+                    nodePath.set(childrenDir);
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            } else {
+                nodePath.set(parentNodeDir);
+            }
+        });
+        return nodePath.get();
     }
 
     private NodeInfo readNodeInfo(NodeInfo parentNodeInfo, Path nodeDir, UnarchiveContext context) throws IOException {
@@ -408,9 +453,9 @@ public class AppStorageArchive {
 
         NodeInfo newNodeInfo = readNodeInfo(parentNodeInfo, nodeDir, context);
 
-        unarchiveDependencies(parentNodeInfo, nodeDir, context);
-
         context.getDependencies().put(newNodeInfo.getId(), readDependencies(nodeDir));
+
+        unarchiveDependencies(parentNodeInfo, nodeDir, context);
 
         readData(newNodeInfo, nodeDir);
 
