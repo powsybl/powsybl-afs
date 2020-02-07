@@ -187,10 +187,7 @@ public abstract class AbstractNodeBase<F> {
         Objects.requireNonNull(dir);
         Path zipPath = null;
         if (useZip) {
-            int end = dir.getNameCount() - 1;
-            Path zipDir = Paths.get("/" + dir.subpath(0, end));
-            String zipName = dir.subpath(end, dir.getNameCount()).toString();
-            zipPath = zipDir.resolve(zipName + ".zip");
+            zipPath = dir.getParent().resolve(dir.getFileName() + ".zip");
         }
 
         try {
