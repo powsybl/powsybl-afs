@@ -215,9 +215,7 @@ public abstract class AbstractNodeBase<F> {
                 try {
                     Utils.unzip(dir, nodeDir);
                     try (Stream<Path> stream = Files.list(nodeDir)) {
-                        stream.forEach(childNodeDir -> {
-                            new AppStorageArchive(storage).unarchive(info, childNodeDir);
-                        });
+                        stream.forEach(childNodeDir -> new AppStorageArchive(storage).unarchive(info, childNodeDir));
                     }
                 } finally {
                     Utils.deleteDirectory(new File(nodeDir.toString()));

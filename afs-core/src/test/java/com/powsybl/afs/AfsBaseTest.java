@@ -12,6 +12,8 @@ import com.google.common.jimfs.Jimfs;
 import com.powsybl.afs.mapdb.storage.MapDbAppStorage;
 import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.InMemoryEventsBus;
+import com.powsybl.afs.storage.NodeGenericMetadata;
+import com.powsybl.afs.storage.NodeInfo;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.iidm.network.NetworkFactoryService;
 import org.junit.After;
@@ -253,6 +255,47 @@ public class AfsBaseTest {
         ProjectFolder dir2 = rootFolder.createFolder("dir2");
         dir2.unarchive(child, true);
         assertEquals(1, dir2.getChildren().size());
+    }
+
+    @Test
+    public void archiveAndUnarchiveTestWithDependencies() throws IOException {
+        Project project = afs.getRootFolder().createProject("test");
+        ProjectFolder rootFolder = project.getRootFolder();
+        ProjectFolder dir1 = rootFolder.createFolder("dir1");
+        ProjectFolder dir2 = rootFolder.createFolder("dir2");
+
+        NodeInfo testDataInfo = storage.createNode(dir1.getId(), "data", "data", "", 0, new NodeGenericMetadata());
+        NodeInfo testData2Info = storage.createNode(dir2.getId(), "data2", "data", "", 0,
+                new NodeGenericMetadata().setString("s1", "v1")
+                        .setDouble("d1", 1d)
+                        .setInt("i1", 2)
+                        .setBoolean("b1", false));
+        storage.setConsistent(testDataInfo.getId());
+        storage.setConsistent(testData2Info.getId());
+        storage.addDependency(testDataInfo.getId(), "mylink2", testData2Info.getId());
+
+        Path rootDir = Files.createTempDirectory("testDir");
+        Files.createDirectory(rootDir.resolve("test"));
+        dir1.archive(rootDir.resolve("test"), true, true);
+        Path child = rootDir.resolve("test.zip");
+        assertTrue(child.toFile().exists());
+
+        try {
+            dir1.archive(rootDir.resolve("test"), true, true);
+            fail();
+        } catch (UncheckedIOException e) {
+            assertTrue(e.getMessage().contains("Archive already exist"));
+        }
+
+        ProjectFolder dir3 = rootFolder.createFolder("dir3");
+        dir3.unarchive(child, true);
+        assertEquals(1, dir3.getChildren().size());
+        ProjectNode node1 = dir3.getChildren().get(0);
+        List<NodeInfo> listNode = storage.getChildNodes(node1.getId());
+        assertEquals(2, listNode.size());
+        assertEquals("data", listNode.get(0).getName());
+        assertEquals("dir2", listNode.get(1).getName());
+        assertEquals("data2", storage.getChildNodes(listNode.get(1).getId()).get(0).getName());
     }
 
     @Test
