@@ -4,15 +4,21 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
+
 package com.powsybl.afs;
 
 import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.AppStorageArchive;
+import com.powsybl.afs.storage.Utils;
 import com.powsybl.afs.storage.NodeInfo;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.io.File;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -175,16 +181,52 @@ public abstract class AbstractNodeBase<F> {
         return childNodes.stream().filter(nodeInfo -> !nodeInfo.getId().equals(getId())).anyMatch(nodeInfo -> nodeInfo.getName().equals(name));
     }
 
-    public void archive(Path dir) {
+    public void archive(Path dir, boolean useZip) {
+
         Objects.requireNonNull(dir);
+
         try {
+            if (Files.exists(dir.resolve(info.getId() + ".zip"))) {
+                throw new FileAlreadyExistsException("Archive already exist");
+            }
+
             new AppStorageArchive(storage).archive(info, dir);
+            if (useZip) {
+                Path zipPath = dir.resolve(info.getId() + ".zip");
+                Utils.zip(dir.resolve(info.getId()), zipPath, true);
+            }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
+    public void unarchive(Path dir, boolean isZipped) {
+        if (isZipped) {
+            try {
+                int index = dir.toString().lastIndexOf('.');
+                Path nodeDir = Paths.get(dir.toString().substring(0, index));
+                if (Files.exists(nodeDir)) {
+                    throw new FileAlreadyExistsException("Archive already exist.");
+                }
+                try {
+                    Utils.unzip(dir, nodeDir);
+                    new AppStorageArchive(storage).unarchive(info, nodeDir);
+                } finally {
+                    Utils.deleteDirectory(new File(nodeDir.toString()));
+                }
+            }  catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        } else {
+            new AppStorageArchive(storage).unarchive(info, dir);
+        }
+    }
+
+    public void archive(Path dir) {
+        archive(dir, false);
+    }
+
     public void unarchive(Path dir) {
-        new AppStorageArchive(storage).unarchive(info, dir);
+        unarchive(dir, false);
     }
 }
