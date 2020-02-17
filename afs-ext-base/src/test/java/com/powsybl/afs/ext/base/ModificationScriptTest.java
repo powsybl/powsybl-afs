@@ -165,5 +165,20 @@ public class ModificationScriptTest extends AbstractProjectFileTest {
         assertThatCode(() -> rootFolder.fileBuilder(GenericScriptBuilder.class).withName("foo").build()).isInstanceOf(AfsException.class).hasMessage("Script type is not set");
         assertThatCode(() -> rootFolder.fileBuilder(GenericScriptBuilder.class).withName("foo").withType(ScriptType.GROOVY).build()).isInstanceOf(AfsException.class).hasMessage("Content is not set");
         assertThatCode(() -> rootFolder.fileBuilder(GenericScriptBuilder.class).withName("include_script2").withType(ScriptType.GROOVY).withContent("hello").build()).isInstanceOf(AfsException.class).hasMessage("Parent folder already contains a 'include_script2' node");
+
+        //assert that the cache is correctly cleared
+        assertEquals("include_script1", include1.getName());
+        assertEquals("include_script3", include3.getName());
+        assertEquals("include_script1", script.getIncludedScripts().get(1).getName());
+        assertEquals("include_script3", script.getIncludedScripts().get(0).getName());
+
+        include1.rename("include_script11");
+        assertEquals("include_script11", include1.getName());
+        assertNotEquals("include_script11", script.getIncludedScripts().get(1).getName());
+        assertEquals("include_script1", script.getIncludedScripts().get(1).getName());
+
+        script.clearDependenciesCache();
+        assertEquals("include_script11", include1.getName());
+        assertEquals("include_script11", script.getIncludedScripts().get(1).getName());
     }
 }
