@@ -129,6 +129,10 @@ public abstract class AbstractScript<T extends AbstractScript> extends ProjectFi
         invalidate();
     }
 
+    public void clearDependenciesCache() {
+        orderedDependencyManager.clearCache();
+    }
+
     @Override
     public void addListener(ScriptListener listener) {
         Objects.requireNonNull(listener);
