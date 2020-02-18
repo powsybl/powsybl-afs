@@ -195,7 +195,7 @@ public abstract class AbstractNodeBase<F> {
                 throw new FileAlreadyExistsException("Archive already exist");
             }
 
-            new AppStorageArchive(storage).archive(info, dir, archiveDependencies);
+            new AppStorageArchive(storage).archive(info.getId(), dir, archiveDependencies);
             if (useZip) {
                 Utils.zip(dir, zipPath, true);
             }

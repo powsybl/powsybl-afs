@@ -97,6 +97,25 @@ public class AppStorageArchive {
         }
     }
 
+    private static class ArchiveContext {
+
+        private final List<String> idListObject = new ArrayList<>();
+
+        private final boolean archiveDependencies;
+
+        public ArchiveContext(boolean archiveDependencies) {
+            this.archiveDependencies = archiveDependencies;
+        }
+
+        public List<String> getIdListObject() {
+            return idListObject;
+        }
+
+        public boolean isArchiveDependencies() {
+            return archiveDependencies;
+        }
+    }
+
     private final AppStorage storage;
 
     private final ObjectMapper mapper;
@@ -195,10 +214,10 @@ public class AppStorageArchive {
     }
 
     public void archiveChildren(NodeInfo nodeInfo, Path nodeDir) throws IOException {
-        archiveChildren(nodeInfo, nodeDir, false);
+        archiveChildren(nodeInfo, nodeDir, new ArchiveContext(false));
     }
 
-    public void archiveChildren(NodeInfo nodeInfo, Path nodeDir, boolean archiveDependencies) throws IOException {
+    public void archiveChildren(NodeInfo nodeInfo, Path nodeDir, ArchiveContext archiveDependencies) throws IOException {
         Objects.requireNonNull(nodeInfo);
         Objects.requireNonNull(nodeDir);
         List<NodeInfo> childNodeInfos = storage.getChildNodes(nodeInfo.getId());
@@ -211,7 +230,7 @@ public class AppStorageArchive {
         }
     }
 
-    public void archiveDependencies(NodeInfo nodeInfo, Path nodeDir) throws IOException {
+    private void archiveDependencies(NodeInfo nodeInfo, Path nodeDir, ArchiveContext archiveDependencies) throws IOException {
         Objects.requireNonNull(nodeInfo);
         Objects.requireNonNull(nodeDir);
         Set<NodeDependency> dependenciesNodes = storage.getDependencies(nodeInfo.getId());
@@ -219,8 +238,19 @@ public class AppStorageArchive {
             Path dependenciesDir = nodeDir.resolve("dependencies");
             Files.createDirectory(dependenciesDir);
             for (NodeDependency dependenciesNode : dependenciesNodes) {
-                archive(dependenciesNode.getNodeInfo(), dependenciesDir, false);
+                archive(dependenciesNode.getNodeInfo(), dependenciesDir, archiveDependencies);
             }
+        }
+    }
+
+    public void archive(String nodeId, Path parentDir) {
+        Objects.requireNonNull(nodeId);
+        Objects.requireNonNull(parentDir);
+
+        try {
+            archive(storage.getNodeInfo(nodeId), parentDir, new ArchiveContext(false));
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 
@@ -229,42 +259,47 @@ public class AppStorageArchive {
         Objects.requireNonNull(parentDir);
 
         try {
-            archive(storage.getNodeInfo(nodeId), parentDir, archiveDependencies);
+            archive(storage.getNodeInfo(nodeId), parentDir, new ArchiveContext(archiveDependencies));
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
-    public void archive(NodeInfo nodeInfo, Path parentDir, boolean archiveDependencies) throws IOException {
+    public void archive(NodeInfo nodeInfo, Path parentDir, ArchiveContext archiveDependencies) throws IOException {
         Objects.requireNonNull(nodeInfo);
         Objects.requireNonNull(parentDir);
         Path directory = parentDir;
 
-        LOGGER.info("Archiving node {} ({})", nodeInfo.getId(), nodeInfo.getName());
+        if (!archiveDependencies.getIdListObject().contains(nodeInfo.getId())) {
 
-        if (parentDir.getFileName().toString().equals("dependencies")) {
-            directory = archiveParent(nodeInfo, parentDir);
-        }
+            LOGGER.info("Archiving node {} ({})", nodeInfo.getId(), nodeInfo.getName());
 
-        Path nodeDir = directory.resolve(nodeInfo.getId());
-        Files.createDirectory(nodeDir);
+            archiveDependencies.getIdListObject().add(nodeInfo.getId());
 
-        writeNodeInfo(nodeInfo, nodeDir);
+            if (parentDir.getFileName().toString().equals("dependencies")) {
+                directory = archiveParent(nodeInfo, parentDir);
+            }
 
-        writeDependencies(nodeInfo, nodeDir);
+            Path nodeDir = directory.resolve(nodeInfo.getId());
+            Files.createDirectory(nodeDir);
 
-        writeData(nodeInfo, nodeDir);
+            writeNodeInfo(nodeInfo, nodeDir);
 
-        writeTimeSeries(nodeInfo, nodeDir);
+            writeDependencies(nodeInfo, nodeDir);
 
-        archiveChildren(nodeInfo, nodeDir, archiveDependencies);
+            writeData(nodeInfo, nodeDir);
 
-        if (archiveDependencies) {
-            archiveDependencies(nodeInfo, nodeDir);
+            writeTimeSeries(nodeInfo, nodeDir);
+
+            archiveChildren(nodeInfo, nodeDir, archiveDependencies);
+
+            if (archiveDependencies.isArchiveDependencies()) {
+                archiveDependencies(nodeInfo, nodeDir, archiveDependencies);
+            }
         }
     }
 
-    public void archiveFolder(NodeInfo nodeInfo, Path parentDir) throws IOException {
+    private void archiveFolder(NodeInfo nodeInfo, Path parentDir) throws IOException {
         Objects.requireNonNull(nodeInfo);
         Objects.requireNonNull(parentDir);
 
@@ -465,6 +500,10 @@ public class AppStorageArchive {
         storage.flush();
 
         unarchiveChildren(newNodeInfo, nodeDir, context);
+    }
+
+    public void unarchive(Path nodeDir) {
+        unarchive(null, nodeDir);
     }
 
     private void resolveDependencies(UnarchiveContext context) {
