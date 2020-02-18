@@ -259,6 +259,10 @@ public class AfsBaseTest {
 
     @Test
     public void archiveAndUnarchiveTestWithDependencies() throws IOException {
+        /* In this test, there are two directories each with a file
+           There is a dependency between the first and the second file
+           Test archive and unarchive the first directory with these dependencies */
+
         Project project = afs.getRootFolder().createProject("test");
         ProjectFolder rootFolder = project.getRootFolder();
         ProjectFolder dir1 = rootFolder.createFolder("dir1");
@@ -300,6 +304,11 @@ public class AfsBaseTest {
 
     @Test
     public void archiveAndUnarchiveTestWithDependencies2() throws IOException {
+
+        /* In this test, there are two directories, one with a file and the second with two files
+           There is a dependency between the first and the second file and between the second an the third
+           Test archive and unarchive the first directory with these dependencies */
+
         Project project = afs.getRootFolder().createProject("test");
         ProjectFolder rootFolder = project.getRootFolder();
         ProjectFolder dir1 = rootFolder.createFolder("dir1");
@@ -350,6 +359,11 @@ public class AfsBaseTest {
 
     @Test
     public void archiveAndUnarchiveTestWithDependencies3() throws IOException {
+
+        /* In this test, there are two directories, one with two files and the second with one file
+           There is a dependency between the first and the second file and between the second an the third
+           Test archive and unarchive the first directory with these dependencies */
+
         Project project = afs.getRootFolder().createProject("test");
         ProjectFolder rootFolder = project.getRootFolder();
         ProjectFolder dir1 = rootFolder.createFolder("dir1");
