@@ -276,6 +276,8 @@ public class AppStorageArchive {
 
             archiveDependencies.getIdListObject().add(nodeInfo.getId());
 
+            // Si il s'agit d'une dependance on va rechercher ces parents
+            // et les sauvegarder s'ils sont différents du dossiers que l'on archive
             if (parentDir.getFileName().toString().equals("dependencies")) {
                 directory = archiveParent(nodeInfo, parentDir);
             }
@@ -299,12 +301,16 @@ public class AppStorageArchive {
         }
     }
 
+    /**
+     * archive folder
+     * @param nodeInfo node's information
+     * @param parentDir directory where archive
+     * @throws IOException Exception if the directory can't be created
+     */
     private void archiveFolder(NodeInfo nodeInfo, Path parentDir) throws IOException {
         Objects.requireNonNull(nodeInfo);
         Objects.requireNonNull(parentDir);
-
         LOGGER.info("Archiving node {} ({})", nodeInfo.getId(), nodeInfo.getName());
-
         Path nodeDir = parentDir.resolve(nodeInfo.getId());
         if (!Files.exists(nodeDir)) {
             Files.createDirectory(nodeDir);
@@ -314,6 +320,12 @@ public class AppStorageArchive {
         }
     }
 
+    /**
+     * archive all parent's node of a node
+     * @param nodeInfo
+     * @param parentNodeDir
+     * @return
+     */
     private Path archiveParent(NodeInfo nodeInfo, Path parentNodeDir) {
         Optional<NodeInfo> parentNodeInfo = storage.getParentNode(nodeInfo.getId());
         AtomicReference<Path> nodePath = new AtomicReference<>();
