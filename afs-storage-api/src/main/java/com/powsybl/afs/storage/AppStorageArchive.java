@@ -45,6 +45,10 @@ public class AppStorageArchive {
 
     private static final Pattern CHUNKS_PATTERN = Pattern.compile("chunks-(\\d*).json.gz");
 
+    private static final String CHILDREN = "children";
+
+    private static final String DEPENDENCIES = "dependencies";
+
     private static class ArchiveDependency {
 
         @JsonProperty("nodeId")
@@ -222,7 +226,7 @@ public class AppStorageArchive {
         Objects.requireNonNull(nodeDir);
         List<NodeInfo> childNodeInfos = storage.getChildNodes(nodeInfo.getId());
         if (!childNodeInfos.isEmpty()) {
-            Path childrenDir = nodeDir.resolve("children");
+            Path childrenDir = nodeDir.resolve(CHILDREN);
             Files.createDirectory(childrenDir);
             for (NodeInfo childNodeInfo : childNodeInfos) {
                 archive(childNodeInfo, childrenDir, archiveDependencies);
@@ -235,7 +239,7 @@ public class AppStorageArchive {
         Objects.requireNonNull(nodeDir);
         Set<NodeDependency> dependenciesNodes = storage.getDependencies(nodeInfo.getId());
         if (!dependenciesNodes.isEmpty()) {
-            Path dependenciesDir = nodeDir.resolve("dependencies");
+            Path dependenciesDir = nodeDir.resolve(DEPENDENCIES);
             Files.createDirectory(dependenciesDir);
             for (NodeDependency dependenciesNode : dependenciesNodes) {
                 archive(dependenciesNode.getNodeInfo(), dependenciesDir, archiveDependencies);
@@ -277,7 +281,7 @@ public class AppStorageArchive {
 
             // If it is a dependency, we will search for these parents and
             // save them if they are different from the folder that we archive
-            if (parentDir.getFileName().toString().equals("dependencies")) {
+            if (parentDir.getFileName().toString().equals(DEPENDENCIES)) {
                 directory = archiveParent(nodeInfo, parentDir);
             }
 
@@ -314,7 +318,7 @@ public class AppStorageArchive {
         if (!Files.exists(nodeDir)) {
             Files.createDirectory(nodeDir);
             writeNodeInfo(nodeInfo, nodeDir);
-            Path childrenDir = nodeDir.resolve("children");
+            Path childrenDir = nodeDir.resolve(CHILDREN);
             Files.createDirectory(childrenDir);
         }
     }
@@ -333,7 +337,7 @@ public class AppStorageArchive {
                 try {
                     nodePath.set(archiveParent(node, parentNodeDir));
                     archiveFolder(node, nodePath.get());
-                    Path childrenDir = nodePath.get().resolve(node.getId()).resolve("children");
+                    Path childrenDir = nodePath.get().resolve(node.getId()).resolve(CHILDREN);
                     nodePath.set(childrenDir);
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
@@ -463,7 +467,7 @@ public class AppStorageArchive {
         Objects.requireNonNull(parentNodeInfo);
         Objects.requireNonNull(nodeDir);
         Objects.requireNonNull(context);
-        Path childrenDir = nodeDir.resolve("children");
+        Path childrenDir = nodeDir.resolve(CHILDREN);
         if (Files.exists(childrenDir)) {
             try (Stream<Path> stream = Files.list(childrenDir)) {
                 stream.forEach(childNodeDir -> {
@@ -481,7 +485,7 @@ public class AppStorageArchive {
         Objects.requireNonNull(parentNodeInfo);
         Objects.requireNonNull(nodeDir);
         Objects.requireNonNull(context);
-        Path dependenciesDir = nodeDir.resolve("dependencies");
+        Path dependenciesDir = nodeDir.resolve(DEPENDENCIES);
         if (Files.exists(dependenciesDir)) {
             try (Stream<Path> stream = Files.list(dependenciesDir)) {
                 stream.forEach(dependenciesNodeDir -> {
