@@ -243,7 +243,7 @@ public class AfsBaseTest {
         Files.createDirectory(rootDir.resolve("test"));
         dir1.archive(rootDir.resolve("test"), true, false);
         child = rootDir.resolve("test.zip");
-        assertTrue(child.toFile().exists());
+        assertTrue(Files.exists(child));
 
         try {
             dir1.archive(rootDir.resolve("test"), true, false);
@@ -282,7 +282,7 @@ public class AfsBaseTest {
         Files.createDirectory(rootDir.resolve("test"));
         dir1.archive(rootDir.resolve("test"), true, true);
         Path child = rootDir.resolve("test.zip");
-        assertTrue(child.toFile().exists());
+        assertTrue(Files.exists(child));
 
         try {
             dir1.archive(rootDir.resolve("test"), true, true);
@@ -335,7 +335,7 @@ public class AfsBaseTest {
         Files.createDirectory(rootDir.resolve("test"));
         dir1.archive(rootDir.resolve("test"), true, true);
         Path child = rootDir.resolve("test.zip");
-        assertTrue(child.toFile().exists());
+        assertTrue(Files.exists(child));
 
         try {
             dir1.archive(rootDir.resolve("test"), true, true);
@@ -390,7 +390,7 @@ public class AfsBaseTest {
         Files.createDirectory(rootDir.resolve("test"));
         dir1.archive(rootDir.resolve("test"), true, true);
         Path child = rootDir.resolve("test.zip");
-        assertTrue(child.toFile().exists());
+        assertTrue(Files.exists(child));
 
         try {
             dir1.archive(rootDir.resolve("test"), true, true);

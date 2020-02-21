@@ -267,8 +267,7 @@ public class AppStorageArchive {
 
     public void archive(NodeInfo nodeInfo, Path parentDir, ArchiveContext archiveDependencies) throws IOException {
         Objects.requireNonNull(nodeInfo);
-        Objects.requireNonNull(parentDir);
-        Path directory = parentDir;
+        Path directory = Objects.requireNonNull(parentDir);
 
         if (!archiveDependencies.getIdListObject().contains(nodeInfo.getId())) {
 
@@ -276,8 +275,8 @@ public class AppStorageArchive {
 
             archiveDependencies.getIdListObject().add(nodeInfo.getId());
 
-            // Si il s'agit d'une dependance on va rechercher ces parents
-            // et les sauvegarder s'ils sont différents du dossiers que l'on archive
+            // If it is a dependency, we will search for these parents and
+            // save them if they are different from the folder that we archive
             if (parentDir.getFileName().toString().equals("dependencies")) {
                 directory = archiveParent(nodeInfo, parentDir);
             }
@@ -334,7 +333,7 @@ public class AppStorageArchive {
                 try {
                     nodePath.set(archiveParent(node, parentNodeDir));
                     archiveFolder(node, nodePath.get());
-                    Path childrenDir = nodePath.get().resolve(node.getId() + "/children");
+                    Path childrenDir = nodePath.get().resolve(node.getId()).resolve("children");
                     nodePath.set(childrenDir);
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
