@@ -59,7 +59,7 @@ public class AppFileSystemToolTest extends AbstractToolTest {
     @Override
     public void assertCommand() {
         Command command = tool.getCommand();
-        assertCommand(command, "afs", 8, 0);
+        assertCommand(command, "afs", 10, 0);
         assertOption(command.getOptions(), "ls", false, true);
         assertOption(command.getOptions(), "archive", false, true);
         assertOption(command.getOptions(), "unarchive", false, true);

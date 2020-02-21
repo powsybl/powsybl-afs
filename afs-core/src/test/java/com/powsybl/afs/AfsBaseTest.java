@@ -241,12 +241,12 @@ public class AfsBaseTest {
         Path rootDir = null;
         rootDir = Files.createTempDirectory("testDir");
         Files.createDirectory(rootDir.resolve("test"));
-        dir1.archive(rootDir.resolve("test"), true, false);
+        dir1.archive(rootDir.resolve("test"), true, false, true);
         child = rootDir.resolve("test.zip");
-        assertTrue(child.toFile().exists());
+        assertTrue(Files.exists(child));
 
         try {
-            dir1.archive(rootDir.resolve("test"), true, false);
+            dir1.archive(rootDir.resolve("test"), true, false, true);
             fail();
         } catch (UncheckedIOException e) {
             assertTrue(e.getMessage().contains("Archive already exist"));
@@ -280,12 +280,12 @@ public class AfsBaseTest {
 
         Path rootDir = Files.createTempDirectory("testDir");
         Files.createDirectory(rootDir.resolve("test"));
-        dir1.archive(rootDir.resolve("test"), true, true);
+        dir1.archive(rootDir.resolve("test"), true, true, true);
         Path child = rootDir.resolve("test.zip");
-        assertTrue(child.toFile().exists());
+        assertTrue(Files.exists(child));
 
         try {
-            dir1.archive(rootDir.resolve("test"), true, true);
+            dir1.archive(rootDir.resolve("test"), true, true, true);
             fail();
         } catch (UncheckedIOException e) {
             assertTrue(e.getMessage().contains("Archive already exist"));
@@ -333,12 +333,12 @@ public class AfsBaseTest {
 
         Path rootDir = Files.createTempDirectory("testDir");
         Files.createDirectory(rootDir.resolve("test"));
-        dir1.archive(rootDir.resolve("test"), true, true);
+        dir1.archive(rootDir.resolve("test"), true, true, true);
         Path child = rootDir.resolve("test.zip");
-        assertTrue(child.toFile().exists());
+        assertTrue(Files.exists(child));
 
         try {
-            dir1.archive(rootDir.resolve("test"), true, true);
+            dir1.archive(rootDir.resolve("test"), true, true, true);
             fail();
         } catch (UncheckedIOException e) {
             assertTrue(e.getMessage().contains("Archive already exist"));
@@ -388,12 +388,12 @@ public class AfsBaseTest {
 
         Path rootDir = Files.createTempDirectory("testDir");
         Files.createDirectory(rootDir.resolve("test"));
-        dir1.archive(rootDir.resolve("test"), true, true);
+        dir1.archive(rootDir.resolve("test"), true, true, true);
         Path child = rootDir.resolve("test.zip");
-        assertTrue(child.toFile().exists());
+        assertTrue(Files.exists(child));
 
         try {
-            dir1.archive(rootDir.resolve("test"), true, true);
+            dir1.archive(rootDir.resolve("test"), true, true, true);
             fail();
         } catch (UncheckedIOException e) {
             assertTrue(e.getMessage().contains("Archive already exist"));

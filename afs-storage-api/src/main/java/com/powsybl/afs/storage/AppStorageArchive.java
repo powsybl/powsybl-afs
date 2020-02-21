@@ -103,8 +103,11 @@ public class AppStorageArchive {
 
         private final boolean archiveDependencies;
 
-        public ArchiveContext(boolean archiveDependencies) {
+        private final boolean keepResults;
+
+        public ArchiveContext(boolean archiveDependencies, boolean keepResults) {
             this.archiveDependencies = archiveDependencies;
+            this.keepResults = keepResults;
         }
 
         public List<String> getIdListObject() {
@@ -113,6 +116,10 @@ public class AppStorageArchive {
 
         public boolean isArchiveDependencies() {
             return archiveDependencies;
+        }
+
+        public boolean isKeepResults() {
+            return keepResults;
         }
     }
 
@@ -148,7 +155,8 @@ public class AppStorageArchive {
         }
     }
 
-    private void writeData(NodeInfo nodeInfo, Path nodeDir) throws IOException {
+    private void writeData(NodeInfo nodeInfo, Path nodeDir, ArchiveContext archiveDependencies)  throws IOException {
+
         Set<String> dataNames = storage.getDataNames(nodeInfo.getId());
         if (dataNames.isEmpty()) {
             return;
@@ -160,10 +168,12 @@ public class AppStorageArchive {
         Files.createDirectory(dataDir);
 
         for (String dataName : dataNames) {
-            Path dataFileName = dataDir.resolve(URLEncoder.encode(dataName, StandardCharsets.UTF_8.name()) + ".gz");
-            try (InputStream is = storage.readBinaryData(nodeInfo.getId(), dataName).orElseThrow(AssertionError::new);
-                 OutputStream os = new GZIPOutputStream(Files.newOutputStream(dataFileName))) {
-                ByteStreams.copy(is, os);
+            if (archiveDependencies.isKeepResults() || dataName.equals("parameters") || dataName.equals("scriptContent")) {
+                Path dataFileName = dataDir.resolve(URLEncoder.encode(dataName, StandardCharsets.UTF_8.name()) + ".gz");
+                try (InputStream is = storage.readBinaryData(nodeInfo.getId(), dataName).orElseThrow(AssertionError::new);
+                     OutputStream os = new GZIPOutputStream(Files.newOutputStream(dataFileName))) {
+                    ByteStreams.copy(is, os);
+                }
             }
         }
     }
@@ -214,7 +224,7 @@ public class AppStorageArchive {
     }
 
     public void archiveChildren(NodeInfo nodeInfo, Path nodeDir) throws IOException {
-        archiveChildren(nodeInfo, nodeDir, new ArchiveContext(false));
+        archiveChildren(nodeInfo, nodeDir, new ArchiveContext(false, true));
     }
 
     public void archiveChildren(NodeInfo nodeInfo, Path nodeDir, ArchiveContext archiveDependencies) throws IOException {
@@ -248,18 +258,18 @@ public class AppStorageArchive {
         Objects.requireNonNull(parentDir);
 
         try {
-            archive(storage.getNodeInfo(nodeId), parentDir, new ArchiveContext(false));
+            archive(storage.getNodeInfo(nodeId), parentDir, new ArchiveContext(false, true));
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
-    public void archive(String nodeId, Path parentDir, boolean archiveDependencies) {
+    public void archive(String nodeId, Path parentDir, boolean archiveDependencies, boolean keepResults) {
         Objects.requireNonNull(nodeId);
         Objects.requireNonNull(parentDir);
 
         try {
-            archive(storage.getNodeInfo(nodeId), parentDir, new ArchiveContext(archiveDependencies));
+            archive(storage.getNodeInfo(nodeId), parentDir, new ArchiveContext(archiveDependencies, keepResults));
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -267,8 +277,7 @@ public class AppStorageArchive {
 
     public void archive(NodeInfo nodeInfo, Path parentDir, ArchiveContext archiveDependencies) throws IOException {
         Objects.requireNonNull(nodeInfo);
-        Objects.requireNonNull(parentDir);
-        Path directory = parentDir;
+        Path directory = Objects.requireNonNull(parentDir);
 
         if (!archiveDependencies.getIdListObject().contains(nodeInfo.getId())) {
 
@@ -276,8 +285,8 @@ public class AppStorageArchive {
 
             archiveDependencies.getIdListObject().add(nodeInfo.getId());
 
-            // Si il s'agit d'une dependance on va rechercher ces parents
-            // et les sauvegarder s'ils sont différents du dossiers que l'on archive
+            // If it is a dependency, we will search for these parents and
+            // save them if they are different from the folder that we archive
             if (parentDir.getFileName().toString().equals("dependencies")) {
                 directory = archiveParent(nodeInfo, parentDir);
             }
@@ -289,7 +298,7 @@ public class AppStorageArchive {
 
             writeDependencies(nodeInfo, nodeDir);
 
-            writeData(nodeInfo, nodeDir);
+            writeData(nodeInfo, nodeDir, archiveDependencies);
 
             writeTimeSeries(nodeInfo, nodeDir);
 
@@ -334,7 +343,7 @@ public class AppStorageArchive {
                 try {
                     nodePath.set(archiveParent(node, parentNodeDir));
                     archiveFolder(node, nodePath.get());
-                    Path childrenDir = nodePath.get().resolve(node.getId() + "/children");
+                    Path childrenDir = nodePath.get().resolve(node.getId()).resolve("children");
                     nodePath.set(childrenDir);
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);

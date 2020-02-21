@@ -32,6 +32,8 @@ public class AppFileSystemTool implements Tool {
     private static final String ARCHIVE = "archive";
     private static final String UNARCHIVE = "unarchive";
     private static final String ZIP = "zip";
+    private static final String DEPENDENCIES = "dependencies";
+    private static final String RESULT = "results";
     private static final String DIR = "dir";
     private static final String LS_INCONSISTENT_NODES = "ls-inconsistent-nodes";
     private static final String FIX_INCONSISTENT_NODES = "fix-inconsistent-nodes";
@@ -91,6 +93,16 @@ public class AppFileSystemTool implements Tool {
                 topLevelOptions.addOption(Option.builder("zip")
                         .longOpt(ZIP)
                         .desc("zip file system")
+                        .hasArg(false)
+                        .build());
+                topLevelOptions.addOption(Option.builder("dependencies")
+                        .longOpt(DEPENDENCIES)
+                        .desc("archive dependencies")
+                        .hasArg(false)
+                        .build());
+                topLevelOptions.addOption(Option.builder("keepResults")
+                        .longOpt(RESULT)
+                        .desc("keep results of MS and metrix")
                         .hasArg(false)
                         .build());
                 topLevelOptions.addOption(Option.builder()
@@ -184,7 +196,9 @@ public class AppFileSystemTool implements Tool {
             }
             Path dir = context.getFileSystem().getPath(line.getOptionValue(DIR));
             boolean mustZip = line.hasOption(ZIP);
-            fs.getRootFolder().archive(dir, mustZip, false);
+            boolean archiveDependencies = line.hasOption(DEPENDENCIES);
+            boolean keepResults = line.hasOption(RESULT);
+            fs.getRootFolder().archive(dir, mustZip, archiveDependencies, keepResults);
         }
     }
 

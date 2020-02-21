@@ -182,7 +182,7 @@ public abstract class AbstractNodeBase<F> {
         return childNodes.stream().filter(nodeInfo -> !nodeInfo.getId().equals(getId())).anyMatch(nodeInfo -> nodeInfo.getName().equals(name));
     }
 
-    public void archive(Path dir, boolean useZip, boolean archiveDependencies) {
+    public void archive(Path dir, boolean useZip, boolean archiveDependencies, boolean keepResults) {
 
         Objects.requireNonNull(dir);
         Path zipPath = null;
@@ -195,7 +195,7 @@ public abstract class AbstractNodeBase<F> {
                 throw new FileAlreadyExistsException("Archive already exist");
             }
 
-            new AppStorageArchive(storage).archive(info.getId(), dir, archiveDependencies);
+            new AppStorageArchive(storage).archive(info.getId(), dir, archiveDependencies, keepResults);
             if (useZip) {
                 Utils.zip(dir, zipPath, true);
             }
@@ -229,7 +229,7 @@ public abstract class AbstractNodeBase<F> {
     }
 
     public void archive(Path dir) {
-        archive(dir, false, false);
+        archive(dir, false, false, true);
     }
 
     public void unarchive(Path dir) {
