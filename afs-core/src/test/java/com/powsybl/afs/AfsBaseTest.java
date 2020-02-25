@@ -238,8 +238,8 @@ public class AfsBaseTest {
         ProjectFolder rootFolder = project.getRootFolder();
         ProjectFolder dir1 = rootFolder.createFolder("dir1");
         Path child = null;
-        Path rootDir = null;
-        rootDir = Files.createTempDirectory("testDir");
+        Path rootDir = fileSystem.getPath("/root");
+        Files.createDirectory(rootDir);
         Files.createDirectory(rootDir.resolve("test"));
         dir1.archive(rootDir.resolve("test"), true, false);
         child = rootDir.resolve("test.zip");
@@ -258,7 +258,7 @@ public class AfsBaseTest {
     }
 
     @Test
-    public void archiveAndUnarchiveTestWithDependencies() throws IOException {
+    public void archiveAndUnarchiveTestWithDependency() throws IOException {
         /* In this test, there are two directories each with a file
            There is a dependency between the first and the second file
            Test archive and unarchive the first directory with these dependencies */
@@ -278,14 +278,15 @@ public class AfsBaseTest {
         storage.setConsistent(testData2Info.getId());
         storage.addDependency(testDataInfo.getId(), "mylink2", testData2Info.getId());
 
-        Path rootDir = Files.createTempDirectory("testDir");
+        Path rootDir = fileSystem.getPath("/root");
+        Files.createDirectory(rootDir);
         Files.createDirectory(rootDir.resolve("test"));
         dir1.archive(rootDir.resolve("test"), true, true);
         Path child = rootDir.resolve("test.zip");
         assertTrue(Files.exists(child));
 
         try {
-            dir1.archive(rootDir.resolve("test"), true, true);
+            dir1.archive(rootDir.resolve("test"), true, true, true);
             fail();
         } catch (UncheckedIOException e) {
             assertTrue(e.getMessage().contains("Archive already exist"));
@@ -303,7 +304,7 @@ public class AfsBaseTest {
     }
 
     @Test
-    public void archiveAndUnarchiveTestWithDependencies2() throws IOException {
+    public void archiveAndUnarchiveTestWithDependencies() throws IOException {
 
         /* In this test, there are two directories, one with a file and the second with two files
            There is a dependency between the first and the second file and between the second an the third
@@ -331,14 +332,15 @@ public class AfsBaseTest {
         storage.addDependency(testDataInfo.getId(), "mylink", testData2Info.getId());
         storage.addDependency(testData2Info.getId(), "mylink2", testData3Info.getId());
 
-        Path rootDir = Files.createTempDirectory("testDir");
+        Path rootDir = fileSystem.getPath("/root");
+        Files.createDirectory(rootDir);
         Files.createDirectory(rootDir.resolve("test"));
         dir1.archive(rootDir.resolve("test"), true, true);
         Path child = rootDir.resolve("test.zip");
         assertTrue(Files.exists(child));
 
         try {
-            dir1.archive(rootDir.resolve("test"), true, true);
+            dir1.archive(rootDir.resolve("test"), true, true, true);
             fail();
         } catch (UncheckedIOException e) {
             assertTrue(e.getMessage().contains("Archive already exist"));
@@ -358,7 +360,7 @@ public class AfsBaseTest {
     }
 
     @Test
-    public void archiveAndUnarchiveTestWithDependencies3() throws IOException {
+    public void archiveAndUnarchiveTestWithDeepDependencies() throws IOException {
 
         /* In this test, there are two directories, one with two files and the second with one file
            There is a dependency between the first and the second file and between the second an the third
@@ -386,14 +388,15 @@ public class AfsBaseTest {
         storage.addDependency(testDataInfo.getId(), "mylink", testData2Info.getId());
         storage.addDependency(testData2Info.getId(), "mylink2", testData3Info.getId());
 
-        Path rootDir = Files.createTempDirectory("testDir");
+        Path rootDir = fileSystem.getPath("/root");
+        Files.createDirectory(rootDir);
         Files.createDirectory(rootDir.resolve("test"));
         dir1.archive(rootDir.resolve("test"), true, true);
         Path child = rootDir.resolve("test.zip");
         assertTrue(Files.exists(child));
 
         try {
-            dir1.archive(rootDir.resolve("test"), true, true);
+            dir1.archive(rootDir.resolve("test"), true, true, true);
             fail();
         } catch (UncheckedIOException e) {
             assertTrue(e.getMessage().contains("Archive already exist"));
