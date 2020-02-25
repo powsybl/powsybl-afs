@@ -185,11 +185,7 @@ public abstract class AbstractNodeBase<F> {
         Objects.requireNonNull(dir);
 
         try {
-            if (Files.exists(dir.resolve(info.getId())) || (zipPath != null && Files.exists(zipPath))) {
-                throw new FileAlreadyExistsException("Archive already exist");
-            }
-
-            new AppStorageArchive(storage).archive(info.getId(), dir, archiveDependencies, keepResults);
+            new AppStorageArchive(storage).archive(info.getId(), dir, archiveDependencies);
             if (useZip) {
                 Path zipPath = dir.getParent().resolve(dir.getFileName() + ".zip");
                 Utils.zip(dir, zipPath, true);

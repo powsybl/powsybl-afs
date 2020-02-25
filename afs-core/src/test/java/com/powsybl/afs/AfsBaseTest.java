@@ -245,13 +245,6 @@ public class AfsBaseTest {
         child = rootDir.resolve("test.zip");
         assertTrue(Files.exists(child));
 
-        try {
-            dir1.archive(rootDir.resolve("test"), true, false);
-            fail();
-        } catch (UncheckedIOException e) {
-            assertTrue(e.getMessage().contains("Archive already exist"));
-        }
-
         ProjectFolder dir2 = rootFolder.createFolder("dir2");
         dir2.unarchive(child, true);
         assertEquals(1, dir2.getChildren().size());
@@ -284,13 +277,6 @@ public class AfsBaseTest {
         dir1.archive(rootDir.resolve("test"), true, true);
         Path child = rootDir.resolve("test.zip");
         assertTrue(Files.exists(child));
-
-        try {
-            dir1.archive(rootDir.resolve("test"), true, true, true);
-            fail();
-        } catch (UncheckedIOException e) {
-            assertTrue(e.getMessage().contains("Archive already exist"));
-        }
 
         ProjectFolder dir3 = rootFolder.createFolder("dir3");
         dir3.unarchive(child, true);
@@ -338,13 +324,6 @@ public class AfsBaseTest {
         dir1.archive(rootDir.resolve("test"), true, true);
         Path child = rootDir.resolve("test.zip");
         assertTrue(Files.exists(child));
-
-        try {
-            dir1.archive(rootDir.resolve("test"), true, true, true);
-            fail();
-        } catch (UncheckedIOException e) {
-            assertTrue(e.getMessage().contains("Archive already exist"));
-        }
 
         ProjectFolder dir3 = rootFolder.createFolder("dir3");
         dir3.unarchive(child, true);
@@ -394,13 +373,6 @@ public class AfsBaseTest {
         dir1.archive(rootDir.resolve("test"), true, true);
         Path child = rootDir.resolve("test.zip");
         assertTrue(Files.exists(child));
-
-        try {
-            dir1.archive(rootDir.resolve("test"), true, true, true);
-            fail();
-        } catch (UncheckedIOException e) {
-            assertTrue(e.getMessage().contains("Archive already exist"));
-        }
 
         ProjectFolder dir3 = rootFolder.createFolder("dir3");
         dir3.unarchive(child, true);
