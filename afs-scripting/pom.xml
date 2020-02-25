@@ -21,6 +21,10 @@
     <name>Scripting AFS</name>
     <description>Extensions to use AFS in scripts</description>
 
+    <properties>
+        <groovydoc.classifier>javadoc</groovydoc.classifier>
+    </properties>
+
     <build>
         <plugins>
             <plugin>
