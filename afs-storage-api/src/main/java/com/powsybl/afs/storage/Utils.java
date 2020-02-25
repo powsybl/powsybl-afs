@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
@@ -42,8 +43,7 @@ public final class Utils {
      * @throws IllegalArgumentException IllegalArgumentException
      */
     public static void zip(Path dir, Path zipPath, boolean deleteDirectory) throws IOException {
-        try (FileOutputStream fos = new FileOutputStream(zipPath.toFile());
-             ZipOutputStream zos = new ZipOutputStream(fos);
+        try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(zipPath));
              Stream<Path> walk = Files.walk(dir);) {
             walk.filter(someFileToZip -> !someFileToZip.equals(dir))
                     .forEach(
@@ -65,7 +65,7 @@ public final class Utils {
         }
 
         if (deleteDirectory) {
-            deleteDirectory(new File(dir.toString()));
+            deleteDirectory(dir);
         }
     }
 
@@ -90,15 +90,15 @@ public final class Utils {
      * @param nodeDir path to the directory where unzip
      */
     public static void unzip(Path zipPath, Path nodeDir) throws IOException {
-        try (ZipInputStream zis = new ZipInputStream(new FileInputStream(zipPath.toFile()))) {
-            Files.createDirectories(nodeDir);
+        try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(zipPath))) {
+            Files.createDirectory(nodeDir);
             ZipEntry entry = zis.getNextEntry();
             while (entry != null) {
                 Path outputEntryPath = nodeDir.resolve(entry.getName());
                 if (entry.isDirectory() && !Files.exists(outputEntryPath)) {
                     Files.createDirectory(outputEntryPath);
                 } else if (!entry.isDirectory()) {
-                    try (FileOutputStream fos = new FileOutputStream(outputEntryPath.toFile())) {
+                    try (OutputStream fos = Files.newOutputStream(outputEntryPath)) {
                         ByteStreams.copy(zis, fos);
                     }
                 }
@@ -115,7 +115,7 @@ public final class Utils {
     }
 
     private static void addFile(ZipOutputStream zos, Path filePath, Path zipFilePath) throws IOException {
-        try (FileInputStream fis = new FileInputStream(filePath.toFile())) {
+        try (InputStream fis = Files.newInputStream(filePath)) {
             ZipEntry entry = new ZipEntry(zipFilePath.toString());
             zos.putNextEntry(entry);
             ByteStreams.copy(fis, zos);
@@ -128,13 +128,14 @@ public final class Utils {
      * @param directoryToBeDeleted directory to be deleted
      * @return true if directory deleted
      */
-    public static void deleteDirectory(File directoryToBeDeleted) throws IOException {
-        File[]allContents = directoryToBeDeleted.listFiles();
-        if (allContents != null) {
-            for (File file : allContents) {
-                deleteDirectory(file);
+    public static void deleteDirectory(Path directoryToBeDeleted) throws IOException {
+        if (Files.isDirectory(directoryToBeDeleted)) {
+            try (DirectoryStream<Path> entries = Files.newDirectoryStream(directoryToBeDeleted)) {
+                for (Path entry : entries) {
+                    deleteDirectory(entry);
+                }
             }
         }
-        Files.delete(directoryToBeDeleted.toPath());
+        Files.delete(directoryToBeDeleted);
     }
 }

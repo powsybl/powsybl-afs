@@ -36,7 +36,7 @@ public class UtilsTest {
 
     @After
     public void tearDown() throws Exception {
-        Utils.deleteDirectory(rootDir.toFile());
+        Utils.deleteDirectory(rootDir);
     }
 
     @Test
@@ -64,7 +64,7 @@ public class UtilsTest {
     public void deleteDirectoryTest() throws IOException {
         Path rootDir2 = Files.createTempDirectory("test1");
         Files.createFile(rootDir2.resolve("test"));
-        Utils.deleteDirectory(rootDir2.toFile());
+        Utils.deleteDirectory(rootDir2);
         assertTrue(Files.notExists(rootDir2));
     }
 

@@ -17,8 +17,6 @@ import java.io.UncheckedIOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.io.File;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -185,18 +183,11 @@ public abstract class AbstractNodeBase<F> {
     public void archive(Path dir, boolean useZip, boolean archiveDependencies, boolean keepResults) {
 
         Objects.requireNonNull(dir);
-        Path zipPath = null;
-        if (useZip) {
-            zipPath = dir.getParent().resolve(dir.getFileName() + ".zip");
-        }
 
         try {
-            if (Files.exists(dir.resolve(info.getId())) || (zipPath != null && Files.exists(zipPath))) {
-                throw new FileAlreadyExistsException("Archive already exist");
-            }
-
             new AppStorageArchive(storage).archive(info.getId(), dir, archiveDependencies, keepResults);
             if (useZip) {
+                Path zipPath = dir.getParent().resolve(dir.getFileName() + ".zip");
                 Utils.zip(dir, zipPath, true);
             }
         } catch (IOException e) {
@@ -206,8 +197,8 @@ public abstract class AbstractNodeBase<F> {
 
     public void unarchive(Path dir, boolean isZipped) {
         if (isZipped) {
-            int index = dir.toString().lastIndexOf('.');
-            Path nodeDir = Paths.get(dir.toString().substring(0, index));
+            String filename = dir.getFileName().toString().substring(0, dir.getFileName().toString().length() - 4);
+            Path nodeDir = dir.getParent().resolve(filename);
             try {
                 if (Files.exists(nodeDir)) {
                     throw new FileAlreadyExistsException("Archive already exist.");
@@ -218,7 +209,7 @@ public abstract class AbstractNodeBase<F> {
                         stream.forEach(childNodeDir -> new AppStorageArchive(storage).unarchive(info, childNodeDir));
                     }
                 } finally {
-                    Utils.deleteDirectory(new File(nodeDir.toString()));
+                    Utils.deleteDirectory(nodeDir);
                 }
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
