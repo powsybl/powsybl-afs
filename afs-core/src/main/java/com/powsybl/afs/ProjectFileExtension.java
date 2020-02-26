@@ -6,6 +6,8 @@
  */
 package com.powsybl.afs;
 
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Interface to add a new type of project file to the application file system.
@@ -78,4 +80,11 @@ public interface ProjectFileExtension<T extends ProjectFile, U extends ProjectFi
      * Creates a builder object, to build an instance of the new type with additional parameters passed to the builder.
      */
     ProjectFileBuilder<T> createProjectFileBuilder(ProjectFileBuildContext context);
+
+    /**
+     * return list of output file
+     */
+    default List<String> getOutputList() {
+        return Collections.emptyList();
+    }
 }

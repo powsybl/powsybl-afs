@@ -8,6 +8,7 @@ package com.powsybl.afs;
 
 import com.google.auto.service.AutoService;
 import com.powsybl.afs.storage.NodeInfo;
+import com.powsybl.commons.util.ServiceLoaderCache;
 import com.powsybl.tools.Command;
 import com.powsybl.tools.CommandLineTools;
 import com.powsybl.tools.Tool;
@@ -19,8 +20,11 @@ import org.apache.commons.cli.Options;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
@@ -41,6 +45,8 @@ public class AppFileSystemTool implements Tool {
     private static final String FILE_SYSTEM_NAME = "FILE_SYSTEM_NAME";
     private static final String FILE_SYSTEM = "File system'";
     private static final String NOT_FOUND = "not found'";
+
+    private static final ServiceLoaderCache<ProjectFileExtension> PROJECT_FILE_EXECUTION = new ServiceLoaderCache<>(ProjectFileExtension.class);
 
     protected AppData createAppData(ToolRunningContext context) {
         return new AppData(context.getShortTimeExecutionComputationManager(),
@@ -198,7 +204,12 @@ public class AppFileSystemTool implements Tool {
             boolean mustZip = line.hasOption(ZIP);
             boolean archiveDependencies = line.hasOption(DEPENDENCIES);
             boolean keepResults = line.hasOption(RESULT);
-            fs.getRootFolder().archive(dir, mustZip, archiveDependencies, keepResults);
+            Map<String, List<String>> outputBlackList = new HashMap<>();
+            if (!keepResults) {
+                List<ProjectFileExtension> services = PROJECT_FILE_EXECUTION.getServices();
+                outputBlackList = services.stream().collect(Collectors.toMap(ProjectFileExtension::getProjectFilePseudoClass, ProjectFileExtension::getOutputList));
+            }
+            fs.getRootFolder().archive(dir, mustZip, archiveDependencies, outputBlackList);
         }
     }
 
