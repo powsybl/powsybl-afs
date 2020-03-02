@@ -216,6 +216,10 @@ public abstract class AbstractNodeBase<F> {
         }
     }
 
+    public void archive(Path dir, Map<String, List<String>> outputBlackList) {
+        archive(dir, false, false, outputBlackList);
+    }
+
     public void archive(Path dir) {
         archive(dir, false, false, new HashMap<>());
     }
