@@ -12,6 +12,8 @@ import com.google.common.jimfs.Jimfs;
 import com.powsybl.afs.mapdb.storage.MapDbAppStorage;
 import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.InMemoryEventsBus;
+import com.powsybl.afs.storage.NodeGenericMetadata;
+import com.powsybl.afs.storage.NodeInfo;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.iidm.network.NetworkFactoryService;
 import org.junit.After;
@@ -236,23 +238,153 @@ public class AfsBaseTest {
         ProjectFolder rootFolder = project.getRootFolder();
         ProjectFolder dir1 = rootFolder.createFolder("dir1");
         Path child = null;
-        Path rootDir = null;
-        rootDir = Files.createTempDirectory("testDir");
+        Path rootDir = fileSystem.getPath("/root");
+        Files.createDirectory(rootDir);
         Files.createDirectory(rootDir.resolve("test"));
-        dir1.archive(rootDir.resolve("test"), true);
-        child = rootDir.resolve("test/" + dir1.getId() + ".zip");
-        assertTrue(child.toFile().exists());
-
-        try {
-            dir1.archive(rootDir.resolve("test"), true);
-            fail();
-        } catch (UncheckedIOException e) {
-            assertTrue(e.getMessage().contains("Archive already exist"));
-        }
+        dir1.archive(rootDir.resolve("test"), true, false);
+        child = rootDir.resolve("test.zip");
+        assertTrue(Files.exists(child));
 
         ProjectFolder dir2 = rootFolder.createFolder("dir2");
         dir2.unarchive(child, true);
         assertEquals(1, dir2.getChildren().size());
+    }
+
+    @Test
+    public void archiveAndUnarchiveTestWithDependency() throws IOException {
+        /* In this test, there are two directories each with a file
+           There is a dependency between the first and the second file
+           Test archive and unarchive the first directory with these dependencies */
+
+        Project project = afs.getRootFolder().createProject("test");
+        ProjectFolder rootFolder = project.getRootFolder();
+        ProjectFolder dir1 = rootFolder.createFolder("dir1");
+        ProjectFolder dir2 = rootFolder.createFolder("dir2");
+
+        NodeInfo testDataInfo = storage.createNode(dir1.getId(), "data", "data", "", 0, new NodeGenericMetadata());
+        NodeInfo testData2Info = storage.createNode(dir2.getId(), "data2", "data", "", 0,
+                new NodeGenericMetadata().setString("s1", "v1")
+                        .setDouble("d1", 1d)
+                        .setInt("i1", 2)
+                        .setBoolean("b1", false));
+        storage.setConsistent(testDataInfo.getId());
+        storage.setConsistent(testData2Info.getId());
+        storage.addDependency(testDataInfo.getId(), "mylink2", testData2Info.getId());
+
+        Path rootDir = fileSystem.getPath("/root");
+        Files.createDirectory(rootDir);
+        Files.createDirectory(rootDir.resolve("test"));
+        dir1.archive(rootDir.resolve("test"), true, true);
+        Path child = rootDir.resolve("test.zip");
+        assertTrue(Files.exists(child));
+
+        ProjectFolder dir3 = rootFolder.createFolder("dir3");
+        dir3.unarchive(child, true);
+        assertEquals(1, dir3.getChildren().size());
+        ProjectNode node1 = dir3.getChildren().get(0);
+        List<NodeInfo> listNode = storage.getChildNodes(node1.getId());
+        assertEquals(2, listNode.size());
+        assertEquals("data", listNode.get(0).getName());
+        assertEquals("dir2", listNode.get(1).getName());
+        assertEquals("data2", storage.getChildNodes(listNode.get(1).getId()).get(0).getName());
+    }
+
+    @Test
+    public void archiveAndUnarchiveTestWithDependencies() throws IOException {
+
+        /* In this test, there are two directories, one with a file and the second with two files
+           There is a dependency between the first and the second file and between the second an the third
+           Test archive and unarchive the first directory with these dependencies */
+
+        Project project = afs.getRootFolder().createProject("test");
+        ProjectFolder rootFolder = project.getRootFolder();
+        ProjectFolder dir1 = rootFolder.createFolder("dir1");
+        ProjectFolder dir2 = rootFolder.createFolder("dir2");
+
+        NodeInfo testDataInfo = storage.createNode(dir1.getId(), "data", "data", "", 0, new NodeGenericMetadata());
+        NodeInfo testData2Info = storage.createNode(dir2.getId(), "data2", "data", "", 0,
+                new NodeGenericMetadata().setString("s1", "v1")
+                        .setDouble("d1", 1d)
+                        .setInt("i1", 2)
+                        .setBoolean("b1", false));
+        NodeInfo testData3Info = storage.createNode(dir2.getId(), "data3", "data", "", 0,
+                new NodeGenericMetadata().setString("s1", "v1")
+                        .setDouble("d1", 1d)
+                        .setInt("i1", 2)
+                        .setBoolean("b1", false));
+        storage.setConsistent(testDataInfo.getId());
+        storage.setConsistent(testData2Info.getId());
+        storage.setConsistent(testData3Info.getId());
+        storage.addDependency(testDataInfo.getId(), "mylink", testData2Info.getId());
+        storage.addDependency(testData2Info.getId(), "mylink2", testData3Info.getId());
+
+        Path rootDir = fileSystem.getPath("/root");
+        Files.createDirectory(rootDir);
+        Files.createDirectory(rootDir.resolve("test"));
+        dir1.archive(rootDir.resolve("test"), true, true);
+        Path child = rootDir.resolve("test.zip");
+        assertTrue(Files.exists(child));
+
+        ProjectFolder dir3 = rootFolder.createFolder("dir3");
+        dir3.unarchive(child, true);
+        assertEquals(1, dir3.getChildren().size());
+        ProjectNode node1 = dir3.getChildren().get(0);
+        List<NodeInfo> listNode = storage.getChildNodes(node1.getId());
+        assertEquals(2, listNode.size());
+        assertEquals("data", listNode.get(0).getName());
+        assertEquals("dir2", listNode.get(1).getName());
+        assertEquals(2, storage.getChildNodes(listNode.get(1).getId()).size());
+        assertEquals("data2", storage.getChildNodes(listNode.get(1).getId()).get(0).getName());
+        assertEquals("data3", storage.getChildNodes(listNode.get(1).getId()).get(1).getName());
+    }
+
+    @Test
+    public void archiveAndUnarchiveTestWithDeepDependencies() throws IOException {
+
+        /* In this test, there are two directories, one with two files and the second with one file
+           There is a dependency between the first and the second file and between the second an the third
+           Test archive and unarchive the first directory with these dependencies */
+
+        Project project = afs.getRootFolder().createProject("test");
+        ProjectFolder rootFolder = project.getRootFolder();
+        ProjectFolder dir1 = rootFolder.createFolder("dir1");
+        ProjectFolder dir2 = rootFolder.createFolder("dir2");
+
+        NodeInfo testDataInfo = storage.createNode(dir1.getId(), "data", "data", "", 0, new NodeGenericMetadata());
+        NodeInfo testData2Info = storage.createNode(dir1.getId(), "data2", "data", "", 0,
+                new NodeGenericMetadata().setString("s1", "v1")
+                        .setDouble("d1", 1d)
+                        .setInt("i1", 2)
+                        .setBoolean("b1", false));
+        NodeInfo testData3Info = storage.createNode(dir2.getId(), "data3", "data", "", 0,
+                new NodeGenericMetadata().setString("s1", "v1")
+                        .setDouble("d1", 1d)
+                        .setInt("i1", 2)
+                        .setBoolean("b1", false));
+        storage.setConsistent(testDataInfo.getId());
+        storage.setConsistent(testData2Info.getId());
+        storage.setConsistent(testData3Info.getId());
+        storage.addDependency(testDataInfo.getId(), "mylink", testData2Info.getId());
+        storage.addDependency(testData2Info.getId(), "mylink2", testData3Info.getId());
+
+        Path rootDir = fileSystem.getPath("/root");
+        Files.createDirectory(rootDir);
+        Files.createDirectory(rootDir.resolve("test"));
+        dir1.archive(rootDir.resolve("test"), true, true);
+        Path child = rootDir.resolve("test.zip");
+        assertTrue(Files.exists(child));
+
+        ProjectFolder dir3 = rootFolder.createFolder("dir3");
+        dir3.unarchive(child, true);
+        assertEquals(1, dir3.getChildren().size());
+        ProjectNode node1 = dir3.getChildren().get(0);
+        List<NodeInfo> listNode = storage.getChildNodes(node1.getId());
+        assertEquals(3, listNode.size());
+        assertEquals("data", listNode.get(0).getName());
+        assertEquals("data2", listNode.get(1).getName());
+        assertEquals("dir2", listNode.get(2).getName());
+        assertEquals(1, storage.getChildNodes(listNode.get(2).getId()).size());
+        assertEquals("data3", storage.getChildNodes(listNode.get(2).getId()).get(0).getName());
     }
 
     @Test
