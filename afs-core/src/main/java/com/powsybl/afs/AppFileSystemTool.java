@@ -101,7 +101,7 @@ public class AppFileSystemTool implements Tool {
                         .desc("zip file system")
                         .hasArg(false)
                         .build());
-                topLevelOptions.addOption(Option.builder("dependencies")
+                topLevelOptions.addOption(Option.builder(DEPENDENCIES)
                         .longOpt(DEPENDENCIES)
                         .desc("archive dependencies")
                         .hasArg(false)

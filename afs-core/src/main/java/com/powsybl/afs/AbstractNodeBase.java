@@ -176,7 +176,7 @@ public abstract class AbstractNodeBase<F> {
         }
         return childNodes.stream().filter(nodeInfo -> !nodeInfo.getId().equals(getId())).anyMatch(nodeInfo -> nodeInfo.getName().equals(name));
     }
-
+  
     public void archive(Path dir, boolean useZip, boolean archiveDependencies, Map<String, List<String>> outputBlackList) {
 
         Objects.requireNonNull(dir);
