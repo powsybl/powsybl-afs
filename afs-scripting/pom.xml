@@ -21,6 +21,10 @@
     <name>Scripting AFS</name>
     <description>Extensions to use AFS in scripts</description>
 
+    <properties>
+        <groovydoc.classifier>javadoc</groovydoc.classifier>
+    </properties>
+
     <build>
         <plugins>
             <plugin>
@@ -37,6 +41,10 @@
             <plugin>
                 <groupId>org.codehaus.gmavenplus</groupId>
                 <artifactId>gmavenplus-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
             </plugin>
         </plugins>
     </build>
