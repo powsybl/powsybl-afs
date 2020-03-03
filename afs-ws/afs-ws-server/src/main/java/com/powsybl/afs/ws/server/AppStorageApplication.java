@@ -6,9 +6,8 @@
  */
 package com.powsybl.afs.ws.server;
 
-import com.powsybl.afs.ws.utils.AfsRestApi;
 import com.powsybl.afs.ws.server.utils.SwaggerConfigExtension;
-import io.swagger.config.SwaggerConfig;
+import com.powsybl.afs.ws.utils.AfsRestApi;
 import io.swagger.jaxrs.config.BeanConfig;
 import io.swagger.models.Info;
 import org.apache.commons.compress.utils.Lists;
@@ -35,7 +34,7 @@ public class AppStorageApplication extends Application {
         initSwaggerConfig(swaggerConfigExtensions);
     }
 
-    private BeanConfig initSwaggerConfig(List<SwaggerConfigExtension> swaggerConfigExtensions){
+    private BeanConfig initSwaggerConfig(List<SwaggerConfigExtension> swaggerConfigExtensions) {
         if (swaggerConfigExtensions.size() > 1) {
             LOGGER.warn("Multiple swagger bean supplier found! Will take the first found and ignore the rest.");
         }
