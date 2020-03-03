@@ -37,7 +37,7 @@ public class AppFileSystemTool implements Tool {
     private static final String UNARCHIVE = "unarchive";
     private static final String ZIP = "zip";
     private static final String DEPENDENCIES = "dependencies";
-    private static final String RESULT = "results";
+    private static final String DELETE_RESULT_OPTNAME = "deleteResults";
     private static final String DIR = "dir";
     private static final String LS_INCONSISTENT_NODES = "ls-inconsistent-nodes";
     private static final String FIX_INCONSISTENT_NODES = "fix-inconsistent-nodes";
@@ -96,20 +96,17 @@ public class AppFileSystemTool implements Tool {
                         .optionalArg(true)
                         .argName(FILE_SYSTEM_NAME)
                         .build());
-                topLevelOptions.addOption(Option.builder("zip")
+                topLevelOptions.addOption(Option.builder()
                         .longOpt(ZIP)
                         .desc("zip file system")
                         .hasArg(false)
+                        .argName(ZIP)
                         .build());
-                topLevelOptions.addOption(Option.builder("dependencies")
+                topLevelOptions.addOption(Option.builder()
                         .longOpt(DEPENDENCIES)
                         .desc("archive dependencies")
                         .hasArg(false)
-                        .build());
-                topLevelOptions.addOption(Option.builder("keepResults")
-                        .longOpt(RESULT)
-                        .desc("keep results of MS and metrix")
-                        .hasArg(false)
+                        .argName(DEPENDENCIES)
                         .build());
                 topLevelOptions.addOption(Option.builder()
                         .longOpt(LS_INCONSISTENT_NODES)
@@ -136,6 +133,12 @@ public class AppFileSystemTool implements Tool {
                         .valueSeparator(',')
                         .build());
                 options.addOptionGroup(topLevelOptions);
+                options.addOption(Option.builder()
+                        .longOpt(DELETE_RESULT_OPTNAME)
+                        .desc("delete results")
+                        .hasArg(false)
+                        .argName(DELETE_RESULT_OPTNAME)
+                        .build());
                 options.addOption(Option.builder()
                         .longOpt(DIR)
                         .desc("directory")
@@ -203,9 +206,9 @@ public class AppFileSystemTool implements Tool {
             Path dir = context.getFileSystem().getPath(line.getOptionValue(DIR));
             boolean mustZip = line.hasOption(ZIP);
             boolean archiveDependencies = line.hasOption(DEPENDENCIES);
-            boolean keepResults = line.hasOption(RESULT);
+            boolean deleteResult = line.hasOption(DELETE_RESULT_OPTNAME);
             Map<String, List<String>> outputBlackList = new HashMap<>();
-            if (!keepResults) {
+            if (deleteResult) {
                 List<ProjectFileExtension> services = PROJECT_FILE_EXECUTION.getServices();
                 outputBlackList = services.stream().collect(Collectors.toMap(ProjectFileExtension::getProjectFilePseudoClass, ProjectFileExtension::getOutputList));
             }

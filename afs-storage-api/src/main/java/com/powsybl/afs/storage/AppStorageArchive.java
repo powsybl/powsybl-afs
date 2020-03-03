@@ -111,7 +111,6 @@ public class AppStorageArchive {
 
         public ArchiveContext(boolean archiveDependencies) {
             this.archiveDependencies = archiveDependencies;
-            this.outputBlackList.putAll(new HashMap<>());
         }
 
         public ArchiveContext(boolean archiveDependencies, Map<String, List<String>> outputBlackList) {
@@ -166,10 +165,7 @@ public class AppStorageArchive {
 
     private boolean checkResultBlackList(Map<String, List<String>> blackMap, String dataName, String pseudoClass) {
         List<String> blackList = blackMap.get(pseudoClass);
-        return blackList == null ? true : blackList.stream()
-                .filter(element -> element.contains(dataName))
-                .collect(Collectors.toList())
-                .isEmpty();
+        return blackList == null || blackList.stream().noneMatch(element -> element.contains(dataName));
     }
 
     private void writeData(NodeInfo nodeInfo, Path nodeDir, ArchiveContext archiveDependencies)  throws IOException {

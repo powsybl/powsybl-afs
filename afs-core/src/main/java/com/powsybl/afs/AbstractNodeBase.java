@@ -221,7 +221,7 @@ public abstract class AbstractNodeBase<F> {
     }
 
     public void archive(Path dir) {
-        archive(dir, false, false, new HashMap<>());
+        archive(dir, false, false, Collections.emptyMap());
     }
 
     public void unarchive(Path dir) {
