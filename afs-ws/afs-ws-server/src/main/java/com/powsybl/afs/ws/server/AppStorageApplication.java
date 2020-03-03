@@ -8,6 +8,7 @@ package com.powsybl.afs.ws.server;
 
 import com.powsybl.afs.ws.utils.AfsRestApi;
 import com.powsybl.afs.ws.server.utils.SwaggerConfigExtension;
+import io.swagger.config.SwaggerConfig;
 import io.swagger.jaxrs.config.BeanConfig;
 import io.swagger.models.Info;
 import org.apache.commons.compress.utils.Lists;
@@ -17,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.core.Application;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.ServiceLoader;
 
 /**
@@ -30,6 +32,10 @@ public class AppStorageApplication extends Application {
     public AppStorageApplication() {
         ServiceLoader<SwaggerConfigExtension> swaggerConfigExtensionsIterator = ServiceLoader.load(SwaggerConfigExtension.class);
         ArrayList<SwaggerConfigExtension> swaggerConfigExtensions = Lists.newArrayList(swaggerConfigExtensionsIterator.iterator());
+        initSwaggerConfig(swaggerConfigExtensions);
+    }
+
+    private BeanConfig initSwaggerConfig(List<SwaggerConfigExtension> swaggerConfigExtensions){
         if (swaggerConfigExtensions.size() > 1) {
             LOGGER.warn("Multiple swagger bean supplier found! Will take the first found and ignore the rest.");
         }
@@ -44,9 +50,9 @@ public class AppStorageApplication extends Application {
                     .title("AFS storage API")
                     .version(AfsRestApi.VERSION)
                     .description("This is the documentation of AFS REST API"));
-            return;
+            return beanConfig;
         }
 
-        swaggerConfigExtensions.get(0).get();
+        return swaggerConfigExtensions.get(0).get();
     }
 }
