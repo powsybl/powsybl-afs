@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UncheckedIOException;
 import java.io.Writer;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -256,7 +255,7 @@ public class AfsBaseTest {
         ProjectFolder rootFolder = project.getRootFolder();
         ProjectFolder dir1 = rootFolder.createFolder("dir1");
         try (Writer writer = new OutputStreamWriter(storage.writeBinaryData(dir1.getId(), "data1"));
-        Writer writer2 = new OutputStreamWriter(storage.writeBinaryData(dir1.getId(), "data2"))) {
+            Writer writer2 = new OutputStreamWriter(storage.writeBinaryData(dir1.getId(), "data2"))) {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
