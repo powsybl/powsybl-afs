@@ -248,6 +248,23 @@ public class AfsBaseTest {
     }
 
     @Test
+    public void archiveAndUnarchiveTestWithDirAndBlackList() throws IOException {
+        Project project = afs.getRootFolder().createProject("test");
+        ProjectFolder rootFolder = project.getRootFolder();
+        ProjectFolder dir1 = rootFolder.createFolder("dir1");
+        Path child = null;
+        Path rootDir = fileSystem.getPath("/root");
+        Files.createDirectory(rootDir);
+        dir1.archive(rootDir, new HashMap<>());
+        child = rootDir.resolve(dir1.getId());
+        assertTrue(Files.exists(child));
+
+        ProjectFolder dir2 = rootFolder.createFolder("dir2");
+        dir2.unarchive(child, false);
+        assertEquals(1, dir2.getChildren().size());
+    }
+
+    @Test
     public void archiveAndUnarchiveTestWithDependency() throws IOException {
         /* In this test, there are two directories each with a file
            There is a dependency between the first and the second file
