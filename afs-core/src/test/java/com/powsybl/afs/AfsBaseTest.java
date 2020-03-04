@@ -22,7 +22,10 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.UncheckedIOException;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -252,10 +255,19 @@ public class AfsBaseTest {
         Project project = afs.getRootFolder().createProject("test");
         ProjectFolder rootFolder = project.getRootFolder();
         ProjectFolder dir1 = rootFolder.createFolder("dir1");
+        try (Writer writer = new OutputStreamWriter(storage.writeBinaryData(dir1.getId(), "data1"));
+        Writer writer2 = new OutputStreamWriter(storage.writeBinaryData(dir1.getId(), "data2"))) {
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
         Path child = null;
         Path rootDir = fileSystem.getPath("/root");
         Files.createDirectory(rootDir);
-        dir1.archive(rootDir, new HashMap<>());
+        Map<String, List<String>> blackList = new HashMap<>();
+        List<String> deleteExtension = new ArrayList<>();
+        deleteExtension.add("data1");
+        blackList.put("projectFolder", deleteExtension);
+        dir1.archive(rootDir, blackList);
         child = rootDir.resolve(dir1.getId());
         assertTrue(Files.exists(child));
 
