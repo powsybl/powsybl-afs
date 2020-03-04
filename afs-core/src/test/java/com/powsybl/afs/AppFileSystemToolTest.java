@@ -18,9 +18,13 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
+import java.util.UUID;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
@@ -71,6 +75,15 @@ public class AppFileSystemToolTest extends AbstractToolTest {
         assertEquals("Application file system", command.getTheme());
         assertEquals("application file system command line tool", command.getDescription());
         assertNull(command.getUsageFooter());
+    }
+
+    @Test
+    public void testArchive() throws IOException {
+        Path archivePath = fileSystem.getPath("/tmp", UUID.randomUUID().toString());
+        Files.createDirectories(archivePath);
+        assertEquals(0, Files.list(archivePath).count());
+        assertCommand(new String[] {"afs", "--archive", "mem", "--dir", archivePath.toString(), "--deleteResults"}, 0, "", "");
+        assertEquals(1, Files.list(archivePath).count());
     }
 
     @Test
