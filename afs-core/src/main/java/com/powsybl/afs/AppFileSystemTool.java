@@ -97,18 +97,6 @@ public class AppFileSystemTool implements Tool {
                         .argName(FILE_SYSTEM_NAME)
                         .build());
                 topLevelOptions.addOption(Option.builder()
-                        .longOpt(ZIP)
-                        .desc("zip file system")
-                        .hasArg(false)
-                        .argName(ZIP)
-                        .build());
-                topLevelOptions.addOption(Option.builder()
-                        .longOpt(DEPENDENCIES)
-                        .desc("archive dependencies")
-                        .hasArg(false)
-                        .argName(DEPENDENCIES)
-                        .build());
-                topLevelOptions.addOption(Option.builder()
                         .longOpt(LS_INCONSISTENT_NODES)
                         .desc("list the inconsistent nodes")
                         .hasArg()
@@ -137,13 +125,22 @@ public class AppFileSystemTool implements Tool {
                         .longOpt(DELETE_RESULT_OPTNAME)
                         .desc("delete results")
                         .hasArg(false)
-                        .argName(DELETE_RESULT_OPTNAME)
                         .build());
                 options.addOption(Option.builder()
                         .longOpt(DIR)
                         .desc("directory")
                         .hasArg()
                         .argName("DIR")
+                        .build());
+                options.addOption(Option.builder()
+                        .longOpt(DEPENDENCIES)
+                        .desc("archive dependencies")
+                        .hasArg(false)
+                        .build());
+                topLevelOptions.addOption(Option.builder()
+                        .longOpt(ZIP)
+                        .desc("zip file system")
+                        .hasArg(false)
                         .build());
                 return options;
             }
