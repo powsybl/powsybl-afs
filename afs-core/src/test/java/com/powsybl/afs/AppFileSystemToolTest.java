@@ -67,7 +67,6 @@ public class AppFileSystemToolTest extends AbstractToolTest {
         assertOption(command.getOptions(), "ls", false, true);
         assertOption(command.getOptions(), "archive", false, true);
         assertOption(command.getOptions(), "unarchive", false, true);
-        assertOption(command.getOptions(), "zip", false, false);
         assertOption(command.getOptions(), "ls-inconsistent-nodes", false, true);
         assertOption(command.getOptions(), "fix-inconsistent-nodes", false, true);
         assertOption(command.getOptions(), "rm-inconsistent-nodes", false, true);
