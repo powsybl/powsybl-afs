@@ -895,6 +895,7 @@ public class RemoteAppStorage extends AbstractAppStorage {
                 .resolveTemplate(NODE_ID, nodeId)
                 .resolveTemplate(VERSION, version)
                 .request()
+                .header("Connection", "close")
                 .header(HttpHeaders.AUTHORIZATION, token)
                 .post(Entity.json(timeSeriesNames));
         try {
@@ -936,6 +937,7 @@ public class RemoteAppStorage extends AbstractAppStorage {
                 .resolveTemplate(NODE_ID, nodeId)
                 .resolveTemplate(VERSION, version)
                 .request()
+                .header("Connection", "close")
                 .header(HttpHeaders.AUTHORIZATION, token)
                 .post(Entity.json(timeSeriesNames));
         try {
@@ -1005,4 +1007,5 @@ public class RemoteAppStorage extends AbstractAppStorage {
             closed = true;
         }
     }
+
 }
