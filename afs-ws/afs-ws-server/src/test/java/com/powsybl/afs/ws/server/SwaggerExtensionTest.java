@@ -8,15 +8,11 @@
 
 package com.powsybl.afs.ws.server;
 
-import com.powsybl.afs.ws.server.utils.SwaggerConfigExtension;
 import io.swagger.jaxrs.config.BeanConfig;
 import org.junit.Test;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 
 import static org.assertj.core.api.Java6Assertions.assertThat;
 
@@ -26,12 +22,10 @@ import static org.assertj.core.api.Java6Assertions.assertThat;
 public class SwaggerExtensionTest {
 
     @Test
-    public void test() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        Method initSwaggerConfig = AppStorageApplication.class.getDeclaredMethod("initSwaggerConfig", List.class);
-        initSwaggerConfig.setAccessible(true);
+    public void test() {
         AppStorageApplication appStorageApplication = new AppStorageApplication();
-        BeanConfig swaggerConfig = (BeanConfig) initSwaggerConfig.invoke(appStorageApplication, Arrays.asList(
-            (SwaggerConfigExtension) () -> {
+        BeanConfig swaggerConfig = appStorageApplication.initSwaggerConfig(Arrays.asList(
+            () -> {
                 BeanConfig beanConfig = new BeanConfig();
                 beanConfig.setBasePath("/foo");
                 return beanConfig;
@@ -44,7 +38,7 @@ public class SwaggerExtensionTest {
         );
         assertThat(swaggerConfig.getBasePath()).isEqualTo("/foo");
 
-        swaggerConfig = (BeanConfig) initSwaggerConfig.invoke(appStorageApplication, Collections.emptyList());
+        swaggerConfig = appStorageApplication.initSwaggerConfig(Collections.emptyList());
         assertThat(swaggerConfig.getBasePath()).isEqualTo("/rest");
     }
 }

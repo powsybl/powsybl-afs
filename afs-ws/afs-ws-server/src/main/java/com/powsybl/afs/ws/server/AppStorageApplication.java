@@ -34,7 +34,7 @@ public class AppStorageApplication extends Application {
         initSwaggerConfig(swaggerConfigExtensions);
     }
 
-    private BeanConfig initSwaggerConfig(List<SwaggerConfigExtension> swaggerConfigExtensions) {
+    BeanConfig initSwaggerConfig(List<SwaggerConfigExtension> swaggerConfigExtensions) {
         if (swaggerConfigExtensions.size() > 1) {
             LOGGER.warn("Multiple swagger bean supplier found! Will take the first found and ignore the rest.");
         }
