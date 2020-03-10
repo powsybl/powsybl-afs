@@ -53,8 +53,8 @@ public class AppStorageServer {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("fileSystems")
-    @ApiOperation (value = "Get file system list", response = List.class)
-    @ApiResponses (value = {@ApiResponse(code = 200, message = "The list of available file systems"), @ApiResponse(code = 404, message = "There is no file system available.")})
+    @ApiOperation (value = "Get file system list")
+    @ApiResponses (value = {@ApiResponse(code = 200, message = "The list of available file systems", responseContainer = "List", response = String.class), @ApiResponse(code = 404, message = "There is no file system available.")})
     public Response getFileSystemNames() {
         return Response.ok().entity(appDataBean.getAppData().getRemotelyAccessibleFileSystemNames()).build();
     }
@@ -62,8 +62,8 @@ public class AppStorageServer {
     @PUT
     @Produces(MediaType.APPLICATION_JSON)
     @Path("fileSystems/{fileSystemName}/rootNode")
-    @ApiOperation (value = "Get file system root node and create it if not exist", response = NodeInfo.class)
-    @ApiResponses (value = {@ApiResponse(code = 200, message = "The root node"), @ApiResponse(code = 500, message = "Error")})
+    @ApiOperation (value = "Get file system root node and create it if not exist")
+    @ApiResponses (value = {@ApiResponse(code = 200, message = "The root node", response = NodeInfo.class), @ApiResponse(code = 500, message = "Error")})
     public Response createRootNodeIfNotExists(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                               @ApiParam(value = "Root node name") @QueryParam("nodeName") String nodeName,
                                               @ApiParam(value = "Root node pseudo class") @QueryParam("nodePseudoClass") String nodePseudoClass) {
@@ -75,8 +75,8 @@ public class AppStorageServer {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("fileSystems/{fileSystemName}/nodes/{nodeId}/children")
-    @ApiOperation (value = "Get child nodes", response = List.class)
-    @ApiResponses (value = {@ApiResponse(code = 200, message = "The list of chid nodes"), @ApiResponse(code = 404, message = "Thera are no child nodes"), @ApiResponse(code = 500, message = "Error")})
+    @ApiOperation (value = "Get child nodes")
+    @ApiResponses (value = {@ApiResponse(code = 200, message = "The list of chid nodes", response = NodeInfo.class, responseContainer = "List"), @ApiResponse(code = 404, message = "Thera are no child nodes"), @ApiResponse(code = 500, message = "Error")})
     public Response getChildNodes(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                   @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId) {
         AppStorage storage = appDataBean.getStorage(fileSystemName);
@@ -87,8 +87,8 @@ public class AppStorageServer {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("fileSystems/{fileSystemName}/inconsistentChildNodes")
-    @ApiOperation (value = "Get inconsistent child nodes", response = List.class)
-    @ApiResponses (value = {@ApiResponse(code = 200, message = "The list of inconsistent chid nodes"), @ApiResponse(code = 404, message = "Thera are no inconsistent child nodes"), @ApiResponse(code = 500, message = "Error")})
+    @ApiOperation (value = "Get inconsistent child nodes")
+    @ApiResponses (value = {@ApiResponse(code = 200, message = "The list of inconsistent chid nodes", response = NodeInfo.class, responseContainer = "List"), @ApiResponse(code = 404, message = "Thera are no inconsistent child nodes"), @ApiResponse(code = 500, message = "Error")})
     public Response getInconsistentChildrenNodes(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName) {
         AppStorage storage = appDataBean.getStorage(fileSystemName);
         List<NodeInfo> childNodes = storage.getInconsistentNodes();
@@ -99,8 +99,8 @@ public class AppStorageServer {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("fileSystems/{fileSystemName}/nodes/{nodeId}/children/{childName}")
-    @ApiOperation (value = "Create Node", response = NodeInfo.class)
-    @ApiResponses (value = {@ApiResponse(code = 200, message = "The node is created"), @ApiResponse(code = 500, message = "Error")})
+    @ApiOperation (value = "Create Node")
+    @ApiResponses (value = {@ApiResponse(code = 200, message = "The node is created", response = NodeInfo.class), @ApiResponse(code = 500, message = "Error")})
     public Response createNode(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId,
                                @ApiParam(value = "Child Name") @PathParam("childName") String childName,
@@ -129,8 +129,8 @@ public class AppStorageServer {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("fileSystems/{fileSystemName}/nodes/{nodeId}/parent")
-    @ApiOperation (value = "Get Parent Node", response = NodeInfo.class)
-    @ApiResponses (value = {@ApiResponse(code = 200, message = "Returns the parent node"), @ApiResponse(code = 404, message = "No parent node for nodeId"), @ApiResponse(code = 500, message = "Error")})
+    @ApiOperation (value = "Get Parent Node")
+    @ApiResponses (value = {@ApiResponse(code = 200, message = "Returns the parent node", response = NodeInfo.class), @ApiResponse(code = 404, message = "No parent node for nodeId"), @ApiResponse(code = 500, message = "Error")})
     public Response getParentNode(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                   @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId) {
         AppStorage storage = appDataBean.getStorage(fileSystemName);
@@ -145,8 +145,8 @@ public class AppStorageServer {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("fileSystems/{fileSystemName}/nodes/{nodeId}/children/{childName}")
-    @ApiOperation (value = "Get Child Node", response = NodeInfo.class)
-    @ApiResponses (value = {@ApiResponse(code = 200, message = "Returns the child node"), @ApiResponse(code = 404, message = "No child node for nodeId"), @ApiResponse(code = 500, message = "Error")})
+    @ApiOperation (value = "Get Child Node")
+    @ApiResponses (value = {@ApiResponse(code = 200, message = "Returns the child node", response = NodeInfo.class), @ApiResponse(code = 404, message = "No child node for nodeId"), @ApiResponse(code = 500, message = "Error")})
     public Response getChildNode(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                  @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId,
                                  @ApiParam(value = "Child Name") @PathParam("childName") String childName) {
@@ -176,8 +176,8 @@ public class AppStorageServer {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("fileSystems/{fileSystemName}/nodes/{nodeId}/dependencies/{name}")
-    @ApiOperation (value = "", response = Set.class)
-    @ApiResponses (value = {@ApiResponse(code = 200, message = ""), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
+    @ApiOperation (value = "Get node dependencies")
+    @ApiResponses (value = {@ApiResponse(code = 200, message = "", response = NodeInfo.class, responseContainer = "Set"), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response getDependencies(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                     @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId,
                                     @ApiParam(value = "Name") @PathParam("name") String name) {
@@ -189,7 +189,7 @@ public class AppStorageServer {
     @DELETE
     @Produces(MediaType.TEXT_PLAIN)
     @Path("fileSystems/{fileSystemName}/nodes/{nodeId}")
-    @ApiOperation (value = "")
+    @ApiOperation (value = "Delete node")
     @ApiResponses (value = {@ApiResponse(code = 200, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response deleteNode(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId) {
@@ -201,7 +201,7 @@ public class AppStorageServer {
     @PUT
     @Consumes(MediaType.TEXT_PLAIN)
     @Path("fileSystems/{fileSystemName}/nodes/{nodeId}/description")
-    @ApiOperation (value = "")
+    @ApiOperation (value = "Update node description")
     @ApiResponses (value = {@ApiResponse(code = 200, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response setDescription(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                    @ApiParam(value = "File system name") @PathParam("nodeId") String nodeId,
@@ -214,7 +214,7 @@ public class AppStorageServer {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("fileSystems/{fileSystemName}/nodes/{nodeId}/consistent")
-    @ApiOperation (value = "")
+    @ApiOperation (value = "Validate node's consistency")
     @ApiResponses (value = {@ApiResponse(code = 200, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response setConsistent(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                    @ApiParam(value = "File system name") @PathParam("nodeId") String nodeId) {
@@ -226,7 +226,7 @@ public class AppStorageServer {
     @PUT
     @Consumes(MediaType.TEXT_PLAIN)
     @Path("fileSystems/{fileSystemName}/nodes/{nodeId}/name")
-    @ApiOperation (value = "")
+    @ApiOperation (value = "Rename node")
     @ApiResponses (value = {@ApiResponse(code = 200, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response renameNode(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                    @ApiParam(value = "File system name") @PathParam("nodeId") String nodeId,
@@ -238,7 +238,7 @@ public class AppStorageServer {
 
     @PUT
     @Path("fileSystems/{fileSystemName}/nodes/{nodeId}/modificationTime")
-    @ApiOperation (value = "")
+    @ApiOperation (value = "Update node modification time")
     @ApiResponses (value = {@ApiResponse(code = 200, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response updateModificationTime(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                            @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId) {
@@ -250,7 +250,7 @@ public class AppStorageServer {
     @PUT
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     @Path("fileSystems/{fileSystemName}/nodes/{nodeId}/data/{name}")
-    @ApiOperation (value = "")
+    @ApiOperation (value = "Update node data")
     @ApiResponses (value = {@ApiResponse(code = 200, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response writeBinaryData(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                     @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId,
@@ -272,8 +272,8 @@ public class AppStorageServer {
     @GET
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     @Path("fileSystems/{fileSystemName}/nodes/{nodeId}/data/{name}")
-    @ApiOperation (value = "", response = InputStream.class)
-    @ApiResponses (value = {@ApiResponse(code = 200, message = ""), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
+    @ApiOperation (value = "Fetch node data")
+    @ApiResponses (value = {@ApiResponse(code = 200, message = "", response = InputStream.class), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response readBinaryAttribute(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                         @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId,
                                         @ApiParam(value = "Name") @PathParam("name") String name) {
@@ -288,8 +288,8 @@ public class AppStorageServer {
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     @Path("fileSystems/{fileSystemName}/nodes/{nodeId}/data/{name}")
-    @ApiOperation (value = "", response = InputStream.class)
-    @ApiResponses (value = {@ApiResponse(code = 200, message = ""), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
+    @ApiOperation (value = "Indicate if given node provides given named data")
+    @ApiResponses (value = {@ApiResponse(code = 200, message = "", response = Boolean.class), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response dataExists(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId,
                                @ApiParam(value = "Name") @PathParam("name") String name) {
@@ -301,8 +301,8 @@ public class AppStorageServer {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("fileSystems/{fileSystemName}/nodes/{nodeId}/data")
-    @ApiOperation (value = "", response = Set.class)
-    @ApiResponses (value = {@ApiResponse(code = 200, message = ""), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
+    @ApiOperation (value = "Fetch all data names for given node")
+    @ApiResponses (value = {@ApiResponse(code = 200, message = "", response = String.class, responseContainer = "Set"), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response getDataNames(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                  @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId) {
         AppStorage storage = appDataBean.getStorage(fileSystemName);
@@ -313,8 +313,8 @@ public class AppStorageServer {
     @DELETE
     @Produces(MediaType.TEXT_PLAIN)
     @Path("fileSystems/{fileSystemName}/nodes/{nodeId}/data/{name}")
-    @ApiOperation (value = "", response = Boolean.class)
-    @ApiResponses (value = {@ApiResponse(code = 200, message = ""), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
+    @ApiOperation (value = "Remove named data for given node")
+    @ApiResponses (value = {@ApiResponse(code = 200, message = "", response = Boolean.class), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response removeData(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId,
                                @ApiParam(value = "Data name") @PathParam("name") String name) {
@@ -326,7 +326,7 @@ public class AppStorageServer {
     @PUT
     @Consumes(MediaType.TEXT_PLAIN)
     @Path("fileSystems/{fileSystemName}/nodes/{nodeId}/parent")
-    @ApiOperation (value = "")
+    @ApiOperation (value = "Update parent for given node")
     @ApiResponses (value = {@ApiResponse(code = 200, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response setParentNode(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                   @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId,
@@ -339,8 +339,8 @@ public class AppStorageServer {
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     @Path("fileSystems/{fileSystemName}/nodes/{nodeId}/writable")
-    @ApiOperation (value = "", response = Boolean.class)
-    @ApiResponses (value = {@ApiResponse(code = 200, message = ""), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
+    @ApiOperation (value = "Indicate if given node is writable")
+    @ApiResponses (value = {@ApiResponse(code = 200, message = "", response = Boolean.class), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response isWritable(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId) {
         AppStorage storage = appDataBean.getStorage(fileSystemName);
@@ -351,8 +351,8 @@ public class AppStorageServer {
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     @Path("fileSystems/{fileSystemName}/nodes/{nodeId}/consistent")
-    @ApiOperation (value = "", response = Boolean.class)
-    @ApiResponses (value = {@ApiResponse(code = 200, message = ""), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
+    @ApiOperation (value = "Indicate if given node is consistent")
+    @ApiResponses (value = {@ApiResponse(code = 200, message = "", response = Boolean.class), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response isConsistent(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                  @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId) {
         AppStorage storage = appDataBean.getStorage(fileSystemName);
@@ -363,8 +363,8 @@ public class AppStorageServer {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("fileSystems/{fileSystemName}/nodes/{nodeId}/dependencies")
-    @ApiOperation (value = "", response = Set.class)
-    @ApiResponses (value = {@ApiResponse(code = 200, message = ""), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
+    @ApiOperation (value = "Fetch node dependencies information")
+    @ApiResponses (value = {@ApiResponse(code = 200, message = "", response = NodeDependency.class, responseContainer = "List"), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response getDependencies(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                     @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId) {
         AppStorage storage = appDataBean.getStorage(fileSystemName);
@@ -375,8 +375,8 @@ public class AppStorageServer {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("fileSystems/{fileSystemName}/nodes/{nodeId}/backwardDependencies")
-    @ApiOperation (value = "", response = Set.class)
-    @ApiResponses (value = {@ApiResponse(code = 200, message = ""), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
+    @ApiOperation (value = "Fetch node backward dependencies")
+    @ApiResponses (value = {@ApiResponse(code = 200, message = "", response = NodeInfo.class, responseContainer = "List"), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response getBackwardDependencies(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                             @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId) {
         AppStorage storage = appDataBean.getStorage(fileSystemName);
@@ -386,7 +386,7 @@ public class AppStorageServer {
 
     @DELETE
     @Path("fileSystems/{fileSystemName}/nodes/{nodeId}/dependencies/{name}/{toNodeId}")
-    @ApiOperation (value = "")
+    @ApiOperation (value = "Remove dependency to node")
     @ApiResponses (value = {@ApiResponse(code = 200, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response removeDependency(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                      @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId,
@@ -400,7 +400,7 @@ public class AppStorageServer {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("fileSystems/{fileSystemName}/flush")
-    @ApiOperation (value = "")
+    @ApiOperation (value = "Flush appstorage changeset")
     @ApiResponses (value = {@ApiResponse(code = 200, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response flush(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                           @ApiParam(value = "Storage Change Set") StorageChangeSet changeSet) {
@@ -436,7 +436,7 @@ public class AppStorageServer {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("fileSystems/{fileSystemName}/nodes/{nodeId}/timeSeries")
-    @ApiOperation (value = "")
+    @ApiOperation (value = "Create new timeseries for given node")
     @ApiResponses (value = {@ApiResponse(code = 200, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response createTimeSeries(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                      @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId,
@@ -450,8 +450,8 @@ public class AppStorageServer {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("fileSystems/{fileSystemName}/nodes/{nodeId}/timeSeries/name")
     @Compress
-    @ApiOperation (value = "", response = Set.class)
-    @ApiResponses (value = {@ApiResponse(code = 200, message = ""), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
+    @ApiOperation (value = "Fetch node timeseries")
+    @ApiResponses (value = {@ApiResponse(code = 200, message = "", response = String.class, responseContainer = "List"), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response getTimeSeriesNames(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                        @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId) {
         AppStorage storage = appDataBean.getStorage(fileSystemName);
@@ -462,8 +462,8 @@ public class AppStorageServer {
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     @Path("fileSystems/{fileSystemName}/nodes/{nodeId}/timeSeries/{timeSeriesName}")
-    @ApiOperation (value = "", response = Boolean.class)
-    @ApiResponses (value = {@ApiResponse(code = 200, message = ""), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
+    @ApiOperation (value = "Indicate if named timeseries exist for given node")
+    @ApiResponses (value = {@ApiResponse(code = 200, message = "", response = Boolean.class), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response timeSeriesExists(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                      @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId,
                                      @ApiParam(value = "Time series name") @PathParam("timeSeriesName") String timeSeriesName) {
@@ -477,8 +477,8 @@ public class AppStorageServer {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("fileSystems/{fileSystemName}/nodes/{nodeId}/timeSeries/metadata")
     @Compress
-    @ApiOperation (value = "", response = List.class)
-    @ApiResponses (value = {@ApiResponse(code = 200, message = ""), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
+    @ApiOperation (value = "Fetch timeseries metadata for given names and node")
+    @ApiResponses (value = {@ApiResponse(code = 200, message = "", response = TimeSeriesMetadata.class, responseContainer = "List"), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response getTimeSeriesMetadata(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                           @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId,
                                           @ApiParam(value = "Time series names") Set<String> timeSeriesNames) {
@@ -490,6 +490,8 @@ public class AppStorageServer {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("fileSystems/{fileSystemName}/nodes/{nodeId}/timeSeries/versions")
+    @ApiOperation (value = "Fetch timeseries available versions")
+    @ApiResponses (value = {@ApiResponse(code = 200, message = "", response = Integer.class, responseContainer = "List"), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response getTimeSeriesDataVersions(@PathParam("fileSystemName") String fileSystemName,
                                               @PathParam("nodeId") String nodeId) {
         AppStorage storage = appDataBean.getStorage(fileSystemName);
@@ -500,8 +502,8 @@ public class AppStorageServer {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("fileSystems/{fileSystemName}/nodes/{nodeId}/timeSeries/{timeSeriesName}/versions")
-    @ApiOperation (value = "", response = Set.class)
-    @ApiResponses (value = {@ApiResponse(code = 200, message = ""), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
+    @ApiOperation (value = "Fetch timeseries available versions for given named timeseries")
+    @ApiResponses (value = {@ApiResponse(code = 200, message = "", response = Integer.class, responseContainer = "List"), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response getTimeSeriesDataVersions(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                               @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId,
                                               @ApiParam(value = "Time series name") @PathParam("timeSeriesName") String timeSeriesName) {
@@ -513,7 +515,7 @@ public class AppStorageServer {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("fileSystems/{fileSystemName}/nodes/{nodeId}/timeSeries/double/{version}/{timeSeriesName}")
-    @ApiOperation (value = "")
+    @ApiOperation (value = "Append Double data chunks to name timeseries")
     @ApiResponses (value = {@ApiResponse(code = 200, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response addDoubleTimeSeriesData(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                             @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId,
@@ -530,8 +532,8 @@ public class AppStorageServer {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("fileSystems/{fileSystemName}/nodes/{nodeId}/timeSeries/double/{version}")
     @Compress
-    @ApiOperation (value = "", response = List.class)
-    @ApiResponses (value = {@ApiResponse(code = 200, message = ""), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
+    @ApiOperation (value = "Fetch Double data for named timeseries")
+    @ApiResponses (value = {@ApiResponse(code = 200, message = "", response = DoubleDataChunk.class, responseContainer = "Map"), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response getDoubleTimeSeriesData(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                             @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId,
                                             @ApiParam(value = "Version") @PathParam("version") int version,
@@ -547,7 +549,7 @@ public class AppStorageServer {
     @POST
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     @Path("fileSystems/{fileSystemName}/nodes/{nodeId}/timeSeries/string/{version}/{timeSeriesName}")
-    @ApiOperation (value = "")
+    @ApiOperation (value = "Append String data chunks to named timeseries")
     @ApiResponses (value = {@ApiResponse(code = 200, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response addStringTimeSeriesData(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                             @ApiParam(value = "File system name") @PathParam("nodeId") String nodeId,
@@ -564,8 +566,8 @@ public class AppStorageServer {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("fileSystems/{fileSystemName}/nodes/{nodeId}/timeSeries/string/{version}")
     @Compress
-    @ApiOperation (value = "", response = List.class)
-    @ApiResponses (value = {@ApiResponse(code = 200, message = ""), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
+    @ApiOperation (value = "Fetch String data for named timeseries")
+    @ApiResponses (value = {@ApiResponse(code = 200, message = "", response = StringDataChunk.class, responseContainer = "Map"), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response getStringTimeSeriesData(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                             @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId,
                                             @ApiParam(value = "Version") @PathParam("version") int version,
@@ -580,7 +582,7 @@ public class AppStorageServer {
 
     @DELETE
     @Path("fileSystems/{fileSystemName}/nodes/{nodeId}/timeSeries")
-    @ApiOperation (value = "")
+    @ApiOperation (value = "Delete all timeseries for given node")
     @ApiResponses (value = {@ApiResponse(code = 200, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response clearTimeSeries(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                     @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId) {
@@ -592,8 +594,8 @@ public class AppStorageServer {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("fileSystems/{fileSystemName}/nodes/{nodeId}")
-    @ApiOperation (value = "", response = InputStream.class)
-    @ApiResponses (value = {@ApiResponse(code = 200, message = ""), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
+    @ApiOperation (value = "Fetch node info")
+    @ApiResponses (value = {@ApiResponse(code = 200, message = "", response = NodeInfo.class), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response getNodeInfo(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                 @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId) {
         AppStorage storage = appDataBean.getStorage(fileSystemName);
@@ -604,6 +606,8 @@ public class AppStorageServer {
     @PUT
     @Produces(MediaType.APPLICATION_JSON)
     @Path("fileSystems/{fileSystemName}/tasks")
+    @ApiOperation (value = "Start a task")
+    @ApiResponses (value = {@ApiResponse(code = 200, message = "", response = TaskMonitor.Task.class), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response startTask(@PathParam("fileSystemName") String fileSystemName,
                               @QueryParam("projectFileId") String projectFileId,
                               @QueryParam("projectId") String projectId,
@@ -629,6 +633,8 @@ public class AppStorageServer {
 
     @DELETE
     @Path("fileSystems/{fileSystemName}/tasks/{taskId}")
+    @ApiOperation (value = "Stop task tracking")
+    @ApiResponses (value = {@ApiResponse(code = 200, message = ""), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response stopTask(@PathParam("fileSystemName") String fileSystemName,
                              @PathParam("taskId") UUID taskId) {
         AppFileSystem fileSystem = appDataBean.getFileSystem(fileSystemName);
@@ -639,6 +645,8 @@ public class AppStorageServer {
     @POST
     @Consumes(MediaType.TEXT_PLAIN)
     @Path("fileSystems/{fileSystemName}/tasks/{taskId}")
+    @ApiOperation (value = "Update a task message")
+    @ApiResponses (value = {@ApiResponse(code = 200, message = ""), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response updateTaskMessage(@PathParam("fileSystemName") String fileSystemName,
                                       @PathParam("taskId") UUID taskId,
                                       String message) {
@@ -650,6 +658,8 @@ public class AppStorageServer {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("fileSystems/{fileSystemName}/tasks")
+    @ApiOperation (value = "Fetch current running tasks snapshot")
+    @ApiResponses (value = {@ApiResponse(code = 200, message = "", response = TaskMonitor.Snapshot.class), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response takeSnapshot(@PathParam("fileSystemName") String fileSystemName,
                                  @QueryParam("projectId") String projectId) {
         AppFileSystem fileSystem = appDataBean.getFileSystem(fileSystemName);
@@ -660,6 +670,8 @@ public class AppStorageServer {
     @PUT
     @Produces(MediaType.APPLICATION_JSON)
     @Path("fileSystems/{fileSystemName}/tasks/{taskId}/_cancel")
+    @ApiOperation (value = "Cancel a task tracked process")
+    @ApiResponses (value = {@ApiResponse(code = 200, message = "", response = Boolean.class), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response cancel(@PathParam("fileSystemName") String fileSystemName,
                                  @PathParam("taskId") String taskId) {
         AppFileSystem fileSystem = appDataBean.getFileSystem(fileSystemName);
