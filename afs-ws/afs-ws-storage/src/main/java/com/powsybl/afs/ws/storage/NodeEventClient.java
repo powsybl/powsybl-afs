@@ -68,13 +68,11 @@ public class NodeEventClient {
 
     @OnError
     public void onError(Throwable t) {
-        if (LOGGER.isErrorEnabled()) {
-            LOGGER.error(t.toString(), t);
-        }
+        LOGGER.error("Node client error", t);
     }
 
     @OnClose
     public void onClose(Session session) {
-        LOGGER.trace("Node event websocket session '{}' closed for file system '{}'", session.getId(), fileSystemName);
+        LOGGER.error("Node event websocket session '{}' closed for file system '{}'", session.getId(), fileSystemName);
     }
 }

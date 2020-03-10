@@ -79,7 +79,7 @@ public class NodeEventServer {
 
     @OnClose
     public void onClose(@PathParam("fileSystemName") String fileSystemName, Session session, CloseReason closeReason) {
-        LOGGER.debug("WebSocket session '{}' closed ({}) for file system '{}'",
+        LOGGER.info("WebSocket session '{}' closed ({}) for file system '{}'",
                 session.getId(), closeReason, fileSystemName);
 
         removeSession(fileSystemName, session);
@@ -87,9 +87,7 @@ public class NodeEventServer {
 
     @OnError
     public void error(@PathParam("fileSystemName") String fileSystemName, Session session, Throwable t) {
-        if (LOGGER.isErrorEnabled()) {
-            LOGGER.error(t.toString(), t);
-        }
+        LOGGER.error(t.toString(), t);
 
         removeSession(fileSystemName, session);
     }
