@@ -120,8 +120,7 @@ public class AppStorageArchive {
         }
 
         public Map<String, List<String>> getOutputBlackList() {
-            ImmutableMap<String, List<String>> blackList = ImmutableMap.copyOf(outputBlackList);
-            return blackList;
+            return ImmutableMap.copyOf(outputBlackList);
         }
 
         public List<String> getIdListObject() {
