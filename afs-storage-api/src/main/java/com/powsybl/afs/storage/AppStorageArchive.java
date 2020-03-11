@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import com.powsybl.afs.storage.json.AppStorageJsonModule;
 import com.powsybl.commons.json.JsonUtil;
@@ -105,7 +106,7 @@ public class AppStorageArchive {
 
         private final List<String> idListObject = new ArrayList<>();
 
-        private final Map<String, List<String>> outputBlackList = new HashMap();
+        private final Map<String, List<String>> outputBlackList = new HashMap<>();
 
         private final boolean archiveDependencies;
 
@@ -119,7 +120,8 @@ public class AppStorageArchive {
         }
 
         public Map<String, List<String>> getOutputBlackList() {
-            return outputBlackList;
+            ImmutableMap<String, List<String>> blackList = ImmutableMap.copyOf(outputBlackList);
+            return blackList;
         }
 
         public List<String> getIdListObject() {

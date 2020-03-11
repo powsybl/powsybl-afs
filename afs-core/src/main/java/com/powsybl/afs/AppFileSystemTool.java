@@ -206,8 +206,9 @@ public class AppFileSystemTool implements Tool {
             boolean deleteResult = line.hasOption(DELETE_RESULT_OPTNAME);
             Map<String, List<String>> outputBlackList = new HashMap<>();
             if (deleteResult) {
-                List<ProjectFileExtension> services = PROJECT_FILE_EXECUTION.getServices();
-                outputBlackList = services.stream().collect(Collectors.toMap(ProjectFileExtension::getProjectFilePseudoClass, ProjectFileExtension::getOutputList));
+                outputBlackList = PROJECT_FILE_EXECUTION.getServices().stream()
+                        .collect(Collectors.toMap(ProjectFileExtension::getProjectFilePseudoClass,
+                                ProjectFileExtension::getOutputList));
             }
             fs.getRootFolder().archive(dir, mustZip, archiveDependencies, outputBlackList);
         }
