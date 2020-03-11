@@ -94,7 +94,7 @@
         <wildfly.dist.version>11.0.0.Final</wildfly.dist.version>
         <wildflyarquilliancontainerembedded.version>2.1.0.Final</wildflyarquilliancontainerembedded.version>
 
-        <powsyblcore.version>3.1.0</powsyblcore.version>
+        <powsyblcore.version>3.2.0</powsyblcore.version>
     </properties>
 
     <profiles>
