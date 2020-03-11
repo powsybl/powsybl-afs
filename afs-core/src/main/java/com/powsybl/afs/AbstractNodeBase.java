@@ -20,10 +20,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Stream;
 
 /**
@@ -180,12 +177,12 @@ public abstract class AbstractNodeBase<F> {
         return childNodes.stream().filter(nodeInfo -> !nodeInfo.getId().equals(getId())).anyMatch(nodeInfo -> nodeInfo.getName().equals(name));
     }
 
-    public void archive(Path dir, boolean useZip, boolean archiveDependencies) {
+    public void archive(Path dir, boolean useZip, boolean archiveDependencies, Map<String, List<String>> outputBlackList) {
 
         Objects.requireNonNull(dir);
 
         try {
-            new AppStorageArchive(storage).archive(info.getId(), dir, archiveDependencies);
+            new AppStorageArchive(storage).archive(info.getId(), dir, archiveDependencies, outputBlackList);
             if (useZip) {
                 Path zipPath = dir.getParent().resolve(dir.getFileName() + ".zip");
                 Utils.zip(dir, zipPath, true);
@@ -219,8 +216,12 @@ public abstract class AbstractNodeBase<F> {
         }
     }
 
+    public void archive(Path dir, Map<String, List<String>> outputBlackList) {
+        archive(dir, false, false, outputBlackList);
+    }
+
     public void archive(Path dir) {
-        archive(dir, false, false);
+        archive(dir, false, false, Collections.emptyMap());
     }
 
     public void unarchive(Path dir) {

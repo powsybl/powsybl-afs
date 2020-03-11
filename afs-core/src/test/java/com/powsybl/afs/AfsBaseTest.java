@@ -22,14 +22,13 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.UncheckedIOException;
+import java.io.Writer;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.function.BiConsumer;
 
 import static org.junit.Assert.*;
@@ -241,12 +240,38 @@ public class AfsBaseTest {
         Path rootDir = fileSystem.getPath("/root");
         Files.createDirectory(rootDir);
         Files.createDirectory(rootDir.resolve("test"));
-        dir1.archive(rootDir.resolve("test"), true, false);
+        dir1.archive(rootDir.resolve("test"), true, false, new HashMap<>());
         child = rootDir.resolve("test.zip");
         assertTrue(Files.exists(child));
 
         ProjectFolder dir2 = rootFolder.createFolder("dir2");
         dir2.unarchive(child, true);
+        assertEquals(1, dir2.getChildren().size());
+    }
+
+    @Test
+    public void archiveAndUnarchiveTestWithDirAndBlackList() throws IOException {
+        Project project = afs.getRootFolder().createProject("test");
+        ProjectFolder rootFolder = project.getRootFolder();
+        ProjectFolder dir1 = rootFolder.createFolder("dir1");
+        try (Writer writer = new OutputStreamWriter(storage.writeBinaryData(dir1.getId(), "data1"));
+            Writer writer2 = new OutputStreamWriter(storage.writeBinaryData(dir1.getId(), "data2"))) {
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        Path child = null;
+        Path rootDir = fileSystem.getPath("/root");
+        Files.createDirectory(rootDir);
+        Map<String, List<String>> blackList = new HashMap<>();
+        List<String> deleteExtension = new ArrayList<>();
+        deleteExtension.add("data1");
+        blackList.put("projectFolder", deleteExtension);
+        dir1.archive(rootDir, blackList);
+        child = rootDir.resolve(dir1.getId());
+        assertTrue(Files.exists(child));
+
+        ProjectFolder dir2 = rootFolder.createFolder("dir2");
+        dir2.unarchive(child, false);
         assertEquals(1, dir2.getChildren().size());
     }
 
@@ -274,7 +299,7 @@ public class AfsBaseTest {
         Path rootDir = fileSystem.getPath("/root");
         Files.createDirectory(rootDir);
         Files.createDirectory(rootDir.resolve("test"));
-        dir1.archive(rootDir.resolve("test"), true, true);
+        dir1.archive(rootDir.resolve("test"), true, true, new HashMap<>());
         Path child = rootDir.resolve("test.zip");
         assertTrue(Files.exists(child));
 
@@ -321,7 +346,7 @@ public class AfsBaseTest {
         Path rootDir = fileSystem.getPath("/root");
         Files.createDirectory(rootDir);
         Files.createDirectory(rootDir.resolve("test"));
-        dir1.archive(rootDir.resolve("test"), true, true);
+        dir1.archive(rootDir.resolve("test"), true, true, new HashMap<>());
         Path child = rootDir.resolve("test.zip");
         assertTrue(Files.exists(child));
 
@@ -370,7 +395,7 @@ public class AfsBaseTest {
         Path rootDir = fileSystem.getPath("/root");
         Files.createDirectory(rootDir);
         Files.createDirectory(rootDir.resolve("test"));
-        dir1.archive(rootDir.resolve("test"), true, true);
+        dir1.archive(rootDir.resolve("test"), true, true, new HashMap<>());
         Path child = rootDir.resolve("test.zip");
         assertTrue(Files.exists(child));
 

@@ -8,6 +8,7 @@ package com.powsybl.afs;
 
 import com.google.auto.service.AutoService;
 import com.powsybl.afs.storage.NodeInfo;
+import com.powsybl.commons.util.ServiceLoaderCache;
 import com.powsybl.tools.Command;
 import com.powsybl.tools.CommandLineTools;
 import com.powsybl.tools.Tool;
@@ -19,8 +20,11 @@ import org.apache.commons.cli.Options;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
@@ -33,6 +37,7 @@ public class AppFileSystemTool implements Tool {
     private static final String UNARCHIVE = "unarchive";
     private static final String ZIP = "zip";
     private static final String DEPENDENCIES = "dependencies";
+    private static final String DELETE_RESULT_OPTNAME = "deleteResults";
     private static final String DIR = "dir";
     private static final String LS_INCONSISTENT_NODES = "ls-inconsistent-nodes";
     private static final String FIX_INCONSISTENT_NODES = "fix-inconsistent-nodes";
@@ -40,6 +45,8 @@ public class AppFileSystemTool implements Tool {
     private static final String FILE_SYSTEM_NAME = "FILE_SYSTEM_NAME";
     private static final String FILE_SYSTEM = "File system'";
     private static final String NOT_FOUND = "not found'";
+
+    private static final ServiceLoaderCache<ProjectFileExtension> PROJECT_FILE_EXECUTION = new ServiceLoaderCache<>(ProjectFileExtension.class);
 
     protected AppData createAppData(ToolRunningContext context) {
         return new AppData(context.getShortTimeExecutionComputationManager(),
@@ -89,16 +96,6 @@ public class AppFileSystemTool implements Tool {
                         .optionalArg(true)
                         .argName(FILE_SYSTEM_NAME)
                         .build());
-                topLevelOptions.addOption(Option.builder("zip")
-                        .longOpt(ZIP)
-                        .desc("zip file system")
-                        .hasArg(false)
-                        .build());
-                topLevelOptions.addOption(Option.builder(DEPENDENCIES)
-                        .longOpt(DEPENDENCIES)
-                        .desc("archive dependencies")
-                        .hasArg(false)
-                        .build());
                 topLevelOptions.addOption(Option.builder()
                         .longOpt(LS_INCONSISTENT_NODES)
                         .desc("list the inconsistent nodes")
@@ -125,10 +122,25 @@ public class AppFileSystemTool implements Tool {
                         .build());
                 options.addOptionGroup(topLevelOptions);
                 options.addOption(Option.builder()
+                        .longOpt(DELETE_RESULT_OPTNAME)
+                        .desc("delete results")
+                        .hasArg(false)
+                        .build());
+                options.addOption(Option.builder()
                         .longOpt(DIR)
                         .desc("directory")
                         .hasArg()
                         .argName("DIR")
+                        .build());
+                options.addOption(Option.builder()
+                        .longOpt(DEPENDENCIES)
+                        .desc("archive dependencies")
+                        .hasArg(false)
+                        .build());
+                options.addOption(Option.builder()
+                        .longOpt(ZIP)
+                        .desc("zip file system")
+                        .hasArg(false)
                         .build());
                 return options;
             }
@@ -191,7 +203,14 @@ public class AppFileSystemTool implements Tool {
             Path dir = context.getFileSystem().getPath(line.getOptionValue(DIR));
             boolean mustZip = line.hasOption(ZIP);
             boolean archiveDependencies = line.hasOption(DEPENDENCIES);
-            fs.getRootFolder().archive(dir, mustZip, archiveDependencies);
+            boolean deleteResult = line.hasOption(DELETE_RESULT_OPTNAME);
+            Map<String, List<String>> outputBlackList = new HashMap<>();
+            if (deleteResult) {
+                outputBlackList = PROJECT_FILE_EXECUTION.getServices().stream()
+                        .collect(Collectors.toMap(ProjectFileExtension::getProjectFilePseudoClass,
+                                ProjectFileExtension::getOutputList));
+            }
+            fs.getRootFolder().archive(dir, mustZip, archiveDependencies, outputBlackList);
         }
     }
 
