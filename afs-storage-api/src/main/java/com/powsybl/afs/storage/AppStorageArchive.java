@@ -429,7 +429,7 @@ public class AppStorageArchive {
                 stream.forEach(timeSeriesNameDir -> {
                     try {
                         String timeSeriesName = URLDecoder.decode(timeSeriesNameDir.getFileName().toString(), StandardCharsets.UTF_8.name());
-                        timeSeriesName = timeSeriesName.substring(0, timeSeriesName.length() - 3);
+                        timeSeriesName = timeSeriesName.substring(0, timeSeriesName.length() - TSEXTENSION.length());
                         timeSeriesNames.add(timeSeriesName);
                         TimeSeriesMetadata metadata;
                         try (Reader reader = Files.newBufferedReader(timeSeriesNameDir.resolve("metadata.json"), StandardCharsets.UTF_8)) {
