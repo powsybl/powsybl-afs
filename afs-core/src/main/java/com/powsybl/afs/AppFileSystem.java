@@ -8,6 +8,7 @@ package com.powsybl.afs;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.powsybl.afs.storage.AfsStorageException;
 import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.EventsBus;
 import com.powsybl.afs.storage.NodeInfo;
@@ -129,6 +130,7 @@ public class AppFileSystem implements AutoCloseable {
     /**
      * Retrieve a project node with undefined class
      * @param nodeId the node Id
+     * @throws AfsStorageException if the node not found
      * @return a typed node
      */
     public AbstractNodeBase fetchNode(String nodeId) {
