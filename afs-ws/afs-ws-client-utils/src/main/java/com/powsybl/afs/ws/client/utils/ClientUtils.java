@@ -93,7 +93,6 @@ public final class ClientUtils {
         } else {
             throw createUnexpectedResponseStatus(status);
         }
-
     }
 
     public static <T> T readEntityIfOk(Response response, GenericType<T> entityType) {
@@ -114,16 +113,11 @@ public final class ClientUtils {
 
     public static <T> Optional<T> readOptionalEntityIfOk(Response response, Class<T> entityType) {
         Response.Status status = Response.Status.fromStatusCode(response.getStatus());
-        if (status == Response.Status.OK) {
-            return Optional.of(readEntityAndLog(response, entityType));
-        } else if (status == Response.Status.NO_CONTENT) {
+        if (status == Response.Status.NO_CONTENT || status == Response.Status.NOT_FOUND) {
             LOGGER.trace("    --> null");
             return Optional.empty();
-        } else if (status == Response.Status.INTERNAL_SERVER_ERROR) {
-            throw createServerErrorException(response);
-        } else {
-            throw createUnexpectedResponseStatus(status);
         }
+        return Optional.of(readEntityIfOk(response, entityType));
     }
 
     public static UserSession authenticate(URI baseUri, String login, String password) {
