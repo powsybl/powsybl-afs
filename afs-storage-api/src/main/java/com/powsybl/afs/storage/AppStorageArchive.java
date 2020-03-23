@@ -50,6 +50,8 @@ public class AppStorageArchive {
 
     private static final String DEPENDENCIES = "dependencies";
 
+    private static final String TSEXTENSION = ".ts";
+
     private static class ArchiveDependency {
 
         @JsonProperty("nodeId")
@@ -204,7 +206,7 @@ public class AppStorageArchive {
         Files.createDirectory(timeSeriesDir);
 
         for (TimeSeriesMetadata metadata : storage.getTimeSeriesMetadata(nodeInfo.getId(), timeSeriesNames)) {
-            String timeSeriesFileName = URLEncoder.encode(metadata.getName(), StandardCharsets.UTF_8.name());
+            String timeSeriesFileName = URLEncoder.encode(metadata.getName() + TSEXTENSION, StandardCharsets.UTF_8.name());
             Path timeSeriesNameDir = timeSeriesDir.resolve(timeSeriesFileName);
             Files.createDirectory(timeSeriesNameDir);
 
@@ -427,6 +429,7 @@ public class AppStorageArchive {
                 stream.forEach(timeSeriesNameDir -> {
                     try {
                         String timeSeriesName = URLDecoder.decode(timeSeriesNameDir.getFileName().toString(), StandardCharsets.UTF_8.name());
+                        timeSeriesName = timeSeriesName.substring(0, timeSeriesName.length() - TSEXTENSION.length());
                         timeSeriesNames.add(timeSeriesName);
                         TimeSeriesMetadata metadata;
                         try (Reader reader = Files.newBufferedReader(timeSeriesNameDir.resolve("metadata.json"), StandardCharsets.UTF_8)) {
