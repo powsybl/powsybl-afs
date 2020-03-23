@@ -10,6 +10,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import com.powsybl.afs.mapdb.storage.MapDbAppStorage;
+import com.powsybl.afs.storage.AfsStorageException;
 import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.InMemoryEventsBus;
 import com.powsybl.afs.storage.NodeGenericMetadata;
@@ -509,6 +510,13 @@ public class AfsBaseTest {
         checkResult.accept(createdFile, afs.fetchNode(createdFile.getId()));
         checkResult.accept(nestedFile, afs.fetchNode(nestedFile.getId()));
         checkResult.accept(projectFolder, afs.fetchNode(projectFolder.getId()));
+
+        try {
+            afs.fetchNode(UUID.randomUUID().toString());
+            fail();
+        } catch (AfsStorageException e) {
+            // ignored
+        }
     }
 
     @Test
