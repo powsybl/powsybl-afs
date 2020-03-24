@@ -9,8 +9,8 @@ package com.powsybl.afs;
 
 import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.AppStorageArchive;
-import com.powsybl.afs.storage.Utils;
 import com.powsybl.afs.storage.NodeInfo;
+import com.powsybl.afs.storage.Utils;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -22,6 +22,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Stream;
+import java.util.zip.ZipInputStream;
 
 /**
  * Base class for all node objects stored in an AFS tree.
@@ -187,6 +188,23 @@ public abstract class AbstractNodeBase<F> {
                 Path zipPath = dir.getParent().resolve(dir.getFileName() + ".zip");
                 Utils.zip(dir, zipPath, true);
             }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    /**
+     *
+     * @param dir The directory to archive
+     * @param archiveDependencies
+     * @param outputBlackList
+     * @return Returns an ZipInputStream representing the archived file
+     */
+    public ZipInputStream openArchiveStream(Path dir, boolean archiveDependencies, Map<String, List<String>> outputBlackList) {
+        Objects.requireNonNull(dir);
+        try {
+            new AppStorageArchive(storage).archive(info.getId(), dir, archiveDependencies, outputBlackList);
+            return Utils.zip(dir, true);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

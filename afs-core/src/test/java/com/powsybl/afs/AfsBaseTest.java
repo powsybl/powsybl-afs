@@ -10,11 +10,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import com.powsybl.afs.mapdb.storage.MapDbAppStorage;
-import com.powsybl.afs.storage.AfsStorageException;
-import com.powsybl.afs.storage.AppStorage;
-import com.powsybl.afs.storage.InMemoryEventsBus;
-import com.powsybl.afs.storage.NodeGenericMetadata;
-import com.powsybl.afs.storage.NodeInfo;
+import com.powsybl.afs.storage.*;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.iidm.network.NetworkFactoryService;
 import org.junit.After;
@@ -31,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.zip.ZipInputStream;
 
 import static org.junit.Assert.*;
 
@@ -248,6 +245,22 @@ public class AfsBaseTest {
         ProjectFolder dir2 = rootFolder.createFolder("dir2");
         dir2.unarchive(child, true);
         assertEquals(1, dir2.getChildren().size());
+    }
+
+    @Test
+    public void archiveInMemory() throws IOException {
+        Project project = afs.getRootFolder().createProject("test");
+        ProjectFolder rootFolder = project.getRootFolder();
+        ProjectFolder dir1 = rootFolder.createFolder("dir1");
+        String nodeId = dir1.getId();
+        Path rootDir = fileSystem.getPath("/root");
+        Files.createDirectory(rootDir);
+        Files.createDirectory(rootDir.resolve("test"));
+        try (ZipInputStream zis = dir1.openArchiveStream(rootDir.resolve("test"), true, new HashMap<>())) {
+            assertEquals(nodeId + "/", zis.getNextEntry().getName());
+            assertEquals(nodeId + "/info.json", zis.getNextEntry().getName());
+            assertNull(zis.getNextEntry());
+        }
     }
 
     @Test
