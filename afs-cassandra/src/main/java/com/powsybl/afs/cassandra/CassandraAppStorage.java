@@ -760,7 +760,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
                                                                    .value(CMB, nodeInfo.getGenericMetadata().getBooleans()));
         getSession().execute(batchStatement);
 
-        pushEvent(new ParentChanged(nodeId), APPSTORAGE_NODE_TOPIC);
+        pushEvent(new ParentChanged(nodeId, newParentNodeId), APPSTORAGE_NODE_TOPIC);
     }
 
     @Override

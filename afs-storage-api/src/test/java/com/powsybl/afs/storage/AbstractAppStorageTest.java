@@ -467,7 +467,7 @@ public abstract class AbstractAppStorageTest {
         storage.flush();
 
         // check event
-        assertEventStack(new ParentChanged(fileInfo.getId()));
+        assertEventStack(new ParentChanged(fileInfo.getId(), folder2Info.getId()));
 
         // check parent folder change
         assertEquals(folder2Info, storage.getParentNode(fileInfo.getId()).orElseThrow(AssertionError::new));

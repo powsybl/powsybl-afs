@@ -16,9 +16,17 @@ public class ParentChanged extends NodeEvent {
 
     public static final String TYPENAME = "PARENT_CHANGED";
 
+    @JsonProperty("newParentId")
+    private String newParentId;
+
     @JsonCreator
-    public ParentChanged(@JsonProperty("id") String id) {
+    public ParentChanged(@JsonProperty("id") String id, @JsonProperty("newParentId") String newParentId) {
         super(id, TYPENAME);
+        this.newParentId = newParentId;
+    }
+
+    public String getNewParentId() {
+        return newParentId;
     }
 
     @Override

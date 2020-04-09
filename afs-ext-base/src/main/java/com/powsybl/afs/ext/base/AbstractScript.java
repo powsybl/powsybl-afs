@@ -77,6 +77,16 @@ public abstract class AbstractScript<T extends AbstractScript> extends ProjectFi
         invalidate();
     }
 
+    public void updateIncludedDependencies(List<T> includeScripts) {
+        for (AbstractScript include : includeScripts) {
+            if (getId().equals(include.getId()) || include.hasDeepDependency(this)) {
+                throw new AfsCircularDependencyException();
+            }
+        }
+        orderedDependencyManager.setDependencies(INCLUDED_SCRIPTS_DEPENDENCY_NAME, includeScripts.stream().map(ProjectNode.class::cast).collect(Collectors.toList()));
+        invalidate();
+    }
+
     public void switchIncludedDependencies(int dependencyIndex1, int dependencyIndex2) {
         List<AbstractScript> includedScripts = getIncludedScripts();
         if (dependencyIndex1 < 0 || dependencyIndex1 >= includedScripts.size() || dependencyIndex2 < 0 || dependencyIndex2 >= includedScripts.size()) {
