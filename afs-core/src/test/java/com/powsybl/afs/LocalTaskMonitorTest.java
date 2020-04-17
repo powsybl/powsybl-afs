@@ -68,6 +68,7 @@ public class LocalTaskMonitorTest extends AbstractProjectFileTest {
             TaskMonitor.Task task = monitor.startTask(foo);
             assertEquals("foo", task.getName());
             assertEquals(1, events.size());
+            assertEquals(foo.getId(), task.getNodeId());
             assertEquals(new StartTaskEvent(task.getId(), 1L, "foo"), events.pop());
 
             assertEquals(1L, monitor.takeSnapshot(null).getRevision());

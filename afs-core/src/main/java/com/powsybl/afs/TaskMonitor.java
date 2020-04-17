@@ -46,6 +46,9 @@ public interface TaskMonitor extends AutoCloseable {
         @JsonProperty("projectId")
         private final String projectId;
 
+        @JsonProperty("nodeId")
+        private final String nodeId;
+
         @JsonProperty("cancellable")
         private boolean cancellable;
 
@@ -53,7 +56,15 @@ public interface TaskMonitor extends AutoCloseable {
                     String message,
                     long revision,
                     String projectId) {
-            this(name, message, revision, projectId, false);
+            this(name, message, revision, projectId, null, false);
+        }
+
+        public Task(String name,
+                    String message,
+                    long revision,
+                    String projectId,
+                    String nodeId) {
+            this(name, message, revision, projectId, nodeId, false);
         }
 
         @JsonCreator
@@ -61,12 +72,14 @@ public interface TaskMonitor extends AutoCloseable {
                     @JsonProperty("message") String message,
                     @JsonProperty("revision") long revision,
                     @JsonProperty("projectId") String projectId,
+                    @JsonProperty("nodeId") String nodeId,
                     @JsonProperty("cancellable") boolean cancellable) {
             id = UUID.randomUUID();
             this.name = Objects.requireNonNull(name);
             this.message = message;
             this.revision = revision;
             this.projectId = Objects.requireNonNull(projectId);
+            this.nodeId = nodeId;
             this.cancellable = cancellable;
         }
 
@@ -77,6 +90,7 @@ public interface TaskMonitor extends AutoCloseable {
             message = other.message;
             revision = other.revision;
             projectId = other.projectId;
+            nodeId = other.nodeId;
             cancellable = other.cancellable;
         }
 
@@ -114,6 +128,10 @@ public interface TaskMonitor extends AutoCloseable {
 
         String getProjectId() {
             return projectId;
+        }
+
+        public String getNodeId() {
+            return nodeId;
         }
 
         @Override
