@@ -48,6 +48,9 @@ public class LocalTaskMonitorTest extends AbstractProjectFileTest {
                 .withName("foo")
                 .build();
 
+        TaskMonitor.Task legacyTask = new TaskMonitor.Task("test", "test", 1L, test.getId());
+        assertNull(legacyTask.getNodeId());
+
         try (TaskMonitor monitor = new LocalTaskMonitor()) {
             Deque<TaskEvent> events = new ArrayDeque<>();
             TaskListener listener = new TaskListener() {

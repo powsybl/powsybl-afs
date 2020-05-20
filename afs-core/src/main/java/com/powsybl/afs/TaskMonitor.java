@@ -136,7 +136,7 @@ public interface TaskMonitor extends AutoCloseable {
 
         @Override
         public int hashCode() {
-            return Objects.hash(id, name, message, revision, projectId);
+            return Objects.hash(id, name, message, revision, nodeId, projectId);
         }
 
         @Override
@@ -147,6 +147,7 @@ public interface TaskMonitor extends AutoCloseable {
                         && name.equals(other.name)
                         && Objects.equals(message, other.message)
                         && revision == other.revision
+                        && nodeId.equals(other.nodeId)
                         && projectId.equals(other.projectId);
             }
             return false;
