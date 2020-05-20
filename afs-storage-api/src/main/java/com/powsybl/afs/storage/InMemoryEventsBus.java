@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.locks.Lock;
@@ -52,17 +53,19 @@ public class InMemoryEventsBus implements EventsBus {
     public void flush() {
         lock.lock();
         try {
+            // to prevent the same thread to reenter the lock and modify the list
+            List<NodeEventList> eventsToSend = new ArrayList<>(topics);
+            topics.clear();
             listeners.log();
-            listeners.notify(l -> topics.forEach(nodeEventList -> {
+            listeners.notify(l -> eventsToSend.forEach(nodeEventList -> {
                 if (l.topics().isEmpty() || l.topics().contains(nodeEventList.getTopic())) {
                     try {
-                        l.onEvents(nodeEventList);
+                        l.onEvents(new NodeEventList(Collections.unmodifiableList(nodeEventList.getEvents()), nodeEventList.getTopic()));
                     } catch (Exception e) {
                         LOGGER.error("Handler failed to consume events {}", nodeEventList, e);
                     }
                 }
             }));
-            topics.clear();
         } finally {
             lock.unlock();
         }
