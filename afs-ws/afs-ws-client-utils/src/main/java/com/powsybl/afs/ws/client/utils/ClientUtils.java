@@ -113,6 +113,8 @@ public final class ClientUtils {
 
     public static <T> Optional<T> readOptionalEntityIfOk(Response response, Class<T> entityType) {
         Response.Status status = Response.Status.fromStatusCode(response.getStatus());
+        // the NO_CONTENT case is for backwards compatibility.
+        // The remote AppStorageServer may still runs on an old version which response with 204 if it not found resources.
         if (status == Response.Status.NO_CONTENT || status == Response.Status.NOT_FOUND) {
             LOGGER.trace("    --> null");
             return Optional.empty();
