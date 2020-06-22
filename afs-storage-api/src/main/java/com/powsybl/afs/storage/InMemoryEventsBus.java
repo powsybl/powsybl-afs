@@ -51,24 +51,27 @@ public class InMemoryEventsBus implements EventsBus {
 
     @Override
     public void flush() {
+        List<NodeEventList> eventsToSend;
         lock.lock();
         try {
-            // to prevent the same thread to reenter the lock and modify the list
-            List<NodeEventList> eventsToSend = new ArrayList<>(topics);
+            // to prevent the same thread to reenter the lock and modify the list : a listener that produces other events
+            eventsToSend = new ArrayList<>(topics);
             topics.clear();
-            listeners.log();
-            listeners.notify(l -> eventsToSend.forEach(nodeEventList -> {
-                if (l.topics().isEmpty() || l.topics().contains(nodeEventList.getTopic())) {
-                    try {
-                        l.onEvents(new NodeEventList(Collections.unmodifiableList(nodeEventList.getEvents()), nodeEventList.getTopic()));
-                    } catch (Exception e) {
-                        LOGGER.error("Handler failed to consume events {}", nodeEventList, e);
-                    }
-                }
-            }));
         } finally {
             lock.unlock();
         }
+
+        listeners.log();
+        listeners.notify(l -> eventsToSend.forEach(nodeEventList -> {
+            if (l.topics().isEmpty() || l.topics().contains(nodeEventList.getTopic())) {
+                try {
+                    l.onEvents(new NodeEventList(Collections.unmodifiableList(nodeEventList.getEvents()), nodeEventList.getTopic()));
+                } catch (Exception e) {
+                    LOGGER.error("Handler failed to consume events {}", nodeEventList, e);
+                }
+            }
+        }));
+
     }
 
     @Override
