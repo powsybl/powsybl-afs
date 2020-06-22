@@ -741,10 +741,15 @@ public class CassandraAppStorage extends AbstractAppStorage {
         changeBuffer.flush();
 
         NodeInfo nodeInfo = getNodeInfo(nodeId);
+        UUID currentParentId = getParentNodeUuid(nodeUuid);
+        if (currentParentId == null) {
+            throw new AfsStorageException("Cannot change parent of root folder");
+        }
+
         BatchStatement batchStatement = new BatchStatement();
         batchStatement.add(update(CHILDREN_BY_NAME_AND_CLASS).with(set(PARENT_ID, newParentNodeUuid))
                                                                .where(eq(ID, nodeUuid)));
-        batchStatement.add(delete().from(CHILDREN_BY_NAME_AND_CLASS).where(eq(ID, getParentNodeUuid(nodeUuid)))
+        batchStatement.add(delete().from(CHILDREN_BY_NAME_AND_CLASS).where(eq(ID, currentParentId))
                                                                    .and(eq(CHILD_NAME, nodeInfo.getName())));
         batchStatement.add(insertInto(CHILDREN_BY_NAME_AND_CLASS).value(ID, newParentNodeUuid)
                                                                    .value(CHILD_NAME, nodeInfo.getName())
@@ -760,7 +765,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
                                                                    .value(CMB, nodeInfo.getGenericMetadata().getBooleans()));
         getSession().execute(batchStatement);
 
-        pushEvent(new ParentChanged(nodeId, newParentNodeId), APPSTORAGE_NODE_TOPIC);
+        pushEvent(new ParentChanged(nodeId, currentParentId.toString(), newParentNodeId), APPSTORAGE_NODE_TOPIC);
     }
 
     @Override
