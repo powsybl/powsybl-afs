@@ -31,7 +31,7 @@ import static org.junit.Assert.assertTrue;
 public class TimeSeriesIssueTest {
 
     @Rule
-    public CassandraCQLUnit cassandraCQLUnit = new CassandraCQLUnit(new ClassPathCQLDataSet("afs.cql", CassandraConstants.AFS_KEYSPACE));
+    public CassandraCQLUnit cassandraCQLUnit = new CassandraCQLUnit(new ClassPathCQLDataSet("afs.cql", CassandraConstants.AFS_KEYSPACE), null, 20000L);
 
     private CassandraAppStorage storage;
     private NodeInfo rootNodeId;
