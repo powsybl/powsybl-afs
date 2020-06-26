@@ -276,7 +276,10 @@ public abstract class AbstractAppStorageTest {
         storage.flush();
 
         // check event
-        assertEventStack(new NodeRemoved(testDataInfo.getId(), testFolderInfo.getId()));
+        assertEventStack(
+                new DependencyRemoved(testDataInfo.getId(), "mylink"),
+                new BackwardDependencyRemoved(testData2Info.getId(), "mylink"),
+                new NodeRemoved(testDataInfo.getId(), testFolderInfo.getId()));
 
         // check test folder children have been correctly updated
         assertEquals(2, storage.getChildNodes(testFolderInfo.getId()).size());
@@ -586,7 +589,7 @@ public abstract class AbstractAppStorageTest {
 
         checkMetadataEquality(metadata, node.getGenericMetadata());
 
-        discardEvents(18);
+        discardEvents(22);
 
         storage.setMetadata(node.getId(), cloneMetadata(metadata));
         storage.flush();

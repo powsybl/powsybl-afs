@@ -16,6 +16,7 @@ import com.powsybl.afs.storage.*;
 import com.powsybl.afs.storage.buffer.*;
 import com.powsybl.afs.storage.events.*;
 import com.powsybl.timeseries.*;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -799,21 +800,35 @@ public class CassandraAppStorage extends AbstractAppStorage {
         clearTimeSeries(nodeUuid, statements);
 
         // dependencies
+        List<Pair<UUID, String>> dependencies = getDependencyInfo(nodeUuid);
         ResultSet resultSet = getSession().execute(select(NAME, FROM_ID).from(BACKWARD_DEPENDENCIES)
                                                                                 .where(eq(TO_ID, nodeUuid)));
+
+        List<Pair<UUID, String>> backwardDependencies = new ArrayList<>();
         for (Row row : resultSet) {
             String name = row.getString(0);
             UUID otherNodeUuid = row.getUUID(1);
+            backwardDependencies.add(Pair.of(otherNodeUuid, name));
             statements.add(delete().from(DEPENDENCIES).where(eq(FROM_ID, otherNodeUuid))
                                                       .and(eq(NAME, name))
                                                       .and(eq(TO_ID, nodeUuid)));
         }
+
         statements.add(delete().from(DEPENDENCIES).where(eq(FROM_ID, nodeUuid)));
-        statements.add(delete().from(BACKWARD_DEPENDENCIES).where(in(TO_ID, getDependencyNodeUuids(nodeUuid))));
+        statements.add(delete().from(BACKWARD_DEPENDENCIES).where(in(TO_ID, dependencies.stream().map(Pair::getKey).collect(Collectors.toList()))));
 
         for (Statement statement : statements) {
             getSession().execute(statement);
         }
+
+        backwardDependencies.forEach(dep -> {
+            pushEvent(new DependencyRemoved(dep.getKey().toString(), dep.getValue()), APPSTORAGE_DEPENDENCY_TOPIC);
+            pushEvent(new BackwardDependencyRemoved(nodeUuid.toString(), dep.getValue()), APPSTORAGE_DEPENDENCY_TOPIC);
+        });
+        dependencies.forEach(dep -> {
+            pushEvent(new DependencyRemoved(nodeUuid.toString(), dep.getValue()), APPSTORAGE_DEPENDENCY_TOPIC);
+            pushEvent(new BackwardDependencyRemoved(dep.getKey().toString(), dep.getValue()), APPSTORAGE_DEPENDENCY_TOPIC);
+        });
 
         return parentNodeUuid;
     }
@@ -1332,13 +1347,13 @@ public class CassandraAppStorage extends AbstractAppStorage {
                 String.valueOf(APPSTORAGE_DEPENDENCY_TOPIC));
     }
 
-    private List<UUID> getDependencyNodeUuids(UUID nodeUuid) {
+    private List<Pair<UUID, String>> getDependencyInfo(UUID nodeUuid) {
         Objects.requireNonNull(nodeUuid);
-        List<UUID> dependencies = new ArrayList<>();
-        ResultSet resultSet = getSession().execute(select(TO_ID).from(DEPENDENCIES)
+        List<Pair<UUID, String>> dependencies = new ArrayList<>();
+        ResultSet resultSet = getSession().execute(select(TO_ID, NAME).from(DEPENDENCIES)
                                                                           .where(eq(FROM_ID, nodeUuid)));
         for (Row row : resultSet) {
-            dependencies.add(row.getUUID(0));
+            dependencies.add(Pair.of(row.getUUID(0), row.getString(1)));
         }
         return dependencies;
     }
