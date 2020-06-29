@@ -44,22 +44,8 @@ public final class Utils {
      */
     public static void zip(Path dir, Path zipPath, boolean deleteDirectory) throws IOException {
         try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(zipPath));
-             Stream<Path> walk = Files.walk(dir);) {
-            walk.filter(someFileToZip -> !someFileToZip.equals(dir))
-                    .forEach(
-                        someFileToZip -> {
-                            Path pathInZip = dir.relativize(someFileToZip);
-                            try {
-                                if (Files.isDirectory(someFileToZip)) {
-                                    addDirectory(zos, pathInZip);
-                                } else {
-                                    addFile(zos, someFileToZip, pathInZip);
-                                }
-                            } catch (IOException e) {
-                                throw new AfsStorageException(e.getMessage());
-                            }
-
-                        });
+             Stream<Path> walk = Files.walk(dir)) {
+            zip(walk, dir, zos);
         } catch (IOException | AfsStorageException e) {
             throw new IOException(e);
         }
@@ -67,6 +53,43 @@ public final class Utils {
         if (deleteDirectory) {
             deleteDirectory(dir);
         }
+    }
+
+    public static ZipInputStream zip(Path dir, boolean deleteDirectory) throws IOException {
+        byte[] bytes;
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             ZipOutputStream zos = new ZipOutputStream(baos);
+             Stream<Path> walk = Files.walk(dir)) {
+            zip(walk, dir, zos);
+            zos.close();
+            baos.close();
+            bytes = baos.toByteArray();
+        } catch (IOException | AfsStorageException e) {
+            throw new IOException(e);
+        }
+
+        if (deleteDirectory) {
+            deleteDirectory(dir);
+        }
+        return new ZipInputStream(new ByteArrayInputStream(bytes));
+    }
+
+    private static void zip(Stream<Path> walk, Path dir, ZipOutputStream zos) {
+        walk.filter(someFileToZip -> !someFileToZip.equals(dir))
+                .forEach(
+                    someFileToZip -> {
+                        Path pathInZip = dir.relativize(someFileToZip);
+                        try {
+                            if (Files.isDirectory(someFileToZip)) {
+                                addDirectory(zos, pathInZip);
+                            } else {
+                                addFile(zos, someFileToZip, pathInZip);
+                            }
+                        } catch (IOException e) {
+                            throw new AfsStorageException(e.getMessage());
+                        }
+
+                    });
     }
 
     /**
