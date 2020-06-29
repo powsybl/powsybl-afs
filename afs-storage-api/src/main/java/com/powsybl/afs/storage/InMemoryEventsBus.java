@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.locks.Lock;
@@ -50,22 +51,27 @@ public class InMemoryEventsBus implements EventsBus {
 
     @Override
     public void flush() {
+        List<NodeEventList> eventsToSend;
         lock.lock();
         try {
-            listeners.log();
-            listeners.notify(l -> topics.forEach(nodeEventList -> {
-                if (l.topics().isEmpty() || l.topics().contains(nodeEventList.getTopic())) {
-                    try {
-                        l.onEvents(nodeEventList);
-                    } catch (Exception e) {
-                        LOGGER.error("Handler failed to consume events {}", nodeEventList, e);
-                    }
-                }
-            }));
+            // to prevent the same thread to reenter the lock and modify the list : a listener that produces other events
+            eventsToSend = new ArrayList<>(topics);
             topics.clear();
         } finally {
             lock.unlock();
         }
+
+        listeners.log();
+        listeners.notify(l -> eventsToSend.forEach(nodeEventList -> {
+            if (l.topics().isEmpty() || l.topics().contains(nodeEventList.getTopic())) {
+                try {
+                    l.onEvents(new NodeEventList(Collections.unmodifiableList(nodeEventList.getEvents()), nodeEventList.getTopic()));
+                } catch (Exception e) {
+                    LOGGER.error("Handler failed to consume events {}", nodeEventList, e);
+                }
+            }
+        }));
+
     }
 
     @Override

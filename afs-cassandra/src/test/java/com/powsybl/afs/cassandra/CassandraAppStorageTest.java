@@ -19,7 +19,7 @@ import org.junit.Rule;
 public class CassandraAppStorageTest extends AbstractAppStorageTest {
 
     @Rule
-    public CassandraCQLUnit cassandraCQLUnit = new CassandraCQLUnit(new ClassPathCQLDataSet("afs.cql", CassandraConstants.AFS_KEYSPACE));
+    public CassandraCQLUnit cassandraCQLUnit = new CassandraCQLUnit(new ClassPathCQLDataSet("afs.cql", CassandraConstants.AFS_KEYSPACE), null, 20000L);
 
     @Override
     protected AppStorage createStorage() {
