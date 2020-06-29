@@ -27,10 +27,8 @@ public class ParentChanged extends NodeEvent {
     @JsonCreator
     public ParentChanged(@JsonProperty("id") String id, @JsonProperty("oldParentId") String oldParentId, @JsonProperty("newParentId") String newParentId) {
         super(id, TYPENAME);
-        Objects.requireNonNull(oldParentId);
-        Objects.requireNonNull(newParentId);
-        this.oldParentId = oldParentId;
-        this.newParentId = newParentId;
+        this.oldParentId = Objects.requireNonNull(oldParentId);
+        this.newParentId = Objects.requireNonNull(newParentId);
     }
 
     public String getNewParentId() {
