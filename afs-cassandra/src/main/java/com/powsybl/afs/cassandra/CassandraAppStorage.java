@@ -800,34 +800,36 @@ public class CassandraAppStorage extends AbstractAppStorage {
         clearTimeSeries(nodeUuid, statements);
 
         // dependencies
-        List<Pair<UUID, String>> dependencies = getDependencyInfo(nodeUuid);
+        Map<String, UUID> dependencies = getDependencyInfo(nodeUuid);
         ResultSet resultSet = getSession().execute(select(NAME, FROM_ID).from(BACKWARD_DEPENDENCIES)
                                                                                 .where(eq(TO_ID, nodeUuid)));
 
-        List<Pair<UUID, String>> backwardDependencies = new ArrayList<>();
+        Map<String, List<UUID>> backwardDependencies = new HashMap<>();
         for (Row row : resultSet) {
             String name = row.getString(0);
             UUID otherNodeUuid = row.getUUID(1);
-            backwardDependencies.add(Pair.of(otherNodeUuid, name));
+            List<UUID> uuids = backwardDependencies.computeIfAbsent(name, depName -> new ArrayList<>());
+            uuids.add(otherNodeUuid);
+            backwardDependencies.put(name, uuids);
             statements.add(delete().from(DEPENDENCIES).where(eq(FROM_ID, otherNodeUuid))
                                                       .and(eq(NAME, name))
                                                       .and(eq(TO_ID, nodeUuid)));
         }
 
         statements.add(delete().from(DEPENDENCIES).where(eq(FROM_ID, nodeUuid)));
-        statements.add(delete().from(BACKWARD_DEPENDENCIES).where(in(TO_ID, dependencies.stream().map(Pair::getKey).collect(Collectors.toList()))));
+        statements.add(delete().from(BACKWARD_DEPENDENCIES).where(in(TO_ID, new ArrayList<>(dependencies.values()))));
 
         for (Statement statement : statements) {
             getSession().execute(statement);
         }
 
-        backwardDependencies.forEach(dep -> {
-            pushEvent(new DependencyRemoved(dep.getKey().toString(), dep.getValue()), APPSTORAGE_DEPENDENCY_TOPIC);
-            pushEvent(new BackwardDependencyRemoved(nodeUuid.toString(), dep.getValue()), APPSTORAGE_DEPENDENCY_TOPIC);
+        backwardDependencies.entrySet().stream().flatMap(dep -> dep.getValue().stream().map(depUuid -> Pair.of(dep.getKey(), depUuid))).forEach(dep -> {
+            pushEvent(new DependencyRemoved(dep.getValue().toString(), dep.getKey()), APPSTORAGE_DEPENDENCY_TOPIC);
+            pushEvent(new BackwardDependencyRemoved(nodeUuid.toString(), dep.getKey()), APPSTORAGE_DEPENDENCY_TOPIC);
         });
-        dependencies.forEach(dep -> {
-            pushEvent(new DependencyRemoved(nodeUuid.toString(), dep.getValue()), APPSTORAGE_DEPENDENCY_TOPIC);
-            pushEvent(new BackwardDependencyRemoved(dep.getKey().toString(), dep.getValue()), APPSTORAGE_DEPENDENCY_TOPIC);
+        dependencies.forEach((key, value) -> {
+            pushEvent(new DependencyRemoved(nodeUuid.toString(), key), APPSTORAGE_DEPENDENCY_TOPIC);
+            pushEvent(new BackwardDependencyRemoved(value.toString(), key), APPSTORAGE_DEPENDENCY_TOPIC);
         });
 
         return parentNodeUuid;
@@ -1347,13 +1349,13 @@ public class CassandraAppStorage extends AbstractAppStorage {
                 String.valueOf(APPSTORAGE_DEPENDENCY_TOPIC));
     }
 
-    private List<Pair<UUID, String>> getDependencyInfo(UUID nodeUuid) {
+    private Map<String, UUID> getDependencyInfo(UUID nodeUuid) {
         Objects.requireNonNull(nodeUuid);
-        List<Pair<UUID, String>> dependencies = new ArrayList<>();
+        Map<String, UUID> dependencies = new HashMap<>();
         ResultSet resultSet = getSession().execute(select(TO_ID, NAME).from(DEPENDENCIES)
                                                                           .where(eq(FROM_ID, nodeUuid)));
         for (Row row : resultSet) {
-            dependencies.add(Pair.of(row.getUUID(0), row.getString(1)));
+            dependencies.put(row.getString(1), row.getUUID(0));
         }
         return dependencies;
     }
