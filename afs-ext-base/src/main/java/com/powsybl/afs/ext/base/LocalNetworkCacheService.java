@@ -9,6 +9,7 @@ package com.powsybl.afs.ext.base;
 import com.powsybl.afs.AfsException;
 import com.powsybl.afs.ProjectFile;
 import com.powsybl.commons.datasource.ReadOnlyDataSource;
+import com.powsybl.commons.datastore.ReadOnlyDataStore;
 import com.powsybl.iidm.import_.Importer;
 import com.powsybl.iidm.network.Network;
 import groovy.json.JsonOutput;
@@ -50,7 +51,13 @@ public class LocalNetworkCacheService implements NetworkCacheService {
         Importer importer = importedCase.getImporter();
         ReadOnlyDataSource dataSource = importedCase.getDataSource();
         Properties parameters = importedCase.getParameters();
-        Network network = importer.importData(dataSource, parameters);
+        Network network;
+        if (dataSource != null) {
+            network = importer.importData(dataSource, parameters);
+        } else {
+            ReadOnlyDataStore dataStore = importedCase.getDataStore();
+            network = importer.importDataStore(dataStore, parameters);
+        }
         return ScriptResult.of(network);
     }
 

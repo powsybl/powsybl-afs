@@ -16,6 +16,7 @@ import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.InMemoryEventsBus;
 import com.powsybl.afs.storage.NodeGenericMetadata;
 import com.powsybl.afs.storage.NodeInfo;
+import com.powsybl.commons.datastore.DataStores;
 import com.powsybl.iidm.export.ExportersLoader;
 import com.powsybl.iidm.export.ExportersLoaderList;
 import com.powsybl.iidm.import_.ImportConfig;
@@ -206,5 +207,26 @@ public class ImportedCaseTest extends AbstractProjectFileTest {
                 .build();
         assertNotNull(importedCase2);
         assertEquals("NetworkID", importedCase2.getName());
+    }
+
+    @Test
+    public void testDataStore() throws IOException {
+        Folder root = afs.getRootFolder();
+
+        // create project
+        Project project = root.createProject("project");
+        assertNotNull(project);
+
+        // create project folder
+        ProjectFolder folder = project.getRootFolder().createFolder("folder");
+        assertTrue(folder.getChildren().isEmpty());
+
+        ImportedCase importedCase = folder.fileBuilder(ImportedCaseBuilder.class)
+                .withDatastore(DataStores.createDataStore(fileSystem.getPath("/work")))
+                .withName("network.tst")
+                .build();
+        assertNotNull(importedCase);
+        assertEquals("network.tst", importedCase.getName());
+
     }
 }

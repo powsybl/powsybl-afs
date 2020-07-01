@@ -16,6 +16,10 @@ import com.powsybl.commons.datasource.DataSource;
 import com.powsybl.commons.datasource.DataSourceUtil;
 import com.powsybl.commons.datasource.MemDataSource;
 import com.powsybl.commons.datasource.ReadOnlyDataSource;
+import com.powsybl.commons.datastore.DataFormat;
+import com.powsybl.commons.datastore.DataPack;
+import com.powsybl.commons.datastore.NonUniqueResultException;
+import com.powsybl.commons.datastore.ReadOnlyDataStore;
 import com.powsybl.iidm.export.Exporters;
 import com.powsybl.iidm.export.ExportersLoader;
 import com.powsybl.iidm.export.ExportersServiceLoader;
@@ -33,6 +37,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Properties;
 
 /**
@@ -57,6 +62,8 @@ public class ImportedCaseBuilder implements ProjectFileBuilder<ImportedCase> {
     private Importer importer;
 
     private final Properties parameters = new Properties();
+
+    private ReadOnlyDataStore dataStore;
 
     public ImportedCaseBuilder(ProjectFileBuildContext context, ImportersLoader importersLoader, ImportConfig importConfig) {
         this(context, new ExportersServiceLoader(), importersLoader, importConfig);
@@ -102,6 +109,11 @@ public class ImportedCaseBuilder implements ProjectFileBuilder<ImportedCase> {
         return this;
     }
 
+    public ImportedCaseBuilder withDatastore(ReadOnlyDataStore dataStore) {
+        this.dataStore = Objects.requireNonNull(dataStore);
+        return this;
+    }
+
     public ImportedCaseBuilder withNetwork(Network network) {
         Objects.requireNonNull(network);
         if (name == null) {
@@ -124,7 +136,7 @@ public class ImportedCaseBuilder implements ProjectFileBuilder<ImportedCase> {
 
     @Override
     public ImportedCase build() {
-        if (dataSource == null) {
+        if (dataSource == null && dataStore == null) {
             throw new AfsException("Case or data source is not set");
         }
         if (name == null) {
@@ -134,14 +146,37 @@ public class ImportedCaseBuilder implements ProjectFileBuilder<ImportedCase> {
         if (context.getStorage().getChildNode(context.getFolderInfo().getId(), name).isPresent()) {
             throw new AfsException("Parent folder already contains a '" + name + "' node");
         }
+        NodeInfo info = null;
+        if (dataSource != null) {
 
-        // create project file
-        NodeInfo info = context.getStorage().createNode(context.getFolderInfo().getId(), name, ImportedCase.PSEUDO_CLASS, "", ImportedCase.VERSION,
-                new NodeGenericMetadata().setString(ImportedCase.FORMAT, importer.getFormat()));
+            // create project file
+            info = context.getStorage().createNode(context.getFolderInfo().getId(), name, ImportedCase.PSEUDO_CLASS, "", ImportedCase.VERSION,
+                    new NodeGenericMetadata().setString(ImportedCase.FORMAT, importer.getFormat()));
+            // store case data
+            importer.copy(dataSource, new AppStorageDataSource(context.getStorage(), info.getId(), info.getName()));
+        } else {
+            importer = Importers.findImporter(dataStore, name, importersLoader, context.getProject().getFileSystem().getData().getShortTimeExecutionComputationManager(), importConfig);
+            if (importer == null) {
+                throw new AfsException("No importer found for this data source");
+            }
 
-        // store case data
-        importer.copy(dataSource, new AppStorageDataSource(context.getStorage(), info.getId(), info.getName()));
-
+            // create project file
+            info = context.getStorage().createNode(context.getFolderInfo().getId(), name, ImportedCase.PSEUDO_CLASS, "", ImportedCase.VERSION,
+                    new NodeGenericMetadata().setString(ImportedCase.FORMAT, importer.getFormat()));
+            DataFormat df = importer.getDataFormat();
+            try {
+                Optional<DataPack> dp = df.newDataResolver().resolve(dataStore, this.name, null);
+                if (dp.isPresent()) {
+                    dp.get().copyTo(new AppStorageDataStore(context.getStorage(), info.getId()));
+                } else {
+                    throw new AfsException("DataPack not resolved");
+                }
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            } catch (NonUniqueResultException e) {
+                throw new AfsException("DataPack not unique");
+            }
+        }
         // store parameters
         try (Writer writer = new OutputStreamWriter(context.getStorage().writeBinaryData(info.getId(), ImportedCase.PARAMETERS), StandardCharsets.UTF_8)) {
             parameters.store(writer, "");
