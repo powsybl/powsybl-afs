@@ -21,6 +21,8 @@ import com.powsybl.timeseries.DoubleDataChunk;
 import com.powsybl.timeseries.StringDataChunk;
 import com.powsybl.timeseries.TimeSeriesMetadata;
 import io.swagger.annotations.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -46,6 +48,8 @@ import java.util.*;
 @Api(value = "/afs", tags = "afs")
 @JwtTokenNeeded
 public class AppStorageServer {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AppStorageServer.class);
 
     @Inject
     private AppDataBean appDataBean;
@@ -108,6 +112,7 @@ public class AppStorageServer {
                                @ApiParam(value = "Node Pseudo Class") @QueryParam("nodePseudoClass") String nodePseudoClass,
                                @ApiParam(value = "Version") @QueryParam("version") int version,
                                @ApiParam(value = "Node Meta Data") NodeGenericMetadata nodeMetadata) {
+        LOGGER.info("Creating node {} under parent {} with name {}", nodePseudoClass, childName, nodeId);
         AppStorage storage = appDataBean.getStorage(fileSystemName);
         NodeInfo newNodeInfo = storage.createNode(nodeId, childName, nodePseudoClass, description, version, nodeMetadata);
         return Response.ok().entity(newNodeInfo).build();
@@ -121,6 +126,7 @@ public class AppStorageServer {
     public Response setMetadata(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                               @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId,
                                               @ApiParam(value = "Node Meta Data") NodeGenericMetadata nodeMetadata) {
+        LOGGER.info("Udpating metadata for node {}", nodeId);
         AppStorage storage = appDataBean.getStorage(fileSystemName);
         storage.setMetadata(nodeId, nodeMetadata);
         return Response.ok().build();
@@ -168,6 +174,7 @@ public class AppStorageServer {
                                   @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId,
                                   @ApiParam(value = "Name") @PathParam("name") String name,
                                   @ApiParam(value = "To Node ID") @PathParam("toNodeId") String toNodeId) {
+        LOGGER.info("Adding dependency {} from {} to {}", name, nodeId, toNodeId);
         AppStorage storage = appDataBean.getStorage(fileSystemName);
         storage.addDependency(nodeId, name, toNodeId);
         return Response.ok().build();
@@ -193,6 +200,7 @@ public class AppStorageServer {
     @ApiResponses (value = {@ApiResponse(code = 200, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response deleteNode(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId) {
+        LOGGER.info("Deleting node {}", nodeId);
         AppStorage storage = appDataBean.getStorage(fileSystemName);
         String parentNodeId = storage.deleteNode(nodeId);
         return Response.ok(parentNodeId).build();
@@ -206,6 +214,7 @@ public class AppStorageServer {
     public Response setDescription(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                    @ApiParam(value = "File system name") @PathParam("nodeId") String nodeId,
                                    @ApiParam(value = "Description") String description) {
+        LOGGER.info("Updating description for node {}", nodeId);
         AppStorage storage = appDataBean.getStorage(fileSystemName);
         storage.setDescription(nodeId, description);
         return Response.ok().build();
@@ -231,6 +240,7 @@ public class AppStorageServer {
     public Response renameNode(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                    @ApiParam(value = "File system name") @PathParam("nodeId") String nodeId,
                                    @ApiParam(value = "Name") String name) {
+        LOGGER.info("Renaming node {} to {}", nodeId, name);
         AppStorage storage = appDataBean.getStorage(fileSystemName);
         storage.renameNode(nodeId, name);
         return Response.ok().build();
@@ -256,6 +266,7 @@ public class AppStorageServer {
                                     @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId,
                                     @ApiParam(value = "Name") @PathParam("name") String name,
                                     @ApiParam(value = "Binary Data") InputStream is) {
+        LOGGER.info("Updating data {} for node {}", name, nodeId);
         AppStorage storage = appDataBean.getStorage(fileSystemName);
         try (OutputStream os = storage.writeBinaryData(nodeId, name)) {
             if (os == null) {
@@ -318,6 +329,7 @@ public class AppStorageServer {
     public Response removeData(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId,
                                @ApiParam(value = "Data name") @PathParam("name") String name) {
+        LOGGER.info("Removing data {} for node {}", name, nodeId);
         AppStorage storage = appDataBean.getStorage(fileSystemName);
         boolean removed = storage.removeData(nodeId, name);
         return Response.ok().entity(removed).build();
@@ -331,6 +343,7 @@ public class AppStorageServer {
     public Response setParentNode(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                   @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId,
                                   @ApiParam(value = "New Parent Node ID") String newParentNodeId) {
+        LOGGER.info("Moving node {} under node {}", nodeId, newParentNodeId);
         AppStorage storage = appDataBean.getStorage(fileSystemName);
         storage.setParentNode(nodeId, newParentNodeId);
         return Response.ok().build();
@@ -392,6 +405,7 @@ public class AppStorageServer {
                                      @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId,
                                      @ApiParam(value = "Name") @PathParam("name") String name,
                                      @ApiParam(value = "To Node ID") @PathParam("toNodeId") String toNodeId) {
+        LOGGER.info("Removing dependency {} ({} -> {})", name, nodeId, toNodeId);
         AppStorage storage = appDataBean.getStorage(fileSystemName);
         storage.removeDependency(nodeId, name, toNodeId);
         return Response.ok().build();
@@ -441,6 +455,7 @@ public class AppStorageServer {
     public Response createTimeSeries(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                      @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId,
                                      @ApiParam(value = "Time Series Meta Data") TimeSeriesMetadata metadata) {
+        LOGGER.info("Creating timeseries {} for node {}", metadata.getName(), nodeId);
         AppStorage storage = appDataBean.getStorage(fileSystemName);
         storage.createTimeSeries(nodeId, metadata);
         return Response.ok().build();
@@ -586,6 +601,7 @@ public class AppStorageServer {
     @ApiResponses (value = {@ApiResponse(code = 200, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response clearTimeSeries(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                     @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId) {
+        LOGGER.info("Clearing timeseries for node {}", nodeId);
         AppStorage storage = appDataBean.getStorage(fileSystemName);
         storage.clearTimeSeries(nodeId);
         return Response.ok().build();
@@ -612,6 +628,7 @@ public class AppStorageServer {
                               @QueryParam("projectFileId") String projectFileId,
                               @QueryParam("projectId") String projectId,
                               @QueryParam("name") String name) {
+        LOGGER.info("Starting task {} for node {} ({})", name, projectFileId, projectId);
         AppFileSystem fileSystem = appDataBean.getFileSystem(fileSystemName);
         TaskMonitor.Task task;
         if (projectFileId != null) {
@@ -637,6 +654,7 @@ public class AppStorageServer {
     @ApiResponses (value = {@ApiResponse(code = 200, message = ""), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response stopTask(@PathParam("fileSystemName") String fileSystemName,
                              @PathParam("taskId") UUID taskId) {
+        LOGGER.info("Stopping task {}", taskId);
         AppFileSystem fileSystem = appDataBean.getFileSystem(fileSystemName);
         fileSystem.getTaskMonitor().stopTask(taskId);
         return Response.ok().build();
@@ -650,6 +668,7 @@ public class AppStorageServer {
     public Response updateTaskMessage(@PathParam("fileSystemName") String fileSystemName,
                                       @PathParam("taskId") UUID taskId,
                                       String message) {
+        LOGGER.info("Updating task {} with message {}", taskId, message);
         AppFileSystem fileSystem = appDataBean.getFileSystem(fileSystemName);
         fileSystem.getTaskMonitor().updateTaskMessage(taskId, message);
         return Response.ok().build();
@@ -674,6 +693,7 @@ public class AppStorageServer {
     @ApiResponses (value = {@ApiResponse(code = 200, message = "", response = Boolean.class), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
     public Response cancel(@PathParam("fileSystemName") String fileSystemName,
                                  @PathParam("taskId") String taskId) {
+        LOGGER.info("Canceling task {}", taskId);
         AppFileSystem fileSystem = appDataBean.getFileSystem(fileSystemName);
         boolean success = fileSystem.getTaskMonitor().cancelTaskComputation(UUID.fromString(taskId));
         return Response.ok(success).build();
