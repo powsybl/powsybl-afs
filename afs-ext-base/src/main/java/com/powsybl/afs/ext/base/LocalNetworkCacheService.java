@@ -56,7 +56,7 @@ public class LocalNetworkCacheService implements NetworkCacheService {
             network = importer.importData(dataSource, parameters);
         } else {
             ReadOnlyDataStore dataStore = importedCase.getDataStore();
-            network = importer.importDataStore(dataStore, parameters);
+            network = importer.importDataStore(dataStore, importedCase.getName(), parameters);
         }
         return ScriptResult.of(network);
     }

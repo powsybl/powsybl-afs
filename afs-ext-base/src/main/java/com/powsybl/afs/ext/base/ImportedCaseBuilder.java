@@ -165,7 +165,7 @@ public class ImportedCaseBuilder implements ProjectFileBuilder<ImportedCase> {
                     new NodeGenericMetadata().setString(ImportedCase.FORMAT, importer.getFormat()));
             DataFormat df = importer.getDataFormat();
             try {
-                Optional<DataPack> dp = df.newDataResolver().resolve(dataStore, this.name, null);
+                Optional<DataPack> dp = df.newDataResolver().resolve(dataStore, this.name, this.parameters);
                 if (dp.isPresent()) {
                     dp.get().copyTo(new AppStorageDataStore(context.getStorage(), info.getId()));
                 } else {

@@ -227,6 +227,6 @@ public class ImportedCaseTest extends AbstractProjectFileTest {
                 .build();
         assertNotNull(importedCase);
         assertEquals("network.tst", importedCase.getName());
-
+        assertNotNull(importedCase.getNetwork());
     }
 }
