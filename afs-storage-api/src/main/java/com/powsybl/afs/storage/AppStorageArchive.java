@@ -110,19 +110,26 @@ public class AppStorageArchive {
 
         private final Map<String, List<String>> outputBlackList = new HashMap<>();
 
+        private final Map<String, Boolean> keepTs = new HashMap<>();
+
         private final boolean archiveDependencies;
 
         public ArchiveContext(boolean archiveDependencies) {
             this.archiveDependencies = archiveDependencies;
         }
 
-        public ArchiveContext(boolean archiveDependencies, Map<String, List<String>> outputBlackList) {
+        public ArchiveContext(boolean archiveDependencies, Map<String, List<String>> outputBlackList, Map<String, Boolean> keepTs) {
             this.archiveDependencies = archiveDependencies;
             this.outputBlackList.putAll(outputBlackList);
+            this.keepTs.putAll(keepTs);
         }
 
         public Map<String, List<String>> getOutputBlackList() {
             return ImmutableMap.copyOf(outputBlackList);
+        }
+
+        public Map<String, Boolean> getkeepTSList() {
+            return ImmutableMap.copyOf(keepTs);
         }
 
         public List<String> getIdListObject() {
@@ -194,7 +201,7 @@ public class AppStorageArchive {
         }
     }
 
-    private void writeTimeSeries(NodeInfo nodeInfo, Path nodeDir) throws IOException {
+    private void writeTimeSeries(NodeInfo nodeInfo, Path nodeDir, ArchiveContext archiveDependencies) throws IOException {
         Set<String> timeSeriesNames = storage.getTimeSeriesNames(nodeInfo.getId());
         if (timeSeriesNames.isEmpty()) {
             return;
@@ -206,34 +213,36 @@ public class AppStorageArchive {
         Files.createDirectory(timeSeriesDir);
 
         for (TimeSeriesMetadata metadata : storage.getTimeSeriesMetadata(nodeInfo.getId(), timeSeriesNames)) {
-            String timeSeriesFileName = URLEncoder.encode(metadata.getName() + TSEXTENSION, StandardCharsets.UTF_8.name());
-            Path timeSeriesNameDir = timeSeriesDir.resolve(timeSeriesFileName);
-            Files.createDirectory(timeSeriesNameDir);
+            if (archiveDependencies.getkeepTSList().isEmpty() || archiveDependencies.getkeepTSList().get(nodeInfo.getPseudoClass())) {
+                String timeSeriesFileName = URLEncoder.encode(metadata.getName() + TSEXTENSION, StandardCharsets.UTF_8.name());
+                Path timeSeriesNameDir = timeSeriesDir.resolve(timeSeriesFileName);
+                Files.createDirectory(timeSeriesNameDir);
 
-            // write metadata
-            try (Writer writer = Files.newBufferedWriter(timeSeriesNameDir.resolve("metadata.json"), StandardCharsets.UTF_8)) {
-                objectWriter.writeValue(writer, metadata);
-            }
+                // write metadata
+                try (Writer writer = Files.newBufferedWriter(timeSeriesNameDir.resolve("metadata.json"), StandardCharsets.UTF_8)) {
+                    objectWriter.writeValue(writer, metadata);
+                }
 
-            // write chunks for each version
-            for (int version : storage.getTimeSeriesDataVersions(nodeInfo.getId(), metadata.getName())) {
-                switch (metadata.getDataType()) {
-                    case DOUBLE:
-                        List<DoubleDataChunk> doubleChunks = storage.getDoubleTimeSeriesData(nodeInfo.getId(), Collections.singleton(metadata.getName()), version).get(metadata.getName());
-                        try (Writer writer = new OutputStreamWriter(new GZIPOutputStream(Files.newOutputStream(timeSeriesNameDir.resolve("chunks-" + version + ".json.gz"))), StandardCharsets.UTF_8)) {
-                            objectWriter.writeValue(writer, doubleChunks);
-                        }
-                        break;
+                // write chunks for each version
+                for (int version : storage.getTimeSeriesDataVersions(nodeInfo.getId(), metadata.getName())) {
+                    switch (metadata.getDataType()) {
+                        case DOUBLE:
+                            List<DoubleDataChunk> doubleChunks = storage.getDoubleTimeSeriesData(nodeInfo.getId(), Collections.singleton(metadata.getName()), version).get(metadata.getName());
+                            try (Writer writer = new OutputStreamWriter(new GZIPOutputStream(Files.newOutputStream(timeSeriesNameDir.resolve("chunks-" + version + ".json.gz"))), StandardCharsets.UTF_8)) {
+                                objectWriter.writeValue(writer, doubleChunks);
+                            }
+                            break;
 
-                    case STRING:
-                        List<StringDataChunk> stringChunks = storage.getStringTimeSeriesData(nodeInfo.getId(), Collections.singleton(metadata.getName()), version).get(metadata.getName());
-                        try (Writer writer = new OutputStreamWriter(new GZIPOutputStream(Files.newOutputStream(timeSeriesNameDir.resolve("chunks-" + version + ".json.gz"))), StandardCharsets.UTF_8)) {
-                            objectWriter.writeValue(writer, stringChunks);
-                        }
-                        break;
+                        case STRING:
+                            List<StringDataChunk> stringChunks = storage.getStringTimeSeriesData(nodeInfo.getId(), Collections.singleton(metadata.getName()), version).get(metadata.getName());
+                            try (Writer writer = new OutputStreamWriter(new GZIPOutputStream(Files.newOutputStream(timeSeriesNameDir.resolve("chunks-" + version + ".json.gz"))), StandardCharsets.UTF_8)) {
+                                objectWriter.writeValue(writer, stringChunks);
+                            }
+                            break;
 
-                    default:
-                        throw new AssertionError("Unsupported data type " + metadata.getDataType());
+                        default:
+                            throw new AssertionError("Unsupported data type " + metadata.getDataType());
+                    }
                 }
             }
         }
@@ -280,12 +289,12 @@ public class AppStorageArchive {
         }
     }
 
-    public void archive(String nodeId, Path parentDir, boolean archiveDependencies, Map<String, List<String>> outputBlackList) {
+    public void archive(String nodeId, Path parentDir, boolean archiveDependencies, Map<String, List<String>> outputBlackList, Map<String, Boolean> keepTs) {
         Objects.requireNonNull(nodeId);
         Objects.requireNonNull(parentDir);
 
         try {
-            archive(storage.getNodeInfo(nodeId), parentDir, new ArchiveContext(archiveDependencies, outputBlackList));
+            archive(storage.getNodeInfo(nodeId), parentDir, new ArchiveContext(archiveDependencies, outputBlackList, keepTs));
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -316,7 +325,7 @@ public class AppStorageArchive {
 
             writeData(nodeInfo, nodeDir, archiveDependencies);
 
-            writeTimeSeries(nodeInfo, nodeDir);
+            writeTimeSeries(nodeInfo, nodeDir, archiveDependencies);
 
             archiveChildren(nodeInfo, nodeDir, archiveDependencies);
 

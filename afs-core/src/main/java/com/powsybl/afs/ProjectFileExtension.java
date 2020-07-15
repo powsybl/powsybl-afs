@@ -87,4 +87,11 @@ public interface ProjectFileExtension<T extends ProjectFile, U extends ProjectFi
     default List<String> getOutputList() {
         return Collections.emptyList();
     }
+
+    /**
+     * return list of output file in time-series folder
+     */
+    default Boolean keepTSWhenArchive() {
+        return true;
+    }
 }

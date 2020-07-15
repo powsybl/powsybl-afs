@@ -205,12 +205,16 @@ public class AppFileSystemTool implements Tool {
             boolean archiveDependencies = line.hasOption(DEPENDENCIES);
             boolean deleteResult = line.hasOption(DELETE_RESULT_OPTNAME);
             Map<String, List<String>> outputBlackList = new HashMap<>();
+            Map<String, Boolean> keepTs = new HashMap<>();
             if (deleteResult) {
                 outputBlackList = PROJECT_FILE_EXECUTION.getServices().stream()
                         .collect(Collectors.toMap(ProjectFileExtension::getProjectFilePseudoClass,
                                 ProjectFileExtension::getOutputList));
+                keepTs = PROJECT_FILE_EXECUTION.getServices().stream()
+                        .collect(Collectors.toMap(ProjectFileExtension::getProjectFilePseudoClass,
+                                ProjectFileExtension::keepTSWhenArchive));
             }
-            fs.getRootFolder().archive(dir, mustZip, archiveDependencies, outputBlackList);
+            fs.getRootFolder().archive(dir, mustZip, archiveDependencies, outputBlackList, keepTs);
         }
     }
 

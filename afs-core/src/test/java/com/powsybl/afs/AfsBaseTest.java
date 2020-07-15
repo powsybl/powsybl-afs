@@ -241,7 +241,7 @@ public class AfsBaseTest {
         Path rootDir = fileSystem.getPath("/root");
         Files.createDirectory(rootDir);
         Files.createDirectory(rootDir.resolve("test"));
-        dir1.archive(rootDir.resolve("test"), true, false, new HashMap<>());
+        dir1.archive(rootDir.resolve("test"), true, false, new HashMap<>(), new HashMap<>());
         child = rootDir.resolve("test.zip");
         assertTrue(Files.exists(child));
 
@@ -267,7 +267,7 @@ public class AfsBaseTest {
         List<String> deleteExtension = new ArrayList<>();
         deleteExtension.add("data1");
         blackList.put("projectFolder", deleteExtension);
-        dir1.archive(rootDir, blackList);
+        dir1.archive(rootDir, blackList, new HashMap<>());
         child = rootDir.resolve(dir1.getId());
         assertTrue(Files.exists(child));
 
@@ -300,7 +300,7 @@ public class AfsBaseTest {
         Path rootDir = fileSystem.getPath("/root");
         Files.createDirectory(rootDir);
         Files.createDirectory(rootDir.resolve("test"));
-        dir1.archive(rootDir.resolve("test"), true, true, new HashMap<>());
+        dir1.archive(rootDir.resolve("test"), true, true, new HashMap<>(), new HashMap<>());
         Path child = rootDir.resolve("test.zip");
         assertTrue(Files.exists(child));
 
@@ -347,7 +347,7 @@ public class AfsBaseTest {
         Path rootDir = fileSystem.getPath("/root");
         Files.createDirectory(rootDir);
         Files.createDirectory(rootDir.resolve("test"));
-        dir1.archive(rootDir.resolve("test"), true, true, new HashMap<>());
+        dir1.archive(rootDir.resolve("test"), true, true, new HashMap<>(), new HashMap<>());
         Path child = rootDir.resolve("test.zip");
         assertTrue(Files.exists(child));
 
@@ -396,7 +396,7 @@ public class AfsBaseTest {
         Path rootDir = fileSystem.getPath("/root");
         Files.createDirectory(rootDir);
         Files.createDirectory(rootDir.resolve("test"));
-        dir1.archive(rootDir.resolve("test"), true, true, new HashMap<>());
+        dir1.archive(rootDir.resolve("test"), true, true, new HashMap<>(), new HashMap<>());
         Path child = rootDir.resolve("test.zip");
         assertTrue(Files.exists(child));
 
