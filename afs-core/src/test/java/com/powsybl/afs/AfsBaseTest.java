@@ -341,8 +341,8 @@ public class AfsBaseTest {
         List<String> deleteTSPseudoClass = new ArrayList<>();
         deleteTSPseudoClass.add("METRIX");
         dir1.archive(rootDir.resolve("test"), false, true, new HashMap<>(), deleteTSPseudoClass);
-        Path child1 = rootDir.resolve("test/"+dir1.getId()+"/children/"+metrix.getId()+"/time-series/ts1.ts");
-        Path child2 = rootDir.resolve("test/"+dir1.getId()+"/children/"+timeSerieVituel.getId()+"/time-series/ts2.ts");
+        Path child1 = rootDir.resolve("test/" + dir1.getId() + "/children/" + metrix.getId() + "/time-series/ts1.ts");
+        Path child2 = rootDir.resolve("test/" + dir1.getId()+"/children/"+timeSerieVituel.getId() + "/time-series/ts2.ts");
         assertTrue(Files.exists(child2));
         assertTrue(Files.notExists(child1));
     }
