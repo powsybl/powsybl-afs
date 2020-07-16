@@ -20,10 +20,7 @@ import org.apache.commons.cli.Options;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -205,14 +202,13 @@ public class AppFileSystemTool implements Tool {
             boolean archiveDependencies = line.hasOption(DEPENDENCIES);
             boolean deleteResult = line.hasOption(DELETE_RESULT_OPTNAME);
             Map<String, List<String>> outputBlackList = new HashMap<>();
-            Map<String, Boolean> keepTs = new HashMap<>();
+            List<String> keepTs = new ArrayList<>();
             if (deleteResult) {
                 outputBlackList = PROJECT_FILE_EXECUTION.getServices().stream()
                         .collect(Collectors.toMap(ProjectFileExtension::getProjectFilePseudoClass,
                                 ProjectFileExtension::getOutputList));
-                keepTs = PROJECT_FILE_EXECUTION.getServices().stream()
-                        .collect(Collectors.toMap(ProjectFileExtension::getProjectFilePseudoClass,
-                                ProjectFileExtension::keepTSWhenArchive));
+                keepTs = PROJECT_FILE_EXECUTION.getServices().stream().filter(ProjectFileExtension::removeTSWhenArchive).map(ProjectFileExtension::getProjectFilePseudoClass)
+                        .collect(Collectors.toList());
             }
             fs.getRootFolder().archive(dir, mustZip, archiveDependencies, outputBlackList, keepTs);
         }

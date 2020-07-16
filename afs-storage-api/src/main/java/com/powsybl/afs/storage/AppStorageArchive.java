@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import com.powsybl.afs.storage.json.AppStorageJsonModule;
@@ -110,7 +111,7 @@ public class AppStorageArchive {
 
         private final Map<String, List<String>> outputBlackList = new HashMap<>();
 
-        private final Map<String, Boolean> keepTs = new HashMap<>();
+        private final List<String> removeTs = new ArrayList<>();
 
         private final boolean archiveDependencies;
 
@@ -118,18 +119,18 @@ public class AppStorageArchive {
             this.archiveDependencies = archiveDependencies;
         }
 
-        public ArchiveContext(boolean archiveDependencies, Map<String, List<String>> outputBlackList, Map<String, Boolean> keepTs) {
+        public ArchiveContext(boolean archiveDependencies, Map<String, List<String>> outputBlackList, List<String> removeTs) {
             this.archiveDependencies = archiveDependencies;
             this.outputBlackList.putAll(outputBlackList);
-            this.keepTs.putAll(keepTs);
+            this.removeTs.addAll(removeTs);
         }
 
         public Map<String, List<String>> getOutputBlackList() {
             return ImmutableMap.copyOf(outputBlackList);
         }
 
-        public Map<String, Boolean> getkeepTSList() {
-            return ImmutableMap.copyOf(keepTs);
+        public List<String> getRemoveTSList() {
+            return ImmutableList.copyOf(removeTs);
         }
 
         public List<String> getIdListObject() {
@@ -213,7 +214,7 @@ public class AppStorageArchive {
         Files.createDirectory(timeSeriesDir);
 
         for (TimeSeriesMetadata metadata : storage.getTimeSeriesMetadata(nodeInfo.getId(), timeSeriesNames)) {
-            if (archiveDependencies.getkeepTSList().isEmpty() || archiveDependencies.getkeepTSList().get(nodeInfo.getPseudoClass())) {
+            if (!archiveDependencies.getRemoveTSList().contains(nodeInfo.getPseudoClass())) {
                 String timeSeriesFileName = URLEncoder.encode(metadata.getName() + TSEXTENSION, StandardCharsets.UTF_8.name());
                 Path timeSeriesNameDir = timeSeriesDir.resolve(timeSeriesFileName);
                 Files.createDirectory(timeSeriesNameDir);
@@ -289,12 +290,12 @@ public class AppStorageArchive {
         }
     }
 
-    public void archive(String nodeId, Path parentDir, boolean archiveDependencies, Map<String, List<String>> outputBlackList, Map<String, Boolean> keepTs) {
+    public void archive(String nodeId, Path parentDir, boolean archiveDependencies, Map<String, List<String>> outputBlackList, List<String> removeTs) {
         Objects.requireNonNull(nodeId);
         Objects.requireNonNull(parentDir);
 
         try {
-            archive(storage.getNodeInfo(nodeId), parentDir, new ArchiveContext(archiveDependencies, outputBlackList, keepTs));
+            archive(storage.getNodeInfo(nodeId), parentDir, new ArchiveContext(archiveDependencies, outputBlackList, removeTs));
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

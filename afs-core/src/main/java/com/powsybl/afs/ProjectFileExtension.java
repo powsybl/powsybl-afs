@@ -91,7 +91,7 @@ public interface ProjectFileExtension<T extends ProjectFile, U extends ProjectFi
     /**
      * return list of output file in time-series folder
      */
-    default Boolean keepTSWhenArchive() {
-        return true;
+    default boolean removeTSWhenArchive() {
+        return false;
     }
 }
