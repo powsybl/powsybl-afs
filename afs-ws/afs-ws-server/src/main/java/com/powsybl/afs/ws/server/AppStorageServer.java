@@ -13,8 +13,8 @@ import com.powsybl.afs.storage.NodeDependency;
 import com.powsybl.afs.storage.NodeGenericMetadata;
 import com.powsybl.afs.storage.NodeInfo;
 import com.powsybl.afs.storage.buffer.*;
-import com.powsybl.afs.ws.server.utils.JwtTokenNeeded;
 import com.powsybl.afs.ws.server.utils.AppDataBean;
+import com.powsybl.afs.ws.server.utils.JwtTokenNeeded;
 import com.powsybl.afs.ws.utils.AfsRestApi;
 import com.powsybl.afs.ws.utils.gzip.Compress;
 import com.powsybl.timeseries.DoubleDataChunk;
@@ -109,7 +109,7 @@ public class AppStorageServer {
                                @ApiParam(value = "Version") @QueryParam("version") int version,
                                @ApiParam(value = "Node Meta Data") NodeGenericMetadata nodeMetadata) {
         AppStorage storage = appDataBean.getStorage(fileSystemName);
-        NodeInfo newNodeInfo =  storage.createNode(nodeId, childName, nodePseudoClass, description, version, nodeMetadata);
+        NodeInfo newNodeInfo = storage.createNode(nodeId, childName, nodePseudoClass, description, version, nodeMetadata);
         return Response.ok().entity(newNodeInfo).build();
     }
 
@@ -138,7 +138,7 @@ public class AppStorageServer {
         if (parentNodeInfo.isPresent()) {
             return Response.ok().entity(parentNodeInfo.get()).build();
         } else {
-            return Response.noContent().build();
+            return Response.status(Status.NOT_FOUND).build();
         }
     }
 
@@ -155,7 +155,7 @@ public class AppStorageServer {
         if (childNodeInfo.isPresent()) {
             return Response.status(Status.OK).entity(childNodeInfo.get()).build();
         } else {
-            return Response.status(Status.NO_CONTENT).build();
+            return Response.status(Status.NOT_FOUND).build();
         }
     }
 
