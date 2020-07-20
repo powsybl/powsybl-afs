@@ -428,7 +428,7 @@ public class MapDbAppStorage extends AbstractAppStorage {
         addToList(childNodesMap, newParentNodeUuid, nodeUuid);
         childNodeMap.put(new NamedLink(newParentNodeUuid, name), nodeUuid);
 
-        pushEvent(new ParentChanged(nodeId), APPSTORAGE_NODE_TOPIC);
+        pushEvent(new ParentChanged(nodeId, oldParentNodeUuid.toString(), newParentNodeId), APPSTORAGE_NODE_TOPIC);
     }
 
     @Override

@@ -9,6 +9,8 @@ package com.powsybl.afs.storage.events;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  */
@@ -16,27 +18,52 @@ public class ParentChanged extends NodeEvent {
 
     public static final String TYPENAME = "PARENT_CHANGED";
 
+    @JsonProperty("oldParentId")
+    private final String oldParentId;
+
+    @JsonProperty("newParentId")
+    private final String newParentId;
+
     @JsonCreator
-    public ParentChanged(@JsonProperty("id") String id) {
+    public ParentChanged(@JsonProperty("id") String id, @JsonProperty("oldParentId") String oldParentId, @JsonProperty("newParentId") String newParentId) {
         super(id, TYPENAME);
+        this.oldParentId = Objects.requireNonNull(oldParentId);
+        this.newParentId = Objects.requireNonNull(newParentId);
+    }
+
+    public String getNewParentId() {
+        return newParentId;
+    }
+
+    public String getOldParentId() {
+        return oldParentId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        ParentChanged that = (ParentChanged) o;
+        return Objects.equals(oldParentId, that.oldParentId) &&
+                Objects.equals(newParentId, that.newParentId) &&
+                Objects.equals(id, that.id);
     }
 
     @Override
     public int hashCode() {
-        return id.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj instanceof ParentChanged) {
-            ParentChanged other = (ParentChanged) obj;
-            return id.equals(other.id);
-        }
-        return false;
+        return Objects.hash(oldParentId, newParentId, id);
     }
 
     @Override
     public String toString() {
-        return "ParentChanged(id=" + id + ")";
+        return "ParentChanged{" +
+                "oldParentId='" + oldParentId + '\'' +
+                ", newParentId='" + newParentId + '\'' +
+                ", id='" + id + '\'' +
+                '}';
     }
 }
