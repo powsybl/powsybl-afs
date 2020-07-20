@@ -536,6 +536,8 @@ public class MapDbAppStorage extends AbstractAppStorage {
             for (NamedLink linkToRemove : linksToRemove) {
                 removeFromList(dependencyNodesMap, otherNodeUuid, linkToRemove);
                 dependencyNodesByNameMap.remove(new NamedLink(otherNodeUuid, linkToRemove.getName()));
+                pushEvent(new DependencyRemoved(linkToRemove.getNodeUuid().toString(), linkToRemove.getName()), APPSTORAGE_DEPENDENCY_TOPIC);
+                pushEvent(new BackwardDependencyRemoved(nodeUuid.toString(), linkToRemove.getName()), APPSTORAGE_DEPENDENCY_TOPIC);
             }
         }
 
@@ -543,6 +545,8 @@ public class MapDbAppStorage extends AbstractAppStorage {
         for (NamedLink link : dependencyNodesMap.get(nodeUuid)) {
             dependencyNodesByNameMap.remove(new NamedLink(nodeUuid, link.getName()));
             removeFromList(backwardDependencyNodesMap, link.getNodeUuid(), nodeUuid);
+            pushEvent(new DependencyRemoved(nodeUuid.toString(), link.getName()), APPSTORAGE_DEPENDENCY_TOPIC);
+            pushEvent(new BackwardDependencyRemoved(link.getNodeUuid().toString(), link.getName()), APPSTORAGE_DEPENDENCY_TOPIC);
         }
         dependencyNodesMap.remove(nodeUuid);
         return parentNodeUuid;
