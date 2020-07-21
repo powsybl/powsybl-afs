@@ -326,15 +326,15 @@ public class AfsBaseTest {
         ProjectFolder rootFolder = project.getRootFolder();
         ProjectFolder dir1 = rootFolder.createFolder("dir1");
         NodeInfo metrix = storage.createNode(dir1.getId(), "metrix", "METRIX", "", 0, new NodeGenericMetadata());
-        NodeInfo timeSerieVituel = storage.createNode(dir1.getId(), "timeSerieVituel", "TSV", "", 0, new NodeGenericMetadata());
+        NodeInfo timeSerieVirtuel = storage.createNode(dir1.getId(), "timeSerieVirtuel", "TSV", "", 0, new NodeGenericMetadata());
 
         RegularTimeSeriesIndex index = RegularTimeSeriesIndex.create(Interval.parse("2015-01-01T00:00:00Z/2015-01-01T01:45:00Z"),
                 Duration.ofMinutes(15));
         storage.createTimeSeries(metrix.getId(), new TimeSeriesMetadata("ts1", TimeSeriesDataType.STRING, index));
-        storage.createTimeSeries(timeSerieVituel.getId(), new TimeSeriesMetadata("ts2", TimeSeriesDataType.DOUBLE, index));
+        storage.createTimeSeries(timeSerieVirtuel.getId(), new TimeSeriesMetadata("ts2", TimeSeriesDataType.DOUBLE, index));
 
         storage.setConsistent(metrix.getId());
-        storage.setConsistent(timeSerieVituel.getId());
+        storage.setConsistent(timeSerieVirtuel.getId());
         Path rootDir = fileSystem.getPath("/root");
         Files.createDirectory(rootDir);
         Files.createDirectory(rootDir.resolve("test"));
@@ -342,7 +342,7 @@ public class AfsBaseTest {
         deleteTSPseudoClass.add("METRIX");
         dir1.archive(rootDir.resolve("test"), false, true, new HashMap<>(), deleteTSPseudoClass);
         Path child1 = rootDir.resolve("test/" + dir1.getId() + "/children/" + metrix.getId() + "/time-series/ts1.ts");
-        Path child2 = rootDir.resolve("test/" + dir1.getId() + "/children/" + timeSerieVituel.getId() + "/time-series/ts2.ts");
+        Path child2 = rootDir.resolve("test/" + dir1.getId() + "/children/" + timeSerieVirtuel.getId() + "/time-series/ts2.ts");
         assertTrue(Files.exists(child2));
         assertTrue(Files.notExists(child1));
     }
