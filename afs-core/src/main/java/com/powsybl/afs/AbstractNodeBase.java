@@ -177,12 +177,12 @@ public abstract class AbstractNodeBase<F> {
         return childNodes.stream().filter(nodeInfo -> !nodeInfo.getId().equals(getId())).anyMatch(nodeInfo -> nodeInfo.getName().equals(name));
     }
 
-    public void archive(Path dir, boolean useZip, boolean archiveDependencies, Map<String, List<String>> outputBlackList) {
+    public void archive(Path dir, boolean useZip, boolean archiveDependencies, Map<String, List<String>> outputBlackList, List<String> removeTs) {
 
         Objects.requireNonNull(dir);
 
         try {
-            new AppStorageArchive(storage).archive(info.getId(), dir, archiveDependencies, outputBlackList);
+            new AppStorageArchive(storage).archive(info.getId(), dir, archiveDependencies, outputBlackList, removeTs);
             if (useZip) {
                 Path zipPath = dir.getParent().resolve(dir.getFileName() + ".zip");
                 Utils.zip(dir, zipPath, true);
@@ -190,6 +190,10 @@ public abstract class AbstractNodeBase<F> {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    public void archive(Path dir, boolean useZip, boolean archiveDependencies, Map<String, List<String>> outputBlackList) {
+        archive(dir, useZip, archiveDependencies, outputBlackList, Collections.emptyList());
     }
 
     public void unarchive(Path dir, boolean isZipped) {
@@ -216,12 +220,16 @@ public abstract class AbstractNodeBase<F> {
         }
     }
 
+    public void archive(Path dir, Map<String, List<String>> outputBlackList, List<String> keepTs) {
+        archive(dir, false, false, outputBlackList, keepTs);
+    }
+
     public void archive(Path dir, Map<String, List<String>> outputBlackList) {
-        archive(dir, false, false, outputBlackList);
+        archive(dir, false, false, outputBlackList, Collections.emptyList());
     }
 
     public void archive(Path dir) {
-        archive(dir, false, false, Collections.emptyMap());
+        archive(dir, false, false, Collections.emptyMap(), Collections.emptyList());
     }
 
     public void unarchive(Path dir) {
