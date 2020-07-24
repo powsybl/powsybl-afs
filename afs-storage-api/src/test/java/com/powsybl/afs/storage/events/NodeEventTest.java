@@ -185,7 +185,7 @@ public class NodeEventTest {
 
     @Test
     public void parentChangedTest() throws IOException {
-        ParentChanged changed = new ParentChanged("a");
+        ParentChanged changed = new ParentChanged("a", "b", "c");
         assertEquals("a", changed.getId());
         assertEquals(ParentChanged.TYPENAME, changed.getType());
 
@@ -193,8 +193,8 @@ public class NodeEventTest {
         assertEquals(changed, changed2);
 
         new EqualsTester()
-                .addEqualityGroup(new ParentChanged("a"), new ParentChanged("a"))
-                .addEqualityGroup(new ParentChanged("b"), new ParentChanged("b"))
+                .addEqualityGroup(new ParentChanged("a", "b", "c"), new ParentChanged("a", "b", "c"))
+                .addEqualityGroup(new ParentChanged("b", "c", "d"), new ParentChanged("b", "c", "d"))
                 .testEquals();
     }
 
