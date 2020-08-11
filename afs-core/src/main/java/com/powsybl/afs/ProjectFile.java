@@ -46,7 +46,9 @@ public class ProjectFile extends ProjectNode {
 
     protected ProjectFile(ProjectFileCreationContext context, int codeVersion) {
         super(context, codeVersion, true);
-        storage.getEventsBus().addListener(l);
+        if (context.isConnected()) {
+            storage.getEventsBus().addListener(l);
+        }
     }
 
     @Override
@@ -57,7 +59,7 @@ public class ProjectFile extends ProjectNode {
     public List<ProjectDependency<ProjectNode>> getDependencies() {
         return storage.getDependencies(info.getId())
                 .stream()
-                .map(dependency -> new ProjectDependency<>(dependency.getName(), project.createProjectNode(dependency.getNodeInfo())))
+                .map(dependency -> new ProjectDependency<>(dependency.getName(), project.createProjectNode(dependency.getNodeInfo(), false)))
                 .collect(Collectors.toList());
     }
 
@@ -90,7 +92,7 @@ public class ProjectFile extends ProjectNode {
         Objects.requireNonNull(name);
         Objects.requireNonNull(nodeClass);
         return storage.getDependencies(info.getId(), name).stream()
-                .map(project::createProjectNode)
+                .map(nodeInfo -> project.createProjectNode(nodeInfo, false))
                 .filter(dependencyNode -> nodeClass.isAssignableFrom(dependencyNode.getClass()))
                 .map(nodeClass::cast)
                 .collect(Collectors.toList());
