@@ -46,7 +46,9 @@ public class ProjectFile extends ProjectNode {
 
     protected ProjectFile(ProjectFileCreationContext context, int codeVersion) {
         super(context, codeVersion, true);
-        storage.getEventsBus().addListener(l);
+        if (context.isConnected()) {
+            storage.getEventsBus().addListener(l);
+        }
     }
 
     @Override

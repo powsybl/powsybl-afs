@@ -16,14 +16,25 @@ import java.util.Objects;
  */
 public class ProjectFileCreationContext extends ProjectFileContext {
 
+    private final boolean connected;
+
     private final NodeInfo info;
 
     public ProjectFileCreationContext(NodeInfo info, AppStorage storage, Project project) {
+        this(info, storage, project, true);
+    }
+
+    public ProjectFileCreationContext(NodeInfo info, AppStorage storage, Project project, boolean connected) {
         super(storage, project);
         this.info = Objects.requireNonNull(info);
+        this.connected = connected;
     }
 
     public NodeInfo getInfo() {
         return info;
+    }
+
+    public boolean isConnected() {
+        return connected;
     }
 }
