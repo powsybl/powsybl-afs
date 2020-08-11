@@ -87,7 +87,7 @@ public class OrderedDependencyManager {
 
     private List<ProjectDependency<ProjectNode>> getDependencyCache() {
         if (dependencyCache == null) {
-            dependencyCache = projectFile.getDependencies();
+            dependencyCache = projectFile.getDependencies(true);
         }
         return dependencyCache;
     }

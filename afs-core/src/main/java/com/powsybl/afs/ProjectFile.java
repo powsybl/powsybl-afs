@@ -63,6 +63,13 @@ public class ProjectFile extends ProjectNode {
                 .collect(Collectors.toList());
     }
 
+    public List<ProjectDependency<ProjectNode>> getDependencies(boolean connected) {
+        return storage.getDependencies(info.getId())
+                .stream()
+                .map(dependency -> new ProjectDependency<>(dependency.getName(), project.createProjectNode(dependency.getNodeInfo(), connected)))
+                .collect(Collectors.toList());
+    }
+
     public void setDependencies(String name, List<ProjectNode> projectNodes) {
         Objects.requireNonNull(name);
         Objects.requireNonNull(projectNodes);
