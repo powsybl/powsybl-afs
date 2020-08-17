@@ -37,6 +37,9 @@ public interface TaskMonitor extends AutoCloseable {
         @JsonProperty("name")
         private final String name;
 
+        @JsonProperty("type")
+        private final String type;
+
         @JsonProperty("message")
         private String message;
 
@@ -56,7 +59,7 @@ public interface TaskMonitor extends AutoCloseable {
                     String message,
                     long revision,
                     String projectId) {
-            this(name, message, revision, projectId, null, false);
+            this(name, message, revision, projectId, null, false, null);
         }
 
         public Task(String name,
@@ -64,7 +67,16 @@ public interface TaskMonitor extends AutoCloseable {
                     long revision,
                     String projectId,
                     String nodeId) {
-            this(name, message, revision, projectId, nodeId, false);
+            this(name, message, revision, projectId, nodeId, false, null);
+        }
+
+        public Task(String name,
+                    String message,
+                    long revision,
+                    String projectId,
+                    String nodeId,
+                    boolean cancellable) {
+            this(name, message, revision, projectId, nodeId, false, null);
         }
 
         @JsonCreator
@@ -73,7 +85,9 @@ public interface TaskMonitor extends AutoCloseable {
                     @JsonProperty("revision") long revision,
                     @JsonProperty("projectId") String projectId,
                     @JsonProperty("nodeId") String nodeId,
-                    @JsonProperty("cancellable") boolean cancellable) {
+                    @JsonProperty("cancellable") boolean cancellable,
+                    @JsonProperty("type") String type
+        ) {
             id = UUID.randomUUID();
             this.name = Objects.requireNonNull(name);
             this.message = message;
@@ -81,6 +95,7 @@ public interface TaskMonitor extends AutoCloseable {
             this.projectId = Objects.requireNonNull(projectId);
             this.nodeId = nodeId;
             this.cancellable = cancellable;
+            this.type = type;
         }
 
         protected Task(Task other) {
@@ -92,6 +107,7 @@ public interface TaskMonitor extends AutoCloseable {
             projectId = other.projectId;
             nodeId = other.nodeId;
             cancellable = other.cancellable;
+            type = other.type;
         }
 
         public boolean isCancellable() {
@@ -108,6 +124,10 @@ public interface TaskMonitor extends AutoCloseable {
 
         public String getName() {
             return name;
+        }
+
+        public String getType() {
+            return type;
         }
 
         public String getMessage() {
@@ -148,7 +168,8 @@ public interface TaskMonitor extends AutoCloseable {
                         && Objects.equals(message, other.message)
                         && revision == other.revision
                         && nodeId.equals(other.nodeId)
-                        && projectId.equals(other.projectId);
+                        && projectId.equals(other.projectId)
+                        && Objects.equals(type, other.type);
             }
             return false;
         }
@@ -202,11 +223,34 @@ public interface TaskMonitor extends AutoCloseable {
     /**
      * Create a task monitoring object
      *
+     * @param projectFile related project file
+     * @param type the type name of the task
+     * @return the newly created task
+     */
+    default Task startTask(ProjectFile projectFile, String type) {
+        return startTask(projectFile);
+    }
+
+    /**
+     * Create a task monitoring object
+     *
      * @param name    name of the task
      * @param project related project
      * @return the newly created task
      */
     Task startTask(String name, Project project);
+
+    /**
+     * Create a task monitoring object
+     *
+     * @param name    name of the task
+     * @param project related project
+     * @param type the type name of the task
+     * @return the newly created task
+     */
+    default Task startTask(String name, Project project, String type) {
+        return startTask(name, project);
+    }
 
     /**
      * Remove the task monitoring object.

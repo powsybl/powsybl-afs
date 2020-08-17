@@ -627,6 +627,7 @@ public class AppStorageServer {
     public Response startTask(@PathParam("fileSystemName") String fileSystemName,
                               @QueryParam("projectFileId") String projectFileId,
                               @QueryParam("projectId") String projectId,
+                              @QueryParam("type") String type,
                               @QueryParam("name") String name) {
         logInfo("Starting task {} for node {} ({})", name, projectFileId, projectId);
         AppFileSystem fileSystem = appDataBean.getFileSystem(fileSystemName);
@@ -636,12 +637,12 @@ public class AppStorageServer {
             if (projectFile == null) {
                 throw new AfsException("Project file '" + projectFileId + "' not found in file system '" + fileSystemName + "'");
             }
-            task = fileSystem.getTaskMonitor().startTask(projectFile);
+            task = fileSystem.getTaskMonitor().startTask(projectFile, type);
         } else if (projectId != null && name != null) {
             Project project = fileSystem
                     .findProject(projectId)
                     .orElseThrow(() -> new AfsException("Project '" + projectId + "' not found in file system '" + fileSystemName + "'"));
-            task = fileSystem.getTaskMonitor().startTask(name, project);
+            task = fileSystem.getTaskMonitor().startTask(name, project, type);
         } else {
             throw new AfsException("Missing arguments");
         }

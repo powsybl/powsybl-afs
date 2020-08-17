@@ -73,6 +73,11 @@ public class RemoteTaskMonitor implements TaskMonitor {
 
     @Override
     public Task startTask(ProjectFile projectFile) {
+        return startTask(projectFile, null);
+    }
+
+    @Override
+    public Task startTask(ProjectFile projectFile, String type) {
         Objects.requireNonNull(projectFile);
 
         LOGGER.debug("startTask(fileSystemName={}, projectFile={})", fileSystemName, projectFile.getId());
@@ -80,6 +85,7 @@ public class RemoteTaskMonitor implements TaskMonitor {
         Response response = webTarget.path("fileSystems/{fileSystemName}/tasks")
                 .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
                 .queryParam("projectFileId", projectFile.getId())
+                .queryParam("type", type)
                 .request(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
                 .put(Entity.text(""));
@@ -90,8 +96,12 @@ public class RemoteTaskMonitor implements TaskMonitor {
         }
     }
 
-    @Override
     public Task startTask(String name, Project project) {
+        return startTask(name, project, null);
+    }
+
+    @Override
+    public Task startTask(String name, Project project, String type) {
         Objects.requireNonNull(name);
         Objects.requireNonNull(project);
 
@@ -101,6 +111,7 @@ public class RemoteTaskMonitor implements TaskMonitor {
                 .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
                 .queryParam("name", name)
                 .queryParam("projectId", project.getId())
+                .queryParam("type", type)
                 .request(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
                 .put(Entity.text(""));
