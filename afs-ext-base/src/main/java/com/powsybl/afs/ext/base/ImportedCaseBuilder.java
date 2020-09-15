@@ -6,29 +6,6 @@
  */
 package com.powsybl.afs.ext.base;
 
-import com.powsybl.afs.AfsException;
-import com.powsybl.afs.ProjectFileBuildContext;
-import com.powsybl.afs.ProjectFileBuilder;
-import com.powsybl.afs.ProjectFileCreationContext;
-import com.powsybl.afs.ext.base.events.CaseImported;
-import com.powsybl.afs.storage.*;
-import com.powsybl.commons.datasource.DataSource;
-import com.powsybl.commons.datasource.DataSourceUtil;
-import com.powsybl.commons.datasource.MemDataSource;
-import com.powsybl.commons.datasource.ReadOnlyDataSource;
-import com.powsybl.commons.datastore.DataFormat;
-import com.powsybl.commons.datastore.DataPack;
-import com.powsybl.commons.datastore.NonUniqueResultException;
-import com.powsybl.commons.datastore.ReadOnlyDataStore;
-import com.powsybl.iidm.export.Exporters;
-import com.powsybl.iidm.export.ExportersLoader;
-import com.powsybl.iidm.export.ExportersServiceLoader;
-import com.powsybl.iidm.import_.ImportConfig;
-import com.powsybl.iidm.import_.Importer;
-import com.powsybl.iidm.import_.Importers;
-import com.powsybl.iidm.import_.ImportersLoader;
-import com.powsybl.iidm.network.Network;
-
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UncheckedIOException;
@@ -37,8 +14,30 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Properties;
+
+import com.powsybl.afs.AfsException;
+import com.powsybl.afs.ProjectFileBuildContext;
+import com.powsybl.afs.ProjectFileBuilder;
+import com.powsybl.afs.ProjectFileCreationContext;
+import com.powsybl.afs.ext.base.events.CaseImported;
+import com.powsybl.afs.storage.AppStorageDataSource;
+import com.powsybl.afs.storage.AppStorageDataStore;
+import com.powsybl.afs.storage.NodeGenericMetadata;
+import com.powsybl.afs.storage.NodeInfo;
+import com.powsybl.commons.datasource.DataSource;
+import com.powsybl.commons.datasource.DataSourceUtil;
+import com.powsybl.commons.datasource.MemDataSource;
+import com.powsybl.commons.datasource.ReadOnlyDataSource;
+import com.powsybl.commons.datastore.DataPack;
+import com.powsybl.iidm.export.Exporters;
+import com.powsybl.iidm.export.ExportersLoader;
+import com.powsybl.iidm.export.ExportersServiceLoader;
+import com.powsybl.iidm.import_.ImportConfig;
+import com.powsybl.iidm.import_.Importer;
+import com.powsybl.iidm.import_.Importers;
+import com.powsybl.iidm.import_.ImportersLoader;
+import com.powsybl.iidm.network.Network;
 
 /**
  * Builder for the project file {@link ImportedCase}.
@@ -63,7 +62,7 @@ public class ImportedCaseBuilder implements ProjectFileBuilder<ImportedCase> {
 
     private final Properties parameters = new Properties();
 
-    private ReadOnlyDataStore dataStore;
+    private DataPack dataPack;
 
     public ImportedCaseBuilder(ProjectFileBuildContext context, ImportersLoader importersLoader, ImportConfig importConfig) {
         this(context, new ExportersServiceLoader(), importersLoader, importConfig);
@@ -109,8 +108,8 @@ public class ImportedCaseBuilder implements ProjectFileBuilder<ImportedCase> {
         return this;
     }
 
-    public ImportedCaseBuilder withDatastore(ReadOnlyDataStore dataStore) {
-        this.dataStore = Objects.requireNonNull(dataStore);
+    public ImportedCaseBuilder withDataPack(DataPack dataPack) {
+        this.dataPack = Objects.requireNonNull(dataPack);
         return this;
     }
 
@@ -136,7 +135,7 @@ public class ImportedCaseBuilder implements ProjectFileBuilder<ImportedCase> {
 
     @Override
     public ImportedCase build() {
-        if (dataSource == null && dataStore == null) {
+        if (dataSource == null && dataPack == null) {
             throw new AfsException("Case or data source is not set");
         }
         if (name == null) {
@@ -148,33 +147,25 @@ public class ImportedCaseBuilder implements ProjectFileBuilder<ImportedCase> {
         }
         NodeInfo info = null;
         if (dataSource != null) {
-
+            NodeGenericMetadata meta = new NodeGenericMetadata().setString(ImportedCase.FORMAT, importer.getFormat());
+            meta.setBoolean(ImportedCase.HAS_DATA_PACK, false);
             // create project file
             info = context.getStorage().createNode(context.getFolderInfo().getId(), name, ImportedCase.PSEUDO_CLASS, "", ImportedCase.VERSION,
-                    new NodeGenericMetadata().setString(ImportedCase.FORMAT, importer.getFormat()));
+                    meta);
             // store case data
             importer.copy(dataSource, new AppStorageDataSource(context.getStorage(), info.getId(), info.getName()));
         } else {
-            importer = Importers.findImporter(dataStore, name, importersLoader, context.getProject().getFileSystem().getData().getShortTimeExecutionComputationManager(), importConfig);
-            if (importer == null) {
-                throw new AfsException("No importer found for this data source");
-            }
-
+            NodeGenericMetadata meta = new NodeGenericMetadata().setString(ImportedCase.FORMAT, dataPack.getDataFormatId());
+            meta.setBoolean(ImportedCase.HAS_DATA_PACK, true);
+            dataPack.getMainEntry().ifPresent(entry -> meta.setString(DataPack.MAIN_ENTRY_TAG, entry.getName()));
             // create project file
             info = context.getStorage().createNode(context.getFolderInfo().getId(), name, ImportedCase.PSEUDO_CLASS, "", ImportedCase.VERSION,
-                    new NodeGenericMetadata().setString(ImportedCase.FORMAT, importer.getFormat()));
-            DataFormat df = importer.getDataFormat();
+                    meta);
+
             try {
-                Optional<DataPack> dp = df.newDataResolver().resolve(dataStore, this.name, this.parameters);
-                if (dp.isPresent()) {
-                    dp.get().copyTo(new AppStorageDataStore(context.getStorage(), info.getId()));
-                } else {
-                    throw new AfsException("DataPack not resolved");
-                }
+                dataPack.copyTo(new AppStorageDataStore(context.getStorage(), info.getId()));
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
-            } catch (NonUniqueResultException e) {
-                throw new AfsException("DataPack not unique");
             }
         }
         // store parameters

@@ -15,6 +15,7 @@ import com.powsybl.commons.datastore.NonUniqueResultException;
 import com.powsybl.commons.datastore.ReadOnlyDataStore;
 import com.powsybl.iidm.import_.Importer;
 import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.NetworkFactory;
 import com.powsybl.iidm.parameters.Parameter;
 import com.powsybl.iidm.parameters.ParameterType;
 
@@ -92,6 +93,11 @@ public class TestImporter implements Importer {
     @Override
     public DataFormat getDataFormat() {
         return new TestDataFormat("tst");
+    }
+
+    @Override
+    public Network importDataPack(DataPack dataPack, NetworkFactory networkFactory, Properties parameters) {
+        return network;
     }
 
 }

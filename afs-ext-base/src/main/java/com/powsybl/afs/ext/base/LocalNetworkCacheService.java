@@ -6,19 +6,21 @@
  */
 package com.powsybl.afs.ext.base;
 
-import com.powsybl.afs.AfsException;
-import com.powsybl.afs.ProjectFile;
-import com.powsybl.commons.datasource.ReadOnlyDataSource;
-import com.powsybl.commons.datastore.ReadOnlyDataStore;
-import com.powsybl.iidm.import_.Importer;
-import com.powsybl.iidm.network.Network;
-import groovy.json.JsonOutput;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Objects;
 import java.util.Properties;
 import java.util.UUID;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.powsybl.afs.AfsException;
+import com.powsybl.afs.ProjectFile;
+import com.powsybl.commons.datasource.ReadOnlyDataSource;
+import com.powsybl.iidm.import_.Importer;
+import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.NetworkFactory;
+
+import groovy.json.JsonOutput;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
@@ -51,13 +53,8 @@ public class LocalNetworkCacheService implements NetworkCacheService {
         Importer importer = importedCase.getImporter();
         ReadOnlyDataSource dataSource = importedCase.getDataSource();
         Properties parameters = importedCase.getParameters();
-        Network network;
-        if (dataSource != null) {
-            network = importer.importData(dataSource, parameters);
-        } else {
-            ReadOnlyDataStore dataStore = importedCase.getDataStore();
-            network = importer.importDataStore(dataStore, importedCase.getName(), parameters);
-        }
+        Network network = importedCase.getDataPack().map(p -> importer.importDataPack(p, NetworkFactory.findDefault(), parameters))
+                .orElse(importer.importData(dataSource, parameters));
         return ScriptResult.of(network);
     }
 
