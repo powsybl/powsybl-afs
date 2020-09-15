@@ -6,10 +6,9 @@
  */
 package com.powsybl.afs.storage;
 
-import org.junit.Test;
-
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+
+import org.junit.Test;
 
 /**
  * @author Giovanni Ferrari <giovanni.ferrari at techrain.eu>
@@ -18,10 +17,7 @@ public class AppStorageDataStoreTest {
 
     @Test
     public void fileNameTest() {
-        AppStorageDataStore.FileName fileName = new AppStorageDataStore.FileName("test.xml");
-        assertEquals("DATA_STORE_FILE_NAME__test.xml", fileName.toString());
-        AppStorageDataStore.Name name = AppStorageDataStore.Name.parse("DATA_STORE_FILE_NAME__test.xml");
-        assertTrue(name instanceof AppStorageDataStore.FileName);
-        assertEquals("test.xml", ((AppStorageDataStore.FileName) name).getName());
+        assertEquals("DATA_STORE_ENTRY_NAME__test.xml", AppStorageDataStore.getEntryDataName("test.xml"));
+
     }
 }
