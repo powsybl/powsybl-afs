@@ -16,6 +16,7 @@ import com.powsybl.afs.storage.*;
 import com.powsybl.afs.storage.buffer.*;
 import com.powsybl.afs.storage.events.*;
 import com.powsybl.timeseries.*;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -741,10 +742,15 @@ public class CassandraAppStorage extends AbstractAppStorage {
         changeBuffer.flush();
 
         NodeInfo nodeInfo = getNodeInfo(nodeId);
+        UUID currentParentId = getParentNodeUuid(nodeUuid);
+        if (currentParentId == null) {
+            throw new AfsStorageException("Cannot change parent of root folder");
+        }
+
         BatchStatement batchStatement = new BatchStatement();
         batchStatement.add(update(CHILDREN_BY_NAME_AND_CLASS).with(set(PARENT_ID, newParentNodeUuid))
                                                                .where(eq(ID, nodeUuid)));
-        batchStatement.add(delete().from(CHILDREN_BY_NAME_AND_CLASS).where(eq(ID, getParentNodeUuid(nodeUuid)))
+        batchStatement.add(delete().from(CHILDREN_BY_NAME_AND_CLASS).where(eq(ID, currentParentId))
                                                                    .and(eq(CHILD_NAME, nodeInfo.getName())));
         batchStatement.add(insertInto(CHILDREN_BY_NAME_AND_CLASS).value(ID, newParentNodeUuid)
                                                                    .value(CHILD_NAME, nodeInfo.getName())
@@ -760,7 +766,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
                                                                    .value(CMB, nodeInfo.getGenericMetadata().getBooleans()));
         getSession().execute(batchStatement);
 
-        pushEvent(new ParentChanged(nodeId), APPSTORAGE_NODE_TOPIC);
+        pushEvent(new ParentChanged(nodeId, currentParentId.toString(), newParentNodeId), APPSTORAGE_NODE_TOPIC);
     }
 
     @Override
@@ -799,21 +805,37 @@ public class CassandraAppStorage extends AbstractAppStorage {
         clearTimeSeries(nodeUuid, statements);
 
         // dependencies
+        Map<String, UUID> dependencies = getDependencyInfo(nodeUuid);
         ResultSet resultSet = getSession().execute(select(NAME, FROM_ID).from(BACKWARD_DEPENDENCIES)
                                                                                 .where(eq(TO_ID, nodeUuid)));
+
+        Map<String, List<UUID>> backwardDependencies = new HashMap<>();
         for (Row row : resultSet) {
             String name = row.getString(0);
             UUID otherNodeUuid = row.getUUID(1);
+            List<UUID> uuids = backwardDependencies.computeIfAbsent(name, depName -> new ArrayList<>());
+            uuids.add(otherNodeUuid);
+            backwardDependencies.put(name, uuids);
             statements.add(delete().from(DEPENDENCIES).where(eq(FROM_ID, otherNodeUuid))
                                                       .and(eq(NAME, name))
                                                       .and(eq(TO_ID, nodeUuid)));
         }
+
         statements.add(delete().from(DEPENDENCIES).where(eq(FROM_ID, nodeUuid)));
-        statements.add(delete().from(BACKWARD_DEPENDENCIES).where(in(TO_ID, getDependencyNodeUuids(nodeUuid))));
+        statements.add(delete().from(BACKWARD_DEPENDENCIES).where(in(TO_ID, new ArrayList<>(dependencies.values()))));
 
         for (Statement statement : statements) {
             getSession().execute(statement);
         }
+
+        backwardDependencies.entrySet().stream().flatMap(dep -> dep.getValue().stream().map(depUuid -> Pair.of(dep.getKey(), depUuid))).forEach(dep -> {
+            pushEvent(new DependencyRemoved(dep.getValue().toString(), dep.getKey()), APPSTORAGE_DEPENDENCY_TOPIC);
+            pushEvent(new BackwardDependencyRemoved(nodeUuid.toString(), dep.getKey()), APPSTORAGE_DEPENDENCY_TOPIC);
+        });
+        dependencies.forEach((key, value) -> {
+            pushEvent(new DependencyRemoved(nodeUuid.toString(), key), APPSTORAGE_DEPENDENCY_TOPIC);
+            pushEvent(new BackwardDependencyRemoved(value.toString(), key), APPSTORAGE_DEPENDENCY_TOPIC);
+        });
 
         return parentNodeUuid;
     }
@@ -1332,13 +1354,13 @@ public class CassandraAppStorage extends AbstractAppStorage {
                 String.valueOf(APPSTORAGE_DEPENDENCY_TOPIC));
     }
 
-    private List<UUID> getDependencyNodeUuids(UUID nodeUuid) {
+    private Map<String, UUID> getDependencyInfo(UUID nodeUuid) {
         Objects.requireNonNull(nodeUuid);
-        List<UUID> dependencies = new ArrayList<>();
-        ResultSet resultSet = getSession().execute(select(TO_ID).from(DEPENDENCIES)
+        Map<String, UUID> dependencies = new HashMap<>();
+        ResultSet resultSet = getSession().execute(select(TO_ID, NAME).from(DEPENDENCIES)
                                                                           .where(eq(FROM_ID, nodeUuid)));
         for (Row row : resultSet) {
-            dependencies.add(row.getUUID(0));
+            dependencies.put(row.getString(1), row.getUUID(0));
         }
         return dependencies;
     }

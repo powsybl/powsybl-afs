@@ -34,18 +34,22 @@ public class LocalTaskMonitor implements TaskMonitor {
     public Task startTask(ProjectFile projectFile) {
         Objects.requireNonNull(projectFile);
 
-        return startTask(projectFile.getName(), projectFile.getProject());
+        return startTask(projectFile.getName(), projectFile.getProject(), projectFile.getId());
     }
 
     @Override
     public Task startTask(String name, Project project) {
+        return startTask(name, project, null);
+    }
+
+    public Task startTask(String name, Project project, String nodeId) {
         Objects.requireNonNull(name);
         Objects.requireNonNull(project);
 
         lock.lock();
         try {
             revision++;
-            Task task = new Task(name, null, revision, project.getId());
+            Task task = new Task(name, null, revision, project.getId(), nodeId);
             tasks.put(task.getId(), task);
 
             // notification

@@ -17,10 +17,14 @@ import com.powsybl.afs.storage.NodeGenericMetadata;
 import com.powsybl.afs.storage.NodeInfo;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.iidm.network.NetworkFactoryService;
+import com.powsybl.timeseries.RegularTimeSeriesIndex;
+import com.powsybl.timeseries.TimeSeriesDataType;
+import com.powsybl.timeseries.TimeSeriesMetadata;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.threeten.extra.Interval;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -29,6 +33,7 @@ import java.io.Writer;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.*;
 import java.util.function.BiConsumer;
 
@@ -313,6 +318,33 @@ public class AfsBaseTest {
         assertEquals("data", listNode.get(0).getName());
         assertEquals("dir2", listNode.get(1).getName());
         assertEquals("data2", storage.getChildNodes(listNode.get(1).getId()).get(0).getName());
+    }
+
+    @Test
+    public void archiveAndUnarchiveTestRemoveTS() throws IOException {
+        Project project = afs.getRootFolder().createProject("test");
+        ProjectFolder rootFolder = project.getRootFolder();
+        ProjectFolder dir1 = rootFolder.createFolder("dir1");
+        NodeInfo metrix = storage.createNode(dir1.getId(), "metrix", "METRIX", "", 0, new NodeGenericMetadata());
+        NodeInfo virtualTimeSeries = storage.createNode(dir1.getId(), "virtualTimeSeries", "TSV", "", 0, new NodeGenericMetadata());
+
+        RegularTimeSeriesIndex index = RegularTimeSeriesIndex.create(Interval.parse("2015-01-01T00:00:00Z/2015-01-01T01:45:00Z"),
+                Duration.ofMinutes(15));
+        storage.createTimeSeries(metrix.getId(), new TimeSeriesMetadata("ts1", TimeSeriesDataType.STRING, index));
+        storage.createTimeSeries(virtualTimeSeries.getId(), new TimeSeriesMetadata("ts2", TimeSeriesDataType.DOUBLE, index));
+
+        storage.setConsistent(metrix.getId());
+        storage.setConsistent(virtualTimeSeries.getId());
+        Path rootDir = fileSystem.getPath("/root");
+        Files.createDirectory(rootDir);
+        Files.createDirectory(rootDir.resolve("test"));
+        List<String> deleteTSPseudoClass = new ArrayList<>();
+        deleteTSPseudoClass.add("METRIX");
+        dir1.archive(rootDir.resolve("test"), false, true, new HashMap<>(), deleteTSPseudoClass);
+        Path child1 = rootDir.resolve("test/" + dir1.getId() + "/children/" + metrix.getId() + "/time-series/ts1.ts");
+        Path child2 = rootDir.resolve("test/" + dir1.getId() + "/children/" + virtualTimeSeries.getId() + "/time-series/ts2.ts");
+        assertTrue(Files.exists(child2));
+        assertTrue(Files.notExists(child1));
     }
 
     @Test

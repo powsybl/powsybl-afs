@@ -296,7 +296,7 @@ public class AppData implements AutoCloseable {
      * @param remoteStorage if {@code true}, tries to get a remote implementation first.
      * @throws AfsException if no service implementation is found.
      */
-    <U> U findService(Class<U> serviceClass, boolean remoteStorage) {
+    public <U> U findService(Class<U> serviceClass, boolean remoteStorage) {
         loadServices();
         U service = null;
         if (remoteStorage) {
