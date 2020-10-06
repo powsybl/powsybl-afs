@@ -57,10 +57,7 @@ public class ProjectFile extends ProjectNode {
     }
 
     public List<ProjectDependency<ProjectNode>> getDependencies() {
-        return storage.getDependencies(info.getId())
-                .stream()
-                .map(dependency -> new ProjectDependency<>(dependency.getName(), project.createProjectNode(dependency.getNodeInfo(), false)))
-                .collect(Collectors.toList());
+        return getDependencies(false);
     }
 
     public List<ProjectDependency<ProjectNode>> getDependencies(boolean connected) {

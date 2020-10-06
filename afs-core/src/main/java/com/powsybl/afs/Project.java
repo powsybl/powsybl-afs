@@ -39,11 +39,7 @@ public class Project extends File {
 
     ProjectNode createProjectNode(NodeInfo nodeInfo) {
         Objects.requireNonNull(nodeInfo);
-        if (ProjectFolder.PSEUDO_CLASS.equals(nodeInfo.getPseudoClass())) {
-            return createProjectFolder(nodeInfo);
-        } else {
-            return createProjectFile(nodeInfo);
-        }
+        return createProjectNode(nodeInfo, true);
     }
 
     ProjectNode createProjectNode(NodeInfo nodeInfo, boolean connected) {
@@ -56,14 +52,7 @@ public class Project extends File {
     }
 
     ProjectFile createProjectFile(NodeInfo nodeInfo) {
-        Objects.requireNonNull(nodeInfo);
-        ProjectFileCreationContext context = new ProjectFileCreationContext(nodeInfo, storage, this);
-        ProjectFileExtension extension = fileSystem.getData().getProjectFileExtensionByPseudoClass(nodeInfo.getPseudoClass());
-        if (extension != null) {
-            return extension.createProjectFile(context);
-        } else {
-            return new UnknownProjectFile(context);
-        }
+        return createProjectFile(nodeInfo, true);
     }
 
     ProjectFile createProjectFile(NodeInfo nodeInfo, boolean connected) {
