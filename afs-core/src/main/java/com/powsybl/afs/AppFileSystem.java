@@ -133,7 +133,7 @@ public class AppFileSystem implements AutoCloseable {
      * @throws AfsStorageException if the node not found
      * @return a typed node
      */
-    public AbstractNodeBase fetchNode(String nodeId) {
+    public AbstractNodeBase fetchNode(String nodeId, boolean connected) {
         Objects.requireNonNull(nodeId);
 
         NodeInfo projectFileInfo = storage.getNodeInfo(nodeId);
@@ -153,7 +153,7 @@ public class AppFileSystem implements AutoCloseable {
             return createNode(projectFileInfo);
         }
 
-        ProjectFileCreationContext context = new ProjectFileCreationContext(projectFileInfo, storage, project);
+        ProjectFileCreationContext context = new ProjectFileCreationContext(projectFileInfo, storage, project, connected);
 
         if (ProjectFolder.PSEUDO_CLASS.equals(projectFileInfo.getPseudoClass())) {
             return new ProjectFolder(context);
@@ -164,6 +164,15 @@ public class AppFileSystem implements AutoCloseable {
             return extension.createProjectFile(context);
         }
         return createNode(projectFileInfo);
+    }
+
+    /**
+     * Retrieve a project node with undefined class
+     * @param nodeId the node Id
+     * @return a typed node
+     */
+    public AbstractNodeBase fetchNode(String nodeId) {
+        return fetchNode(nodeId, true);
     }
 
 
