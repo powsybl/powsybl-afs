@@ -10,6 +10,7 @@ package com.powsybl.afs.ws.server.utils;
 
 import javax.ws.rs.core.SecurityContext;
 import java.security.Principal;
+import java.util.Objects;
 
 /**
  * @author Paul Bui-Quang <paul.buiquang at rte-france.com>
@@ -45,5 +46,22 @@ public class AfsSimpleSecurityContext implements SecurityContext {
     @Override
     public String getAuthenticationScheme() {
         return null;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        AfsSimpleSecurityContext that = (AfsSimpleSecurityContext) o;
+        return Objects.equals(user.getName(), that.user.getName());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(user.getName());
     }
 }
