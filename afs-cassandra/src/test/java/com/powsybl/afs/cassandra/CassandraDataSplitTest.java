@@ -31,19 +31,35 @@ public class CassandraDataSplitTest {
     public CassandraCQLUnit cassandraCQLUnit = new CassandraCQLUnit(new ClassPathCQLDataSet("afs.cql", CassandraConstants.AFS_KEYSPACE), null, 20000L);
 
     @Test
-    public void test() throws IOException  {
+    public void test() throws IOException {
         CassandraAppStorage storage = new CassandraAppStorage("test", () -> new CassandraTestContext(cassandraCQLUnit),
                 new CassandraAppStorageConfig().setBinaryDataChunkSize(10), new InMemoryEventsBus());
         NodeInfo rootNodeId = storage.createRootNodeIfNotExists("test", "folder");
         NodeInfo nodeInfo = storage.createNode(rootNodeId.getId(), "test1", "folder", "", 0, new NodeGenericMetadata());
         try (OutputStream os = storage.writeBinaryData(nodeInfo.getId(), "a")) {
-            os.write("aaaaaaaaaabbbbbbbbbbcccccccccc".getBytes(StandardCharsets.UTF_8));
+            byte[] bytes = "aaaaaaaaaabbbbbbbbbbcccccccccc".getBytes(StandardCharsets.UTF_8);
+            // to emulate a BufferedWriter with 1byte buffer size
+            for (int i = 0; i < bytes.length; i++) {
+                os.write(bytes, i, 1);
+            }
         }
         storage.flush();
 
         InputStream is = storage.readBinaryData(nodeInfo.getId(), "a").orElse(null);
         assertNotNull(is);
         assertEquals("aaaaaaaaaabbbbbbbbbbcccccccccc", new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8));
+
+        try (OutputStream os = storage.writeBinaryData(nodeInfo.getId(), "a")) {
+            byte[] bytes = "xaaaaaaaaa".getBytes(StandardCharsets.UTF_8);
+            for (int i = 0; i < bytes.length; i++) {
+                os.write(bytes, i, 1);
+            }
+        }
+        storage.flush();
+
+        InputStream is2 = storage.readBinaryData(nodeInfo.getId(), "a").orElse(null);
+        assertNotNull(is2);
+        assertEquals("xaaaaaaaaa", new String(ByteStreams.toByteArray(is2), StandardCharsets.UTF_8));
 
         assertTrue(storage.removeData(nodeInfo.getId(), "a"));
         assertTrue(storage.getDataNames(nodeInfo.getId()).isEmpty());
