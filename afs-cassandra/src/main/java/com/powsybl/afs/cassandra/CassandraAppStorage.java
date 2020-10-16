@@ -1001,9 +1001,25 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
         @Override
         public void write(byte[] b, int off, int len) throws IOException {
-            gzos.write(b, off, len);
-            count += len;
-            executeIfNecessary();
+            if (len > config.getBinaryDataChunkSize()) {
+                int chunkOffset = off;
+                int chunkCount = 0;
+                while (chunkCount * config.getBinaryDataChunkSize() <= len) {
+                    int chunkLen = config.getBinaryDataChunkSize();
+                    if (len - chunkOffset < config.getBinaryDataChunkSize()) {
+                        chunkLen = len - chunkOffset;
+                    }
+                    gzos.write(Arrays.copyOfRange(b, chunkOffset, chunkOffset + chunkLen));
+                    count += chunkLen;
+                    executeIfNecessary();
+                    chunkCount += 1;
+                    chunkOffset = off + chunkCount * config.getBinaryDataChunkSize();
+                }
+            } else {
+                gzos.write(b, off, len);
+                count += len;
+                executeIfNecessary();
+            }
         }
 
         @Override
