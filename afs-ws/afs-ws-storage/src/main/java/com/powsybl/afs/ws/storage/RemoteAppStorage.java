@@ -11,6 +11,7 @@ import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.powsybl.afs.storage.*;
 import com.powsybl.afs.storage.buffer.StorageChangeBuffer;
 import com.powsybl.afs.ws.client.utils.ClientUtils;
+import com.powsybl.afs.ws.storage.websocket.WebsocketConnectionPolicy;
 import com.powsybl.afs.ws.utils.AfsRestApi;
 import com.powsybl.afs.ws.utils.JsonProvider;
 import com.powsybl.afs.ws.utils.gzip.ReaderInterceptorGzip;
@@ -61,7 +62,7 @@ public class RemoteAppStorage extends AbstractAppStorage {
 
     private final StorageChangeBuffer changeBuffer;
 
-    private String token;
+    private final String token;
 
     private boolean closed = false;
 
@@ -70,9 +71,13 @@ public class RemoteAppStorage extends AbstractAppStorage {
     }
 
     public RemoteAppStorage(String fileSystemName, URI baseUri, String token) {
+        this(fileSystemName, baseUri, token, WebsocketConnectionPolicy.standard());
+    }
+
+    public RemoteAppStorage(String fileSystemName, URI baseUri, String token, WebsocketConnectionPolicy websocketConnectionPolicy) {
         this.fileSystemName = Objects.requireNonNull(fileSystemName);
         this.token = token;
-        this.eventsBus = new WebSocketEventsBus(this, baseUri);
+        this.eventsBus = new WebSocketEventsBus(this, baseUri, websocketConnectionPolicy);
 
         client = createClient();
 
@@ -998,9 +1003,10 @@ public class RemoteAppStorage extends AbstractAppStorage {
     }
 
     @Override
-    public void close() {
+    public synchronized void close() {
         if (!closed) {
             flush();
+            eventsBus.close();
             client.close();
             closed = true;
         }

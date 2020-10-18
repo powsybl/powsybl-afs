@@ -14,6 +14,7 @@ import com.powsybl.afs.AppFileSystemProviderContext;
 import com.powsybl.afs.ws.client.utils.RemoteServiceConfig;
 import com.powsybl.afs.ws.storage.RemoteAppStorage;
 import com.powsybl.afs.ws.storage.RemoteTaskMonitor;
+import com.powsybl.afs.ws.storage.websocket.WebsocketConnectionPolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,13 +48,14 @@ public class RemoteAppFileSystemProvider implements AppFileSystemProvider {
     @Override
     public List<AppFileSystem> getFileSystems(AppFileSystemProviderContext context) {
         Objects.requireNonNull(context);
-        Optional<RemoteServiceConfig> config = configSupplier.get();
-        if (config.isPresent()) {
-            URI uri = config.get().getRestUri();
+        RemoteServiceConfig config = configSupplier.get().orElse(null);
+        if (config != null) {
+            URI uri = config.getRestUri();
             try {
                 return RemoteAppStorage.getFileSystemNames(uri, context.getToken()).stream()
                         .map(fileSystemName -> {
-                            RemoteAppStorage storage = new RemoteAppStorage(fileSystemName, uri, context.getToken());
+                            WebsocketConnectionPolicy websocketPolicy = WebsocketConnectionPolicy.forConfig(config);
+                            RemoteAppStorage storage = new RemoteAppStorage(fileSystemName, uri, context.getToken(), websocketPolicy);
                             RemoteTaskMonitor taskMonitor = new RemoteTaskMonitor(fileSystemName, uri, context.getToken());
                             return new AppFileSystem(fileSystemName, true, storage, taskMonitor);
                         })

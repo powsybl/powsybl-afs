@@ -12,7 +12,7 @@ import com.powsybl.afs.storage.events.NodeEvent;
 /**
  * @author Chamseddine Benhamed <chamseddine.benhamed at rte-france.com>
  */
-public interface EventsBus {
+public interface EventsBus extends AutoCloseable {
     /**
      * Add a new event to the event bus
      * @param event
@@ -39,4 +39,9 @@ public interface EventsBus {
      * Flush any changes to underlying EventsBus.
      */
     void flush();
+
+    @Override
+    default void close() {
+        //no-op
+    }
 }
