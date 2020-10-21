@@ -9,6 +9,7 @@
 package com.powsybl.afs.ws.server.utils;
 
 import javax.ws.rs.core.SecurityContext;
+import java.nio.file.attribute.UserPrincipal;
 import java.security.Principal;
 import java.util.Objects;
 
@@ -17,13 +18,26 @@ import java.util.Objects;
  */
 public class AfsSimpleSecurityContext implements SecurityContext {
 
-    private Principal user;
+    private final Principal user;
 
     public AfsSimpleSecurityContext(String username) {
-        this.user = new Principal() {
+        this.user = new UserPrincipal() {
             @Override
             public String getName() {
                 return username;
+            }
+
+            @Override
+            public int hashCode() {
+                return getName().hashCode();
+            }
+
+            @Override
+            public boolean equals(Object obj) {
+                if (obj instanceof UserPrincipal) {
+                    return getName().equals(((UserPrincipal) obj).getName());
+                }
+                return false;
             }
         };
     }
@@ -57,11 +71,11 @@ public class AfsSimpleSecurityContext implements SecurityContext {
             return false;
         }
         AfsSimpleSecurityContext that = (AfsSimpleSecurityContext) o;
-        return Objects.equals(user.getName(), that.user.getName());
+        return Objects.equals(user, that.user);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(user.getName());
+        return Objects.hash(user);
     }
 }
