@@ -48,6 +48,7 @@ public class CassandraDataSplitTest {
         InputStream is = storage.readBinaryData(nodeInfo.getId(), "a").orElse(null);
         assertNotNull(is);
         assertEquals("aaaaaaaaaabbbbbbbbbbcccccccccc", new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8));
+        is.close();
 
         try (OutputStream os = storage.writeBinaryData(nodeInfo.getId(), "a")) {
             byte[] bytes = "xaaaaaaaaa".getBytes(StandardCharsets.UTF_8);
@@ -60,6 +61,7 @@ public class CassandraDataSplitTest {
         InputStream is2 = storage.readBinaryData(nodeInfo.getId(), "a").orElse(null);
         assertNotNull(is2);
         assertEquals("xaaaaaaaaa", new String(ByteStreams.toByteArray(is2), StandardCharsets.UTF_8));
+        is2.close();
 
         assertTrue(storage.removeData(nodeInfo.getId(), "a"));
         assertTrue(storage.getDataNames(nodeInfo.getId()).isEmpty());
