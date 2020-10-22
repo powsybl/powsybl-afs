@@ -965,6 +965,12 @@ public class CassandraAppStorage extends AbstractAppStorage {
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
+
+            // at first write clear previous data to prevent just overlapping on a potential previous data of greater length
+            if (chunkNum == 0) {
+                removeData(nodeUuid.toString(), name);
+            }
+
             getSession().execute(insertInto(NODE_DATA)
                     .value(ID, nodeUuid)
                     .value(NAME, name)
