@@ -21,6 +21,7 @@ public class AfsSimpleSecurityContext implements SecurityContext {
     private final Principal user;
 
     public AfsSimpleSecurityContext(String username) {
+        Objects.requireNonNull(username);
         this.user = new UserPrincipal() {
             @Override
             public String getName() {
