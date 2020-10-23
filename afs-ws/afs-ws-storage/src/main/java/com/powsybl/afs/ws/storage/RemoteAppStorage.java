@@ -1003,7 +1003,7 @@ public class RemoteAppStorage extends AbstractAppStorage {
     }
 
     @Override
-    public synchronized void close() {
+    public void close() {
         if (!closed) {
             flush();
             eventsBus.close();

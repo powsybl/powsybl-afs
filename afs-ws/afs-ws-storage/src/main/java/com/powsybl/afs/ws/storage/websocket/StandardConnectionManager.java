@@ -17,6 +17,7 @@ import javax.websocket.WebSocketContainer;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URI;
+import java.util.Objects;
 
 /**
  * A simple connection manager which does not try to reconnect on close.
@@ -32,7 +33,7 @@ public class StandardConnectionManager implements WebsocketConnectionManager {
 
     public StandardConnectionManager(URI uri) {
         this.webSocketContainer = ContainerProvider.getWebSocketContainer();
-        this.uri = uri;
+        this.uri = Objects.requireNonNull(uri);
     }
 
     protected URI getUri() {

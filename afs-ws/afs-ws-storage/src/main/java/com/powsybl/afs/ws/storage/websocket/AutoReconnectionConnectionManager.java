@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.websocket.Session;
 import java.net.URI;
+import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -34,7 +35,7 @@ public class AutoReconnectionConnectionManager extends StandardConnectionManager
         super(uri);
         this.scheduler = Executors.newSingleThreadScheduledExecutor();
         this.delay = delay;
-        this.timeUnit = timeUnit;
+        this.timeUnit = Objects.requireNonNull(timeUnit);
     }
 
     public AutoReconnectionConnectionManager(URI uri, long delayInSeconds) {
@@ -60,7 +61,7 @@ public class AutoReconnectionConnectionManager extends StandardConnectionManager
         try {
             connect(clientEndoint);
         } catch (Exception e) {
-            LOGGER.error("Failed to reconnect to {}, will retry in {}", getUri(), getDelayAsString(), timeUnit, e);
+            LOGGER.error("Failed to reconnect to {}, will retry in {}", getUri(), getDelayAsString(), e);
             scheduleReconnection(clientEndoint);
         }
     }
@@ -71,6 +72,7 @@ public class AutoReconnectionConnectionManager extends StandardConnectionManager
 
     @Override
     public void close() {
+        scheduler.shutdownNow();
         closed = true;
     }
 }
