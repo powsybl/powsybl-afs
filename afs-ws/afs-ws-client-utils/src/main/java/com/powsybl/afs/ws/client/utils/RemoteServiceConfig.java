@@ -7,6 +7,7 @@
 package com.powsybl.afs.ws.client.utils;
 
 import com.google.common.base.MoreObjects;
+import com.powsybl.commons.config.ConfigurationException;
 import com.powsybl.commons.config.PlatformConfig;
 import com.powsybl.commons.exceptions.UncheckedUriSyntaxException;
 
@@ -132,6 +133,9 @@ public class RemoteServiceConfig {
     }
 
     public void setReconnectionDelay(long reconnectionDelay) {
+        if (reconnectionDelay <= 0) {
+            throw new ConfigurationException("Reconnection delay must be strictly positive, got " + reconnectionDelay);
+        }
         this.reconnectionDelay = reconnectionDelay;
     }
 
