@@ -840,6 +840,40 @@ public class CassandraAppStorage extends AbstractAppStorage {
         return parentNodeUuid;
     }
 
+    private final class DecompressOnceBinaryDataInputStream extends InputStream {
+
+        private GZIPInputStream gzis;
+
+        private DecompressOnceBinaryDataInputStream(UUID nodeUuid, String name, Row firstRow) {
+            Objects.requireNonNull(nodeUuid);
+            Objects.requireNonNull(name);
+            Objects.requireNonNull(firstRow);
+            int chunkNum = 0;
+            try {
+                ByteArrayOutputStream tmp = new ByteArrayOutputStream();
+                Row row = firstRow;
+                while (row != null) {
+                    tmp.write(row.getBytes(0).array());
+                    chunkNum++;
+                    ResultSet resultSet = getSession().execute(select(CHUNK).from(NODE_DATA)
+                            .where(eq(ID, nodeUuid))
+                            .and(eq(NAME, name))
+                            .and(eq(CHUNK_NUM, chunkNum)));
+                    row = resultSet.one();
+                }
+                ByteArrayInputStream bais = new ByteArrayInputStream(tmp.toByteArray());
+                gzis = new GZIPInputStream(bais);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public int read() throws IOException {
+            return gzis.read();
+        }
+    }
+
     private final class BinaryDataInputStream extends InputStream {
 
         private final UUID nodeUuid;
@@ -855,6 +889,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
         private BinaryDataInputStream(UUID nodeUuid, String name, Row firstRow) {
             this.nodeUuid = Objects.requireNonNull(nodeUuid);
             this.name = Objects.requireNonNull(name);
+            Objects.requireNonNull(firstRow);
             buffer = new ByteArrayInputStream(firstRow.getBytes(0).array());
             try {
                 gzis = new GZIPInputStream(buffer);
@@ -932,26 +967,44 @@ public class CassandraAppStorage extends AbstractAppStorage {
             return Optional.empty();
         }
 
-        return Optional.of(new BinaryDataInputStream(nodeUuid, name, firstRow));
+        ResultSet resultSet2 = getSession().execute(select(CHUNK).from(NODE_DATA)
+                .where(eq(ID, nodeUuid))
+                .and(eq(NAME, name))
+                .and(eq(CHUNK_NUM, 1)));
+        if (resultSet2 == null) {
+            return Optional.of(new BinaryDataInputStream(nodeUuid, name, firstRow));
+        }
+        final Row row = resultSet2.one();
+        if (row == null) {
+            return Optional.of(new BinaryDataInputStream(nodeUuid, name, firstRow));
+        }
+        final CompressionMode compressionMode = detectedBySecondChunk(row.getBytes(0).array());
+        if (CompressionMode.ONCE.equals(compressionMode)) {
+            return Optional.of(new DecompressOnceBinaryDataInputStream(nodeUuid, name, firstRow));
+        } else if (CompressionMode.MULTI.equals(compressionMode)) {
+            return Optional.of(new BinaryDataInputStream(nodeUuid, name, firstRow));
+        } else {
+            throw new IllegalArgumentException(compressionMode + " is not supported");
+        }
     }
 
-    private final class BinaryDataOutputStream extends OutputStream {
+    private static CompressionMode detectedBySecondChunk(byte[] header) {
+        if (header[0] == (byte) 35615 && header[1] == (byte) (35615 >> 8) && header[2] == 8) {
+            return CompressionMode.MULTI;
+        }
+        return CompressionMode.ONCE;
+    }
 
-        private final UUID nodeUuid;
-
-        private final String name;
+    private final class BinaryDataOutputStream extends AbstractCassandraOutputStream {
 
         private ByteArrayOutputStream buffer = new ByteArrayOutputStream(config.getBinaryDataChunkSize());
 
         private long count = 0;
 
-        private int chunkNum = 0;
-
         private GZIPOutputStream gzos;
 
         private BinaryDataOutputStream(UUID nodeUuid, String name) {
-            this.nodeUuid = Objects.requireNonNull(nodeUuid);
-            this.name = Objects.requireNonNull(name);
+            super(nodeUuid, name, config.getBinaryDataChunkSize(), getSession());
             try {
                 gzos = new GZIPOutputStream(buffer);
             } catch (IOException e) {
@@ -1008,7 +1061,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
         @Override
         public void close() {
-            if (chunkNum == 0 || count > 0) { // create  at least on chunk even empty
+            if (chunkNum == 0 || count > 0) { // create at least one chunk even empty
                 execute();
             }
 
@@ -1022,12 +1075,23 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
     @Override
     public OutputStream writeBinaryData(String nodeId, String name) {
+        return writeBinaryData(nodeId, name, CompressionMode.MULTI);
+    }
+
+    @Override
+    public OutputStream writeBinaryData(String nodeId, String name, CompressionMode mode) {
         UUID nodeUuid = checkNodeId(nodeId);
         Objects.requireNonNull(name);
         // flush buffer to keep change order
         changeBuffer.flush();
         pushEvent(new NodeDataUpdated(nodeId, name), APPSTORAGE_NODE_TOPIC);
-        return new BinaryDataOutputStream(nodeUuid, name);
+        if (CompressionMode.ONCE.equals(mode)) {
+            return new CompressOnceBinaryDataOutputStream(nodeUuid, name, config.getBinaryDataChunkSize(), getSession());
+        } else if (CompressionMode.MULTI.equals(mode)) {
+            return new BinaryDataOutputStream(nodeUuid, name);
+        } else {
+            throw new IllegalArgumentException(mode + " is not supported");
+        }
     }
 
     @Override

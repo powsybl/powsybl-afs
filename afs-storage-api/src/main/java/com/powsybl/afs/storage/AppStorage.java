@@ -7,7 +7,9 @@
 package com.powsybl.afs.storage;
 
 import com.powsybl.commons.PowsyblException;
-import com.powsybl.timeseries.*;
+import com.powsybl.timeseries.DoubleDataChunk;
+import com.powsybl.timeseries.StringDataChunk;
+import com.powsybl.timeseries.TimeSeriesMetadata;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -128,6 +130,14 @@ public interface AppStorage extends AutoCloseable {
     OutputStream writeBinaryData(String nodeId, String name);
 
     /**
+     * Returns an {@code OutputStream} to write data associated to the node with ID {@code nodeId}.
+     * The underling stored data bytes will be compressed depending on user chose {@code mode}
+     */
+    default OutputStream writeBinaryData(String nodeId, String name, CompressionMode mode) {
+        return writeBinaryData(nodeId, name);
+    }
+
+    /**
      * Returns {@code true} if data named {@code name} associated with the node with ID {@code nodeId} exists.
      */
     boolean dataExists(String nodeId, String name);
@@ -243,4 +253,15 @@ public interface AppStorage extends AutoCloseable {
      */
     @Override
     void close();
+
+    enum CompressionMode {
+        /**
+         * The input data will be gzipped first, and every chunk contains a part of gzipped bytes.
+         */
+        ONCE,
+        /**
+         * The input data will be chunked first, then each chunk data will be gzipped and stored.
+         */
+        MULTI
+    }
 }
