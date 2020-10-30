@@ -67,13 +67,8 @@ public class CassandraDataSplitTest {
         assertTrue(storage.removeData(nodeInfo.getId(), "a"));
         assertTrue(storage.getDataNames(nodeInfo.getId()).isEmpty());
         assertFalse(storage.readBinaryData(nodeInfo.getId(), "a").isPresent());
-//    }
-//
-//    @Test
-//    public void testGzipOnce() throws IOException {
+
         String data = "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddddddddddeeeeeeeeeeeeeeeeeeeeefffffffffffffffffffffffff";
-//        CassandraAppStorage storage = new CassandraAppStorage("test", () -> new CassandraTestContext(cassandraCQLUnit),
-//                new CassandraAppStorageConfig().setBinaryDataChunkSize(10), new InMemoryEventsBus());
         NodeInfo rootNodeId2 = storage.createRootNodeIfNotExists("test", "folder");
         NodeInfo nodeInfo2 = storage.createNode(rootNodeId2.getId(), "test1", "folder", "", 0, new NodeGenericMetadata());
         try (OutputStream os = storage.writeBinaryData(nodeInfo2.getId(), "gzipOnce", AppStorage.CompressionMode.ONCE)) {
