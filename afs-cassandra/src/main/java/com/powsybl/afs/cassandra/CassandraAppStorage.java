@@ -864,7 +864,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
                 ByteArrayInputStream bais = new ByteArrayInputStream(tmp.toByteArray());
                 gzis = new GZIPInputStream(bais);
             } catch (IOException e) {
-                e.printStackTrace();
+                throw new UncheckedIOException(e);
             }
         }
 
