@@ -6,6 +6,10 @@
  */
 package com.powsybl.afs.storage;
 
+import com.powsybl.commons.datasource.DataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -14,11 +18,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.powsybl.commons.datasource.DataSource;
 
 /**
  * A datasource corresponding to a data blob stored in the file system.
@@ -29,6 +28,10 @@ import com.powsybl.commons.datasource.DataSource;
 public class AppStorageDataSource implements DataSource {
 
     private static final String SEPARATOR = "__";
+
+    private static final AppStorage.CompressionMode DEFAULT_COMPRESS_MODE = AppStorage.CompressionMode.MULTI;
+
+    private final AppStorage.CompressionMode compressMode;
 
     public interface Name {
 
@@ -132,9 +135,14 @@ public class AppStorageDataSource implements DataSource {
     private final String nodeName;
 
     public AppStorageDataSource(AppStorage storage, String nodeId, String nodeName) {
+        this(storage, nodeId, nodeName, DEFAULT_COMPRESS_MODE);
+    }
+
+    public AppStorageDataSource(AppStorage storage, String nodeId, String nodeName, AppStorage.CompressionMode mode) {
         this.storage = Objects.requireNonNull(storage);
         this.nodeId = Objects.requireNonNull(nodeId);
         this.nodeName = Objects.requireNonNull(nodeName);
+        this.compressMode = Objects.requireNonNull(mode);
     }
 
     @Override
@@ -147,7 +155,7 @@ public class AppStorageDataSource implements DataSource {
         if (append) {
             throw new UnsupportedOperationException("Append mode not supported");
         }
-        return storage.writeBinaryData(nodeId, new SuffixAndExtension(suffix, ext).toString());
+        return storage.writeBinaryData(nodeId, new SuffixAndExtension(suffix, ext).toString(), compressMode);
     }
 
     @Override
@@ -156,7 +164,7 @@ public class AppStorageDataSource implements DataSource {
         if (append) {
             throw new UnsupportedOperationException("Append mode not supported");
         }
-        return storage.writeBinaryData(nodeId, new FileName(fileName).toString());
+        return storage.writeBinaryData(nodeId, new FileName(fileName).toString(), compressMode);
     }
 
     @Override

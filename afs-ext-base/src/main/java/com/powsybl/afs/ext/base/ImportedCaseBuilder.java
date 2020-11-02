@@ -56,6 +56,8 @@ public class ImportedCaseBuilder implements ProjectFileBuilder<ImportedCase> {
 
     private Importer importer;
 
+    private AppStorage.CompressionMode mode = AppStorage.CompressionMode.MULTI;
+
     private final Properties parameters = new Properties();
 
     public ImportedCaseBuilder(ProjectFileBuildContext context, ImportersLoader importersLoader, ImportConfig importConfig) {
@@ -122,6 +124,11 @@ public class ImportedCaseBuilder implements ProjectFileBuilder<ImportedCase> {
         return this;
     }
 
+    public ImportedCaseBuilder setCompressMode(AppStorage.CompressionMode mode) {
+        this.mode = Objects.requireNonNull(mode);
+        return this;
+    }
+
     @Override
     public ImportedCase build() {
         if (dataSource == null) {
@@ -140,7 +147,7 @@ public class ImportedCaseBuilder implements ProjectFileBuilder<ImportedCase> {
                 new NodeGenericMetadata().setString(ImportedCase.FORMAT, importer.getFormat()));
 
         // store case data
-        importer.copy(dataSource, new AppStorageDataSource(context.getStorage(), info.getId(), info.getName()));
+        importer.copy(dataSource, new AppStorageDataSource(context.getStorage(), info.getId(), info.getName(), mode));
 
         // store parameters
         try (Writer writer = new OutputStreamWriter(context.getStorage().writeBinaryData(info.getId(), ImportedCase.PARAMETERS), StandardCharsets.UTF_8)) {

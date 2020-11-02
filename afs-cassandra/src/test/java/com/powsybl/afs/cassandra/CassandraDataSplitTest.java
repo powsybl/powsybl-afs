@@ -7,6 +7,7 @@
 package com.powsybl.afs.cassandra;
 
 import com.google.common.io.ByteStreams;
+import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.InMemoryEventsBus;
 import com.powsybl.afs.storage.NodeGenericMetadata;
 import com.powsybl.afs.storage.NodeInfo;
@@ -66,5 +67,19 @@ public class CassandraDataSplitTest {
         assertTrue(storage.removeData(nodeInfo.getId(), "a"));
         assertTrue(storage.getDataNames(nodeInfo.getId()).isEmpty());
         assertFalse(storage.readBinaryData(nodeInfo.getId(), "a").isPresent());
+
+        String data = "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddddddddddeeeeeeeeeeeeeeeeeeeeefffffffffffffffffffffffff";
+        NodeInfo rootNodeId2 = storage.createRootNodeIfNotExists("test", "folder");
+        NodeInfo nodeInfo2 = storage.createNode(rootNodeId2.getId(), "test1", "folder", "", 0, new NodeGenericMetadata());
+        try (OutputStream os = storage.writeBinaryData(nodeInfo2.getId(), "gzipOnce", AppStorage.CompressionMode.ONCE)) {
+            os.write(data.getBytes(StandardCharsets.UTF_8));
+        }
+        storage.flush();
+
+        InputStream is3 = storage.readBinaryData(nodeInfo2.getId(), "gzipOnce").orElse(null);
+        assertNotNull(is3);
+        assertEquals(data, new String(ByteStreams.toByteArray(is3), StandardCharsets.UTF_8));
+        assertTrue(storage.removeData(nodeInfo2.getId(), "gzipOnce"));
+        assertTrue(storage.getDataNames(nodeInfo2.getId()).isEmpty());
     }
 }
