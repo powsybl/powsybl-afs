@@ -1005,10 +1005,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
                 int chunkOffset = off;
                 long writtenLen = 0;
                 while (writtenLen < len) {
-                    long chunkLen = config.getBinaryDataChunkSize() - count;
-                    if (len - writtenLen < chunkLen) {
-                        chunkLen = len - writtenLen;
-                    }
+                    long chunkLen = Math.min(config.getBinaryDataChunkSize() - count, len - writtenLen);
                     gzos.write(b, chunkOffset, (int) chunkLen);
                     count += chunkLen;
                     writtenLen += chunkLen;

@@ -94,6 +94,6 @@ public class CassandraDataSplitTest {
                 .and(eq(NAME, "a")));
         Row firstRow = resultSet.one();
         assertNotNull(firstRow);
-        assertEquals(new Integer(4), firstRow.get(0, Integer.class));
+        assertEquals(4, firstRow.get(0, Integer.class).intValue());
     }
 }
