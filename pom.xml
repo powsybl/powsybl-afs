@@ -85,7 +85,7 @@
         <junit.version>4.12</junit.version>
         <mapdb.version>3.0.6</mapdb.version>
         <maven.core.version>3.3.9</maven.core.version>
-        <mockito.version>1.10.19</mockito.version>
+        <mockito.version>3.3.3</mockito.version>
         <resteasy.version>3.1.4.Final</resteasy.version>
         <shrinkwrap-resolver.version>2.2.6</shrinkwrap-resolver.version>
         <slf4j.version>1.7.22</slf4j.version>
@@ -94,7 +94,7 @@
         <wildfly.dist.version>11.0.0.Final</wildfly.dist.version>
         <wildflyarquilliancontainerembedded.version>2.1.0.Final</wildflyarquilliancontainerembedded.version>
 
-        <powsyblcore.version>3.3.1</powsyblcore.version>
+        <powsyblcore.version>3.3.2</powsyblcore.version>
     </properties>
 
     <profiles>
@@ -315,7 +315,7 @@
             </dependency>
             <dependency>
                 <groupId>org.mockito</groupId>
-                <artifactId>mockito-all</artifactId>
+                <artifactId>mockito-core</artifactId>
                 <version>${mockito.version}</version>
                 <scope>test</scope>
             </dependency>

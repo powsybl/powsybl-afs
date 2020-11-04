@@ -6,6 +6,8 @@
  */
 package com.powsybl.afs.ws.client.utils;
 
+import com.google.common.base.MoreObjects;
+import com.powsybl.commons.config.ConfigurationException;
 import com.powsybl.commons.config.PlatformConfig;
 import com.powsybl.commons.exceptions.UncheckedUriSyntaxException;
 
@@ -27,11 +29,17 @@ public class RemoteServiceConfig {
 
     private boolean secure;
 
+    private boolean autoReconnectionEnabled;
+
+    private long reconnectionDelay;
+
     public RemoteServiceConfig(String hostName, String appName, int port, boolean secure) {
         this.hostName = Objects.requireNonNull(hostName);
         this.appName = Objects.requireNonNull(appName);
         this.port = checkPort(port);
         this.secure = secure;
+        this.autoReconnectionEnabled = false;
+        this.reconnectionDelay = 60;
     }
 
     public static Optional<RemoteServiceConfig> load() {
@@ -45,7 +53,11 @@ public class RemoteServiceConfig {
             String appName = moduleConfig.getStringProperty("app-name");
             boolean secure = moduleConfig.getBooleanProperty("secure", true);
             int port = moduleConfig.getIntProperty("port", secure ? 443 : 80);
-            return new RemoteServiceConfig(hostName, appName, port, secure);
+            RemoteServiceConfig config = new RemoteServiceConfig(hostName, appName, port, secure);
+
+            moduleConfig.getOptionalBooleanProperty("auto-reconnection").ifPresent(config::setAutoReconnectionEnabled);
+            moduleConfig.getOptionalLongProperty("reconnection-delay").ifPresent(config::setReconnectionDelay);
+            return config;
         });
     }
 
@@ -108,8 +120,34 @@ public class RemoteServiceConfig {
         }
     }
 
+    public boolean isAutoReconnectionEnabled() {
+        return autoReconnectionEnabled;
+    }
+
+    public void setAutoReconnectionEnabled(boolean autoReconnectEnabled) {
+        this.autoReconnectionEnabled = autoReconnectEnabled;
+    }
+
+    public long getReconnectionDelay() {
+        return reconnectionDelay;
+    }
+
+    public void setReconnectionDelay(long reconnectionDelay) {
+        if (reconnectionDelay <= 0) {
+            throw new ConfigurationException("Reconnection delay must be strictly positive, got " + reconnectionDelay);
+        }
+        this.reconnectionDelay = reconnectionDelay;
+    }
+
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "(hostName=" + hostName + ", appName=" + appName + ", port=" + port + ", secure=" + secure + ")";
+        return MoreObjects.toStringHelper(this)
+                .add("hostName", hostName)
+                .add("appName", appName)
+                .add("port", port)
+                .add("secure", secure)
+                .add("autoReconnectionEnabled", autoReconnectionEnabled)
+                .add("reconnectionDelay", reconnectionDelay)
+                .toString();
     }
 }

@@ -10,17 +10,12 @@ import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.EventsBus;
 import com.powsybl.afs.storage.events.AppStorageListener;
 import com.powsybl.afs.storage.events.NodeEvent;
-import com.powsybl.afs.ws.client.utils.UncheckedDeploymentException;
+import com.powsybl.afs.ws.storage.websocket.WebsocketConnectionPolicy;
 import com.powsybl.afs.ws.utils.AfsRestApi;
 import com.powsybl.commons.util.WeakListenerList;
 
-import javax.websocket.ContainerProvider;
-import javax.websocket.DeploymentException;
-import javax.websocket.WebSocketContainer;
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.net.URI;
-import java.util.*;
+import java.util.Objects;
 
 /**
  * @author Chamseddine Benhamed <chamseddine.benhamed at rte-france.com>
@@ -29,25 +24,18 @@ public class WebSocketEventsBus implements EventsBus {
 
     private final WeakListenerList<AppStorageListener> listeners = new WeakListenerList<>();
 
-    private NodeEventClient nodeEventClient;
+    private final NodeEventClient nodeEventClient;
 
-    private AppStorage storage;
+    private final AppStorage storage;
 
-    public WebSocketEventsBus(AppStorage storage, URI restUri) {
+    public WebSocketEventsBus(AppStorage storage, URI restUri, WebsocketConnectionPolicy connectionPolicy) {
         URI wsUri = SocketsUtils.getWebSocketUri(restUri);
         this.storage = Objects.requireNonNull(storage);
         URI endPointUri = URI.create(wsUri + "/messages/" + AfsRestApi.RESOURCE_ROOT + "/" +
                 AfsRestApi.VERSION + "/node_events/" + storage.getFileSystemName());
 
-        WebSocketContainer container = ContainerProvider.getWebSocketContainer();
-        try {
-            nodeEventClient = new NodeEventClient(storage.getFileSystemName(), listeners);
-            container.connectToServer(nodeEventClient, endPointUri);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        } catch (DeploymentException e) {
-            throw new UncheckedDeploymentException(e);
-        }
+        nodeEventClient = new NodeEventClient(connectionPolicy.newConnectionManager(endPointUri), storage.getFileSystemName(), listeners);
+        nodeEventClient.connect();
     }
 
     @Override
@@ -73,5 +61,10 @@ public class WebSocketEventsBus implements EventsBus {
     @Override
     public void flush() {
         // Noop
+    }
+
+    @Override
+    public void close() {
+        nodeEventClient.close();
     }
 }
