@@ -6,6 +6,8 @@
  */
 package com.powsybl.afs.cassandra;
 
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
 import com.google.common.io.ByteStreams;
 import com.powsybl.afs.storage.InMemoryEventsBus;
 import com.powsybl.afs.storage.NodeGenericMetadata;
@@ -19,7 +21,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 
+import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
+import static com.powsybl.afs.cassandra.CassandraConstants.*;
 import static org.junit.Assert.*;
 
 /**
@@ -32,7 +38,8 @@ public class CassandraDataSplitTest {
 
     @Test
     public void test() throws IOException {
-        CassandraAppStorage storage = new CassandraAppStorage("test", () -> new CassandraTestContext(cassandraCQLUnit),
+        CassandraTestContext cassandraTestContext = new CassandraTestContext(cassandraCQLUnit);
+        CassandraAppStorage storage = new CassandraAppStorage("test", () -> cassandraTestContext,
                 new CassandraAppStorageConfig().setBinaryDataChunkSize(10), new InMemoryEventsBus());
         NodeInfo rootNodeId = storage.createRootNodeIfNotExists("test", "folder");
         NodeInfo nodeInfo = storage.createNode(rootNodeId.getId(), "test1", "folder", "", 0, new NodeGenericMetadata());
@@ -66,5 +73,27 @@ public class CassandraDataSplitTest {
         assertTrue(storage.removeData(nodeInfo.getId(), "a"));
         assertTrue(storage.getDataNames(nodeInfo.getId()).isEmpty());
         assertFalse(storage.readBinaryData(nodeInfo.getId(), "a").isPresent());
+
+        try (OutputStream os = storage.writeBinaryData(nodeInfo.getId(), "a")) {
+            byte[] bytes = "aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd".getBytes(StandardCharsets.UTF_8);
+            os.write(bytes, 0, 5);
+            os.write(bytes, 5, 10);
+            os.write(bytes, 15, 4);
+            os.write(bytes, 19, 3);
+            os.write(bytes, 22, 18);
+        }
+        storage.flush();
+
+        InputStream is3 = storage.readBinaryData(nodeInfo.getId(), "a").orElse(null);
+        assertNotNull(is3);
+        assertEquals("aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd", new String(ByteStreams.toByteArray(is3), StandardCharsets.UTF_8));
+        is3.close();
+
+        ResultSet resultSet = cassandraTestContext.getSession().execute(select(CHUNKS_COUNT).from(NODE_DATA)
+                .where(eq(ID, UUID.fromString(nodeInfo.getId())))
+                .and(eq(NAME, "a")));
+        Row firstRow = resultSet.one();
+        assertNotNull(firstRow);
+        assertEquals(4, firstRow.get(0, Integer.class).intValue());
     }
 }
