@@ -9,6 +9,7 @@ package com.powsybl.afs.ext.base;
 import com.powsybl.afs.AfsException;
 import com.powsybl.afs.ProjectFile;
 import com.powsybl.afs.ProjectFileCreationContext;
+import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.AppStorageDataSource;
 import com.powsybl.commons.datasource.ReadOnlyDataSource;
 import com.powsybl.iidm.import_.Importer;
@@ -46,6 +47,10 @@ public class ImportedCase extends ProjectFile implements ProjectCase {
 
     public ReadOnlyDataSource getDataSource() {
         return new AppStorageDataSource(storage, info.getId(), info.getName());
+    }
+
+    public ReadOnlyDataSource getDataSource(boolean gz) {
+        return new AppStorageDataSource(storage, info.getId(), info.getName(), AppStorage.CompressionMode.ONCE, gz);
     }
 
     public Properties getParameters() {

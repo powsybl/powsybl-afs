@@ -872,6 +872,10 @@ public class CassandraAppStorage extends AbstractAppStorage {
         public int read() throws IOException {
             return gzis.read();
         }
+
+        private GZIPInputStream getGzis() {
+            return gzis;
+        }
     }
 
     private final class BinaryDataInputStream extends InputStream {
@@ -957,12 +961,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
         UUID nodeUuid = checkNodeId(nodeId);
         Objects.requireNonNull(name);
 
-        // get first chunk
-        ResultSet resultSet = getSession().execute(select(CHUNK).from(NODE_DATA)
-                .where(eq(ID, nodeUuid))
-                .and(eq(NAME, name))
-                .and(eq(CHUNK_NUM, 0)));
-        Row firstRow = resultSet.one();
+        final Row firstRow = firstRow(nodeUuid, name);
         if (firstRow == null) {
             return Optional.empty();
         }
@@ -986,6 +985,53 @@ public class CassandraAppStorage extends AbstractAppStorage {
         } else {
             throw new IllegalArgumentException(compressionMode + " is not supported");
         }
+    }
+
+    @Override
+    public Optional<GZIPInputStream> readGZBinaryData(String nodeId, String name) {
+        UUID nodeUuid = checkNodeId(nodeId);
+        Objects.requireNonNull(name);
+
+        final Row firstRow = firstRow(nodeUuid, name);
+        if (firstRow == null) {
+            return Optional.empty();
+        }
+        ResultSet resultSet2 = getSession().execute(select(CHUNK).from(NODE_DATA)
+                .where(eq(ID, nodeUuid))
+                .and(eq(NAME, name))
+                .and(eq(CHUNK_NUM, 1)));
+        if (resultSet2 == null) {
+            return gzipInputStreamFromFirstChunk(firstRow);
+        }
+        final Row row = resultSet2.one();
+        if (row == null) {
+            return gzipInputStreamFromFirstChunk(firstRow);
+        }
+        final CompressionMode compressionMode = detectedBySecondChunk(row.getBytes(0).array());
+        if (CompressionMode.ONCE == compressionMode) {
+            return Optional.of(new DecompressOnceBinaryDataInputStream(nodeUuid, name, firstRow).getGzis());
+        } else if (CompressionMode.MULTI == compressionMode) {
+            return CassandraAppStorage.super.readGZBinaryData(nodeId, name);
+        } else {
+            throw new IllegalArgumentException(compressionMode + " is not supported");
+        }
+    }
+
+    private Optional<GZIPInputStream> gzipInputStreamFromFirstChunk(Row firstRow) {
+        try {
+            return Optional.of(new GZIPInputStream(new ByteArrayInputStream(firstRow.getBytes(0).array())));
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private Row firstRow(UUID nodeUuid, String name) {
+        // get first chunk
+        ResultSet resultSet = getSession().execute(select(CHUNK).from(NODE_DATA)
+                .where(eq(ID, nodeUuid))
+                .and(eq(NAME, name))
+                .and(eq(CHUNK_NUM, 0)));
+        return resultSet.one();
     }
 
     private static CompressionMode detectedBySecondChunk(byte[] header) {

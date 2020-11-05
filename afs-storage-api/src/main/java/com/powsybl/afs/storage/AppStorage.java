@@ -10,10 +10,12 @@ import com.powsybl.commons.PowsyblException;
 import com.powsybl.timeseries.DoubleDataChunk;
 import com.powsybl.timeseries.StringDataChunk;
 import com.powsybl.timeseries.TimeSeriesMetadata;
+import org.apache.commons.io.IOUtils;
 
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.*;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * A storage which maintains data for an application file system. This is a low level object,
@@ -122,6 +124,29 @@ public interface AppStorage extends AutoCloseable {
      * with different names. The parameters {@code name} specifies which of those data is requested.
      */
     Optional<InputStream> readBinaryData(String nodeId, String name);
+
+    /**
+     * Reads gz formatted binary data associated to the node with ID {@code nodeId}.
+     */
+    default Optional<GZIPInputStream> readGZBinaryData(String nodeId, String name) {
+        final Optional<InputStream> inputStream = readBinaryData(nodeId, name);
+        if (inputStream.isPresent()) {
+            try {
+                final ByteArrayOutputStream ungzBytes = new ByteArrayOutputStream();
+                IOUtils.copy(inputStream.get(), ungzBytes);
+                final ByteArrayInputStream bais = new ByteArrayInputStream(ungzBytes.toByteArray());
+                final ByteArrayOutputStream gzBytes = new ByteArrayOutputStream();
+                final GZIPOutputStream gzos = new GZIPOutputStream(gzBytes);
+                IOUtils.copy(bais, gzos);
+                gzos.close();
+                final GZIPInputStream gzipInputStream = new GZIPInputStream(new ByteArrayInputStream(gzBytes.toByteArray()));
+                return Optional.of(gzipInputStream);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
+        return Optional.empty();
+    }
 
     /**
      * Returns an {@code OutputStream} to write data associated to the node with ID {@code nodeId}.

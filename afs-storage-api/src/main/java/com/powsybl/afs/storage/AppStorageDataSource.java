@@ -33,6 +33,8 @@ public class AppStorageDataSource implements DataSource {
 
     private final AppStorage.CompressionMode compressMode;
 
+    private final boolean gz;
+
     public interface Name {
 
         static Name parse(String text) {
@@ -139,10 +141,15 @@ public class AppStorageDataSource implements DataSource {
     }
 
     public AppStorageDataSource(AppStorage storage, String nodeId, String nodeName, AppStorage.CompressionMode mode) {
+        this(storage, nodeId, nodeName, mode, false);
+    }
+
+    public AppStorageDataSource(AppStorage storage, String nodeId, String nodeName, AppStorage.CompressionMode mode, boolean gz) {
         this.storage = Objects.requireNonNull(storage);
         this.nodeId = Objects.requireNonNull(nodeId);
         this.nodeName = Objects.requireNonNull(nodeName);
         this.compressMode = Objects.requireNonNull(mode);
+        this.gz = gz;
     }
 
     @Override
