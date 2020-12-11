@@ -9,6 +9,9 @@ package com.powsybl.afs.cassandra;
 import com.powsybl.commons.config.ModuleConfig;
 import com.powsybl.commons.config.PlatformConfig;
 
+import java.nio.file.Path;
+import java.util.Objects;
+
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  */
@@ -30,6 +33,8 @@ public class CassandraAppStorageConfig {
 
     private int binaryDataChunkSize;
 
+    private FileOnDiskConfig fileOnDiskConfig;
+
     public static CassandraAppStorageConfig load() {
         return load(PlatformConfig.defaultConfig());
     }
@@ -40,6 +45,8 @@ public class CassandraAppStorageConfig {
         int doubleQueryPartitionSize = DEFAULT_DOUBLE_QUERY_PARTITION_SIZE;
         int stringQueryPartitionSize = DEFAULT_STRING_QUERY_PARTITION_SIZE;
         int binaryDataChunkSize = DEFAULT_BINARY_DATA_CHUNK_SIZE;
+        boolean fileOnDisk = false;
+        FileOnDiskConfig fodConfig = null;
         ModuleConfig moduleConfig = platformConfig.getOptionalModuleConfig("cassandra-app-storage").orElse(null);
         if (moduleConfig != null) {
             flushMaximumChange = moduleConfig.getIntProperty("flush-maximum-change", DEFAULT_FLUSH_MAXIMUM_CHANGE);
@@ -47,9 +54,15 @@ public class CassandraAppStorageConfig {
             doubleQueryPartitionSize = moduleConfig.getIntProperty("double-query-partition-size", DEFAULT_DOUBLE_QUERY_PARTITION_SIZE);
             stringQueryPartitionSize = moduleConfig.getIntProperty("string-query-partition-size", DEFAULT_STRING_QUERY_PARTITION_SIZE);
             binaryDataChunkSize = moduleConfig.getIntProperty("binary-data-chunk-size", DEFAULT_BINARY_DATA_CHUNK_SIZE);
+            fileOnDisk = moduleConfig.getBooleanProperty("file-on-disk", false);
+            if (fileOnDisk) {
+                final ModuleConfig fodModuleConfig = platformConfig.getModuleConfig("cassandra-file-on-disk");
+                final Path fodRootDir = fodModuleConfig.getPathProperty("root-dir");
+                fodConfig = new FileOnDiskConfig(fodRootDir);
+            }
         }
         return new CassandraAppStorageConfig(flushMaximumChange, flushMaximumSize, doubleQueryPartitionSize,
-                stringQueryPartitionSize, binaryDataChunkSize);
+                stringQueryPartitionSize, binaryDataChunkSize, fodConfig);
     }
 
     private static int checkFlushMaximumChange(int flushMaximumChange) {
@@ -82,16 +95,17 @@ public class CassandraAppStorageConfig {
 
     public CassandraAppStorageConfig() {
         this(DEFAULT_FLUSH_MAXIMUM_CHANGE, DEFAULT_FLUSH_MAXIMUM_SIZE, DEFAULT_DOUBLE_QUERY_PARTITION_SIZE,
-                DEFAULT_STRING_QUERY_PARTITION_SIZE, DEFAULT_BINARY_DATA_CHUNK_SIZE);
+                DEFAULT_STRING_QUERY_PARTITION_SIZE, DEFAULT_BINARY_DATA_CHUNK_SIZE, null);
     }
 
     public CassandraAppStorageConfig(int flushMaximumChange, long flushMaximumSize, int doubleQueryPartitionSize,
-                                     int stringQueryPartitionSize, int binaryDataChunkSize) {
+                                     int stringQueryPartitionSize, int binaryDataChunkSize, FileOnDiskConfig fileOnDiskConfig) {
         this.flushMaximumChange = checkFlushMaximumChange(flushMaximumChange);
         this.flushMaximumSize = checkFlushMaximumSize(flushMaximumSize);
         this.doubleQueryPartitionSize = checkQueryPartitionSize(doubleQueryPartitionSize);
         this.stringQueryPartitionSize = checkQueryPartitionSize(stringQueryPartitionSize);
         this.binaryDataChunkSize = checkBinaryDataChunkSize(binaryDataChunkSize);
+        this.fileOnDiskConfig = fileOnDiskConfig;
     }
 
     public int getFlushMaximumChange() {
@@ -137,5 +151,21 @@ public class CassandraAppStorageConfig {
     public CassandraAppStorageConfig setBinaryDataChunkSize(int binaryDataChunkSize) {
         this.binaryDataChunkSize = checkBinaryDataChunkSize(binaryDataChunkSize);
         return this;
+    }
+
+    static class FileOnDiskConfig {
+
+        private final Path rootDir;
+
+        FileOnDiskConfig(Path rootDir) {
+            this.rootDir = Objects.requireNonNull(rootDir);
+        }
+    }
+
+    public Path getRootDir() {
+        if (fileOnDiskConfig == null) {
+            return null;
+        }
+        return fileOnDiskConfig.rootDir;
     }
 }
