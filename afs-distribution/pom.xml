@@ -90,6 +90,11 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
+            <artifactId>powsybl-afs-spring-server</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
             <artifactId>powsybl-afs-storage-api</artifactId>
             <version>${project.version}</version>
         </dependency>
