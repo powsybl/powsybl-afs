@@ -1027,7 +1027,6 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
             // update data names
             getSession().execute(insertInto(NODE_DATA_NAMES)
-                    .ifNotExists()
                     .value(ID, nodeUuid)
                     .value(NAME, name));
         }
