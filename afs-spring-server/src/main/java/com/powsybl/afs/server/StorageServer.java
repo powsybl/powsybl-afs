@@ -12,6 +12,7 @@ import com.powsybl.afs.ProjectFile;
 import com.powsybl.afs.TaskMonitor;
 import com.powsybl.afs.storage.*;
 import com.powsybl.afs.storage.buffer.*;
+import com.powsybl.afs.ws.server.utils.AppDataBean;
 import com.powsybl.timeseries.DoubleDataChunk;
 import com.powsybl.timeseries.StringDataChunk;
 import com.powsybl.timeseries.TimeSeriesMetadata;
