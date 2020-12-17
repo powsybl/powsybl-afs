@@ -7,10 +7,10 @@
 package com.powsybl.afs.server.events;
 
 import com.fasterxml.jackson.databind.ObjectReader;
-import com.powsybl.afs.server.AppDataBean;
 import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.events.AppStorageListener;
 import com.powsybl.afs.storage.events.NodeEventContainer;
+import com.powsybl.afs.ws.server.utils.AppDataBean;
 import com.powsybl.commons.json.JsonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

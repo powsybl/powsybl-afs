@@ -10,7 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.afs.AppFileSystem;
 import com.powsybl.afs.TaskEvent;
 import com.powsybl.afs.TaskListener;
-import com.powsybl.afs.server.AppDataBean;
+import com.powsybl.afs.ws.server.utils.AppDataBean;
 import com.powsybl.commons.json.JsonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

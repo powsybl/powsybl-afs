@@ -6,8 +6,8 @@
  */
 package com.powsybl.afs.server.events;
 
-import com.powsybl.afs.server.AppDataBean;
 import com.powsybl.afs.server.StorageServer;
+import com.powsybl.afs.ws.server.utils.AppDataBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
