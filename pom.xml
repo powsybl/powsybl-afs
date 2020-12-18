@@ -57,6 +57,7 @@
         <module>afs-local</module>
         <module>afs-mapdb</module>
         <module>afs-mapdb-storage</module>
+        <module>afs-mixed</module>
         <module>afs-network</module>
         <module>afs-scripting</module>
         <module>afs-security-analysis</module>
@@ -206,6 +207,21 @@
                 <groupId>com.powsybl</groupId>
                 <artifactId>powsybl-tools</artifactId>
                 <version>${powsyblcore.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>powsybl-afs-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>powsybl-afs-mixed-storage</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>powsybl-afs-storage-api</artifactId>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.jsonwebtoken</groupId>
