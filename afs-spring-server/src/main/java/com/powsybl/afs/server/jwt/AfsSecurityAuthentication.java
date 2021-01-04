@@ -21,7 +21,7 @@ import java.util.Objects;
  */
 public class AfsSecurityAuthentication implements Authentication {
 
-    private Principal user;
+    private final Principal user;
 
     public AfsSecurityAuthentication(String username) {
         Objects.requireNonNull(username);
