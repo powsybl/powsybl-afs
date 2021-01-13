@@ -58,6 +58,7 @@
         <module>afs-mapdb</module>
         <module>afs-mapdb-storage</module>
         <module>afs-network</module>
+        <module>afs-postgres</module>
         <module>afs-scripting</module>
         <module>afs-security-analysis</module>
         <module>afs-security-analysis-local</module>

@@ -15,6 +15,8 @@ public abstract class AbstractAppFileSystemConfig<T extends AbstractAppFileSyste
 
     protected static final boolean DEFAULT_REMOTELY_ACCESSIBLE = false;
 
+    protected static final String DRIVE_NAME = "drive-name";
+
     protected String driveName;
 
     protected boolean remotelyAccessible;
