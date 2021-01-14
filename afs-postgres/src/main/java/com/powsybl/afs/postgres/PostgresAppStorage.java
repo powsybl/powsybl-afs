@@ -9,7 +9,9 @@ package com.powsybl.afs.postgres;
 import com.powsybl.afs.postgres.jpa.NodeDataEntity;
 import com.powsybl.afs.postgres.jpa.NodeDataRepository;
 import com.powsybl.afs.storage.*;
+import com.powsybl.afs.storage.events.NodeConsistent;
 import com.powsybl.afs.storage.events.NodeCreated;
+import com.powsybl.afs.storage.events.NodeDescriptionUpdated;
 import com.powsybl.timeseries.DoubleDataChunk;
 import com.powsybl.timeseries.StringDataChunk;
 import com.powsybl.timeseries.TimeSeriesMetadata;
@@ -41,7 +43,9 @@ public class PostgresAppStorage extends AbstractAppStorage {
         this.nodeService = Objects.requireNonNull(nodeService);
         this.nodeDataRepository = Objects.requireNonNull(nodeDataRepository);
         this.tsService = Objects.requireNonNull(tsService);
-        this.nodeService.setPush((event, topic) -> {pushEvent(event, topic);flush();});
+        this.nodeService.setNodeCreated((nodeId, parentNodeId) -> pushEvent(new NodeCreated(nodeId, parentNodeId), APPSTORAGE_NODE_TOPIC));
+        this.nodeService.setNodeConsistence(id -> pushEvent(new NodeConsistent(id), APPSTORAGE_NODE_TOPIC));
+        this.nodeService.setDescriptionUpdated((id, desc) -> pushEvent(new NodeDescriptionUpdated(id, desc), APPSTORAGE_NODE_TOPIC));
     }
 
     @Override

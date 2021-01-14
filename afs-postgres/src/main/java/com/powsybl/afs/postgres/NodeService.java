@@ -11,8 +11,6 @@ import com.powsybl.afs.postgres.jpa.NodeInfoEntity;
 import com.powsybl.afs.postgres.jpa.NodeRepository;
 import com.powsybl.afs.storage.NodeGenericMetadata;
 import com.powsybl.afs.storage.NodeInfo;
-import com.powsybl.afs.storage.events.NodeCreated;
-import com.powsybl.afs.storage.events.NodeEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +20,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -33,7 +32,9 @@ class NodeService {
     private final NodeRepository nodeRepository;
     private final MetaDataService metaDataService;
 
-    private BiConsumer<NodeEvent, String> push;
+    private BiConsumer<String, String> nodeCreated;
+    private Consumer<String> nodeConsistentTrue;
+    private BiConsumer<String, String> descriptionUpdated;
 
     @Autowired
     NodeService(NodeRepository nodeRepository, MetaDataService metaDataService) {
@@ -41,8 +42,16 @@ class NodeService {
         this.metaDataService = Objects.requireNonNull(metaDataService);
     }
 
-    void setPush(BiConsumer<NodeEvent, String> push) {
-        this.push = push;
+    void setNodeCreated(BiConsumer<String, String> nodeCreated) {
+        this.nodeCreated = nodeCreated;
+    }
+
+    void setNodeConsistence(Consumer<String> nodeConsistent) {
+        this.nodeConsistentTrue = nodeConsistent;
+    }
+
+    public void setDescriptionUpdated(BiConsumer<String, String> descriptionUpdated) {
+        this.descriptionUpdated = descriptionUpdated;
     }
 
     NodeInfo createRootNodeIfNotExists(String name, String nodePseudoClass) {
@@ -60,7 +69,10 @@ class NodeService {
         metaDataService.saveMetaData(nodeId, genericMetadata);
         final NodeInfo nodeInfo = nodeRepository.save(new NodeInfoEntity(nodeId, parentNodeId, name, nodePseudoClass, description, creationTime, creationTime, version).setConsistence(consistence))
                 .toNodeInfo(genericMetadata);
-        push.accept(new NodeCreated(nodeId, parentNodeId), "APPSTORAGE_NODE_TOPIC");
+        nodeCreated.accept(nodeId, parentNodeId);
+        if (consistence) {
+            nodeConsistentTrue.accept(nodeId);
+        }
         return nodeInfo;
     }
 
@@ -76,6 +88,7 @@ class NodeService {
 
     void setDescription(String nodeId, String description) {
         nodeRepository.updateDescriptionAndModificationTimeById(nodeId, description, ZonedDateTime.now().toInstant().toEpochMilli());
+        descriptionUpdated.accept(nodeId, description);
     }
 
     void updateModificationTime(String nodeId) {
@@ -132,5 +145,6 @@ class NodeService {
 
     void setConsistent(String nodeId) {
         nodeRepository.updateConsistenceById(nodeId, true);
+        nodeConsistentTrue.accept(nodeId);
     }
 }
