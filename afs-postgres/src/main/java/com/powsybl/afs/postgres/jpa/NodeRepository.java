@@ -23,6 +23,7 @@ public interface NodeRepository extends CrudRepository<NodeInfoEntity, String> {
 
     Optional<NodeInfoEntity> findByName(String name);
 
+    // TODO not change modification time
     @Transactional
     @Modifying
     @Query("update NodeInfoEntity info set info.description = ?2, info.modificationTime = ?3 where info.id = ?1")
@@ -35,10 +36,17 @@ public interface NodeRepository extends CrudRepository<NodeInfoEntity, String> {
 
     @Transactional
     @Modifying
+    @Query("update NodeInfoEntity info set info.consistence = ?2 where info.id = ?1")
+    void updateConsistenceById(String id, boolean consistence);
+
+    @Transactional
+    @Modifying
     @Query("update NodeInfoEntity info set info.parentId = ?3 where info.id = ?1 and info.modificationTime = ?2")
     void updateParentById(String id, long modificationTime, String newParentId);
 
     List<NodeInfoEntity> findAllByParentId(String parentId);
+
+    List<NodeInfoEntity> findAllByConsistenceFalse();
 
     Optional<NodeInfoEntity> findByParentIdAndName(String parentId, String childName);
 

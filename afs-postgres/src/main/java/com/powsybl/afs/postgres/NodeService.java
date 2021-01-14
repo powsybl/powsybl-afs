@@ -11,6 +11,8 @@ import com.powsybl.afs.postgres.jpa.NodeInfoEntity;
 import com.powsybl.afs.postgres.jpa.NodeRepository;
 import com.powsybl.afs.storage.NodeGenericMetadata;
 import com.powsybl.afs.storage.NodeInfo;
+import com.powsybl.afs.storage.events.NodeCreated;
+import com.powsybl.afs.storage.events.NodeEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -19,16 +21,19 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 /**
  * @author Yichen TANG <yichen.tang at rte-france.com>
  */
 @Service
-public class NodeService {
+class NodeService {
 
     private final NodeRepository nodeRepository;
     private final MetaDataService metaDataService;
+
+    private BiConsumer<NodeEvent, String> push;
 
     @Autowired
     NodeService(NodeRepository nodeRepository, MetaDataService metaDataService) {
@@ -36,22 +41,27 @@ public class NodeService {
         this.metaDataService = Objects.requireNonNull(metaDataService);
     }
 
+    void setPush(BiConsumer<NodeEvent, String> push) {
+        this.push = push;
+    }
+
     NodeInfo createRootNodeIfNotExists(String name, String nodePseudoClass) {
         final Optional<NodeInfoEntity> byName = nodeRepository.findByName(name);
         if (byName.isPresent()) {
             return byName.get().toNodeInfo();
         }
-        long creationTime = ZonedDateTime.now().toInstant().toEpochMilli();
-        final NodeInfoEntity created = nodeRepository.save(new NodeInfoEntity(UUID.randomUUID().toString(), null, name, nodePseudoClass, "", creationTime, creationTime, 0));
-        return created.toNodeInfo();
+        final NodeInfo node = createNode(null, name, nodePseudoClass, "", true, 0, new NodeGenericMetadata());
+        return node;
     }
 
-    NodeInfo createNode(String parentNodeId, String name, String nodePseudoClass, String description, int version, NodeGenericMetadata genericMetadata) {
+    NodeInfo createNode(String parentNodeId, String name, String nodePseudoClass, String description, boolean consistence, int version, NodeGenericMetadata genericMetadata) {
         long creationTime = ZonedDateTime.now().toInstant().toEpochMilli();
         final String nodeId = UUID.randomUUID().toString();
         metaDataService.saveMetaData(nodeId, genericMetadata);
-        return nodeRepository.save(new NodeInfoEntity(nodeId, parentNodeId, name, nodePseudoClass, description, creationTime, creationTime, version))
+        final NodeInfo nodeInfo = nodeRepository.save(new NodeInfoEntity(nodeId, parentNodeId, name, nodePseudoClass, description, creationTime, creationTime, version).setConsistence(consistence))
                 .toNodeInfo(genericMetadata);
+        push.accept(new NodeCreated(nodeId, parentNodeId), "APPSTORAGE_NODE_TOPIC");
+        return nodeInfo;
     }
 
     NodeInfo getNodeInfo(String nodeId) {
@@ -102,7 +112,25 @@ public class NodeService {
         return parentNode.map(NodeInfo::getId).orElse(null);
     }
 
+    boolean isConsistent(String nodeId) {
+        return nodeRepository.findById(nodeId).map(NodeInfoEntity::isConsistence).orElseThrow(() -> createNodeNotFoundException(nodeId));
+    }
+
     private static PostgresAfsException createNodeNotFoundException(UUID nodeId) {
+        return createNodeNotFoundException(nodeId.toString());
+    }
+
+    private static PostgresAfsException createNodeNotFoundException(String nodeId) {
         return new PostgresAfsException("Node '" + nodeId + "' not found");
+    }
+
+    List<NodeInfo> getInconsistentNodes() {
+        return nodeRepository.findAllByConsistenceFalse().
+                stream().map(e -> getNodeInfo(e.getId()))
+                .collect(Collectors.toList());
+    }
+
+    void setConsistent(String nodeId) {
+        nodeRepository.updateConsistenceById(nodeId, true);
     }
 }

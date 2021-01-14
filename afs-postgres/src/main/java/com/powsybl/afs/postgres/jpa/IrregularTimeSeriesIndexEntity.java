@@ -6,19 +6,27 @@
  */
 package com.powsybl.afs.postgres.jpa;
 
-import org.springframework.stereotype.Service;
+import lombok.Data;
+import lombok.experimental.Accessors;
 
-import java.util.Objects;
+import javax.persistence.Entity;
+import javax.persistence.Id;
 
 /**
  * @author Yichen TANG <yichen.tang at rte-france.com>
  */
-@Service
-public class TimeSeriesService {
+@Entity
+@Data
+@Accessors(chain = true)
+public class IrregularTimeSeriesIndexEntity {
 
-    private final TimeSeriesMetadataRepository metadataRepository;
+    @Id
+    long id;
 
-    public TimeSeriesService(TimeSeriesMetadataRepository metadataRepository) {
-        this.metadataRepository = Objects.requireNonNull(metadataRepository);
-    }
+    // TODO foreign_key?
+    long tsmdId;
+
+    int point;
+
+    long epoch;
 }

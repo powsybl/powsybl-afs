@@ -43,6 +43,8 @@ public class NodeInfoEntity {
     @Column(nullable = false)
     private int version;
 
+    private boolean consistence;
+
     private String parentId;
 
     protected NodeInfoEntity() {

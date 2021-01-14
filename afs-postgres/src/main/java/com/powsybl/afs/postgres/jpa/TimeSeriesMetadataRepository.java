@@ -6,13 +6,19 @@
  */
 package com.powsybl.afs.postgres.jpa;
 
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
+
+import java.util.Set;
 
 @Repository
 public interface TimeSeriesMetadataRepository extends CrudRepository<TimeSeriesMetadataEntity, Long> {
 
-    Iterable<TimeSeriesMetadataEntity> findAllByNodeId(String nodeId);
+    @Query(value = "select t.name from time_series_metadata_entity t where t.node_id = ?1", nativeQuery = true)
+    Set<String> getTimeSeriesNames(String nodeId);
+
+    boolean existsByNodeIdAndName(String nodeId, String name);
 
     Iterable<TimeSeriesMetadataEntity> findAllByNodeIdAndName(String nodeId, String name);
 }

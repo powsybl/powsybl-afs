@@ -6,25 +6,12 @@
  */
 package com.powsybl.afs.postgres.jpa;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.experimental.Accessors;
-
-import javax.persistence.*;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
 
 /**
  * @author Yichen TANG <yichen.tang at rte-france.com>
  */
-@Entity
-@Accessors(chain = true)
-@Data()
-@NoArgsConstructor
-public class TimeSeriesMetadataEntity {
-
-    @Id
-    long id;
-    String nodeId;
-    String name;
-    String dataType;
+@Repository
+public interface IrregularTimeSeriesIndexEntityRepository extends CrudRepository<IrregularTimeSeriesIndexEntity, Long> {
 }

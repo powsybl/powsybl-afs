@@ -8,12 +8,8 @@ package com.powsybl.afs.postgres;
 
 import com.powsybl.afs.postgres.jpa.NodeDataEntity;
 import com.powsybl.afs.postgres.jpa.NodeDataRepository;
-import com.powsybl.afs.postgres.jpa.TimeSeriesMetadataEntity;
-import com.powsybl.afs.postgres.jpa.TimeSeriesMetadataRepository;
-import com.powsybl.afs.storage.AbstractAppStorage;
-import com.powsybl.afs.storage.NodeDependency;
-import com.powsybl.afs.storage.NodeGenericMetadata;
-import com.powsybl.afs.storage.NodeInfo;
+import com.powsybl.afs.storage.*;
+import com.powsybl.afs.storage.events.NodeCreated;
 import com.powsybl.timeseries.DoubleDataChunk;
 import com.powsybl.timeseries.StringDataChunk;
 import com.powsybl.timeseries.TimeSeriesMetadata;
@@ -32,22 +28,50 @@ public class PostgresAppStorage extends AbstractAppStorage {
 
     private final NodeService nodeService;
     private final NodeDataRepository nodeDataRepository;
-    private final TimeSeriesMetadataRepository timeSeriesMetadataRepository;
+    private final TimeSeriesService tsService;
 
     private static final int ROOT_NODE_VERSION = 0;
 
     @Autowired
     public PostgresAppStorage(NodeService nodeService,
                               NodeDataRepository nodeDataRepository,
-                              TimeSeriesMetadataRepository timeSeriesMetadataRepository) {
+                              TimeSeriesService tsService) {
+        // TODO here
+        this.eventsBus = new InMemoryEventsBus();
         this.nodeService = Objects.requireNonNull(nodeService);
         this.nodeDataRepository = Objects.requireNonNull(nodeDataRepository);
-        this.timeSeriesMetadataRepository = Objects.requireNonNull(timeSeriesMetadataRepository);
+        this.tsService = Objects.requireNonNull(tsService);
+        this.nodeService.setPush((event, topic) -> {pushEvent(event, topic);flush();});
     }
 
     @Override
     public String getFileSystemName() {
-        return null;
+        // TODO here
+        return "postgres-test";
+    }
+
+    @Override
+    public boolean isConsistent(String nodeId) {
+        return nodeService.isConsistent(nodeId);
+    }
+
+    @Override
+    public List<NodeInfo> getInconsistentNodes() {
+        return nodeService.getInconsistentNodes();
+    }
+
+    @Override
+    public void setMetadata(String nodeId, NodeGenericMetadata genericMetadata) {
+    }
+
+    @Override
+    public void setConsistent(String nodeId) {
+        nodeService.setConsistent(nodeId);
+    }
+
+    @Override
+    public void renameNode(String nodeId, String name) {
+
     }
 
     @Override
@@ -57,17 +81,20 @@ public class PostgresAppStorage extends AbstractAppStorage {
 
     @Override
     public NodeInfo createRootNodeIfNotExists(String name, String nodePseudoClass) {
-        return nodeService.createRootNodeIfNotExists(name, nodePseudoClass);
+        final NodeInfo info = nodeService.createRootNodeIfNotExists(name, nodePseudoClass);
+//        pushEvent(new NodeCreated("test", null), "APPSTORAGE_NODE_TOPIC");
+        return info;
     }
 
     @Override
     public NodeInfo createNode(String parentNodeId, String name, String nodePseudoClass, String description, int version, NodeGenericMetadata genericMetadata) {
-        return nodeService.createNode(parentNodeId, name, nodePseudoClass, description, version, genericMetadata);
+        return nodeService.createNode(parentNodeId, name, nodePseudoClass, description, false, version, genericMetadata);
     }
 
     @Override
     public boolean isWritable(String nodeId) {
-        return false;
+        // TODO
+        return true;
     }
 
     @Override
@@ -144,24 +171,17 @@ public class PostgresAppStorage extends AbstractAppStorage {
 
     @Override
     public void createTimeSeries(String nodeId, TimeSeriesMetadata metadata) {
-        TimeSeriesMetadataEntity entity = new TimeSeriesMetadataEntity();
-        entity.setType(metadata.getDataType().name());
-        entity.setName(metadata.getName());
-        entity.setNodeId(nodeId);
-        timeSeriesMetadataRepository.save(entity);
+        tsService.createTimeSeries(nodeId, metadata);
     }
 
     @Override
     public Set<String> getTimeSeriesNames(String nodeId) {
-        final Iterable<TimeSeriesMetadataEntity> allByNodeId = timeSeriesMetadataRepository.findAllByNodeId(nodeId);
-        Set<String> set = new HashSet<>();
-        allByNodeId.forEach(i -> set.add(i.getName()));
-        return set;
+        return tsService.getTimeSeriesNames(nodeId);
     }
 
     @Override
     public boolean timeSeriesExists(String nodeId, String timeSeriesName) {
-        return false;
+        return tsService.timeSeriesExists(nodeId, timeSeriesName);
     }
 
     @Override
@@ -231,7 +251,7 @@ public class PostgresAppStorage extends AbstractAppStorage {
 
     @Override
     public void flush() {
-
+        eventsBus.flush();
     }
 
     @Override
