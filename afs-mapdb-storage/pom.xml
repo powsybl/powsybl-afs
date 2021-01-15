@@ -15,7 +15,7 @@
     <parent>
         <artifactId>powsybl-afs</artifactId>
         <groupId>com.powsybl</groupId>
-        <version>3.4.0</version>
+        <version>3.4.1</version>
     </parent>
 
     <artifactId>powsybl-afs-mapdb-storage</artifactId>
