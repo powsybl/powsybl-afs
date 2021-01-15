@@ -52,6 +52,7 @@ public class PostgresAppStorage extends AbstractAppStorage {
         nodeService.setBDepAdded((id, depName) -> pushEvent(new BackwardDependencyAdded(id, depName), APPSTORAGE_DEPENDENCY_TOPIC));
         nodeService.setDepRemoved((id, depName) -> pushEvent(new DependencyRemoved(id, depName), APPSTORAGE_DEPENDENCY_TOPIC));
         nodeService.setBDepRemoved((id, depName) -> pushEvent(new BackwardDependencyRemoved(id, depName), APPSTORAGE_DEPENDENCY_TOPIC));
+        nodeService.setNodeRemoved((id, pid) -> pushEvent(new NodeRemoved(id, pid), APPSTORAGE_NODE_TOPIC));
     }
 
     @Override
@@ -176,7 +177,11 @@ public class PostgresAppStorage extends AbstractAppStorage {
 
     @Override
     public boolean removeData(String nodeId, String name) {
+        if (!dataExists(nodeId, name)) {
+            return false;
+        }
         nodeDataRepository.deleteByNodeIdAndKey(nodeId, name);
+        pushEvent(new NodeDataRemoved(nodeId, name), APPSTORAGE_NODE_TOPIC);
         return true;
     }
 

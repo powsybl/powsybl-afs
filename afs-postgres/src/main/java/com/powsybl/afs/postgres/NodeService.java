@@ -43,6 +43,8 @@ class NodeService {
     private BiConsumer<String, String> depRemoved;
     @Setter(AccessLevel.PACKAGE)
     private BiConsumer<String, String> bDepRemoved;
+    @Setter(AccessLevel.PACKAGE)
+    private BiConsumer<String, String> nodeRemoved;
 
     @Autowired
     NodeService(NodeRepository nodeRepository,
@@ -135,10 +137,13 @@ class NodeService {
         final NodeInfoEntity nodeToDelete = nodeRepository.findById(nodeId).get();
         cleanDep(nodeToDelete);
         final Optional<NodeInfo> parentNode = getParentNode(nodeId);
+        final String parentId = parentNode.map(NodeInfo::getId).orElse(null);
         final List<NodeInfo> childNodes = getChildNodes(nodeId);
         childNodes.forEach(id -> deleteNode(id.getId()));
         metaDataService.deleteMetaDate(nodeId);
-        return parentNode.map(NodeInfo::getId).orElse(null);
+        nodeRepository.deleteById(nodeToDelete.getId());
+        nodeRemoved.accept(nodeId, parentId);
+        return parentId;
     }
 
     private void cleanDep(NodeInfoEntity nodeToDelete) {
