@@ -9,9 +9,7 @@ package com.powsybl.afs.postgres;
 import com.powsybl.afs.postgres.jpa.NodeDataEntity;
 import com.powsybl.afs.postgres.jpa.NodeDataRepository;
 import com.powsybl.afs.storage.*;
-import com.powsybl.afs.storage.events.NodeConsistent;
-import com.powsybl.afs.storage.events.NodeCreated;
-import com.powsybl.afs.storage.events.NodeDescriptionUpdated;
+import com.powsybl.afs.storage.events.*;
 import com.powsybl.timeseries.DoubleDataChunk;
 import com.powsybl.timeseries.StringDataChunk;
 import com.powsybl.timeseries.TimeSeriesMetadata;
@@ -43,9 +41,17 @@ public class PostgresAppStorage extends AbstractAppStorage {
         this.nodeService = Objects.requireNonNull(nodeService);
         this.nodeDataRepository = Objects.requireNonNull(nodeDataRepository);
         this.tsService = Objects.requireNonNull(tsService);
-        this.nodeService.setNodeCreated((nodeId, parentNodeId) -> pushEvent(new NodeCreated(nodeId, parentNodeId), APPSTORAGE_NODE_TOPIC));
-        this.nodeService.setNodeConsistence(id -> pushEvent(new NodeConsistent(id), APPSTORAGE_NODE_TOPIC));
-        this.nodeService.setDescriptionUpdated((id, desc) -> pushEvent(new NodeDescriptionUpdated(id, desc), APPSTORAGE_NODE_TOPIC));
+        bindListener();
+    }
+
+    private void bindListener() {
+        nodeService.setNodeCreated((nodeId, parentNodeId) -> pushEvent(new NodeCreated(nodeId, parentNodeId), APPSTORAGE_NODE_TOPIC));
+        nodeService.setNodeConsistence(id -> pushEvent(new NodeConsistent(id), APPSTORAGE_NODE_TOPIC));
+        nodeService.setDescriptionUpdated((id, desc) -> pushEvent(new NodeDescriptionUpdated(id, desc), APPSTORAGE_NODE_TOPIC));
+        nodeService.setDepAdded((id, depName) -> pushEvent(new DependencyAdded(id, depName), APPSTORAGE_DEPENDENCY_TOPIC));
+        nodeService.setBDepAdded((id, depName) -> pushEvent(new BackwardDependencyAdded(id, depName), APPSTORAGE_DEPENDENCY_TOPIC));
+        nodeService.setDepRemoved((id, depName) -> pushEvent(new DependencyRemoved(id, depName), APPSTORAGE_DEPENDENCY_TOPIC));
+        nodeService.setBDepRemoved((id, depName) -> pushEvent(new BackwardDependencyRemoved(id, depName), APPSTORAGE_DEPENDENCY_TOPIC));
     }
 
     @Override
@@ -140,7 +146,7 @@ public class PostgresAppStorage extends AbstractAppStorage {
     public String deleteNode(String nodeId) {
         final String s = nodeService.deleteNode(nodeId);
         // TODO node id foreign key to auto delete
-        nodeDataRepository.deleteByNodeId(nodeId);
+//        nodeDataRepository.deleteByNodeId(nodeId);
         return s;
     }
 
@@ -153,6 +159,7 @@ public class PostgresAppStorage extends AbstractAppStorage {
     @Override
     public OutputStream writeBinaryData(String nodeId, String name) {
         final BinaryDataOutputStream os = new BinaryDataOutputStream(nodeId, name);
+        pushEvent(new NodeDataUpdated(nodeId, name), APPSTORAGE_NODE_TOPIC);
         return os;
     }
 
@@ -230,27 +237,27 @@ public class PostgresAppStorage extends AbstractAppStorage {
 
     @Override
     public void addDependency(String nodeId, String name, String toNodeId) {
-
+        nodeService.addDependency(nodeId, name, toNodeId);
     }
 
     @Override
     public Set<NodeInfo> getDependencies(String nodeId, String name) {
-        return null;
+        return nodeService.getDependencies(nodeId, name);
     }
 
     @Override
     public Set<NodeDependency> getDependencies(String nodeId) {
-        return null;
+        return nodeService.getDependencies(nodeId);
     }
 
     @Override
     public Set<NodeInfo> getBackwardDependencies(String nodeId) {
-        return null;
+        return nodeService.getBackwardDependencies(nodeId);
     }
 
     @Override
     public void removeDependency(String nodeId, String name, String toNodeId) {
-
+        nodeService.removeDependency(nodeId, name, toNodeId);
     }
 
     @Override

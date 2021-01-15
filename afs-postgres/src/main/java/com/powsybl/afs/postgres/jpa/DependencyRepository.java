@@ -12,22 +12,25 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
-/**
- * @author Yichen TANG <yichen.tang at rte-france.com>
- */
-@Transactional
 @Repository
-public interface NodeDataRepository extends CrudRepository<NodeDataEntity, Long> {
+public interface DependencyRepository extends CrudRepository<DependencyEntity, Long> {
 
-    List<NodeDataEntity> findAllByNodeId(String nodeId);
+    List<DependencyEntity> findAllByFrom(NodeInfoEntity from);
 
-    Optional<NodeDataEntity> findByNodeIdAndKey(String nodeId, String key);
+    List<DependencyEntity> findAllByTo(NodeInfoEntity to);
 
+    List<DependencyEntity> findAllByFromAndName(NodeInfoEntity from, String name);
+
+    @Transactional
     @Modifying
-    void deleteByNodeId(String nodeId);
+    void deleteByFrom(NodeInfoEntity from);
 
+    @Transactional
     @Modifying
-    void deleteByNodeIdAndKey(String nodeId, String key);
+    void deleteByTo(NodeInfoEntity to);
+
+    @Transactional
+    @Modifying
+    void deleteByFromAndNameAndTo(NodeInfoEntity from, String name, NodeInfoEntity to);
 }

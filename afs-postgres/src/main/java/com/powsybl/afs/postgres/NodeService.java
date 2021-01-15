@@ -6,19 +6,17 @@
  */
 package com.powsybl.afs.postgres;
 
-import com.powsybl.afs.postgres.jpa.MetaDataService;
-import com.powsybl.afs.postgres.jpa.NodeInfoEntity;
-import com.powsybl.afs.postgres.jpa.NodeRepository;
+import com.powsybl.afs.postgres.jpa.*;
+import com.powsybl.afs.storage.NodeDependency;
 import com.powsybl.afs.storage.NodeGenericMetadata;
 import com.powsybl.afs.storage.NodeInfo;
+import lombok.AccessLevel;
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -31,15 +29,28 @@ class NodeService {
 
     private final NodeRepository nodeRepository;
     private final MetaDataService metaDataService;
+    private final DependencyRepository depRepository;
 
     private BiConsumer<String, String> nodeCreated;
     private Consumer<String> nodeConsistentTrue;
     private BiConsumer<String, String> descriptionUpdated;
+    private BiConsumer<String, String> nodeDataUpdated;
+    @Setter(AccessLevel.PACKAGE)
+    private BiConsumer<String, String> depAdded;
+    @Setter(AccessLevel.PACKAGE)
+    private BiConsumer<String, String> bDepAdded;
+    @Setter(AccessLevel.PACKAGE)
+    private BiConsumer<String, String> depRemoved;
+    @Setter(AccessLevel.PACKAGE)
+    private BiConsumer<String, String> bDepRemoved;
 
     @Autowired
-    NodeService(NodeRepository nodeRepository, MetaDataService metaDataService) {
+    NodeService(NodeRepository nodeRepository,
+                MetaDataService metaDataService,
+                DependencyRepository dependencyRepository) {
         this.nodeRepository = Objects.requireNonNull(nodeRepository);
         this.metaDataService = Objects.requireNonNull(metaDataService);
+        depRepository = Objects.requireNonNull(dependencyRepository);
     }
 
     void setNodeCreated(BiConsumer<String, String> nodeCreated) {
@@ -50,8 +61,12 @@ class NodeService {
         this.nodeConsistentTrue = nodeConsistent;
     }
 
-    public void setDescriptionUpdated(BiConsumer<String, String> descriptionUpdated) {
+    void setDescriptionUpdated(BiConsumer<String, String> descriptionUpdated) {
         this.descriptionUpdated = descriptionUpdated;
+    }
+
+    void setNodeDataUpdated(BiConsumer<String, String> nodeDataUpdated) {
+        this.nodeDataUpdated = nodeDataUpdated;
     }
 
     NodeInfo createRootNodeIfNotExists(String name, String nodePseudoClass) {
@@ -117,12 +132,24 @@ class NodeService {
     }
 
     String deleteNode(String nodeId) {
+        final NodeInfoEntity nodeToDelete = nodeRepository.findById(nodeId).get();
+        cleanDep(nodeToDelete);
         final Optional<NodeInfo> parentNode = getParentNode(nodeId);
         final List<NodeInfo> childNodes = getChildNodes(nodeId);
         childNodes.forEach(id -> deleteNode(id.getId()));
-        nodeRepository.deleteById(nodeId);
         metaDataService.deleteMetaDate(nodeId);
         return parentNode.map(NodeInfo::getId).orElse(null);
+    }
+
+    private void cleanDep(NodeInfoEntity nodeToDelete) {
+        depRepository.findAllByFrom(nodeToDelete)
+                .forEach(de -> {
+                    depRemoved.accept(nodeToDelete.getId(), de.getName());
+                    bDepRemoved.accept(de.getTo().getId(), de.getName());
+                });
+        depRepository.deleteByFrom(nodeToDelete);
+        depRepository.deleteByTo(nodeToDelete);
+        // TODO ???
     }
 
     boolean isConsistent(String nodeId) {
@@ -146,5 +173,50 @@ class NodeService {
     void setConsistent(String nodeId) {
         nodeRepository.updateConsistenceById(nodeId, true);
         nodeConsistentTrue.accept(nodeId);
+    }
+
+    Set<NodeDependency> getDependencies(String nodeId) {
+        final Optional<NodeInfoEntity> from = nodeRepository.findById(nodeId);
+        return depRepository.findAllByFrom(from.get()).stream()
+                .map(de -> new NodeDependency(de.getName(), getNodeInfo(de.getTo().getId())))
+                .collect(Collectors.toSet());
+    }
+
+    Set<NodeInfo> getDependencies(String nodeId, String name) {
+        final Optional<NodeInfoEntity> from = nodeRepository.findById(nodeId);
+        return depRepository.findAllByFromAndName(from.get(), name)
+                .stream().map(DependencyEntity::getTo)
+                // TODO ??? no need to re get if metadata is bounded already to entity
+                .map(NodeInfoEntity::getId)
+                .map(this::getNodeInfo)
+                .collect(Collectors.toSet());
+    }
+
+    void addDependency(String nodeId, String name, String toNodeId) {
+        final Optional<NodeInfoEntity> from = nodeRepository.findById(nodeId);
+        final Optional<NodeInfoEntity> to = nodeRepository.findById(toNodeId);
+        final DependencyEntity dependencyEntity = new DependencyEntity()
+                .setFrom(from.get())
+                .setTo(to.get())
+                .setName(name);
+        depRepository.save(dependencyEntity);
+        depAdded.accept(nodeId, name);
+        bDepAdded.accept(toNodeId, name);
+    }
+
+    Set<NodeInfo> getBackwardDependencies(String nodeId) {
+        final Optional<NodeInfoEntity> toId = nodeRepository.findById(nodeId);
+        return depRepository.findAllByTo(toId.get())
+                .stream().map(DependencyEntity::getFrom)
+                // TODO ??? no need to re get if metadata is bounded already to entity
+                .map(NodeInfoEntity::getId)
+                .map(this::getNodeInfo)
+                .collect(Collectors.toSet());
+    }
+
+    void removeDependency(String nodeId, String name, String toNodeId) {
+        depRepository.deleteByFromAndNameAndTo(nodeRepository.findById(nodeId).get(), name, nodeRepository.findById(toNodeId).get());
+        depRemoved.accept(nodeId, name);
+        bDepRemoved.accept(toNodeId, name);
     }
 }

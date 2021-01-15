@@ -15,18 +15,22 @@ import javax.persistence.*;
  * @author Yichen TANG <yichen.tang at rte-france.com>
  */
 @Entity
+@Table(name = "dependency")
 @Accessors(chain = true)
 @Data()
-@Table(indexes = @Index(name = "binary_data",  columnList = "nodeId, key", unique = true))
-public class NodeDataEntity extends AbstractMetaEntity<NodeDataEntity, byte[]> {
+public class DependencyEntity {
 
-    @Lob
-//    @Column(columnDefinition = "BLOB")
-    private byte[] binaryData;
+    @Id
+    @GeneratedValue
+    long id;
 
-    @Override
-    public NodeDataEntity setValue(byte[] value) {
-        binaryData = value;
-        return this;
-    }
+    @ManyToOne
+    @JoinColumn(name = "from_node")
+    private NodeInfoEntity from;
+
+    @ManyToOne
+    @JoinColumn(name = "to_node")
+    private NodeInfoEntity to;
+
+    private String name;
 }

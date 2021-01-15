@@ -9,9 +9,13 @@ package com.powsybl.afs.postgres.jpa;
 import com.powsybl.afs.storage.NodeGenericMetadata;
 import com.powsybl.afs.storage.NodeInfo;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
 /**
  * @author Yichen TANG <yichen.tang at rte-france.com>
@@ -19,10 +23,11 @@ import javax.persistence.*;
 @Accessors(chain = true)
 @Data()
 @Entity
+@NoArgsConstructor
+@Table(name = "node")
 public class NodeInfoEntity {
 
     @Id
-//    @GeneratedValue(strategy = GenerationType.AUTO)
     private String id;
 
     @Column(nullable = false)
@@ -46,9 +51,6 @@ public class NodeInfoEntity {
     private boolean consistence;
 
     private String parentId;
-
-    protected NodeInfoEntity() {
-    }
 
     public NodeInfoEntity(String id, String parentId, String name, String pseudoClass, String description, long creationTime, long modificationTime,
                           int version) {
