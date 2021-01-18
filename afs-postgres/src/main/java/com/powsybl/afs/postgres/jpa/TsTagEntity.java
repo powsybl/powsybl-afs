@@ -6,9 +6,7 @@
  */
 package com.powsybl.afs.postgres.jpa;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 import javax.persistence.*;
@@ -19,14 +17,18 @@ import javax.persistence.*;
 @Entity
 @Accessors(chain = true)
 @Data()
-@NoArgsConstructor
-public class TimeSeriesMetadataEntity {
+@Table(name = "ts_tag")
+public class TsTagEntity {
 
     @Id
-    long id;
-    String nodeId;
-    String name;
-    String dataType;
+    @GeneratedValue
+    Long id;
 
-    // TODO tags oneToMany
+    String tagKey;
+    String tagValue;
+
+    @ManyToOne
+    @JoinColumn(name = "metadata_id")
+    TimeSeriesMetadataEntity metadataEntity;
+
 }

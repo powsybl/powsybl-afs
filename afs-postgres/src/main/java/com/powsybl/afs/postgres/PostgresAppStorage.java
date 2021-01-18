@@ -53,6 +53,7 @@ public class PostgresAppStorage extends AbstractAppStorage {
         nodeService.setDepRemoved((id, depName) -> pushEvent(new DependencyRemoved(id, depName), APPSTORAGE_DEPENDENCY_TOPIC));
         nodeService.setBDepRemoved((id, depName) -> pushEvent(new BackwardDependencyRemoved(id, depName), APPSTORAGE_DEPENDENCY_TOPIC));
         nodeService.setNodeRemoved((id, pid) -> pushEvent(new NodeRemoved(id, pid), APPSTORAGE_NODE_TOPIC));
+        tsService.setTimeSeriesCreated((id, name) -> pushEvent(new TimeSeriesCreated(id, name), APPSTORAGE_TIMESERIES_TOPIC));
     }
 
     @Override
@@ -202,7 +203,7 @@ public class PostgresAppStorage extends AbstractAppStorage {
 
     @Override
     public List<TimeSeriesMetadata> getTimeSeriesMetadata(String nodeId, Set<String> timeSeriesNames) {
-        return null;
+        return tsService.getTimeSeriesMetadata(nodeId, timeSeriesNames);
     }
 
     @Override

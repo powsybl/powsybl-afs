@@ -20,5 +20,5 @@ public interface TimeSeriesMetadataRepository extends CrudRepository<TimeSeriesM
 
     boolean existsByNodeIdAndName(String nodeId, String name);
 
-    Iterable<TimeSeriesMetadataEntity> findAllByNodeIdAndName(String nodeId, String name);
+    Iterable<TimeSeriesMetadataEntity> findAllByNodeIdAndName(String nodeId, Iterable<String> names);
 }

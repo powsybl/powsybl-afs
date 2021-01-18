@@ -6,21 +6,18 @@
  */
 package com.powsybl.afs.postgres;
 
-import com.powsybl.afs.postgres.jpa.IrregularTimeSeriesIndexEntity;
-import com.powsybl.afs.postgres.jpa.IrregularTimeSeriesIndexEntityRepository;
-import com.powsybl.afs.postgres.jpa.TimeSeriesMetadataEntity;
-import com.powsybl.afs.postgres.jpa.TimeSeriesMetadataRepository;
-import com.powsybl.timeseries.IrregularTimeSeriesIndex;
-import com.powsybl.timeseries.TimeSeriesIndex;
-import com.powsybl.timeseries.TimeSeriesMetadata;
+import com.powsybl.afs.postgres.jpa.*;
+import com.powsybl.timeseries.*;
+import lombok.AccessLevel;
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.threeten.extra.Interval;
 
+import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 /**
@@ -30,21 +27,33 @@ import java.util.stream.Collectors;
 public class TimeSeriesService {
 
     private final TimeSeriesMetadataRepository metaRepo;
+    private final TsTagRepository tagRepo;
     private final IrregularTimeSeriesIndexEntityRepository irrTsiRepo;
 
+    @Setter(AccessLevel.PACKAGE)
+    private BiConsumer<String, String> timeSeriesCreated;
+
     @Autowired
-    protected TimeSeriesService(TimeSeriesMetadataRepository tsmdRepo, IrregularTimeSeriesIndexEntityRepository irrTsiRepo) {
+    protected TimeSeriesService(TimeSeriesMetadataRepository tsmdRepo,
+                                TsTagRepository tsTagRepository,
+                                IrregularTimeSeriesIndexEntityRepository irrTsiRepo) {
         metaRepo = Objects.requireNonNull(tsmdRepo);
+        tagRepo = Objects.requireNonNull(tsTagRepository);
         this.irrTsiRepo = Objects.requireNonNull(irrTsiRepo);
     }
 
     void createTimeSeries(String nodeId, TimeSeriesMetadata metadata) {
-        // TODO tags
         TimeSeriesMetadataEntity metadataEntity = new TimeSeriesMetadataEntity();
         metadataEntity.setNodeId(nodeId);
         metadataEntity.setName(metadata.getName());
         metadataEntity.setDataType(metadata.getDataType().toString());
         final TimeSeriesMetadataEntity save = metaRepo.save(metadataEntity);
+
+        // save tags
+        List<TsTagEntity> tags = new ArrayList<>();
+        metadata.getTags().forEach((k, v) -> tags.add(new TsTagEntity().setMetadataEntity(save)
+                .setTagKey(k).setTagValue(v)));
+        tagRepo.saveAll(tags);
 
         final TimeSeriesIndex tsi = metadata.getIndex();
         if (tsi.getType().equals(IrregularTimeSeriesIndex.TYPE)) {
@@ -58,6 +67,9 @@ public class TimeSeriesService {
             }
             irrTsiRepo.saveAll(entities);
         }
+        // TODO other types
+
+        timeSeriesCreated.accept(nodeId, metadata.getName());
     }
 
     Set<String> getTimeSeriesNames(String nodeId) {
@@ -66,5 +78,23 @@ public class TimeSeriesService {
 
     boolean timeSeriesExists(String nodeId, String timeSeriesName) {
         return metaRepo.existsByNodeIdAndName(nodeId, timeSeriesName);
+    }
+
+    List<TimeSeriesMetadata> getTimeSeriesMetadata(String nodeId, Set<String> timeSeriesNames) {
+        List<TimeSeriesMetadata> res = new ArrayList<>();
+        final Iterable<TimeSeriesMetadataEntity> allByNodeIdAndName = metaRepo.findAllByNodeIdAndName(nodeId, timeSeriesNames);
+        for (TimeSeriesMetadataEntity e : allByNodeIdAndName) {
+            final TimeSeriesDataType type = TimeSeriesDataType.valueOf(e.getDataType());
+            final TimeSeriesIndex index = getIndex(nodeId, type, e.getName());
+            Map<String, String> tags = new HashMap<>();
+            tagRepo.findAllByMetadataEntity(e).forEach(tsTagEntity -> tags.put(tsTagEntity.getTagKey(), tsTagEntity.getTagValue()));
+            res.add(new TimeSeriesMetadata(e.getName(), type, tags, index));
+        }
+        return res;
+    }
+
+    private TimeSeriesIndex getIndex(String nodeId, TimeSeriesDataType type, String name) {
+        return RegularTimeSeriesIndex.create(Interval.parse("2015-01-01T00:00:00Z/2015-01-01T01:15:00Z"),
+                Duration.ofMinutes(15));
     }
 }
