@@ -10,6 +10,7 @@ import com.powsybl.afs.postgres.jpa.*;
 import com.powsybl.timeseries.*;
 import lombok.AccessLevel;
 import lombok.Setter;
+import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.threeten.extra.Interval;
@@ -28,17 +29,22 @@ public class TimeSeriesService {
 
     private final TimeSeriesMetadataRepository metaRepo;
     private final TsTagRepository tagRepo;
+    private final RegularTimeSeriesIndexRepository regTsiRepo;
     private final IrregularTimeSeriesIndexEntityRepository irrTsiRepo;
 
     @Setter(AccessLevel.PACKAGE)
     private BiConsumer<String, String> timeSeriesCreated;
+    @Setter(AccessLevel.PACKAGE)
+    private BiConsumer<String, String> timeSeriesDataUpdated;
 
     @Autowired
     protected TimeSeriesService(TimeSeriesMetadataRepository tsmdRepo,
                                 TsTagRepository tsTagRepository,
+                                RegularTimeSeriesIndexRepository regularTimeSeriesIndexRepository,
                                 IrregularTimeSeriesIndexEntityRepository irrTsiRepo) {
         metaRepo = Objects.requireNonNull(tsmdRepo);
         tagRepo = Objects.requireNonNull(tsTagRepository);
+        regTsiRepo = Objects.requireNonNull(regularTimeSeriesIndexRepository);
         this.irrTsiRepo = Objects.requireNonNull(irrTsiRepo);
     }
 
@@ -55,7 +61,12 @@ public class TimeSeriesService {
                 .setTagKey(k).setTagValue(v)));
         tagRepo.saveAll(tags);
 
-        final TimeSeriesIndex tsi = metadata.getIndex();
+        saveTsi(metadata.getIndex(), save);
+
+        timeSeriesCreated.accept(nodeId, metadata.getName());
+    }
+
+    private void saveTsi(TimeSeriesIndex tsi, TimeSeriesMetadataEntity save) {
         if (tsi.getType().equals(IrregularTimeSeriesIndex.TYPE)) {
             final List<Instant> instances = tsi.stream().collect(Collectors.toList());
             final List<IrregularTimeSeriesIndexEntity> entities = new ArrayList<>();
@@ -66,10 +77,17 @@ public class TimeSeriesService {
                         .setEpoch(instances.get(i).toEpochMilli());
             }
             irrTsiRepo.saveAll(entities);
+        } else if (tsi.getType().equals(RegularTimeSeriesIndex.TYPE)) {
+            final RegularTimeSeriesIndex regIdx = (RegularTimeSeriesIndex) tsi;
+            RegularTimeSeriesIndexEntity entity = new RegularTimeSeriesIndexEntity()
+                    .setStart(regIdx.getStartTime())
+                    .setEndEpochMille(regIdx.getEndTime())
+                    .setSpacing(regIdx.getSpacing())
+                    .setMetadataEntity(save);
+            regTsiRepo.save(entity);
+        } else {
+            throw new NotImplementedException("other types");
         }
-        // TODO other types
-
-        timeSeriesCreated.accept(nodeId, metadata.getName());
     }
 
     Set<String> getTimeSeriesNames(String nodeId) {
@@ -85,7 +103,7 @@ public class TimeSeriesService {
         final Iterable<TimeSeriesMetadataEntity> allByNodeIdAndName = metaRepo.findAllByNodeIdAndName(nodeId, timeSeriesNames);
         for (TimeSeriesMetadataEntity e : allByNodeIdAndName) {
             final TimeSeriesDataType type = TimeSeriesDataType.valueOf(e.getDataType());
-            final TimeSeriesIndex index = getIndex(nodeId, type, e.getName());
+            final TimeSeriesIndex index = getIndex(e);
             Map<String, String> tags = new HashMap<>();
             tagRepo.findAllByMetadataEntity(e).forEach(tsTagEntity -> tags.put(tsTagEntity.getTagKey(), tsTagEntity.getTagValue()));
             res.add(new TimeSeriesMetadata(e.getName(), type, tags, index));
@@ -93,8 +111,18 @@ public class TimeSeriesService {
         return res;
     }
 
-    private TimeSeriesIndex getIndex(String nodeId, TimeSeriesDataType type, String name) {
+    private TimeSeriesIndex getIndex(TimeSeriesMetadataEntity e) {
+        if (e.getDataType().equals(IrregularTimeSeriesIndex.TYPE)) {
+            throw new NotImplementedException("other types");
+        } else if (e.getDataType().equals(RegularTimeSeriesIndex.TYPE)) {
+            final RegularTimeSeriesIndexEntity regTsi = regTsiRepo.findByMetadataEntity(e);
+            return new RegularTimeSeriesIndex(regTsi.getStart(), regTsi.getEndEpochMille(), regTsi.getSpacing());
+        }
         return RegularTimeSeriesIndex.create(Interval.parse("2015-01-01T00:00:00Z/2015-01-01T01:15:00Z"),
                 Duration.ofMinutes(15));
+    }
+
+    void addDoubleTimeSeriesData(String nodeId, int version, String timeSeriesName, List<DoubleDataChunk> chunks) {
+
     }
 }

@@ -6,11 +6,30 @@
  */
 package com.powsybl.afs.postgres.jpa;
 
-import javax.persistence.Entity;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.Accessors;
+
+import javax.persistence.*;
 
 /**
  * @author Yichen TANG <yichen.tang at rte-france.com>
  */
-//@Entity
+@Entity
+@Accessors(chain = true)
+@Data()
+@Table(name = "reg_ts_index")
 public class RegularTimeSeriesIndexEntity {
+
+    @Id
+    @GeneratedValue
+    Long id;
+
+    long start;
+    long endEpochMille;
+    long spacing;
+
+    @OneToOne
+    @JoinColumn(name = "metadata_id")
+    TimeSeriesMetadataEntity metadataEntity;
 }
