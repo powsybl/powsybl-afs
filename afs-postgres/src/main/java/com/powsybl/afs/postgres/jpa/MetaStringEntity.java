@@ -9,6 +9,7 @@ package com.powsybl.afs.postgres.jpa;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
+import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.Index;
 import javax.persistence.Table;
@@ -20,43 +21,12 @@ import java.util.Objects;
 @Entity
 @Accessors(chain = true)
 @Data()
-@Table(indexes = @Index(name = "str_meta",  columnList = "nodeId, key", unique = true))
-public class MetaStringEntity extends AbstractMetaEntity<MetaStringEntity, String> {
+@Table(name = "meta_string")
+public class MetaStringEntity {
+
+    @EmbeddedId
+    public NodeMetadataField field;
 
     private String value;
 
-    public MetaStringEntity setKey(String key) {
-        super.key = Objects.requireNonNull(key);
-        return this;
-    }
-
-    @Override
-    public MetaStringEntity setValue(String value) {
-        this.value = value;
-        return this;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof MetaStringEntity)) {
-            return false;
-        }
-        if (!super.equals(o)) {
-            return false;
-        }
-
-        MetaStringEntity that = (MetaStringEntity) o;
-
-        return getValue() != null ? getValue().equals(that.getValue()) : that.getValue() == null;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = super.hashCode();
-        result = 31 * result + (getValue() != null ? getValue().hashCode() : 0);
-        return result;
-    }
 }

@@ -6,23 +6,23 @@
  */
 package com.powsybl.afs.postgres.jpa;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
-import javax.persistence.EmbeddedId;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import javax.persistence.Embeddable;
+import java.io.Serializable;
 
 /**
  * @author Yichen TANG <yichen.tang at rte-france.com>
  */
-@Entity
 @Accessors(chain = true)
 @Data()
-@Table(name = "meta_boolean")
-public class MetaBooleanEntity {
-
-    @EmbeddedId
-    public NodeMetadataField field;
-    private Boolean value;
+@AllArgsConstructor
+@NoArgsConstructor
+@Embeddable
+public class NodeMetadataField implements Serializable {
+    private String id;
+    private String field;
 }

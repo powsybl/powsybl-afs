@@ -17,11 +17,11 @@ import java.util.List;
  * @author Yichen TANG <yichen.tang at rte-france.com>
  */
 @Repository
-public interface MetaDoubleRepository extends CrudRepository<MetaDoubleEntity, Long> {
+public interface MetaDoubleRepository extends CrudRepository<MetaDoubleEntity, NodeMetadataField> {
 
-    List<MetaDoubleEntity> findAllByNodeId(String nodeId);
+    List<MetaDoubleEntity> findAllByFieldId(String nodeId);
 
     @Transactional
     @Modifying
-    void deleteByNodeId(String nodeId);
+    void deleteByFieldId(String nodeId);
 }

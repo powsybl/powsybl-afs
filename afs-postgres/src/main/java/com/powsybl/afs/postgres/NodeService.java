@@ -6,6 +6,7 @@
  */
 package com.powsybl.afs.postgres;
 
+import com.google.common.base.Strings;
 import com.powsybl.afs.postgres.jpa.*;
 import com.powsybl.afs.storage.NodeDependency;
 import com.powsybl.afs.storage.NodeGenericMetadata;
@@ -31,10 +32,12 @@ class NodeService {
     private final MetaDataService metaDataService;
     private final DependencyRepository depRepository;
 
+    @Setter(AccessLevel.PACKAGE)
     private BiConsumer<String, String> nodeCreated;
+    @Setter(AccessLevel.PACKAGE)
     private Consumer<String> nodeConsistentTrue;
+    @Setter(AccessLevel.PACKAGE)
     private BiConsumer<String, String> descriptionUpdated;
-    private BiConsumer<String, String> nodeDataUpdated;
     @Setter(AccessLevel.PACKAGE)
     private BiConsumer<String, String> depAdded;
     @Setter(AccessLevel.PACKAGE)
@@ -45,6 +48,13 @@ class NodeService {
     private BiConsumer<String, String> bDepRemoved;
     @Setter(AccessLevel.PACKAGE)
     private BiConsumer<String, String> nodeRemoved;
+    @Setter(AccessLevel.PACKAGE)
+    private ParentChangedListener parentChanged;
+    @Setter(AccessLevel.PACKAGE)
+    private BiConsumer<String, String> nodeNameUpdated;
+
+    @Setter(AccessLevel.PACKAGE)
+    private BiConsumer<String, NodeGenericMetadata> nodeMetadataUpdated;
 
     @Autowired
     NodeService(NodeRepository nodeRepository,
@@ -55,21 +65,9 @@ class NodeService {
         depRepository = Objects.requireNonNull(dependencyRepository);
     }
 
-    void setNodeCreated(BiConsumer<String, String> nodeCreated) {
-        this.nodeCreated = nodeCreated;
-    }
-
-    void setNodeConsistence(Consumer<String> nodeConsistent) {
-        this.nodeConsistentTrue = nodeConsistent;
-    }
-
-    void setDescriptionUpdated(BiConsumer<String, String> descriptionUpdated) {
-        this.descriptionUpdated = descriptionUpdated;
-    }
-
-    void setNodeDataUpdated(BiConsumer<String, String> nodeDataUpdated) {
-        this.nodeDataUpdated = nodeDataUpdated;
-    }
+//    void setNodeMetadataUpdate(BiConsumer<String, NodeGenericMetadata> metadataUpdate) {
+//        metaDataService.setNodeMetadataUpdated(metadataUpdate);
+//    }
 
     NodeInfo createRootNodeIfNotExists(String name, String nodePseudoClass) {
         final Optional<NodeInfoEntity> byName = nodeRepository.findByName(name);
@@ -104,7 +102,7 @@ class NodeService {
     }
 
     void setDescription(String nodeId, String description) {
-        nodeRepository.updateDescriptionAndModificationTimeById(nodeId, description, ZonedDateTime.now().toInstant().toEpochMilli());
+        nodeRepository.updateDescriptionById(nodeId, description);
         descriptionUpdated.accept(nodeId, description);
     }
 
@@ -130,7 +128,10 @@ class NodeService {
     }
 
     void setParentNode(String nodeId, String newParentNodeId) {
-        nodeRepository.updateParentById(nodeId, ZonedDateTime.now().toInstant().toEpochMilli(), newParentNodeId);
+        final String id = getParentNode(nodeId).get().getId();
+        System.out.println(id);
+        nodeRepository.updateParentById(nodeId, newParentNodeId);
+        parentChanged.consume(nodeId, id, newParentNodeId);
     }
 
     String deleteNode(String nodeId) {
@@ -223,5 +224,18 @@ class NodeService {
         depRepository.deleteByFromAndNameAndTo(nodeRepository.findById(nodeId).get(), name, nodeRepository.findById(toNodeId).get());
         depRemoved.accept(nodeId, name);
         bDepRemoved.accept(toNodeId, name);
+    }
+
+    void renameNode(String nodeId, String name) {
+        if (Strings.isNullOrEmpty(name)) {
+            throw new IllegalArgumentException("Impossible to rename node '" + nodeId + "' with an empty or null name");
+        }
+        nodeRepository.updateNameById(nodeId, name);
+        nodeNameUpdated.accept(nodeId, name);
+    }
+
+    void setMetadata(String nodeId, NodeGenericMetadata genericMetadata) {
+        metaDataService.saveMetaData(nodeId, genericMetadata);
+        nodeMetadataUpdated.accept(nodeId, genericMetadata);
     }
 }

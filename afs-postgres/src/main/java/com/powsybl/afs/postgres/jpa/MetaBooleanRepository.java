@@ -17,11 +17,11 @@ import java.util.List;
  * @author Yichen TANG <yichen.tang at rte-france.com>
  */
 @Repository
-public interface MetaBooleanRepository extends CrudRepository<MetaBooleanEntity, Long> {
+public interface MetaBooleanRepository extends CrudRepository<MetaBooleanEntity, NodeMetadataField> {
 
-    List<MetaBooleanEntity> findAllByNodeId(String nodeId);
+    List<MetaBooleanEntity> findAllByFieldId(String nodeId);
 
     @Transactional
     @Modifying
-    void deleteByNodeId(String nodeId);
+    void deleteByFieldId(String nodeId);
 }

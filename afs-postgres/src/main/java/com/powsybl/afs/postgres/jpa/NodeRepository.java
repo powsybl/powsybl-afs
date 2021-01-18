@@ -23,11 +23,10 @@ public interface NodeRepository extends CrudRepository<NodeInfoEntity, String> {
 
     Optional<NodeInfoEntity> findByName(String name);
 
-    // TODO not change modification time
     @Transactional
     @Modifying
-    @Query("update NodeInfoEntity info set info.description = ?2, info.modificationTime = ?3 where info.id = ?1")
-    void updateDescriptionAndModificationTimeById(String id, String desc, long modification);
+    @Query("update NodeInfoEntity info set info.description = ?2 where info.id = ?1")
+    void updateDescriptionById(String id, String desc);
 
     @Transactional
     @Modifying
@@ -41,8 +40,13 @@ public interface NodeRepository extends CrudRepository<NodeInfoEntity, String> {
 
     @Transactional
     @Modifying
-    @Query("update NodeInfoEntity info set info.parentId = ?3 where info.id = ?1 and info.modificationTime = ?2")
-    void updateParentById(String id, long modificationTime, String newParentId);
+    @Query("update NodeInfoEntity info set info.parentId = ?2 where info.id = ?1")
+    void updateParentById(String id, String newParentId);
+
+    @Transactional
+    @Modifying
+    @Query("update NodeInfoEntity info set info.name = ?2 where info.id = ?1")
+    void updateNameById(String id, String name);
 
     List<NodeInfoEntity> findAllByParentId(String parentId);
 

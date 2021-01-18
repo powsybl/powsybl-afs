@@ -46,13 +46,16 @@ public class PostgresAppStorage extends AbstractAppStorage {
 
     private void bindListener() {
         nodeService.setNodeCreated((nodeId, parentNodeId) -> pushEvent(new NodeCreated(nodeId, parentNodeId), APPSTORAGE_NODE_TOPIC));
-        nodeService.setNodeConsistence(id -> pushEvent(new NodeConsistent(id), APPSTORAGE_NODE_TOPIC));
+        nodeService.setNodeConsistentTrue(id -> pushEvent(new NodeConsistent(id), APPSTORAGE_NODE_TOPIC));
         nodeService.setDescriptionUpdated((id, desc) -> pushEvent(new NodeDescriptionUpdated(id, desc), APPSTORAGE_NODE_TOPIC));
         nodeService.setDepAdded((id, depName) -> pushEvent(new DependencyAdded(id, depName), APPSTORAGE_DEPENDENCY_TOPIC));
         nodeService.setBDepAdded((id, depName) -> pushEvent(new BackwardDependencyAdded(id, depName), APPSTORAGE_DEPENDENCY_TOPIC));
         nodeService.setDepRemoved((id, depName) -> pushEvent(new DependencyRemoved(id, depName), APPSTORAGE_DEPENDENCY_TOPIC));
         nodeService.setBDepRemoved((id, depName) -> pushEvent(new BackwardDependencyRemoved(id, depName), APPSTORAGE_DEPENDENCY_TOPIC));
         nodeService.setNodeRemoved((id, pid) -> pushEvent(new NodeRemoved(id, pid), APPSTORAGE_NODE_TOPIC));
+        nodeService.setParentChanged((id, opid, npid) -> pushEvent(new ParentChanged(id, opid, npid), APPSTORAGE_NODE_TOPIC));
+        nodeService.setNodeNameUpdated((id, name) -> pushEvent(new NodeNameUpdated(id, name), APPSTORAGE_NODE_TOPIC));
+        nodeService.setNodeMetadataUpdated((id, data) -> pushEvent(new NodeMetadataUpdated(id, data), APPSTORAGE_NODE_TOPIC));
         tsService.setTimeSeriesCreated((id, name) -> pushEvent(new TimeSeriesCreated(id, name), APPSTORAGE_TIMESERIES_TOPIC));
         tsService.setTimeSeriesDataUpdated((id, name) -> pushEvent(new TimeSeriesDataUpdated(id, name), APPSTORAGE_NODE_TOPIC));
     }
@@ -75,6 +78,7 @@ public class PostgresAppStorage extends AbstractAppStorage {
 
     @Override
     public void setMetadata(String nodeId, NodeGenericMetadata genericMetadata) {
+        nodeService.setMetadata(nodeId, genericMetadata);
     }
 
     @Override
@@ -84,7 +88,7 @@ public class PostgresAppStorage extends AbstractAppStorage {
 
     @Override
     public void renameNode(String nodeId, String name) {
-
+        nodeService.renameNode(nodeId, name);
     }
 
     @Override

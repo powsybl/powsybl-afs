@@ -123,6 +123,10 @@ public class TimeSeriesService {
     }
 
     void addDoubleTimeSeriesData(String nodeId, int version, String timeSeriesName, List<DoubleDataChunk> chunks) {
+        final TimeSeriesMetadataEntity metadataEntity = new TimeSeriesMetadataEntity();
 
+
+        chunks.forEach(c -> {
+        });
     }
 }

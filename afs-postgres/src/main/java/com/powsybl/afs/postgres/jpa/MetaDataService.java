@@ -7,10 +7,12 @@
 package com.powsybl.afs.postgres.jpa;
 
 import com.powsybl.afs.storage.NodeGenericMetadata;
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.function.BiConsumer;
 
 /**
  * @author Yichen TANG <yichen.tang at rte-france.com>
@@ -23,6 +25,9 @@ public class MetaDataService {
     private final MetaIntRepository intRepo;
     private final MetaBooleanRepository booRepo;
 
+    @Setter
+    private BiConsumer<String, NodeGenericMetadata> nodeMetadataUpdated;
+
     @Autowired
     public MetaDataService(MetaStringRepository stringRepository, MetaDoubleRepository doubleRepository,
                            MetaIntRepository integerRepository, MetaBooleanRepository booleanRepository) {
@@ -33,42 +38,51 @@ public class MetaDataService {
     }
 
     public void saveMetaData(String nodeId, NodeGenericMetadata metadata) {
+        deleteMetaDate(nodeId);
         final Map<String, String> strings = metadata.getStrings();
-        strings.forEach((k, v) -> strRepo.save(new MetaStringEntity().setKey(k).setNodeId(nodeId).setValue(v)));
+        strings.forEach((k, v) -> strRepo.save(new MetaStringEntity()
+                .setField(new NodeMetadataField(nodeId, k))
+                .setValue(v)));
 
         final Map<String, Double> doubles = metadata.getDoubles();
-        doubles.forEach((k, v) -> douRepo.save(new MetaDoubleEntity().setKey(k).setNodeId(nodeId).setValue(v)));
+        doubles.forEach((k, v) -> douRepo.save(new MetaDoubleEntity()
+                .setField(new NodeMetadataField(nodeId, k))
+                .setValue(v)));
 
         final Map<String, Integer> ints = metadata.getInts();
-        ints.forEach((k, v) -> intRepo.save(new MetaIntEntity().setKey(k).setNodeId(nodeId).setValue(v)));
+        ints.forEach((k, v) -> intRepo.save(new MetaIntEntity()
+                .setField(new NodeMetadataField(nodeId, k))
+                .setValue(v)));
 
         final Map<String, Boolean> booleans = metadata.getBooleans();
-        booleans.forEach((k, v) -> booRepo.save(new MetaBooleanEntity().setKey(k).setNodeId(nodeId).setValue(v)));
+        booleans.forEach((k, v) -> booRepo.save(new MetaBooleanEntity()
+                .setField(new NodeMetadataField(nodeId, k))
+                .setValue(v)));
     }
 
     public NodeGenericMetadata getMetaDataByNodeId(String nodeId) {
         Map<String, String> strMap = new HashMap<>();
-        final List<MetaStringEntity> strs = strRepo.findAllByNodeId(nodeId);
-        strs.forEach(entity -> strMap.put(entity.getKey(), entity.getValue()));
+        final List<MetaStringEntity> strs = strRepo.findAllByFieldId(nodeId);
+        strs.forEach(entity -> strMap.put(entity.getField().getField(), entity.getValue()));
 
         Map<String, Double> doubleMap = new HashMap<>();
-        final List<MetaDoubleEntity> doubles = douRepo.findAllByNodeId(nodeId);
-        doubles.forEach(entity -> doubleMap.put(entity.getKey(), entity.getValue()));
+        final List<MetaDoubleEntity> doubles = douRepo.findAllByFieldId(nodeId);
+        doubles.forEach(entity -> doubleMap.put(entity.getField().getField(), entity.getValue()));
 
-        final List<MetaIntEntity> ints = intRepo.findAllByNodeId(nodeId);
+        final List<MetaIntEntity> ints = intRepo.findAllByFieldId(nodeId);
         Map<String, Integer> intMap = new HashMap<>();
-        ints.forEach(entity -> intMap.put(entity.getKey(), entity.getValue()));
+        ints.forEach(entity -> intMap.put(entity.field.getField(), entity.getValue()));
 
-        final List<MetaBooleanEntity> bools = booRepo.findAllByNodeId(nodeId);
+        final List<MetaBooleanEntity> bools = booRepo.findAllByFieldId(nodeId);
         Map<String, Boolean> booleanMap = new HashMap<>();
-        bools.forEach(e -> booleanMap.put(e.getKey(), e.getValue()));
+        bools.forEach(e -> booleanMap.put(e.getField().getField(), e.getValue()));
         return new NodeGenericMetadata(strMap, doubleMap, intMap, booleanMap);
     }
 
     public void deleteMetaDate(String nodeId) {
-        strRepo.deleteByNodeId(nodeId);
-        douRepo.deleteByNodeId(nodeId);
-        intRepo.deleteByNodeId(nodeId);
-        booRepo.deleteByNodeId(nodeId);
+        strRepo.deleteByFieldId(nodeId);
+        douRepo.deleteByFieldId(nodeId);
+        intRepo.deleteByFieldId(nodeId);
+        booRepo.deleteByFieldId(nodeId);
     }
 }

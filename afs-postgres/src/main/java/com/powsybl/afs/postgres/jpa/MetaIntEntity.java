@@ -9,10 +9,9 @@ package com.powsybl.afs.postgres.jpa;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
+import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
-import javax.persistence.Index;
 import javax.persistence.Table;
-import java.util.Objects;
 
 /**
  * @author Yichen TANG <yichen.tang at rte-france.com>
@@ -20,43 +19,12 @@ import java.util.Objects;
 @Entity
 @Accessors(chain = true)
 @Data()
-@Table(indexes = @Index(name = "int_meta",  columnList = "nodeId, key", unique = true))
-public class MetaIntEntity extends AbstractMetaEntity<MetaIntEntity, Integer> {
+@Table(name = "meta_int")
+public class MetaIntEntity {
+
+    @EmbeddedId
+    public NodeMetadataField field;
 
     private Integer value;
 
-    public MetaIntEntity setKey(String key) {
-        super.key = Objects.requireNonNull(key);
-        return this;
-    }
-
-    @Override
-    public MetaIntEntity setValue(Integer integer) {
-        value = integer;
-        return this;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        if (!super.equals(o)) {
-            return false;
-        }
-
-        MetaIntEntity that = (MetaIntEntity) o;
-
-        return getValue() != null ? getValue().equals(that.getValue()) : that.getValue() == null;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = super.hashCode();
-        result = 31 * result + (getValue() != null ? getValue().hashCode() : 0);
-        return result;
-    }
 }
