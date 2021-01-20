@@ -6,6 +6,7 @@
  */
 package com.powsybl.afs.postgres;
 
+import com.google.common.primitives.Doubles;
 import com.powsybl.afs.postgres.jpa.*;
 import com.powsybl.timeseries.*;
 import lombok.AccessLevel;
@@ -13,9 +14,7 @@ import lombok.Setter;
 import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.threeten.extra.Interval;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.BiConsumer;
@@ -31,6 +30,7 @@ public class TimeSeriesService {
     private final TsTagRepository tagRepo;
     private final RegularTimeSeriesIndexRepository regTsiRepo;
     private final IrregularTimeSeriesIndexEntityRepository irrTsiRepo;
+    private final TimeSeriesDoubleDataEntityRepository doubleDataRepo;
 
     @Setter(AccessLevel.PACKAGE)
     private BiConsumer<String, String> timeSeriesCreated;
@@ -41,11 +41,13 @@ public class TimeSeriesService {
     protected TimeSeriesService(TimeSeriesMetadataRepository tsmdRepo,
                                 TsTagRepository tsTagRepository,
                                 RegularTimeSeriesIndexRepository regularTimeSeriesIndexRepository,
-                                IrregularTimeSeriesIndexEntityRepository irrTsiRepo) {
+                                IrregularTimeSeriesIndexEntityRepository irrTsiRepo,
+                                TimeSeriesDoubleDataEntityRepository doubleDataRepo) {
         metaRepo = Objects.requireNonNull(tsmdRepo);
         tagRepo = Objects.requireNonNull(tsTagRepository);
         regTsiRepo = Objects.requireNonNull(regularTimeSeriesIndexRepository);
         this.irrTsiRepo = Objects.requireNonNull(irrTsiRepo);
+        this.doubleDataRepo = Objects.requireNonNull(doubleDataRepo);
     }
 
     void createTimeSeries(String nodeId, TimeSeriesMetadata metadata) {
@@ -75,6 +77,7 @@ public class TimeSeriesService {
                 entity.setTsmdId(save.getId())
                         .setPoint(i)
                         .setEpoch(instances.get(i).toEpochMilli());
+                entities.add(entity);
             }
             irrTsiRepo.saveAll(entities);
         } else if (tsi.getType().equals(RegularTimeSeriesIndex.TYPE)) {
@@ -112,21 +115,101 @@ public class TimeSeriesService {
     }
 
     private TimeSeriesIndex getIndex(TimeSeriesMetadataEntity e) {
-        if (e.getDataType().equals(IrregularTimeSeriesIndex.TYPE)) {
-            throw new NotImplementedException("other types");
-        } else if (e.getDataType().equals(RegularTimeSeriesIndex.TYPE)) {
-            final RegularTimeSeriesIndexEntity regTsi = regTsiRepo.findByMetadataEntity(e);
-            return new RegularTimeSeriesIndex(regTsi.getStart(), regTsi.getEndEpochMille(), regTsi.getSpacing());
+        final TimeSeriesIndex regIndex = getRegIndex(e);
+        if (regIndex != null) {
+            return regIndex;
         }
-        return RegularTimeSeriesIndex.create(Interval.parse("2015-01-01T00:00:00Z/2015-01-01T01:15:00Z"),
-                Duration.ofMinutes(15));
+        throw new NotImplementedException("not yet");
+    }
+
+    private TimeSeriesIndex getRegIndex(TimeSeriesMetadataEntity metadataEntity) {
+        final RegularTimeSeriesIndexEntity regIdxEntity = regTsiRepo.findByMetadataEntity(metadataEntity);
+        if (regIdxEntity == null) {
+            return null;
+        }
+        return new RegularTimeSeriesIndex(regIdxEntity.getStart(), regIdxEntity.getEndEpochMille(), regIdxEntity.getSpacing());
     }
 
     void addDoubleTimeSeriesData(String nodeId, int version, String timeSeriesName, List<DoubleDataChunk> chunks) {
-        final TimeSeriesMetadataEntity metadataEntity = new TimeSeriesMetadataEntity();
-
-
         chunks.forEach(c -> {
+            int offset = c.getOffset();
+            if (c.isCompressed()) {
+                final CompressedDoubleDataChunk c1 = (CompressedDoubleDataChunk) c;
+                throw new NotImplementedException("not yet");
+            } else {
+                final UncompressedDoubleDataChunk uncompressedDoubleDataChunk = (UncompressedDoubleDataChunk) c;
+                uncompressedDoubleDataChunk.tryToCompress();
+                final double[] values = uncompressedDoubleDataChunk.getValues();
+                for (int i = 0; i < values.length; i++) {
+                    final TimeSeriesDoubleDataEntity entity = new TimeSeriesDoubleDataEntity().setName(timeSeriesName)
+                            .setNodeId(nodeId).setPoint(offset + i).setValue(values[i])
+                            .setVersion(version);
+                    doubleDataRepo.save(entity);
+                }
+            }
         });
+        timeSeriesDataUpdated.accept(nodeId, timeSeriesName);
+    }
+
+    Set<Integer> getTimeSeriesDataVersions(String nodeId) {
+        Set<Integer> res = new HashSet<>();
+        res.addAll(doubleDataRepo.findDistinctVersionsByNodeId(nodeId));
+        return res;
+    }
+
+    Set<Integer> getTimeSeriesDataVersions(String nodeId, String timeSeriesName) {
+        Set<Integer> res = new HashSet<>();
+        res.addAll(doubleDataRepo.findDistinctVersionsByNodeIdAndName(nodeId, timeSeriesName));
+        return res;
+    }
+
+    Map<String, List<DoubleDataChunk>> getDoubleTimeSeriesData(String nodeId, Set<String> timeSeriesNames, int version) {
+        Map<String, List<DoubleDataChunk>> map = new HashMap<>();
+        for (String name : timeSeriesNames) {
+            final List<TimeSeriesDoubleDataEntity> allByNodeIdAndNameAndVersionOrderByPoint = doubleDataRepo.findAllByNodeIdAndNameAndVersionOrderByPoint(nodeId, name, version);
+            if (allByNodeIdAndNameAndVersionOrderByPoint.isEmpty()) {
+                continue;
+            }
+            List<DoubleDataChunk> chunks = new ArrayList<>();
+            int lastPoint = -1;
+            List<Double> data = new ArrayList<>();
+            boolean isContinue = false;
+            int point = lastPoint;
+            double value = 0.0;
+            for (TimeSeriesDoubleDataEntity entity : allByNodeIdAndNameAndVersionOrderByPoint) {
+                point = entity.getPoint();
+                value = entity.getValue();
+                if (lastPoint == -1) {
+                    lastPoint = point;
+                    data.add(value);
+                    isContinue = false;
+                    continue;
+                }
+                if (point != (lastPoint + 1)) {
+                    // close previous chunk
+                    int offset = lastPoint - data.size() + 1;
+                    double[] arrData = Doubles.toArray(data);
+                    chunks.add(new UncompressedDoubleDataChunk(offset, arrData));
+                    lastPoint = point;
+                    data = new ArrayList<>();
+                    isContinue = false;
+                } else {
+                    lastPoint = point;
+                    data.add(value);
+                    isContinue = true;
+                }
+            }
+            if (lastPoint != -1) {
+                if (isContinue) {
+                    int offset = lastPoint - data.size() + 1;
+                    double[] arrData = Doubles.toArray(data);
+                    chunks.add(new UncompressedDoubleDataChunk(offset, arrData));
+                } else {
+                    chunks.add(new UncompressedDoubleDataChunk(point, new double[]{value}));
+                }
+            }
+            map.put(name, chunks);
+        }
+        return map;
     }
 }

@@ -7,6 +7,7 @@
 package com.powsybl.afs.postgres.jpa;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 import javax.persistence.Entity;
@@ -18,19 +19,23 @@ import javax.persistence.Table;
  * @author Yichen TANG <yichen.tang at rte-france.com>
  */
 @Entity
-@Data
 @Accessors(chain = true)
-@Table(name = "irr_ts_index")
-public class IrregularTimeSeriesIndexEntity {
+@Data()
+@NoArgsConstructor
+@Table(name = "ts_double_data")
+public class TimeSeriesDoubleDataEntity {
 
     @Id
     @GeneratedValue
     long id;
 
-    // TODO foreign_key?
-    long tsmdId;
+    String nodeId;
+
+    int version;
+
+    String name;
 
     int point;
 
-    long epoch;
+    double value;
 }

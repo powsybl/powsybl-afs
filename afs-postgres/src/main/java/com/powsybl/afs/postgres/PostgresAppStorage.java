@@ -213,17 +213,17 @@ public class PostgresAppStorage extends AbstractAppStorage {
 
     @Override
     public Set<Integer> getTimeSeriesDataVersions(String nodeId) {
-        return null;
+        return tsService.getTimeSeriesDataVersions(nodeId);
     }
 
     @Override
     public Set<Integer> getTimeSeriesDataVersions(String nodeId, String timeSeriesName) {
-        return null;
+        return tsService.getTimeSeriesDataVersions(nodeId, timeSeriesName);
     }
 
     @Override
     public Map<String, List<DoubleDataChunk>> getDoubleTimeSeriesData(String nodeId, Set<String> timeSeriesNames, int version) {
-        return null;
+        return tsService.getDoubleTimeSeriesData(nodeId, timeSeriesNames, version);
     }
 
     @Override

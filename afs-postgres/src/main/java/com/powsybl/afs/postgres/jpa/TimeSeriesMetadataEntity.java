@@ -6,12 +6,14 @@
  */
 package com.powsybl.afs.postgres.jpa;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
 /**
  * @author Yichen TANG <yichen.tang at rte-france.com>
@@ -20,13 +22,14 @@ import javax.persistence.*;
 @Accessors(chain = true)
 @Data()
 @NoArgsConstructor
+@Table(name = "meta_ts")
 public class TimeSeriesMetadataEntity {
 
     @Id
+    @GeneratedValue
     long id;
     String nodeId;
     String name;
     String dataType;
 
-    // TODO tags oneToMany
 }

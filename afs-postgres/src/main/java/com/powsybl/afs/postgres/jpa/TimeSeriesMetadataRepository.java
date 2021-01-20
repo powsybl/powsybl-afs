@@ -15,7 +15,7 @@ import java.util.Set;
 @Repository
 public interface TimeSeriesMetadataRepository extends CrudRepository<TimeSeriesMetadataEntity, Long> {
 
-    @Query(value = "select t.name from time_series_metadata_entity t where t.node_id = ?1", nativeQuery = true)
+    @Query(value = "select t.name from meta_ts t where t.node_id = ?1", nativeQuery = true)
     Set<String> getTimeSeriesNames(String nodeId);
 
     boolean existsByNodeIdAndName(String nodeId, String name);
