@@ -11,9 +11,7 @@ import lombok.experimental.Accessors;
 
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
-import javax.persistence.Index;
 import javax.persistence.Table;
-import java.util.Objects;
 
 /**
  * @author Yichen TANG <yichen.tang at rte-france.com>

@@ -45,9 +45,7 @@ public abstract class AbstractAppStorageTest {
 
     protected BlockingQueue<NodeEvent> eventStack;
 
-    protected AppStorageListener l = eventList -> {
-        eventStack.addAll(eventList.getEvents());
-    };
+    protected AppStorageListener l = eventList -> eventStack.addAll(eventList.getEvents());
 
     protected abstract AppStorage createStorage();
 
@@ -65,7 +63,7 @@ public abstract class AbstractAppStorageTest {
 
     private void assertEventStack(NodeEvent... events) throws InterruptedException {
         for (NodeEvent event : events) {
-            assertEquals(event, eventStack.poll(200, TimeUnit.MILLISECONDS));
+            assertEquals(event, eventStack.take());
         }
 
         // assert all events have been checked

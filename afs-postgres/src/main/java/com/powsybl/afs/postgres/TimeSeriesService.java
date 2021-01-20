@@ -6,7 +6,6 @@
  */
 package com.powsybl.afs.postgres;
 
-import com.google.common.collect.Lists;
 import com.google.common.primitives.Doubles;
 import com.powsybl.afs.postgres.jpa.*;
 import com.powsybl.timeseries.*;
@@ -291,6 +290,12 @@ public class TimeSeriesService {
     }
 
     void clearTimeSeries(String nodeId) {
+        // TODO jpa relationship delete
+        final List<TimeSeriesMetadataEntity> allByNodeId = metaRepo.findAllByNodeId(nodeId);
+        for (TimeSeriesMetadataEntity metadataEntity : allByNodeId) {
+            regTsiRepo.deleteByMetadataEntity(metadataEntity);
+            tagRepo.deleteByMetadataEntity(metadataEntity);
+        }
         metaRepo.deleteAllByNodeId(nodeId);
         doubleDataRepo.deleteAllByNodeId(nodeId);
         stringDataRepo.deleteAllByNodeId(nodeId);

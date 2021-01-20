@@ -12,6 +12,7 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Set;
 
 @Repository
@@ -19,6 +20,8 @@ public interface TimeSeriesMetadataRepository extends CrudRepository<TimeSeriesM
 
     @Query(value = "select t.name from meta_ts t where t.node_id = ?1", nativeQuery = true)
     Set<String> getTimeSeriesNames(String nodeId);
+
+    List<TimeSeriesMetadataEntity> findAllByNodeId(String nodeId);
 
     boolean existsByNodeIdAndName(String nodeId, String name);
 
