@@ -16,15 +16,15 @@ import java.util.List;
 import java.util.Set;
 
 @Repository
-public interface TimeSeriesDoubleDataEntityRepository extends CrudRepository<TimeSeriesDoubleDataEntity, Long> {
+public interface TimeSeriesStringDataEntityRepository extends CrudRepository<TimeSeriesStringDataEntity, Long> {
 
-    @Query("SELECT DISTINCT t.version FROM TimeSeriesDoubleDataEntity t WHERE t.nodeId = ?1")
+    @Query("SELECT DISTINCT t.version FROM TimeSeriesStringDataEntity t WHERE t.nodeId = ?1")
     List<Integer> findDistinctVersionsByNodeId(String nodeId);
 
-    @Query("SELECT DISTINCT t.version FROM TimeSeriesDoubleDataEntity t WHERE t.nodeId = ?1 and t.name = ?2")
+    @Query("SELECT DISTINCT t.version FROM TimeSeriesStringDataEntity t WHERE t.nodeId = ?1 and t.name = ?2")
     Set<Integer> findDistinctVersionsByNodeIdAndName(String nodeId, String tsName);
 
-    List<TimeSeriesDoubleDataEntity> findAllByNodeIdAndNameAndVersionOrderByPoint(String nodeId, String name, int version);
+    List<TimeSeriesStringDataEntity> findAllByNodeIdAndNameAndVersionOrderByPoint(String nodeId, String name, int version);
 
     @Transactional
     @Modifying

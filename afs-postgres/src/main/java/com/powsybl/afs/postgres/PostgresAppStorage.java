@@ -58,6 +58,7 @@ public class PostgresAppStorage extends AbstractAppStorage {
         nodeService.setNodeMetadataUpdated((id, data) -> pushEvent(new NodeMetadataUpdated(id, data), APPSTORAGE_NODE_TOPIC));
         tsService.setTimeSeriesCreated((id, name) -> pushEvent(new TimeSeriesCreated(id, name), APPSTORAGE_TIMESERIES_TOPIC));
         tsService.setTimeSeriesDataUpdated((id, name) -> pushEvent(new TimeSeriesDataUpdated(id, name), APPSTORAGE_NODE_TOPIC));
+        tsService.setTimeSeriesCleared(id -> pushEvent(new TimeSeriesCleared(id), APPSTORAGE_TIMESERIES_TOPIC));
     }
 
     @Override
@@ -233,17 +234,17 @@ public class PostgresAppStorage extends AbstractAppStorage {
 
     @Override
     public Map<String, List<StringDataChunk>> getStringTimeSeriesData(String nodeId, Set<String> timeSeriesNames, int version) {
-        return null;
+        return tsService.getStringTimeSeriesData(nodeId, timeSeriesNames, version);
     }
 
     @Override
     public void addStringTimeSeriesData(String nodeId, int version, String timeSeriesName, List<StringDataChunk> chunks) {
-
+        tsService.addStringTimeSeriesData(nodeId, version, timeSeriesName, chunks);
     }
 
     @Override
     public void clearTimeSeries(String nodeId) {
-
+        tsService.clearTimeSeries(nodeId);
     }
 
     @Override

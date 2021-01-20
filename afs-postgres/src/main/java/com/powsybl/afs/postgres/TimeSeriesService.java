@@ -6,6 +6,7 @@
  */
 package com.powsybl.afs.postgres;
 
+import com.google.common.collect.Lists;
 import com.google.common.primitives.Doubles;
 import com.powsybl.afs.postgres.jpa.*;
 import com.powsybl.timeseries.*;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -31,23 +33,28 @@ public class TimeSeriesService {
     private final RegularTimeSeriesIndexRepository regTsiRepo;
     private final IrregularTimeSeriesIndexEntityRepository irrTsiRepo;
     private final TimeSeriesDoubleDataEntityRepository doubleDataRepo;
+    private final TimeSeriesStringDataEntityRepository stringDataRepo;
 
     @Setter(AccessLevel.PACKAGE)
     private BiConsumer<String, String> timeSeriesCreated;
     @Setter(AccessLevel.PACKAGE)
     private BiConsumer<String, String> timeSeriesDataUpdated;
+    @Setter(AccessLevel.PACKAGE)
+    private Consumer<String> timeSeriesCleared;
 
     @Autowired
     protected TimeSeriesService(TimeSeriesMetadataRepository tsmdRepo,
                                 TsTagRepository tsTagRepository,
                                 RegularTimeSeriesIndexRepository regularTimeSeriesIndexRepository,
                                 IrregularTimeSeriesIndexEntityRepository irrTsiRepo,
-                                TimeSeriesDoubleDataEntityRepository doubleDataRepo) {
+                                TimeSeriesDoubleDataEntityRepository doubleDataRepo,
+                                TimeSeriesStringDataEntityRepository stringDataRepo) {
         metaRepo = Objects.requireNonNull(tsmdRepo);
         tagRepo = Objects.requireNonNull(tsTagRepository);
         regTsiRepo = Objects.requireNonNull(regularTimeSeriesIndexRepository);
         this.irrTsiRepo = Objects.requireNonNull(irrTsiRepo);
         this.doubleDataRepo = Objects.requireNonNull(doubleDataRepo);
+        this.stringDataRepo = Objects.requireNonNull(stringDataRepo);
     }
 
     void createTimeSeries(String nodeId, TimeSeriesMetadata metadata) {
@@ -166,8 +173,8 @@ public class TimeSeriesService {
     Map<String, List<DoubleDataChunk>> getDoubleTimeSeriesData(String nodeId, Set<String> timeSeriesNames, int version) {
         Map<String, List<DoubleDataChunk>> map = new HashMap<>();
         for (String name : timeSeriesNames) {
-            final List<TimeSeriesDoubleDataEntity> allByNodeIdAndNameAndVersionOrderByPoint = doubleDataRepo.findAllByNodeIdAndNameAndVersionOrderByPoint(nodeId, name, version);
-            if (allByNodeIdAndNameAndVersionOrderByPoint.isEmpty()) {
+            final List<TimeSeriesDoubleDataEntity> entities = doubleDataRepo.findAllByNodeIdAndNameAndVersionOrderByPoint(nodeId, name, version);
+            if (entities.isEmpty()) {
                 continue;
             }
             List<DoubleDataChunk> chunks = new ArrayList<>();
@@ -176,10 +183,11 @@ public class TimeSeriesService {
             boolean isContinue = false;
             int point = lastPoint;
             double value = 0.0;
-            for (TimeSeriesDoubleDataEntity entity : allByNodeIdAndNameAndVersionOrderByPoint) {
+            for (TimeSeriesDoubleDataEntity entity : entities) {
                 point = entity.getPoint();
                 value = entity.getValue();
                 if (lastPoint == -1) {
+                    // first element
                     lastPoint = point;
                     data.add(value);
                     isContinue = false;
@@ -190,26 +198,102 @@ public class TimeSeriesService {
                     int offset = lastPoint - data.size() + 1;
                     double[] arrData = Doubles.toArray(data);
                     chunks.add(new UncompressedDoubleDataChunk(offset, arrData));
-                    lastPoint = point;
+                    // prepare next chunk
                     data = new ArrayList<>();
+                    data.add(value);
                     isContinue = false;
                 } else {
-                    lastPoint = point;
                     data.add(value);
                     isContinue = true;
                 }
+                lastPoint = point;
             }
-            if (lastPoint != -1) {
-                if (isContinue) {
-                    int offset = lastPoint - data.size() + 1;
-                    double[] arrData = Doubles.toArray(data);
-                    chunks.add(new UncompressedDoubleDataChunk(offset, arrData));
-                } else {
-                    chunks.add(new UncompressedDoubleDataChunk(point, new double[]{value}));
-                }
+            // close last chunk
+            if (isContinue) {
+                int offset = lastPoint - data.size() + 1;
+                double[] arrData = Doubles.toArray(data);
+                chunks.add(new UncompressedDoubleDataChunk(offset, arrData));
+            } else {
+                chunks.add(new UncompressedDoubleDataChunk(point, new double[]{value}));
             }
             map.put(name, chunks);
         }
         return map;
+    }
+
+    Map<String, List<StringDataChunk>> getStringTimeSeriesData(String nodeId, Set<String> timeSeriesNames, int version) {
+        Map<String, List<StringDataChunk>> map = new HashMap<>();
+        for (String name : timeSeriesNames) {
+            final List<TimeSeriesStringDataEntity> entities = stringDataRepo.findAllByNodeIdAndNameAndVersionOrderByPoint(nodeId, name, version);
+            if (entities.isEmpty()) {
+                continue;
+            }
+            List<StringDataChunk> chunks = new ArrayList<>();
+            int lastPoint = -1;
+            List<String> data = new ArrayList<>();
+            boolean isContinue = false;
+            int point = lastPoint;
+            String value = "";
+            for (TimeSeriesStringDataEntity entity : entities) {
+                point = entity.getPoint();
+                value = entity.getValue();
+                if (lastPoint == -1) {
+                    // first element
+                    lastPoint = point;
+                    data.add(value);
+                    isContinue = false;
+                    continue;
+                }
+                if (point != (lastPoint + 1)) {
+                    // close previous chunk
+                    int offset = lastPoint - data.size() + 1;
+                    chunks.add(new UncompressedStringDataChunk(offset, data.toArray(new String[0])));
+                    // prepare next chunk
+                    data = new ArrayList<>();
+                    data.add(value);
+                    isContinue = false;
+                } else {
+                    data.add(value);
+                    isContinue = true;
+                }
+                lastPoint = point;
+            }
+            // close last chunk
+            if (isContinue) {
+                int offset = lastPoint - data.size() + 1;
+                chunks.add(new UncompressedStringDataChunk(offset, data.toArray(new String[0])));
+            } else {
+                chunks.add(DataChunk.create(point, new String[]{value}));
+            }
+            map.put(name, chunks);
+        }
+        return map;
+    }
+
+    void addStringTimeSeriesData(String nodeId, int version, String timeSeriesName, List<StringDataChunk> chunks) {
+        chunks.forEach(c -> {
+            int offset = c.getOffset();
+            if (c.isCompressed()) {
+                final CompressedStringDataChunk c1 = (CompressedStringDataChunk) c;
+                throw new NotImplementedException("not yet");
+            } else {
+                final UncompressedStringDataChunk uncompressedChunk = (UncompressedStringDataChunk) c;
+                final String[] values = uncompressedChunk.getValues();
+                for (int i = 0; i < values.length; i++) {
+                    final TimeSeriesStringDataEntity entity = new TimeSeriesStringDataEntity().setName(timeSeriesName)
+                            .setNodeId(nodeId).setPoint(offset + i).setValue(values[i])
+                            .setVersion(version);
+                    stringDataRepo.save(entity);
+                }
+            }
+        });
+        timeSeriesDataUpdated.accept(nodeId, timeSeriesName);
+    }
+
+    void clearTimeSeries(String nodeId) {
+        metaRepo.deleteAllByNodeId(nodeId);
+        doubleDataRepo.deleteAllByNodeId(nodeId);
+        stringDataRepo.deleteAllByNodeId(nodeId);
+        timeSeriesCleared.accept(nodeId);
     }
 }
