@@ -9,6 +9,7 @@ package com.powsybl.afs.postgres.config;
 import com.powsybl.afs.postgres.PostgresAppFileSystemConfig;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 import javax.sql.DataSource;
@@ -18,6 +19,7 @@ import java.util.List;
  * @author Yichen TANG <yichen.tang at rte-france.com>
  */
 @Configuration
+@Profile({"production"})
 public class JpaContext {
 
     @Bean

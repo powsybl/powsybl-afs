@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.time.Instant;
@@ -34,6 +35,7 @@ import static org.junit.Assert.assertEquals;
 @SpringBootTest(classes = {PostgresAppStorageTest.class})
 @ComponentScan(basePackages = {"com.powsybl.afs.postgres.jpa", "com.powsybl.afs.postgres"})
 @EnableAutoConfiguration
+@ActiveProfiles({"test"})
 public class PostgresAppStorageTest extends AbstractAppStorageTest {
     @Autowired
     private NodeService nodeService;

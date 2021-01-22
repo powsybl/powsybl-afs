@@ -65,17 +65,12 @@ class NodeService {
         depRepository = Objects.requireNonNull(dependencyRepository);
     }
 
-//    void setNodeMetadataUpdate(BiConsumer<String, NodeGenericMetadata> metadataUpdate) {
-//        metaDataService.setNodeMetadataUpdated(metadataUpdate);
-//    }
-
     NodeInfo createRootNodeIfNotExists(String name, String nodePseudoClass) {
         final Optional<NodeInfoEntity> byName = nodeRepository.findByName(name);
         if (byName.isPresent()) {
             return byName.get().toNodeInfo();
         }
-        final NodeInfo node = createNode(null, name, nodePseudoClass, "", true, 0, new NodeGenericMetadata());
-        return node;
+        return createNode(null, name, nodePseudoClass, "", true, 0, new NodeGenericMetadata());
     }
 
     NodeInfo createNode(String parentNodeId, String name, String nodePseudoClass, String description, boolean consistence, int version, NodeGenericMetadata genericMetadata) {
