@@ -153,9 +153,13 @@ class NodeService {
                     depRemoved.accept(nodeToDelete.getId(), de.getName());
                     bDepRemoved.accept(de.getTo().getId(), de.getName());
                 });
+        depRepository.findAllByTo(nodeToDelete)
+                .forEach(de -> {
+                    depRemoved.accept(de.getTo().getId(), de.getName());
+                    bDepRemoved.accept(nodeToDelete.getId(), de.getName());
+                });
         depRepository.deleteByFrom(nodeToDelete);
         depRepository.deleteByTo(nodeToDelete);
-        // TODO ???
     }
 
     boolean isConsistent(String nodeId) {

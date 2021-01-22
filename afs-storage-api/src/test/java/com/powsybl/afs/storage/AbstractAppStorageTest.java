@@ -61,7 +61,7 @@ public abstract class AbstractAppStorageTest {
         storage.close();
     }
 
-    private void assertEventStack(NodeEvent... events) throws InterruptedException {
+    protected void assertEventStack(NodeEvent... events) throws InterruptedException {
         for (NodeEvent event : events) {
             assertEquals(event, eventStack.take());
         }
