@@ -6,14 +6,22 @@
  */
 package com.powsybl.afs.postgres.jpa;
 
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 /**
  * @author Yichen TANG <yichen.tang at rte-france.com>
  */
 @Repository
-public interface IrregularTimeSeriesIndexEntityRepository extends CrudRepository<IrregularTimeSeriesIndexEntity, Long> {
+public interface UncompressedDoubleDataRepository extends CrudRepository<UncompressedDoubleDataEntity, Long> {
 
-    Iterable<IrregularTimeSeriesIndexEntity> findAllByTsmdIdOrderByPoint(long tsmdId);
+    List<UncompressedDoubleDataEntity> findAllByChunkOrderByI(ChunkEntity chunkEntity);
+
+    @Transactional
+    @Modifying
+    void deleteAllByChunk(ChunkEntity chunkEntity);
 }

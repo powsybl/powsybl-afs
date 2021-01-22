@@ -16,17 +16,20 @@ import java.util.List;
 import java.util.Set;
 
 @Repository
-public interface TimeSeriesDoubleDataEntityRepository extends CrudRepository<TimeSeriesDoubleDataEntity, Long> {
+public interface ChunkRepository extends CrudRepository<ChunkEntity, Long> {
 
-    @Query("SELECT DISTINCT t.version FROM TimeSeriesDoubleDataEntity t WHERE t.nodeId = ?1")
-    List<Integer> findDistinctVersionsByNodeId(String nodeId);
+    List<ChunkEntity> findAllByNodeIdAndTsNameAndVersionAndDataType(String nodeId, String tsName,
+                                                                    int version, String dataType);
 
-    @Query("SELECT DISTINCT t.version FROM TimeSeriesDoubleDataEntity t WHERE t.nodeId = ?1 and t.name = ?2")
-    Set<Integer> findDistinctVersionsByNodeIdAndName(String nodeId, String tsName);
+    @Query("SELECT DISTINCT t.version FROM ChunkEntity t WHERE t.nodeId = ?1")
+    Set<Integer> findDistinctVersionsByNodeId(String nodeId);
 
-    List<TimeSeriesDoubleDataEntity> findAllByNodeIdAndNameAndVersionOrderByPoint(String nodeId, String name, int version);
+    @Query("SELECT DISTINCT t.version FROM ChunkEntity t WHERE t.nodeId = ?1 and t.tsName = ?2")
+    Set<Integer> findDistinctVersionsByNodeIdAndTsName(String nodeId, String tsName);
 
     @Transactional
     @Modifying
     void deleteAllByNodeId(String nodeId);
+
+    Iterable<ChunkEntity> findAllByNodeId(String nodeId);
 }

@@ -18,24 +18,21 @@ import javax.persistence.Table;
 /**
  * @author Yichen TANG <yichen.tang at rte-france.com>
  */
-@Entity
 @Accessors(chain = true)
 @Data()
+@Entity
 @NoArgsConstructor
-@Table(name = "ts_double_data")
-public class TimeSeriesDoubleDataEntity {
+@Table(name = "chunk")
+public class ChunkEntity {
 
     @Id
     @GeneratedValue
     long id;
 
     String nodeId;
-
+    String tsName;
     int version;
 
-    String name;
-
-    int point;
-
-    double value;
+    int myOffset;
+    String dataType;
 }

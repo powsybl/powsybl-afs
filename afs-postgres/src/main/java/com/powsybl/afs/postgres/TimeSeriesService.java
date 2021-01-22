@@ -7,6 +7,7 @@
 package com.powsybl.afs.postgres;
 
 import com.google.common.primitives.Doubles;
+import com.google.common.primitives.Ints;
 import com.powsybl.afs.postgres.jpa.*;
 import com.powsybl.timeseries.*;
 import lombok.AccessLevel;
@@ -31,8 +32,11 @@ public class TimeSeriesService {
     private final TsTagRepository tagRepo;
     private final RegularTimeSeriesIndexRepository regTsiRepo;
     private final IrregularTimeSeriesIndexEntityRepository irrTsiRepo;
-    private final TimeSeriesDoubleDataEntityRepository doubleDataRepo;
-    private final TimeSeriesStringDataEntityRepository stringDataRepo;
+    private final UncompressedDoubleDataRepository uncompressedDoubleRepo;
+    private final CompressedDoubleDataRepository compressedDoubleRepo;
+    private final UncompressedStringDataRepository uncompressedStringRepo;
+    private final CompressedStringDataRepository compressedStringRepo;
+    private final ChunkRepository chunkRepository;
 
     @Setter(AccessLevel.PACKAGE)
     private BiConsumer<String, String> timeSeriesCreated;
@@ -46,14 +50,20 @@ public class TimeSeriesService {
                                 TsTagRepository tsTagRepository,
                                 RegularTimeSeriesIndexRepository regularTimeSeriesIndexRepository,
                                 IrregularTimeSeriesIndexEntityRepository irrTsiRepo,
-                                TimeSeriesDoubleDataEntityRepository doubleDataRepo,
-                                TimeSeriesStringDataEntityRepository stringDataRepo) {
+                                ChunkRepository chunkRepository,
+                                UncompressedDoubleDataRepository uncompressedDoubleDataRepository,
+                                CompressedDoubleDataRepository compressedDoubleDataRepository,
+                                UncompressedStringDataRepository uncompressedStringDataRepository,
+                                CompressedStringDataRepository compressedStringDataRepository) {
         metaRepo = Objects.requireNonNull(tsmdRepo);
         tagRepo = Objects.requireNonNull(tsTagRepository);
         regTsiRepo = Objects.requireNonNull(regularTimeSeriesIndexRepository);
         this.irrTsiRepo = Objects.requireNonNull(irrTsiRepo);
-        this.doubleDataRepo = Objects.requireNonNull(doubleDataRepo);
-        this.stringDataRepo = Objects.requireNonNull(stringDataRepo);
+        uncompressedDoubleRepo = Objects.requireNonNull(uncompressedDoubleDataRepository);
+        uncompressedStringRepo = Objects.requireNonNull(uncompressedStringDataRepository);
+        compressedDoubleRepo = Objects.requireNonNull(compressedDoubleDataRepository);
+        compressedStringRepo = Objects.requireNonNull(compressedStringDataRepository);
+        this.chunkRepository = Objects.requireNonNull(chunkRepository);
     }
 
     void createTimeSeries(String nodeId, TimeSeriesMetadata metadata) {
@@ -81,7 +91,7 @@ public class TimeSeriesService {
             for (int i = 0; i < instances.size(); i++) {
                 IrregularTimeSeriesIndexEntity entity = new IrregularTimeSeriesIndexEntity();
                 entity.setTsmdId(save.getId())
-                        .setPoint(i)
+                        .setPoint(i) // TODO remove point
                         .setEpoch(instances.get(i).toEpochMilli());
                 entities.add(entity);
             }
@@ -125,7 +135,16 @@ public class TimeSeriesService {
         if (regIndex != null) {
             return regIndex;
         }
-        throw new NotImplementedException("not yet");
+        return getIrrIndex(e);
+    }
+
+    private IrregularTimeSeriesIndex getIrrIndex(TimeSeriesMetadataEntity e) {
+        final Iterable<IrregularTimeSeriesIndexEntity> irrPoints = irrTsiRepo.findAllByTsmdIdOrderByPoint(e.getId());
+        List<Instant> list = new ArrayList<>();
+        for (IrregularTimeSeriesIndexEntity entity : irrPoints) {
+            list.add(Instant.ofEpochMilli(entity.getEpoch()));
+        }
+        return IrregularTimeSeriesIndex.create(list);
     }
 
     private TimeSeriesIndex getRegIndex(TimeSeriesMetadataEntity metadataEntity) {
@@ -139,18 +158,26 @@ public class TimeSeriesService {
     void addDoubleTimeSeriesData(String nodeId, int version, String timeSeriesName, List<DoubleDataChunk> chunks) {
         chunks.forEach(c -> {
             int offset = c.getOffset();
+            final ChunkEntity chunkEntity = new ChunkEntity()
+                    .setNodeId(nodeId).setVersion(version)
+                    .setTsName(timeSeriesName).setMyOffset(offset).setDataType(TimeSeriesDataType.DOUBLE.name());
+            final ChunkEntity savedChunk = chunkRepository.save(chunkEntity);
             if (c.isCompressed()) {
-                final CompressedDoubleDataChunk c1 = (CompressedDoubleDataChunk) c;
-                throw new NotImplementedException("not yet");
+                final CompressedDoubleDataChunk chunk = (CompressedDoubleDataChunk) c;
+                final double[] stepValues = chunk.getStepValues();
+                final int[] stepLengths = chunk.getStepLengths();
+                for (int i = 0; i < stepLengths.length; i++) {
+                    CompressedDoubleDataEntity entity = new CompressedDoubleDataEntity()
+                            .setChunk(savedChunk).setI(i).setStepLength(stepLengths[i]).setValue(stepValues[i]);
+                    compressedDoubleRepo.save(entity);
+                }
             } else {
-                final UncompressedDoubleDataChunk uncompressedDoubleDataChunk = (UncompressedDoubleDataChunk) c;
-                uncompressedDoubleDataChunk.tryToCompress();
-                final double[] values = uncompressedDoubleDataChunk.getValues();
+                final UncompressedDoubleDataChunk chunk = (UncompressedDoubleDataChunk) c;
+                final double[] values = chunk.getValues();
                 for (int i = 0; i < values.length; i++) {
-                    final TimeSeriesDoubleDataEntity entity = new TimeSeriesDoubleDataEntity().setName(timeSeriesName)
-                            .setNodeId(nodeId).setPoint(offset + i).setValue(values[i])
-                            .setVersion(version);
-                    doubleDataRepo.save(entity);
+                    UncompressedDoubleDataEntity doubleDataEntity = new UncompressedDoubleDataEntity()
+                            .setChunk(savedChunk).setI(i).setValue(values[i]);
+                    uncompressedDoubleRepo.save(doubleDataEntity);
                 }
             }
         });
@@ -158,113 +185,97 @@ public class TimeSeriesService {
     }
 
     Set<Integer> getTimeSeriesDataVersions(String nodeId) {
-        Set<Integer> res = new HashSet<>();
-        res.addAll(doubleDataRepo.findDistinctVersionsByNodeId(nodeId));
-        return res;
+        return chunkRepository.findDistinctVersionsByNodeId(nodeId);
     }
 
     Set<Integer> getTimeSeriesDataVersions(String nodeId, String timeSeriesName) {
-        Set<Integer> res = new HashSet<>();
-        res.addAll(doubleDataRepo.findDistinctVersionsByNodeIdAndName(nodeId, timeSeriesName));
-        return res;
+        return chunkRepository.findDistinctVersionsByNodeIdAndTsName(nodeId, timeSeriesName);
     }
 
     Map<String, List<DoubleDataChunk>> getDoubleTimeSeriesData(String nodeId, Set<String> timeSeriesNames, int version) {
         Map<String, List<DoubleDataChunk>> map = new HashMap<>();
         for (String name : timeSeriesNames) {
-            final List<TimeSeriesDoubleDataEntity> entities = doubleDataRepo.findAllByNodeIdAndNameAndVersionOrderByPoint(nodeId, name, version);
-            if (entities.isEmpty()) {
+            final List<ChunkEntity> chunks = chunkRepository.findAllByNodeIdAndTsNameAndVersionAndDataType(nodeId, name, version, TimeSeriesDataType.DOUBLE.name());
+            if (chunks.isEmpty()) {
                 continue;
             }
-            List<DoubleDataChunk> chunks = new ArrayList<>();
-            int lastPoint = -1;
-            List<Double> data = new ArrayList<>();
-            boolean isContinue = false;
-            int point = lastPoint;
-            double value = 0.0;
-            for (TimeSeriesDoubleDataEntity entity : entities) {
-                point = entity.getPoint();
-                value = entity.getValue();
-                if (lastPoint == -1) {
-                    // first element
-                    lastPoint = point;
-                    data.add(value);
-                    isContinue = false;
-                    continue;
-                }
-                if (point != (lastPoint + 1)) {
-                    // close previous chunk
-                    int offset = lastPoint - data.size() + 1;
-                    double[] arrData = Doubles.toArray(data);
-                    chunks.add(new UncompressedDoubleDataChunk(offset, arrData));
-                    // prepare next chunk
-                    data = new ArrayList<>();
-                    data.add(value);
-                    isContinue = false;
-                } else {
-                    data.add(value);
-                    isContinue = true;
-                }
-                lastPoint = point;
+            List<DoubleDataChunk> res = new ArrayList<>();
+            for (ChunkEntity chunkEntity : chunks) {
+                tryGetFromUncompressedDouble(res, chunkEntity);
+                tryGetFromCompressedDouble(res, chunkEntity);
             }
-            // close last chunk
-            if (isContinue) {
-                int offset = lastPoint - data.size() + 1;
-                double[] arrData = Doubles.toArray(data);
-                chunks.add(new UncompressedDoubleDataChunk(offset, arrData));
-            } else {
-                chunks.add(new UncompressedDoubleDataChunk(point, new double[]{value}));
-            }
-            map.put(name, chunks);
+            map.put(name, res);
         }
         return map;
+    }
+
+    private void tryGetFromUncompressedDouble(List<DoubleDataChunk> res, ChunkEntity chunkEntity) {
+        final List<UncompressedDoubleDataEntity> chunkFromUncompressed = uncompressedDoubleRepo.findAllByChunkOrderByI(chunkEntity);
+        if (chunkFromUncompressed.isEmpty()) {
+            return;
+        }
+        List<Double> values = new ArrayList<>();
+        for (UncompressedDoubleDataEntity dataEntity : chunkFromUncompressed) {
+            values.add(dataEntity.getValue());
+        }
+        res.add(new UncompressedDoubleDataChunk(chunkEntity.getMyOffset(), Doubles.toArray(values)));
+    }
+
+    private void tryGetFromUncompressedString(List<StringDataChunk> res, ChunkEntity chunkEntity) {
+        final List<UncompressedStringDataEntity> chunkFromUncompressed = uncompressedStringRepo.findAllByChunkOrderByI(chunkEntity);
+        if (chunkFromUncompressed.isEmpty()) {
+            return;
+        }
+        List<String> values = new ArrayList<>();
+        for (UncompressedStringDataEntity dataEntity : chunkFromUncompressed) {
+            values.add(dataEntity.getValue());
+        }
+        res.add(new UncompressedStringDataChunk(chunkEntity.getMyOffset(), values.toArray(new String[0])));
+    }
+
+    private void tryGetFromCompressedDouble(List<DoubleDataChunk> res, ChunkEntity chunkEntity) {
+        final List<CompressedDoubleDataEntity> datas = compressedDoubleRepo.findAllByChunkOrderByI(chunkEntity);
+        if (datas.isEmpty()) {
+            return;
+        }
+        List<Double> stepValues = new ArrayList<>();
+        List<Integer> stepLength = new ArrayList<>();
+        for (CompressedDoubleDataEntity dataEntity : datas) {
+            stepValues.add(dataEntity.getValue());
+            stepLength.add(dataEntity.getStepLength());
+        }
+        int sumStep = stepLength.stream().mapToInt(i -> i).sum();
+        res.add(new CompressedDoubleDataChunk(chunkEntity.getMyOffset(), sumStep, Doubles.toArray(stepValues), Ints.toArray(stepLength)));
+    }
+
+    private void tryGetFromCompressedString(List<StringDataChunk> res, ChunkEntity chunkEntity) {
+        final List<CompressedStringDataEntity> datas = compressedStringRepo.findAllByChunkOrderByI(chunkEntity);
+        if (datas.isEmpty()) {
+            return;
+        }
+        List<String> stepValues = new ArrayList<>();
+        List<Integer> stepLength = new ArrayList<>();
+        for (CompressedStringDataEntity dataEntity : datas) {
+            stepValues.add(dataEntity.getValue());
+            stepLength.add(dataEntity.getStepLength());
+        }
+        int sumStep = stepLength.stream().mapToInt(i -> i).sum();
+        res.add(new CompressedStringDataChunk(chunkEntity.getMyOffset(), sumStep, stepValues.toArray(new String[0]), Ints.toArray(stepLength)));
     }
 
     Map<String, List<StringDataChunk>> getStringTimeSeriesData(String nodeId, Set<String> timeSeriesNames, int version) {
         Map<String, List<StringDataChunk>> map = new HashMap<>();
         for (String name : timeSeriesNames) {
-            final List<TimeSeriesStringDataEntity> entities = stringDataRepo.findAllByNodeIdAndNameAndVersionOrderByPoint(nodeId, name, version);
-            if (entities.isEmpty()) {
+            final List<ChunkEntity> chunks = chunkRepository.findAllByNodeIdAndTsNameAndVersionAndDataType(nodeId, name, version, TimeSeriesDataType.STRING.name());
+            if (chunks.isEmpty()) {
                 continue;
             }
-            List<StringDataChunk> chunks = new ArrayList<>();
-            int lastPoint = -1;
-            List<String> data = new ArrayList<>();
-            boolean isContinue = false;
-            int point = lastPoint;
-            String value = "";
-            for (TimeSeriesStringDataEntity entity : entities) {
-                point = entity.getPoint();
-                value = entity.getValue();
-                if (lastPoint == -1) {
-                    // first element
-                    lastPoint = point;
-                    data.add(value);
-                    isContinue = false;
-                    continue;
-                }
-                if (point != (lastPoint + 1)) {
-                    // close previous chunk
-                    int offset = lastPoint - data.size() + 1;
-                    chunks.add(new UncompressedStringDataChunk(offset, data.toArray(new String[0])));
-                    // prepare next chunk
-                    data = new ArrayList<>();
-                    data.add(value);
-                    isContinue = false;
-                } else {
-                    data.add(value);
-                    isContinue = true;
-                }
-                lastPoint = point;
+            List<StringDataChunk> res = new ArrayList<>();
+            for (ChunkEntity chunkEntity : chunks) {
+                tryGetFromUncompressedString(res, chunkEntity);
+                tryGetFromCompressedString(res, chunkEntity);
             }
-            // close last chunk
-            if (isContinue) {
-                int offset = lastPoint - data.size() + 1;
-                chunks.add(new UncompressedStringDataChunk(offset, data.toArray(new String[0])));
-            } else {
-                chunks.add(DataChunk.create(point, new String[]{value}));
-            }
-            map.put(name, chunks);
+            map.put(name, res);
         }
         return map;
     }
@@ -272,17 +283,26 @@ public class TimeSeriesService {
     void addStringTimeSeriesData(String nodeId, int version, String timeSeriesName, List<StringDataChunk> chunks) {
         chunks.forEach(c -> {
             int offset = c.getOffset();
+            final ChunkEntity chunkEntity = new ChunkEntity()
+                    .setNodeId(nodeId).setVersion(version)
+                    .setTsName(timeSeriesName).setMyOffset(offset).setDataType(TimeSeriesDataType.STRING.name());
+            final ChunkEntity savedChunk = chunkRepository.save(chunkEntity);
             if (c.isCompressed()) {
-                final CompressedStringDataChunk c1 = (CompressedStringDataChunk) c;
-                throw new NotImplementedException("not yet");
+                final CompressedStringDataChunk chunk = (CompressedStringDataChunk) c;
+                final String[] stepValues = chunk.getStepValues();
+                final int[] stepLengths = chunk.getStepLengths();
+                for (int i = 0; i < stepLengths.length; i++) {
+                    CompressedStringDataEntity entity = new CompressedStringDataEntity()
+                            .setChunk(savedChunk).setI(i).setStepLength(stepLengths[i]).setValue(stepValues[i]);
+                    compressedStringRepo.save(entity);
+                }
             } else {
-                final UncompressedStringDataChunk uncompressedChunk = (UncompressedStringDataChunk) c;
-                final String[] values = uncompressedChunk.getValues();
+                final UncompressedStringDataChunk chunk = (UncompressedStringDataChunk) c;
+                final String[] values = chunk.getValues();
                 for (int i = 0; i < values.length; i++) {
-                    final TimeSeriesStringDataEntity entity = new TimeSeriesStringDataEntity().setName(timeSeriesName)
-                            .setNodeId(nodeId).setPoint(offset + i).setValue(values[i])
-                            .setVersion(version);
-                    stringDataRepo.save(entity);
+                    UncompressedStringDataEntity doubleDataEntity = new UncompressedStringDataEntity()
+                            .setChunk(savedChunk).setI(i).setValue(values[i]);
+                    uncompressedStringRepo.save(doubleDataEntity);
                 }
             }
         });
@@ -297,8 +317,14 @@ public class TimeSeriesService {
             tagRepo.deleteByMetadataEntity(metadataEntity);
         }
         metaRepo.deleteAllByNodeId(nodeId);
-        doubleDataRepo.deleteAllByNodeId(nodeId);
-        stringDataRepo.deleteAllByNodeId(nodeId);
+        final Iterable<ChunkEntity> chunks = chunkRepository.findAllByNodeId(nodeId);
+        for (ChunkEntity chunk : chunks) {
+            uncompressedDoubleRepo.deleteAllByChunk(chunk);
+            uncompressedStringRepo.deleteAllByChunk(chunk);
+            compressedDoubleRepo.deleteAllByChunk(chunk);
+            compressedStringRepo.deleteAllByChunk(chunk);
+        }
+        chunkRepository.deleteAllByNodeId(nodeId);
         timeSeriesCleared.accept(nodeId);
     }
 }

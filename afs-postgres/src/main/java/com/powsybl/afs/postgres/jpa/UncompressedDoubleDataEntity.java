@@ -6,14 +6,28 @@
  */
 package com.powsybl.afs.postgres.jpa;
 
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.stereotype.Repository;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.Accessors;
+
+import javax.persistence.*;
 
 /**
  * @author Yichen TANG <yichen.tang at rte-france.com>
  */
-@Repository
-public interface IrregularTimeSeriesIndexEntityRepository extends CrudRepository<IrregularTimeSeriesIndexEntity, Long> {
+@Accessors(chain = true)
+@Data()
+@Entity
+@NoArgsConstructor
+@Table(name = "uncompress_double")
+public class UncompressedDoubleDataEntity {
+    @Id
+    @GeneratedValue
+    long id;
 
-    Iterable<IrregularTimeSeriesIndexEntity> findAllByTsmdIdOrderByPoint(long tsmdId);
+    int i;
+    double value;
+
+    @ManyToOne
+    ChunkEntity chunk;
 }
