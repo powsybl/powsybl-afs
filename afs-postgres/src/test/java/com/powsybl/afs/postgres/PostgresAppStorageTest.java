@@ -27,6 +27,7 @@ import java.time.Instant;
 import java.util.*;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 /**
  * @author Yichen TANG <yichen.tang at rte-france.com>
@@ -102,5 +103,11 @@ public class PostgresAppStorageTest extends AbstractAppStorageTest {
         assertEquals(Arrays.asList(new CompressedStringDataChunk(5, 10, new String[]{"a", "b", "c"}, new int[]{3, 3, 4}),
                 new UncompressedStringDataChunk(20, new String[]{"d", "e"})),
                 stringTimeSeriesData4.get("ts4"));
+        try {
+            storage.getNodeInfo(UUID.randomUUID().toString());
+            fail();
+        } catch (PostgresAfsException e) {
+            // do nothing
+        }
     }
 }
