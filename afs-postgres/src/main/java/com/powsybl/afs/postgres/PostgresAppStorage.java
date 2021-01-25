@@ -30,17 +30,21 @@ public class PostgresAppStorage extends AbstractAppStorage {
     private final NodeDataRepository nodeDataRepository;
     private final TimeSeriesService tsService;
 
+    private final String fileSystemName;
+
     private static final int ROOT_NODE_VERSION = 0;
 
     @Autowired
-    public PostgresAppStorage(NodeService nodeService,
+    public PostgresAppStorage(String fileSystemName,
+                              NodeService nodeService,
                               NodeDataRepository nodeDataRepository,
-                              TimeSeriesService tsService) {
-        // TODO here
-        this.eventsBus = new InMemoryEventsBus();
+                              TimeSeriesService tsService,
+                              EventsBus eventsBus) {
+        this.fileSystemName = Objects.requireNonNull(fileSystemName);
         this.nodeService = Objects.requireNonNull(nodeService);
         this.nodeDataRepository = Objects.requireNonNull(nodeDataRepository);
         this.tsService = Objects.requireNonNull(tsService);
+        this.eventsBus = Objects.requireNonNull(eventsBus);
         bindListener();
     }
 
@@ -63,8 +67,7 @@ public class PostgresAppStorage extends AbstractAppStorage {
 
     @Override
     public String getFileSystemName() {
-        // TODO here
-        return "postgres-test";
+        return fileSystemName;
     }
 
     @Override
@@ -100,7 +103,6 @@ public class PostgresAppStorage extends AbstractAppStorage {
     @Override
     public NodeInfo createRootNodeIfNotExists(String name, String nodePseudoClass) {
         final NodeInfo info = nodeService.createRootNodeIfNotExists(name, nodePseudoClass);
-//        pushEvent(new NodeCreated("test", null), "APPSTORAGE_NODE_TOPIC");
         return info;
     }
 

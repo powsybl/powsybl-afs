@@ -8,10 +8,7 @@ package com.powsybl.afs.postgres;
 
 import com.google.common.collect.Sets;
 import com.powsybl.afs.postgres.jpa.NodeDataRepository;
-import com.powsybl.afs.storage.AbstractAppStorageTest;
-import com.powsybl.afs.storage.AppStorage;
-import com.powsybl.afs.storage.NodeGenericMetadata;
-import com.powsybl.afs.storage.NodeInfo;
+import com.powsybl.afs.storage.*;
 import com.powsybl.afs.storage.events.TimeSeriesCreated;
 import com.powsybl.afs.storage.events.TimeSeriesDataUpdated;
 import com.powsybl.timeseries.*;
@@ -44,10 +41,14 @@ public class PostgresAppStorageTest extends AbstractAppStorageTest {
     private TimeSeriesService tsService;
     @Autowired
     private NodeDataRepository nodeDataRepository;
+    @Autowired
+    private EventsBus eventsBus;
+    @Autowired
+    private String fileSystemName;
 
     @Override
     protected AppStorage createStorage() {
-        return new PostgresAppStorage(nodeService, nodeDataRepository, tsService);
+        return new PostgresAppStorage(fileSystemName, nodeService, nodeDataRepository, tsService, eventsBus);
     }
 
     @Override
