@@ -10,7 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.afs.AppFileSystem;
 import com.powsybl.afs.TaskEvent;
 import com.powsybl.afs.TaskListener;
-import com.powsybl.afs.ws.server.utils.AppDataBean;
+import com.powsybl.afs.server.AppDataWrapper;
 import com.powsybl.commons.json.JsonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,13 +26,13 @@ public class TaskEventHandler extends TextWebSocketHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskEventHandler.class);
 
-    private final AppDataBean appDataBean;
+    private final AppDataWrapper appDataWrapper;
     private final WebSocketContext webSocketContext;
 
     private final ObjectMapper objectMapper = JsonUtil.createObjectMapper();
 
-    public TaskEventHandler(AppDataBean appDataBean, WebSocketContext webSocketContext) {
-        this.appDataBean = appDataBean;
+    public TaskEventHandler(AppDataWrapper appDataWrapper, WebSocketContext webSocketContext) {
+        this.appDataWrapper = appDataWrapper;
         this.webSocketContext = webSocketContext;
     }
 
@@ -40,7 +40,7 @@ public class TaskEventHandler extends TextWebSocketHandler {
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
 
         String fileSystemName = SessionAttributes.of(session).getFilesystem();
-        AppFileSystem fileSystem = appDataBean.getFileSystem(fileSystemName);
+        AppFileSystem fileSystem = appDataWrapper.getFileSystem(fileSystemName);
         String projectId = session.getAttributes().get("projectId").toString();
 
         LOGGER.debug("WebSocket session '{}' opened for file system '{}'", session.getId(), fileSystemName);
@@ -80,7 +80,7 @@ public class TaskEventHandler extends TextWebSocketHandler {
 
     private void removeSession(WebSocketSession session) {
         SessionAttributes attrs = SessionAttributes.of(session);
-        AppFileSystem fileSystem = appDataBean.getFileSystem(attrs.getFilesystem());
+        AppFileSystem fileSystem = appDataWrapper.getFileSystem(attrs.getFilesystem());
 
         fileSystem.getTaskMonitor().removeListener(attrs.getTaskListener());
         webSocketContext.removeSession(session);

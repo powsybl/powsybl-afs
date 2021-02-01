@@ -7,10 +7,10 @@
 package com.powsybl.afs.server.events;
 
 import com.fasterxml.jackson.databind.ObjectReader;
+import com.powsybl.afs.server.AppDataWrapper;
 import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.events.AppStorageListener;
 import com.powsybl.afs.storage.events.NodeEventContainer;
-import com.powsybl.afs.ws.server.utils.AppDataBean;
 import com.powsybl.commons.json.JsonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,11 +36,11 @@ public class NodeEventHandler extends TextWebSocketHandler {
     private static final ObjectReader NODE_EVENT_READER = JsonUtil.createObjectMapper()
             .readerFor(NodeEventContainer.class);
 
-    private final AppDataBean appDataBean;
+    private final AppDataWrapper appDataWrapper;
     private final WebSocketContext webSocketContext;
 
-    public NodeEventHandler(AppDataBean appDataBean, WebSocketContext webSocketContext) {
-        this.appDataBean = appDataBean;
+    public NodeEventHandler(AppDataWrapper appDataWrapper, WebSocketContext webSocketContext) {
+        this.appDataWrapper = appDataWrapper;
         this.webSocketContext = webSocketContext;
     }
 
@@ -54,7 +54,7 @@ public class NodeEventHandler extends TextWebSocketHandler {
 
     private void registerListener(WebSocketSession session) {
         AppStorageListener eventForwarder = new NodeEventForwarder(session);
-        appDataBean.getAppData().getEventsBus().addListener(eventForwarder);
+        appDataWrapper.getAppData().getEventsBus().addListener(eventForwarder);
         SessionAttributes.of(session).setListener(eventForwarder);
         webSocketContext.addSession(session);
     }
@@ -70,7 +70,7 @@ public class NodeEventHandler extends TextWebSocketHandler {
     private void forwardEventsToBus(TextMessage message) {
         try {
             NodeEventContainer container = NODE_EVENT_READER.readValue(message.getPayload());
-            AppStorage storage = appDataBean.getStorage(container.getFileSystemName());
+            AppStorage storage = appDataWrapper.getStorage(container.getFileSystemName());
             storage.getEventsBus().pushEvent(container.getNodeEvent(), container.getTopic());
             storage.getEventsBus().flush();
         } catch (IOException e) {
@@ -85,7 +85,7 @@ public class NodeEventHandler extends TextWebSocketHandler {
 
     private void removeSession(WebSocketSession session) {
         AppStorageListener listener = SessionAttributes.of(session).getListener();
-        appDataBean.getAppData().getEventsBus().removeListener(listener);
+        appDataWrapper.getAppData().getEventsBus().removeListener(listener);
         webSocketContext.removeSession(session);
     }
 }
