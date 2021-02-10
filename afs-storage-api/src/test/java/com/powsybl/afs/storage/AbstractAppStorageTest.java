@@ -446,6 +446,32 @@ public abstract class AbstractAppStorageTest {
         // check there is no more time series
         assertTrue(storage.getTimeSeriesNames(testData2Info.getId()).isEmpty());
 
+        // 17.1) clear time series by delete node
+        NodeInfo testTsInfo = storage.createNode(testFolderInfo.getId(), "testTs", DATA_FILE_CLASS, "", 0, new NodeGenericMetadata());
+        TimeSeriesMetadata metadata3 = new TimeSeriesMetadata("ts3",
+                TimeSeriesDataType.DOUBLE,
+                ImmutableMap.of("var1", "value1"),
+                RegularTimeSeriesIndex.create(Interval.parse("2015-01-01T00:00:00Z/2015-01-01T01:15:00Z"),
+                        Duration.ofMinutes(15)));
+        storage.setConsistent(testTsInfo.getId());
+        storage.flush();
+        assertEventStack(new NodeCreated(testTsInfo.getId(), testFolderInfo.getId()),
+                new NodeConsistent(testTsInfo.getId()));
+
+        storage.createTimeSeries(testTsInfo.getId(), metadata3);
+        storage.flush();
+        assertEventStack(new TimeSeriesCreated(testTsInfo.getId(), "ts3"));
+        storage.addDoubleTimeSeriesData(testTsInfo.getId(), 0, "ts3", Arrays.asList(new UncompressedDoubleDataChunk(2, new double[] {1d, 2d}),
+                new UncompressedDoubleDataChunk(5, new double[] {3d})));
+        storage.flush();
+        assertEventStack(new TimeSeriesDataUpdated(testTsInfo.getId(), "ts3"));
+        storage.deleteNode(testTsInfo.getId());
+        storage.flush();
+        // check event
+        assertEventStack(
+                new TimeSeriesCleared(testTsInfo.getId()),
+                new NodeRemoved(testTsInfo.getId(), testFolderInfo.getId()));
+
         // 18) change parent test
         NodeInfo folder1Info = storage.createNode(rootFolderInfo.getId(), "test1", FOLDER_PSEUDO_CLASS, "", 0, new NodeGenericMetadata());
         NodeInfo folder2Info = storage.createNode(rootFolderInfo.getId(), "test2", FOLDER_PSEUDO_CLASS, "", 0, new NodeGenericMetadata());
