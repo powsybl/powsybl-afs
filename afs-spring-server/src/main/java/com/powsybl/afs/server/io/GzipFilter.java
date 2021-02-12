@@ -26,6 +26,7 @@ import java.io.IOException;
  * the streaming of responses ({@link org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody}.
  * This filter must not be activated on such endpoints.
  *
+ * @author Sylvain Leclerc <sylvain.leclerc at rte-france.com>
  */
 public class GzipFilter implements Filter {
 

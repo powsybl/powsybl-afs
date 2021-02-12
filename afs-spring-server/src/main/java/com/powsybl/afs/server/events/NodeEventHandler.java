@@ -28,6 +28,8 @@ import java.io.UncheckedIOException;
  *     <li>On connection, registers a listener to forward events to the client</li>
  *     <li>On receiving events from the client, forwards it to underlying event bus</li>
  * </ul>
+ *
+ * @author Sylvain Leclerc <sylvain.leclerc at rte-france.com>
  */
 public class NodeEventHandler extends TextWebSocketHandler {
 
