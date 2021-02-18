@@ -83,7 +83,7 @@
         <javaeeapi.version>7.0</javaeeapi.version>
         <jimfs.version>1.1</jimfs.version>
         <jjwt.version>0.9.0</jjwt.version>
-        <junit.version>4.12</junit.version>
+        <junit.version>4.13.1</junit.version>
         <mapdb.version>3.0.6</mapdb.version>
         <maven.core.version>3.3.9</maven.core.version>
         <mockito.version>3.3.3</mockito.version>
