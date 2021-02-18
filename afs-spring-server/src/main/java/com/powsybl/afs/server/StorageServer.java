@@ -19,12 +19,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -321,13 +321,21 @@ public class StorageServer {
     }
 
     @GetMapping(value = "fileSystems/{fileSystemName}/nodes/{nodeId}/data/{name}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    @ApiOperation(value = "", response = InputStream.class)
-    @ApiResponses(value = {@ApiResponse(code = 200, message = ""), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
-    public ResponseEntity<InputStreamResource> readBinaryAttribute(@ApiParam(value = "File system name") @PathVariable("fileSystemName") String fileSystemName,
-                                                                   @ApiParam(value = "Node ID") @PathVariable("nodeId") String nodeId,
-                                                                   @ApiParam(value = "Name") @PathVariable("name") String name) {
+    @ApiOperation (value = "", response = InputStream.class)
+    @ApiResponses (value = {@ApiResponse(code = 200, message = ""), @ApiResponse(code = 404, message = ""), @ApiResponse(code = 500, message = "Error")})
+    public ResponseEntity<StreamingResponseBody> readBinaryAttribute(@ApiParam(value = "File system name") @PathVariable("fileSystemName") String fileSystemName,
+                                                                     @ApiParam(value = "Node ID") @PathVariable("nodeId") String nodeId,
+                                                                     @ApiParam(value = "Name") @PathVariable("name") String name) {
         AppStorage storage = appDataWrapper.getStorage(fileSystemName);
-        return okIfPresent(storage.readBinaryData(nodeId, name).map(InputStreamResource::new));
+        return okIfPresent(storage.readBinaryData(nodeId, name).map(StorageServer::copyToBodyAndClose));
+    }
+
+    private static StreamingResponseBody copyToBodyAndClose(InputStream inputStream) {
+        return outputStream -> {
+            try (InputStream toClose = inputStream) {
+                IOUtils.copy(toClose, outputStream);
+            }
+        };
     }
 
     @GetMapping(value = "fileSystems/{fileSystemName}/nodes/{nodeId}/data/{name}", produces = MediaType.TEXT_PLAIN_VALUE)

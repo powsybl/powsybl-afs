@@ -23,7 +23,7 @@ public class GzipFilterRegistration {
         FilterRegistrationBean<GzipFilter> registration = new FilterRegistrationBean<>();
         registration.setFilter(new GzipFilter());
         registration.addUrlPatterns("/rest/afs/v1/*");
-        registration.setAsyncSupported(false);
+        registration.setAsyncSupported(true);
         return registration;
     }
 }

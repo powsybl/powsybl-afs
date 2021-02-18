@@ -55,10 +55,42 @@ public class GzipFilter implements Filter {
 
         //This seems necessary because otherwise spring does not close the output stream,
         //and therefore the gzip data is invalid.
-        //However it is not clean, and in particular it will not work when we want to
-        //stream the response to the client, because it will close the stream
-        //before the actual transfer has started
-        gzipResponse.finish();
+        applyAfterCompletion(request, gzipResponse::finish);
+    }
+
+    @FunctionalInterface
+    private interface IORunnable {
+        void run() throws IOException;
+    }
+
+    /**
+     * Apply a method after the completion of the request, be it synchronous or asynchronous.
+     */
+    private void applyAfterCompletion(HttpServletRequest request, IORunnable runnable) throws IOException {
+        if (request.isAsyncStarted()) {
+            request.getAsyncContext().addListener(new AsyncListener() {
+                @Override
+                public void onComplete(AsyncEvent asyncEvent) throws IOException {
+                    runnable.run();
+                }
+
+                @Override
+                public void onTimeout(AsyncEvent asyncEvent) throws IOException {
+                    runnable.run();
+                }
+
+                @Override
+                public void onError(AsyncEvent asyncEvent) throws IOException {
+                    runnable.run();
+                }
+
+                @Override
+                public void onStartAsync(AsyncEvent asyncEvent) throws IOException {
+                }
+            });
+        } else {
+            runnable.run();
+        }
     }
 
     @Override
