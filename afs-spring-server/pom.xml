@@ -44,7 +44,7 @@
         <!-- Compilation dependencies -->
         <dependency>
             <groupId>com.powsybl</groupId>
-            <artifactId>powsybl-afs-ws-server-utils</artifactId>
+            <artifactId>powsybl-afs-core</artifactId>
             <version>${project.version}</version>
         </dependency>
 

@@ -9,7 +9,6 @@ package com.powsybl.afs.server;
 import com.powsybl.afs.*;
 import com.powsybl.afs.storage.*;
 import com.powsybl.afs.storage.buffer.*;
-import com.powsybl.afs.ws.server.utils.JwtTokenNeeded;
 import com.powsybl.timeseries.DoubleDataChunk;
 import com.powsybl.timeseries.StringDataChunk;
 import com.powsybl.timeseries.TimeSeriesMetadata;
@@ -31,7 +30,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
 
-@JwtTokenNeeded
 @RestController
 @RequestMapping(value = "/rest/afs/" + StorageServer.API_VERSION)
 @Api(value = "/afs", tags = "afs")
