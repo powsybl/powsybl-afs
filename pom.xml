@@ -91,7 +91,7 @@
         <shrinkwrap-resolver.version>2.2.6</shrinkwrap-resolver.version>
         <slf4j.version>1.7.22</slf4j.version>
         <springfox.version>2.10.5</springfox.version>
-        <springboot.version>2.2.1.RELEASE</springboot.version>
+        <springboot.version>2.2.13.RELEASE</springboot.version>
         <swaggerjaxrs.version>1.5.16</swaggerjaxrs.version>
         <tyrus.version>1.13.1</tyrus.version>
         <wildfly.dist.version>11.0.0.Final</wildfly.dist.version>
@@ -344,4 +344,3 @@
     </dependencyManagement>
 
 </project>
-
