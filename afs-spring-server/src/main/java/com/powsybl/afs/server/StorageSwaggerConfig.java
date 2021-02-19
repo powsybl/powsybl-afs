@@ -6,6 +6,7 @@
  */
 package com.powsybl.afs.server;
 
+import com.google.common.base.Predicate;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import springfox.documentation.builders.ApiInfoBuilder;
@@ -13,12 +14,14 @@ import springfox.documentation.builders.RequestHandlerSelectors;
 import springfox.documentation.service.ApiInfo;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
-import springfox.documentation.swagger2.annotations.EnableSwagger2WebMvc;
+import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
-import java.util.function.Predicate;
+import static com.google.common.base.Predicates.and;
+import static com.google.common.base.Predicates.not;
+import static springfox.documentation.builders.PathSelectors.regex;
 
 @Configuration
-@EnableSwagger2WebMvc
+@EnableSwagger2
 public class StorageSwaggerConfig {
     @Bean
     public Docket produceApi() {
@@ -42,6 +45,7 @@ public class StorageSwaggerConfig {
     // Only select apis that matches the given Predicates.
     private Predicate<String> paths() {
         // Match all paths except /error
-        return input -> input.matches("/rest/afs/" + StorageServer.API_VERSION + ".*") && !input.matches("/error.*");
+        return and(regex("/rest/afs/" + StorageServer.API_VERSION + ".*"),
+                not(regex("/error.*")));
     }
 }
