@@ -6,25 +6,6 @@
  */
 package com.powsybl.afs.ext.base;
 
-import com.powsybl.afs.AfsException;
-import com.powsybl.afs.ProjectFileBuildContext;
-import com.powsybl.afs.ProjectFileBuilder;
-import com.powsybl.afs.ProjectFileCreationContext;
-import com.powsybl.afs.ext.base.events.CaseImported;
-import com.powsybl.afs.storage.*;
-import com.powsybl.commons.datasource.DataSource;
-import com.powsybl.commons.datasource.DataSourceUtil;
-import com.powsybl.commons.datasource.MemDataSource;
-import com.powsybl.commons.datasource.ReadOnlyDataSource;
-import com.powsybl.iidm.export.Exporters;
-import com.powsybl.iidm.export.ExportersLoader;
-import com.powsybl.iidm.export.ExportersServiceLoader;
-import com.powsybl.iidm.import_.ImportConfig;
-import com.powsybl.iidm.import_.Importer;
-import com.powsybl.iidm.import_.Importers;
-import com.powsybl.iidm.import_.ImportersLoader;
-import com.powsybl.iidm.network.Network;
-
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UncheckedIOException;
@@ -34,6 +15,29 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
+
+import com.powsybl.afs.AfsException;
+import com.powsybl.afs.ProjectFileBuildContext;
+import com.powsybl.afs.ProjectFileBuilder;
+import com.powsybl.afs.ProjectFileCreationContext;
+import com.powsybl.afs.ext.base.events.CaseImported;
+import com.powsybl.afs.storage.AppStorageDataSource;
+import com.powsybl.afs.storage.AppStorageDataStore;
+import com.powsybl.afs.storage.NodeGenericMetadata;
+import com.powsybl.afs.storage.NodeInfo;
+import com.powsybl.commons.datasource.DataSource;
+import com.powsybl.commons.datasource.DataSourceUtil;
+import com.powsybl.commons.datasource.MemDataSource;
+import com.powsybl.commons.datasource.ReadOnlyDataSource;
+import com.powsybl.commons.datastore.DataPack;
+import com.powsybl.iidm.export.Exporters;
+import com.powsybl.iidm.export.ExportersLoader;
+import com.powsybl.iidm.export.ExportersServiceLoader;
+import com.powsybl.iidm.import_.ImportConfig;
+import com.powsybl.iidm.import_.Importer;
+import com.powsybl.iidm.import_.Importers;
+import com.powsybl.iidm.import_.ImportersLoader;
+import com.powsybl.iidm.network.Network;
 
 /**
  * Builder for the project file {@link ImportedCase}.
@@ -57,6 +61,8 @@ public class ImportedCaseBuilder implements ProjectFileBuilder<ImportedCase> {
     private Importer importer;
 
     private final Properties parameters = new Properties();
+
+    private DataPack dataPack;
 
     public ImportedCaseBuilder(ProjectFileBuildContext context, ImportersLoader importersLoader, ImportConfig importConfig) {
         this(context, new ExportersServiceLoader(), importersLoader, importConfig);
@@ -102,6 +108,11 @@ public class ImportedCaseBuilder implements ProjectFileBuilder<ImportedCase> {
         return this;
     }
 
+    public ImportedCaseBuilder withDataPack(DataPack dataPack) {
+        this.dataPack = Objects.requireNonNull(dataPack);
+        return this;
+    }
+
     public ImportedCaseBuilder withNetwork(Network network) {
         Objects.requireNonNull(network);
         if (name == null) {
@@ -124,7 +135,7 @@ public class ImportedCaseBuilder implements ProjectFileBuilder<ImportedCase> {
 
     @Override
     public ImportedCase build() {
-        if (dataSource == null) {
+        if (dataSource == null && dataPack == null) {
             throw new AfsException("Case or data source is not set");
         }
         if (name == null) {
@@ -134,14 +145,29 @@ public class ImportedCaseBuilder implements ProjectFileBuilder<ImportedCase> {
         if (context.getStorage().getChildNode(context.getFolderInfo().getId(), name).isPresent()) {
             throw new AfsException("Parent folder already contains a '" + name + "' node");
         }
+        NodeInfo info = null;
+        if (dataSource != null) {
+            NodeGenericMetadata meta = new NodeGenericMetadata().setString(ImportedCase.FORMAT, importer.getFormat());
+            meta.setBoolean(ImportedCase.HAS_DATA_PACK, false);
+            // create project file
+            info = context.getStorage().createNode(context.getFolderInfo().getId(), name, ImportedCase.PSEUDO_CLASS, "", ImportedCase.VERSION,
+                    meta);
+            // store case data
+            importer.copy(dataSource, new AppStorageDataSource(context.getStorage(), info.getId(), info.getName()));
+        } else {
+            NodeGenericMetadata meta = new NodeGenericMetadata().setString(ImportedCase.FORMAT, dataPack.getDataFormatId());
+            meta.setBoolean(ImportedCase.HAS_DATA_PACK, true);
+            dataPack.getMainEntry().ifPresent(entry -> meta.setString(DataPack.MAIN_ENTRY_TAG, entry.getName()));
+            // create project file
+            info = context.getStorage().createNode(context.getFolderInfo().getId(), name, ImportedCase.PSEUDO_CLASS, "", ImportedCase.VERSION,
+                    meta);
 
-        // create project file
-        NodeInfo info = context.getStorage().createNode(context.getFolderInfo().getId(), name, ImportedCase.PSEUDO_CLASS, "", ImportedCase.VERSION,
-                new NodeGenericMetadata().setString(ImportedCase.FORMAT, importer.getFormat()));
-
-        // store case data
-        importer.copy(dataSource, new AppStorageDataSource(context.getStorage(), info.getId(), info.getName()));
-
+            try {
+                dataPack.copyTo(new AppStorageDataStore(context.getStorage(), info.getId()));
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
         // store parameters
         try (Writer writer = new OutputStreamWriter(context.getStorage().writeBinaryData(info.getId(), ImportedCase.PARAMETERS), StandardCharsets.UTF_8)) {
             parameters.store(writer, "");

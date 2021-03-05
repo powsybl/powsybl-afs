@@ -9,8 +9,13 @@ package com.powsybl.afs.ext.base;
 import com.google.common.collect.ImmutableList;
 import com.powsybl.commons.datasource.DataSource;
 import com.powsybl.commons.datasource.ReadOnlyDataSource;
+import com.powsybl.commons.datastore.DataFormat;
+import com.powsybl.commons.datastore.DataPack;
+import com.powsybl.commons.datastore.NonUniqueResultException;
+import com.powsybl.commons.datastore.ReadOnlyDataStore;
 import com.powsybl.iidm.import_.Importer;
 import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.NetworkFactory;
 import com.powsybl.iidm.parameters.Parameter;
 import com.powsybl.iidm.parameters.ParameterType;
 
@@ -18,6 +23,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Properties;
 
 /**
@@ -67,4 +73,31 @@ public class TestImporter implements Importer {
     @Override
     public void copy(ReadOnlyDataSource fromDataSource, DataSource toDataSource) {
     }
+
+    @Override
+    public boolean exists(ReadOnlyDataStore dataStore, String fileName) {
+        TestDataFormat df = new TestDataFormat(getFormat());
+        try {
+            Optional<DataPack> dp = df.newDataResolver().resolve(dataStore, fileName, null);
+            return dp.isPresent();
+        } catch (IOException | NonUniqueResultException e) {
+            return false;
+        }
+    }
+
+    @Override
+    public Network importDataStore(ReadOnlyDataStore dataStore, String fileName, Properties parameters) {
+        return network;
+    }
+
+    @Override
+    public DataFormat getDataFormat() {
+        return new TestDataFormat("tst");
+    }
+
+    @Override
+    public Network importDataPack(DataPack dataPack, NetworkFactory networkFactory, Properties parameters) {
+        return network;
+    }
+
 }

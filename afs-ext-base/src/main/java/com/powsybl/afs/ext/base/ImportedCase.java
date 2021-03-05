@@ -6,28 +6,35 @@
  */
 package com.powsybl.afs.ext.base;
 
-import com.powsybl.afs.AfsException;
-import com.powsybl.afs.ProjectFile;
-import com.powsybl.afs.ProjectFileCreationContext;
-import com.powsybl.afs.storage.AppStorageDataSource;
-import com.powsybl.commons.datasource.ReadOnlyDataSource;
-import com.powsybl.iidm.import_.Importer;
-import com.powsybl.iidm.import_.ImportersLoader;
-import com.powsybl.iidm.network.Network;
-
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Properties;
 
+import com.powsybl.afs.AfsException;
+import com.powsybl.afs.ProjectFile;
+import com.powsybl.afs.ProjectFileCreationContext;
+import com.powsybl.afs.storage.AppStorageDataSource;
+import com.powsybl.afs.storage.AppStorageDataStore;
+import com.powsybl.commons.datasource.ReadOnlyDataSource;
+import com.powsybl.commons.datastore.DataPack;
+import com.powsybl.commons.datastore.NonUniqueResultException;
+import com.powsybl.commons.datastore.ReadOnlyDataStore;
+import com.powsybl.commons.exceptions.NetworkImportException;
+import com.powsybl.iidm.import_.Importer;
+import com.powsybl.iidm.import_.ImportersLoader;
+import com.powsybl.iidm.network.Network;
+
 /**
- *  A type of {@code ProjectFile} which represents a {@link Network} imported to the project,
- *  and provides methods to get the {@code Network} object or query it with a script.
+ * A type of {@code ProjectFile} which represents a {@link Network} imported to
+ * the project, and provides methods to get the {@code Network} object or query
+ * it with a script.
  *
- *  @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
+ * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  */
 public class ImportedCase extends ProjectFile implements ProjectCase {
 
@@ -36,6 +43,7 @@ public class ImportedCase extends ProjectFile implements ProjectCase {
 
     static final String FORMAT = "format";
     static final String PARAMETERS = "parameters";
+    static final String HAS_DATA_PACK = "HAS_DATA_PACK";
 
     private final ImportersLoader importersLoader;
 
@@ -48,9 +56,31 @@ public class ImportedCase extends ProjectFile implements ProjectCase {
         return new AppStorageDataSource(storage, info.getId(), info.getName());
     }
 
+    private ReadOnlyDataStore getDataStore() {
+        return new AppStorageDataStore(storage, info.getId());
+    }
+
+    public Optional<DataPack> getDataPack() {
+        if (info.getGenericMetadata().getBoolean(HAS_DATA_PACK)) {
+            try {
+                return getImporter().getDataFormat().newDataResolver().resolve(getDataStore(), getDataPackMainEntry(), getParameters());
+            } catch (IOException | NonUniqueResultException e) {
+                throw new NetworkImportException(e);
+            }
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    private String getDataPackMainEntry() {
+        return info.getGenericMetadata().getString(DataPack.MAIN_ENTRY_TAG);
+    }
+
     public Properties getParameters() {
         Properties parameters = new Properties();
-        try (Reader reader = new InputStreamReader(storage.readBinaryData(info.getId(), PARAMETERS).orElseThrow(AssertionError::new), StandardCharsets.UTF_8)) {
+        try (Reader reader = new InputStreamReader(
+                storage.readBinaryData(info.getId(), PARAMETERS).orElseThrow(AssertionError::new),
+                StandardCharsets.UTF_8)) {
             parameters.load(reader);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -60,11 +90,9 @@ public class ImportedCase extends ProjectFile implements ProjectCase {
 
     public Importer getImporter() {
         String format = info.getGenericMetadata().getString(FORMAT);
-        return importersLoader.loadImporters()
-                .stream()
+        return importersLoader.loadImporters().stream()
                 .filter(importer -> importer.getFormat().equals(format))
-                .findFirst()
-                .orElseThrow(() -> new AfsException("Importer not found for format " + format));
+                .findFirst().orElseThrow(() -> new AfsException("Importer not found for format " + format));
     }
 
     @Override

@@ -6,16 +6,46 @@
  */
 package com.powsybl.afs.ext.base;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
-import com.powsybl.afs.*;
+import com.powsybl.afs.AbstractProjectFileTest;
+import com.powsybl.afs.AfsException;
+import com.powsybl.afs.FileExtension;
+import com.powsybl.afs.Folder;
+import com.powsybl.afs.Project;
+import com.powsybl.afs.ProjectFileExtension;
+import com.powsybl.afs.ProjectFolder;
+import com.powsybl.afs.ProjectNode;
+import com.powsybl.afs.ServiceExtension;
 import com.powsybl.afs.mapdb.storage.MapDbAppStorage;
 import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.InMemoryEventsBus;
 import com.powsybl.afs.storage.NodeGenericMetadata;
 import com.powsybl.afs.storage.NodeInfo;
+import com.powsybl.commons.datastore.DataPack;
+import com.powsybl.commons.datastore.DataStore;
+import com.powsybl.commons.datastore.DataStores;
+import com.powsybl.commons.datastore.NonUniqueResultException;
 import com.powsybl.iidm.export.ExportersLoader;
 import com.powsybl.iidm.export.ExportersLoaderList;
 import com.powsybl.iidm.import_.ImportConfig;
@@ -24,18 +54,6 @@ import com.powsybl.iidm.import_.ImportersLoaderList;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.xml.XMLExporter;
 import com.powsybl.iidm.xml.XMLImporter;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.io.IOException;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
-import static org.junit.Assert.*;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
@@ -206,5 +224,33 @@ public class ImportedCaseTest extends AbstractProjectFileTest {
                 .build();
         assertNotNull(importedCase2);
         assertEquals("NetworkID", importedCase2.getName());
+    }
+
+    @Test
+    public void testDataStore() throws IOException, NonUniqueResultException {
+        Folder root = afs.getRootFolder();
+
+        // create project
+        Project project = root.createProject("project");
+        assertNotNull(project);
+
+        // create project folder
+        ProjectFolder folder = project.getRootFolder().createFolder("folder");
+        assertTrue(folder.getChildren().isEmpty());
+
+        DataStore ds = DataStores.createDataStore(fileSystem.getPath("/work"));
+        TestDataFormat form = new TestDataFormat("TEST");
+        Optional<DataPack> op = form.newDataResolver().resolve(ds, "network.tst", null);
+        assertTrue(op.isPresent());
+
+        ImportedCase importedCase = folder.fileBuilder(ImportedCaseBuilder.class)
+                .withDataPack(op.get())
+                .withName("test")
+                .build();
+        assertNotNull(importedCase);
+        assertEquals("test", importedCase.getName());
+        assertNotNull(importedCase.getNetwork());
+        assertTrue(importedCase.getDataPack().isPresent());
+        assertEquals("network.tst", importedCase.getDataPack().get().getMainEntry().get().getName());
     }
 }
