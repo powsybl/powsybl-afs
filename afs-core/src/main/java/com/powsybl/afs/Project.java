@@ -39,16 +39,25 @@ public class Project extends File {
 
     ProjectNode createProjectNode(NodeInfo nodeInfo) {
         Objects.requireNonNull(nodeInfo);
+        return createProjectNode(nodeInfo, true);
+    }
+
+    ProjectNode createProjectNode(NodeInfo nodeInfo, boolean connected) {
+        Objects.requireNonNull(nodeInfo);
         if (ProjectFolder.PSEUDO_CLASS.equals(nodeInfo.getPseudoClass())) {
             return createProjectFolder(nodeInfo);
         } else {
-            return createProjectFile(nodeInfo);
+            return createProjectFile(nodeInfo, connected);
         }
     }
 
     ProjectFile createProjectFile(NodeInfo nodeInfo) {
+        return createProjectFile(nodeInfo, true);
+    }
+
+    ProjectFile createProjectFile(NodeInfo nodeInfo, boolean connected) {
         Objects.requireNonNull(nodeInfo);
-        ProjectFileCreationContext context = new ProjectFileCreationContext(nodeInfo, storage, this);
+        ProjectFileCreationContext context = new ProjectFileCreationContext(nodeInfo, storage, this, connected);
         ProjectFileExtension extension = fileSystem.getData().getProjectFileExtensionByPseudoClass(nodeInfo.getPseudoClass());
         if (extension != null) {
             return extension.createProjectFile(context);

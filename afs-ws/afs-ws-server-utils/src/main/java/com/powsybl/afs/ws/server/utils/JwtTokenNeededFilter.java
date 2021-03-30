@@ -7,6 +7,8 @@
 package com.powsybl.afs.ws.server.utils;
 
 import com.powsybl.commons.config.PlatformConfig;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,7 +67,8 @@ public class JwtTokenNeededFilter implements ContainerRequestFilter {
         try {
             // Validate the token
             Key key = keyGenerator.generateKey();
-            Jwts.parser().setSigningKey(key).parseClaimsJws(token);
+            Jws<Claims> claimsJws = Jwts.parser().setSigningKey(key).parseClaimsJws(token);
+            requestContext.setSecurityContext(new AfsSimpleSecurityContext(claimsJws.getBody().getSubject()));
         } catch (Exception eee) {
             requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
         }

@@ -19,7 +19,7 @@
         <relativePath/>
     </parent>
     <artifactId>powsybl-afs</artifactId>
-    <version>3.4.0-SNAPSHOT</version>
+    <version>3.6.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>powsybl-afs</name>
@@ -63,6 +63,7 @@
         <module>afs-security-analysis-local</module>
         <module>afs-storage-api</module>
         <module>afs-ws</module>
+        <module>afs-spring-server</module>
     </modules>
 
     <properties>
@@ -78,23 +79,25 @@
         <cassandraunit.version>3.11.2.0</cassandraunit.version>
         <groovy.version>2.5.8</groovy.version>
         <guava.version>20.0</guava.version>
-        <jackson.jaxrs.version>2.8.11</jackson.jaxrs.version>
+        <jackson.version>2.8.11</jackson.version>
         <javaeeapi.version>7.0</javaeeapi.version>
         <jimfs.version>1.1</jimfs.version>
         <jjwt.version>0.9.0</jjwt.version>
         <junit.version>4.12</junit.version>
         <mapdb.version>3.0.6</mapdb.version>
         <maven.core.version>3.3.9</maven.core.version>
-        <mockito.version>1.10.19</mockito.version>
+        <mockito.version>3.3.3</mockito.version>
         <resteasy.version>3.1.4.Final</resteasy.version>
         <shrinkwrap-resolver.version>2.2.6</shrinkwrap-resolver.version>
         <slf4j.version>1.7.22</slf4j.version>
+        <springfox.version>2.9.2</springfox.version>
+        <springboot.version>2.2.13.RELEASE</springboot.version>
         <swaggerjaxrs.version>1.5.16</swaggerjaxrs.version>
         <tyrus.version>1.13.1</tyrus.version>
         <wildfly.dist.version>11.0.0.Final</wildfly.dist.version>
         <wildflyarquilliancontainerembedded.version>2.1.0.Final</wildflyarquilliancontainerembedded.version>
 
-        <powsyblcore.version>3.3.1</powsyblcore.version>
+        <powsyblcore.version>3.3.2</powsyblcore.version>
     </properties>
 
     <profiles>
@@ -135,7 +138,7 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.jaxrs</groupId>
                 <artifactId>jackson-jaxrs-json-provider</artifactId>
-                <version>${jackson.jaxrs.version}</version>
+                <version>${jackson.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.google.auto.service</groupId>
@@ -264,6 +267,12 @@
                 <artifactId>slf4j-api</artifactId>
                 <version>${slf4j.version}</version>
             </dependency>
+            <dependency>
+                <groupId>io.springfox</groupId>
+                <artifactId>springfox-swagger2</artifactId>
+                <version>${springfox.version}</version>
+            </dependency>
+
 
             <!-- Test dependencies -->
             <dependency>
@@ -315,7 +324,7 @@
             </dependency>
             <dependency>
                 <groupId>org.mockito</groupId>
-                <artifactId>mockito-all</artifactId>
+                <artifactId>mockito-core</artifactId>
                 <version>${mockito.version}</version>
                 <scope>test</scope>
             </dependency>
@@ -335,4 +344,3 @@
     </dependencyManagement>
 
 </project>
-
