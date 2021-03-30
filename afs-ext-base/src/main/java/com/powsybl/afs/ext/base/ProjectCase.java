@@ -7,6 +7,7 @@
 package com.powsybl.afs.ext.base;
 
 import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.NetworkListener;
 
 /**
  * Common interface for project files able to provide a Network.
@@ -18,6 +19,8 @@ public interface ProjectCase {
     String queryNetwork(ScriptType scriptType, String scriptContent);
 
     Network getNetwork();
+
+    Network getNetwork(NetworkListener listener);
 
     void invalidateNetworkCache();
 

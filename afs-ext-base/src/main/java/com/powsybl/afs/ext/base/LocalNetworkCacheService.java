@@ -11,6 +11,7 @@ import com.powsybl.afs.ProjectFile;
 import com.powsybl.commons.datasource.ReadOnlyDataSource;
 import com.powsybl.iidm.import_.Importer;
 import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.NetworkListener;
 import groovy.json.JsonOutput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,13 +45,16 @@ public class LocalNetworkCacheService implements NetworkCacheService {
         });
     }
 
-    private static ScriptResult<Network> loadNetworkFromImportedCase(ImportedCase importedCase) {
+    private static ScriptResult<Network> loadNetworkFromImportedCase(ImportedCase importedCase, NetworkListener listener) {
         LOGGER.info("Loading network of project case {}", importedCase.getId());
 
         Importer importer = importedCase.getImporter();
         ReadOnlyDataSource dataSource = importedCase.getDataSource();
         Properties parameters = importedCase.getParameters();
         Network network = importer.importData(dataSource, parameters);
+        if (listener != null) {
+            network.addListener(listener);
+        }
         return ScriptResult.of(network);
     }
 
@@ -64,11 +68,11 @@ public class LocalNetworkCacheService implements NetworkCacheService {
         }
     }
 
-    private static ScriptResult<Network> loadNetworkFromVirtualCase(VirtualCase virtualCase) {
+    private static ScriptResult<Network> loadNetworkFromVirtualCase(VirtualCase virtualCase, NetworkListener listener) {
         ProjectCase baseCase = (ProjectCase) virtualCase.getCase()
                                                         .orElseThrow(() -> new AfsException("Case link is dead"));
 
-        ScriptResult<Network> network = loadNetworkFromProjectCase(baseCase);
+        ScriptResult<Network> network = loadNetworkFromProjectCase(baseCase, listener);
 
         if (network.getError() != null) {
             return network;
@@ -83,10 +87,14 @@ public class LocalNetworkCacheService implements NetworkCacheService {
     }
 
     private static ScriptResult<Network> loadNetworkFromProjectCase(ProjectCase projectCase) {
+        return loadNetworkFromProjectCase(projectCase, null);
+    }
+
+    private static ScriptResult<Network> loadNetworkFromProjectCase(ProjectCase projectCase, NetworkListener listener) {
         if (projectCase instanceof ImportedCase) {
-            return loadNetworkFromImportedCase((ImportedCase) projectCase);
+            return loadNetworkFromImportedCase((ImportedCase) projectCase, listener);
         } else if (projectCase instanceof VirtualCase) {
-            return loadNetworkFromVirtualCase((VirtualCase) projectCase);
+            return loadNetworkFromVirtualCase((VirtualCase) projectCase, listener);
         } else {
             throw new AssertionError("ProjectCase implementation " + projectCase.getClass().getName() + " not supported");
         }
@@ -110,6 +118,12 @@ public class LocalNetworkCacheService implements NetworkCacheService {
     @Override
     public <T extends ProjectFile & ProjectCase> Network getNetwork(T projectCase) {
         return cache.get(projectCase).getValueOrThrowIfError(projectCase);
+    }
+
+    @Override
+    public <T extends ProjectFile & ProjectCase> Network getNetwork(T projectCase, NetworkListener listener) {
+        ScriptResult<Network> network = loadNetworkFromProjectCase(projectCase, listener);
+        return network.getValueOrThrowIfError(projectCase);
     }
 
     @Override
