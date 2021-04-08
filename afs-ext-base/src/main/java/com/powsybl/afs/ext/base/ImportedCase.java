@@ -21,6 +21,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 
@@ -81,8 +82,8 @@ public class ImportedCase extends ProjectFile implements ProjectCase {
     }
 
     @Override
-    public Network getNetwork(NetworkListener listener) {
-        return findService(NetworkCacheService.class).getNetwork(this, listener);
+    public Network getNetwork(List<NetworkListener> listeners) {
+        return findService(NetworkCacheService.class).getNetwork(this, listeners);
     }
 
     @Override

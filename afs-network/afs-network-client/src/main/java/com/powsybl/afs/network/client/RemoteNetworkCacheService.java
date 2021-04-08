@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.URI;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -67,7 +68,7 @@ class RemoteNetworkCacheService implements NetworkCacheService {
     }
 
     @Override
-    public <T extends ProjectFile & ProjectCase> Network getNetwork(T projectCase, NetworkListener listener) {
+    public <T extends ProjectFile & ProjectCase> Network getNetwork(T projectCase, List<NetworkListener> listeners) {
         return getNetwork(projectCase);
     }
 

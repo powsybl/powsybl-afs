@@ -9,6 +9,8 @@ package com.powsybl.afs.ext.base;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.NetworkListener;
 
+import java.util.List;
+
 /**
  * Common interface for project files able to provide a Network.
  *
@@ -20,7 +22,7 @@ public interface ProjectCase {
 
     Network getNetwork();
 
-    Network getNetwork(NetworkListener listener);
+    Network getNetwork(List<NetworkListener> listeners);
 
     void invalidateNetworkCache();
 
