@@ -50,7 +50,7 @@ public class LocalNetworkCacheService implements NetworkCacheService {
         ReadOnlyDataSource dataSource = importedCase.getDataSource();
         Properties parameters = importedCase.getParameters();
         Network network = importer.importData(dataSource, parameters);
-        listeners.forEach(l -> network.addListener(l));
+        listeners.forEach(network::addListener);
         return ScriptResult.of(network);
     }
 
