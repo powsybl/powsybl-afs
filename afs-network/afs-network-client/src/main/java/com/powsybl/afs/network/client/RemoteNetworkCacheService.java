@@ -67,6 +67,9 @@ class RemoteNetworkCacheService implements NetworkCacheService {
         return Objects.requireNonNull(configSupplier.get()).orElseThrow(() -> new AfsException("Remote service config is missing"));
     }
 
+    /**
+     * Listeners will not be added to the network
+     */
     @Override
     public <T extends ProjectFile & ProjectCase> Network getNetwork(T projectCase, List<NetworkListener> listeners) {
         return getNetwork(projectCase);
