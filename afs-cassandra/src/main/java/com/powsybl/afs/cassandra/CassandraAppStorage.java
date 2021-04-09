@@ -14,7 +14,10 @@ import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
 import com.powsybl.afs.storage.*;
 import com.powsybl.afs.storage.buffer.*;
+import com.powsybl.afs.storage.check.FileSystemCheckIssue;
+import com.powsybl.afs.storage.check.FileSystemCheckOptions;
 import com.powsybl.afs.storage.events.*;
+import com.powsybl.commons.PowsyblException;
 import com.powsybl.timeseries.*;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -22,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.ByteBuffer;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -1477,5 +1481,59 @@ public class CassandraAppStorage extends AbstractAppStorage {
     public void close() {
         changeBuffer.flush();
         contextSupplier.get().close();
+    }
+
+    @Override
+    public List<FileSystemCheckIssue> checkFileSystem(FileSystemCheckOptions options) {
+        ResultSet resultSet = getSession().execute(select(ID, NAME, MODIFICATION_DATE, CONSISTENT)
+                .from(CHILDREN_BY_NAME_AND_CLASS));
+        List<FileSystemCheckIssue> results = new ArrayList<>();
+        for (Row row : resultSet) {
+            final Optional<FileSystemCheckIssue> issue = buildIssueByOptions(row, options);
+            issue.ifPresent(results::add);
+        }
+        if (options.isRepair()) {
+            for (FileSystemCheckIssue issue : results) {
+                repair(issue);
+            }
+        }
+        return results;
+    }
+
+    private static Optional<FileSystemCheckIssue> buildIssueByOptions(Row row, FileSystemCheckOptions options) {
+        if (options.getInconsistentNodesExpirationTime() != null) {
+            return Optional.ofNullable(buildExpirationInconsistent(row, options.isRepair(), options.getInconsistentNodesExpirationTime()));
+        }
+        return Optional.empty();
+    }
+
+    private static FileSystemCheckIssue buildExpirationInconsistent(Row row, boolean repair, Instant instant) {
+        if (row.getTimestamp(MODIFICATION_DATE).toInstant().isBefore(instant) && !row.getBool(CONSISTENT)) {
+            final FileSystemCheckIssue fileSystemCheckIssue = buildIssue(row);
+            fileSystemCheckIssue.setType(FileSystemCheckIssue.Type.EXPIRATION_INCONSISTENT);
+            return fileSystemCheckIssue;
+        }
+        return null;
+    }
+
+    private static FileSystemCheckIssue buildIssue(Row row) {
+        final FileSystemCheckIssue issue = new FileSystemCheckIssue();
+        issue.setUuid(row.getUUID(ID)).setName(row.getString(NAME));
+        return issue;
+    }
+
+    private void repair(FileSystemCheckIssue issue) {
+        switch (issue.getType()) {
+            case EXPIRATION_INCONSISTENT:
+                repairExpirationInconsistent(issue);
+                break;
+            default:
+                throw new PowsyblException("Check issue type '" + issue.getType() + "' is invalid.");
+        }
+    }
+
+    private void repairExpirationInconsistent(FileSystemCheckIssue issue) {
+        final UUID uuid = deleteNode(issue.getUuid());
+        issue.setRepaired(true);
     }
 }
