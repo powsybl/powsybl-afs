@@ -16,6 +16,7 @@ import com.powsybl.afs.ext.base.ScriptType;
 import com.powsybl.afs.ws.client.utils.ClientUtils;
 import com.powsybl.afs.ws.client.utils.RemoteServiceConfig;
 import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.NetworkListener;
 import com.powsybl.iidm.xml.NetworkXml;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +31,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.URI;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -63,6 +65,14 @@ class RemoteNetworkCacheService implements NetworkCacheService {
 
     private RemoteServiceConfig getConfig() {
         return Objects.requireNonNull(configSupplier.get()).orElseThrow(() -> new AfsException("Remote service config is missing"));
+    }
+
+    /**
+     * Listeners will not be added to the network
+     */
+    @Override
+    public <T extends ProjectFile & ProjectCase> Network getNetwork(T projectCase, List<NetworkListener> listeners) {
+        return getNetwork(projectCase);
     }
 
     @Override

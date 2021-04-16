@@ -16,14 +16,20 @@ import com.powsybl.afs.storage.NodeInfo;
 import com.powsybl.iidm.import_.ImportConfig;
 import com.powsybl.iidm.import_.ImportersLoader;
 import com.powsybl.iidm.import_.ImportersLoaderList;
+import com.powsybl.iidm.network.DefaultNetworkListener;
+import com.powsybl.iidm.network.NetworkListener;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
@@ -193,5 +199,22 @@ public class VirtualCaseTest extends AbstractProjectFileTest {
         assertEquals(importedCase3.getName(), virtualCase3.getCase().map(ProjectFile::getName).orElse(null));
 
         assertThatCode(() -> virtualCase3.setCase(virtualCase3)).isInstanceOf(AfsCircularDependencyException.class);
+
+        // test network listener
+        ModificationScript scriptModif = folder.fileBuilder(ModificationScriptBuilder.class)
+                .withName("scriptModif")
+                .withType(ScriptType.GROOVY)
+                .withContent("network.getSubstation('s1').setTso('tso_new')")
+                .build();
+        VirtualCase virtualCase4 = folder.fileBuilder(VirtualCaseBuilder.class)
+                .withName("network4")
+                .withCase(importedCase3)
+                .withScript(scriptModif)
+                .build();
+
+        NetworkListener mockedListener = mock(DefaultNetworkListener.class);
+        virtualCase4.getNetwork(Collections.singletonList(mockedListener));
+        verify(mockedListener, times(1))
+                .onUpdate(network.getSubstation("s1"), "tso", "TSO", "tso_new");
     }
 }
