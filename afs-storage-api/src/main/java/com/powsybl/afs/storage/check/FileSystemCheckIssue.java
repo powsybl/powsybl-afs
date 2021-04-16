@@ -50,21 +50,23 @@ public class FileSystemCheckIssue {
         return repaired;
     }
 
-    public void setRepaired(boolean repaired) {
+    public FileSystemCheckIssue setRepaired(boolean repaired) {
         this.repaired = repaired;
+        return this;
     }
 
     @Override
     public String toString() {
         return "FileSystemCheckIssue{" +
-                "type=" + type +
-                ", uuid=" + uuid +
+                "uuid=" + uuid +
+                ", name='" + name + '\'' +
+                ", type=" + type +
                 ", repaired=" + repaired +
-                ", name='" + name  +
                 '}';
     }
 
     public enum Type {
-        EXPIRATION_INCONSISTENT
+        EXPIRATION_INCONSISTENT,
+        MISSING_CHILD_NODE;
     }
 }

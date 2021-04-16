@@ -7,7 +7,9 @@
 package com.powsybl.afs.storage.check;
 
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * @author Yichen TANG <yichen.tang at rte-france.com>
@@ -15,17 +17,26 @@ import java.util.Objects;
 public class FileSystemCheckOptionsBuilder {
 
     private Instant inconsistentNodesExpirationTime = Instant.MIN;
+    private Set<String> ids = new HashSet<>();
     private boolean repair = false;
 
     public FileSystemCheckOptionsBuilder() {
-
     }
 
+    /**
+     * Just report issues, but not to fix.
+     * @return
+     */
     public FileSystemCheckOptionsBuilder dryRun() {
         repair = false;
         return this;
     }
 
+    /**
+     * For inconsistent expiration node, it would delete those nodes.
+     * For missing child node, it would clear reference record in its parent.
+     * @return
+     */
     public FileSystemCheckOptionsBuilder repair() {
         repair = true;
         return this;
@@ -36,7 +47,22 @@ public class FileSystemCheckOptionsBuilder {
         return this;
     }
 
+    /**
+     * Parent's node id to check its children nodes status.
+     * If child node is not exists, but still referenced under parent id. When retrieving, it will throw AfsException.
+     * Check process would clear this referenced record.
+     *
+     * If child exists, do nothing.
+     * @param ids
+     * @return
+     */
+    public FileSystemCheckOptionsBuilder addParentNodeIds(Set<String> ids) {
+        Objects.requireNonNull(ids);
+        this.ids.addAll(ids);
+        return this;
+    }
+
     public FileSystemCheckOptions build() {
-        return new FileSystemCheckOptions(inconsistentNodesExpirationTime, repair);
+        return new FileSystemCheckOptions(inconsistentNodesExpirationTime, ids, repair);
     }
 }

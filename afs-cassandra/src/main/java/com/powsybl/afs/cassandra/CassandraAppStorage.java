@@ -17,7 +17,6 @@ import com.powsybl.afs.storage.buffer.*;
 import com.powsybl.afs.storage.check.FileSystemCheckIssue;
 import com.powsybl.afs.storage.check.FileSystemCheckOptions;
 import com.powsybl.afs.storage.events.*;
-import com.powsybl.commons.PowsyblException;
 import com.powsybl.timeseries.*;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -1485,26 +1484,62 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
     @Override
     public List<FileSystemCheckIssue> checkFileSystem(FileSystemCheckOptions options) {
+        List<FileSystemCheckIssue> results = new ArrayList<>();
+
+        checkMissingChildNodeStillReferenced(results, options);
+        checkInconsistent(results, options);
+
+        return results;
+    }
+
+    private void checkMissingChildNodeStillReferenced(List<FileSystemCheckIssue> results, FileSystemCheckOptions options) {
+        List<Statement> statements = new ArrayList<>();
+        final Set<String> ids = options.getIds();
+        for (String id : ids) {
+            final List<NodeInfo> childNodes = getChildNodes(id);
+            for (NodeInfo child : childNodes) {
+                try {
+                    getNodeInfo(child.getId());
+                } catch (CassandraAfsException e) {
+                    final UUID childId = UUID.fromString(child.getId());
+                    results.add(new FileSystemCheckIssue()
+                            .setUuid(childId)
+                            .setName(child.getName())
+                            .setRepaired(options.isRepair())
+                            .setType(FileSystemCheckIssue.Type.MISSING_CHILD_NODE));
+                    if (options.isRepair()) {
+                        statements.add(delete().from(CHILDREN_BY_NAME_AND_CLASS)
+                                .where(eq(ID, UUID.fromString(id)))
+                                .and(eq(CHILD_NAME, child.getName())));
+                    }
+                }
+            }
+        }
+        if (options.isRepair()) {
+            for (Statement statement : statements) {
+                getSession().execute(statement);
+            }
+        }
+    }
+
+    private void checkInconsistent(List<FileSystemCheckIssue> results, FileSystemCheckOptions options) {
         ResultSet resultSet = getSession().execute(select(ID, NAME, MODIFICATION_DATE, CONSISTENT)
                 .from(CHILDREN_BY_NAME_AND_CLASS));
-        List<FileSystemCheckIssue> results = new ArrayList<>();
         for (Row row : resultSet) {
-            final Optional<FileSystemCheckIssue> issue = buildIssueByOptions(row, options);
+            final Optional<FileSystemCheckIssue> issue = buildExpirationInconsisentIssue(row, options);
             issue.ifPresent(results::add);
         }
         if (options.isRepair()) {
             for (FileSystemCheckIssue issue : results) {
-                repair(issue);
+                if (issue.getType() == FileSystemCheckIssue.Type.EXPIRATION_INCONSISTENT) {
+                    repairExpirationInconsistent(issue);
+                }
             }
         }
-        return results;
     }
 
-    private static Optional<FileSystemCheckIssue> buildIssueByOptions(Row row, FileSystemCheckOptions options) {
-        if (options.getInconsistentNodesExpirationTime() != null) {
-            return Optional.ofNullable(buildExpirationInconsistent(row, options.isRepair(), options.getInconsistentNodesExpirationTime()));
-        }
-        return Optional.empty();
+    private static Optional<FileSystemCheckIssue> buildExpirationInconsisentIssue(Row row, FileSystemCheckOptions options) {
+        return Optional.ofNullable(buildExpirationInconsistent(row, options.isRepair(), options.getInconsistentNodesExpirationTime()));
     }
 
     private static FileSystemCheckIssue buildExpirationInconsistent(Row row, boolean repair, Instant instant) {
@@ -1520,16 +1555,6 @@ public class CassandraAppStorage extends AbstractAppStorage {
         final FileSystemCheckIssue issue = new FileSystemCheckIssue();
         issue.setUuid(row.getUUID(ID)).setName(row.getString(NAME));
         return issue;
-    }
-
-    private void repair(FileSystemCheckIssue issue) {
-        switch (issue.getType()) {
-            case EXPIRATION_INCONSISTENT:
-                repairExpirationInconsistent(issue);
-                break;
-            default:
-                throw new PowsyblException("Check issue type '" + issue.getType() + "' is invalid.");
-        }
     }
 
     private void repairExpirationInconsistent(FileSystemCheckIssue issue) {
