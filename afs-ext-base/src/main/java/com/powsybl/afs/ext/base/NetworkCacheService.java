@@ -8,6 +8,9 @@ package com.powsybl.afs.ext.base;
 
 import com.powsybl.afs.ProjectFile;
 import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.NetworkListener;
+
+import java.util.List;
 
 /**
  * Provides caching capabilities for loaded {@code Network} objects.
@@ -17,6 +20,8 @@ import com.powsybl.iidm.network.Network;
 public interface NetworkCacheService {
 
     <T extends ProjectFile & ProjectCase> Network getNetwork(T projectCase);
+
+    <T extends ProjectFile & ProjectCase> Network getNetwork(T projectCase, List<NetworkListener> listeners);
 
     <T extends ProjectFile & ProjectCase> String queryNetwork(T projectCase, ScriptType scriptType, String scriptContent);
 

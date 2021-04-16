@@ -21,7 +21,9 @@ import com.powsybl.iidm.export.ExportersLoaderList;
 import com.powsybl.iidm.import_.ImportConfig;
 import com.powsybl.iidm.import_.ImportersLoader;
 import com.powsybl.iidm.import_.ImportersLoaderList;
+import com.powsybl.iidm.network.DefaultNetworkListener;
 import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.NetworkListener;
 import com.powsybl.iidm.xml.XMLExporter;
 import com.powsybl.iidm.xml.XMLImporter;
 import org.junit.After;
@@ -36,6 +38,9 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
@@ -130,6 +135,13 @@ public class ImportedCaseTest extends AbstractProjectFileTest {
         assertFalse(importedCase.isFolder());
         assertNotNull(importedCase.getNetwork());
         assertTrue(importedCase.getDependencies().isEmpty());
+
+        // test network listener
+        NetworkListener mockedListener = mock(DefaultNetworkListener.class);
+        assertNotNull(importedCase.getNetwork(Collections.singletonList(mockedListener)));
+        network.getSubstation("s1").setTso("tso_new");
+        verify(mockedListener, times(1))
+                .onUpdate(network.getSubstation("s1"), "tso", "TSO", "tso_new");
 
         // test network query
         assertEquals("[\"s1\"]", importedCase.queryNetwork(ScriptType.GROOVY, "network.substations.collect { it.id }"));
