@@ -7,6 +7,7 @@
 package com.powsybl.afs.storage.check;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -53,7 +54,7 @@ public class FileSystemCheckOptionsBuilder {
      * @param types
      * @return
      */
-    public FileSystemCheckOptionsBuilder addCheckTypes(Set<String> types) {
+    public FileSystemCheckOptionsBuilder addCheckTypes(Collection<String> types) {
         Objects.requireNonNull(types);
         this.types.addAll(types);
         return this;

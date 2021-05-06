@@ -1488,7 +1488,8 @@ public class CassandraAppStorage extends AbstractAppStorage {
     public List<FileSystemCheckIssue> checkFileSystem(FileSystemCheckOptions options) {
         List<FileSystemCheckIssue> results = new ArrayList<>();
 
-        if (options.getInconsistentNodesExpirationTime().isPresent()) {
+        if (options.getInconsistentNodesExpirationTime().isPresent()
+                && !options.getInconsistentNodesExpirationTime().get().equals(Instant.MIN)) {
             checkInconsistent(results, options);
         }
         for (String type : options.getTypes()) {

@@ -6,9 +6,12 @@
  */
 package com.powsybl.afs.server;
 
+import com.google.common.base.Strings;
 import com.powsybl.afs.*;
 import com.powsybl.afs.storage.*;
 import com.powsybl.afs.storage.buffer.*;
+import com.powsybl.afs.storage.check.FileSystemCheckIssue;
+import com.powsybl.afs.storage.check.FileSystemCheckOptionsBuilder;
 import com.powsybl.timeseries.DoubleDataChunk;
 import com.powsybl.timeseries.StringDataChunk;
 import com.powsybl.timeseries.TimeSeriesMetadata;
@@ -28,6 +31,7 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.time.Instant;
 import java.util.*;
 
 @RestController
@@ -62,6 +66,28 @@ public class StorageServer {
         AppStorage storage = appDataWrapper.getStorage(fileSystemName);
         NodeInfo rootNodeInfo = storage.createRootNodeIfNotExists(nodeName, nodePseudoClass);
         return ok(rootNodeInfo);
+    }
+
+    @PostMapping("fileSystems/{fileSystemName}/check")
+    @ApiOperation (value = "Check file system")
+    @ApiResponses (value = {@ApiResponse(code = 200, message = "Check results", response = FileSystemCheckIssue.class), @ApiResponse(code = 500, message = "Error")})
+    public ResponseEntity<List<FileSystemCheckIssue>> check(@ApiParam(value = "File system name") @PathVariable("fileSystemName") String fileSystemName,
+                          @ApiParam(value = "Issue types to check") @RequestParam("types") String types,
+                          @ApiParam(value = "Inconsistent if older than") @RequestParam(value = "instant", required = false) Long instant,
+                          @ApiParam(value = "Try to repair or not", defaultValue = "false") @RequestParam(value = "repair", required = false) boolean repair) {
+        AppStorage storage = appDataWrapper.getStorage(fileSystemName);
+        FileSystemCheckOptionsBuilder builder = new FileSystemCheckOptionsBuilder();
+        if (!Strings.isNullOrEmpty(types)) {
+            builder.addCheckTypes(Arrays.asList(types.split(",")));
+        }
+        if (instant != null) {
+            Instant exp = Instant.ofEpochSecond(instant);
+            builder.setInconsistentNodesExpirationTime(exp);
+        }
+        if (repair) {
+            builder.repair();
+        }
+        return ok(storage.checkFileSystem(builder.build()));
     }
 
     @PostMapping(value = "fileSystems/{fileSystemName}/flush", consumes = "application/json")
