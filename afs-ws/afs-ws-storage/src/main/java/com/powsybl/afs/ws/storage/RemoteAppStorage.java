@@ -10,6 +10,8 @@ import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.powsybl.afs.storage.*;
 import com.powsybl.afs.storage.buffer.StorageChangeBuffer;
+import com.powsybl.afs.storage.check.FileSystemCheckIssue;
+import com.powsybl.afs.storage.check.FileSystemCheckOptions;
 import com.powsybl.afs.ws.client.utils.ClientUtils;
 import com.powsybl.afs.ws.storage.websocket.WebsocketConnectionPolicy;
 import com.powsybl.afs.ws.utils.AfsRestApi;
@@ -33,6 +35,7 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.*;
 import java.io.*;
 import java.net.URI;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -987,6 +990,26 @@ public class RemoteAppStorage extends AbstractAppStorage {
                 .get();
         try {
             return readEntityIfOk(response, NodeInfo.class);
+        } finally {
+            response.close();
+        }
+    }
+
+    @Override
+    public List<FileSystemCheckIssue> checkFileSystem(FileSystemCheckOptions options) {
+        Optional<Instant> optInstant = options.getInconsistentNodesExpirationTime();
+
+        WebTarget target = webTarget.path("fileSystems/{fileSystemName}/check")
+                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+                .queryParam("types", String.join(",", options.getTypes()));
+        optInstant.ifPresent(instant -> target.resolveTemplate("instant", instant.toEpochMilli()));
+        target.resolveTemplate("repair", options.isRepair());
+
+        Response response = target.request(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, token)
+                .post(Entity.json(""));
+        try {
+            return readEntityIfOk(response, new GenericType<List<FileSystemCheckIssue>>() { });
         } finally {
             response.close();
         }
