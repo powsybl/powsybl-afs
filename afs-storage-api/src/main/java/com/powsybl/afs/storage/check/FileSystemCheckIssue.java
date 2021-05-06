@@ -16,7 +16,10 @@ public class FileSystemCheckIssue {
 
     private UUID uuid;
     private String name;
-    private Type type;
+    private String type;
+
+    private String description;
+    private String resolutionDescription;
     private boolean repaired;
 
     public UUID getUuid() {
@@ -37,11 +40,11 @@ public class FileSystemCheckIssue {
         return this;
     }
 
-    public Type getType() {
+    public String getType() {
         return type;
     }
 
-    public FileSystemCheckIssue setType(Type type) {
+    public FileSystemCheckIssue setType(String type) {
         this.type = Objects.requireNonNull(type);
         return this;
     }
@@ -55,18 +58,34 @@ public class FileSystemCheckIssue {
         return this;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
+    public FileSystemCheckIssue setDescription(String description) {
+        this.description = description;
+        return this;
+    }
+
+    public String getResolutionDescription() {
+        return resolutionDescription;
+    }
+
+    public FileSystemCheckIssue setResolutionDescription(String resolutionDescription) {
+        this.resolutionDescription = resolutionDescription;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "FileSystemCheckIssue{" +
                 "uuid=" + uuid +
                 ", name='" + name + '\'' +
                 ", type=" + type +
+                ", description=" + description +
+                ", resolutionDescription=" + resolutionDescription +
                 ", repaired=" + repaired +
                 '}';
     }
 
-    public enum Type {
-        EXPIRATION_INCONSISTENT,
-        MISSING_CHILD_NODE;
-    }
 }

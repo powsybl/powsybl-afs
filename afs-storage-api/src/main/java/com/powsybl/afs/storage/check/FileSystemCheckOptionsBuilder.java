@@ -16,8 +16,8 @@ import java.util.Set;
  */
 public class FileSystemCheckOptionsBuilder {
 
-    private Instant inconsistentNodesExpirationTime = Instant.MIN;
-    private Set<String> ids = new HashSet<>();
+    private Instant inconsistentNodesExpirationTime;
+    private Set<String> types = new HashSet<>();
     private boolean repair = false;
 
     public FileSystemCheckOptionsBuilder() {
@@ -34,7 +34,6 @@ public class FileSystemCheckOptionsBuilder {
 
     /**
      * For inconsistent expiration node, it would delete those nodes.
-     * For missing child node, it would clear reference record in its parent.
      * @return
      */
     public FileSystemCheckOptionsBuilder repair() {
@@ -48,21 +47,19 @@ public class FileSystemCheckOptionsBuilder {
     }
 
     /**
-     * Parent's node id to check its children nodes status.
-     * If child node is not exists, but still referenced under parent id. When retrieving, it will throw AfsException.
-     * Check process would clear this referenced record.
+     * Add implementation specific check types.
+     * For example, in cassandra, "reference_not_found"
      *
-     * If child exists, do nothing.
-     * @param ids
+     * @param types
      * @return
      */
-    public FileSystemCheckOptionsBuilder addParentNodeIds(Set<String> ids) {
-        Objects.requireNonNull(ids);
-        this.ids.addAll(ids);
+    public FileSystemCheckOptionsBuilder addCheckTypes(Set<String> types) {
+        Objects.requireNonNull(types);
+        this.types.addAll(types);
         return this;
     }
 
     public FileSystemCheckOptions build() {
-        return new FileSystemCheckOptions(inconsistentNodesExpirationTime, ids, repair);
+        return new FileSystemCheckOptions(inconsistentNodesExpirationTime, types, repair);
     }
 }

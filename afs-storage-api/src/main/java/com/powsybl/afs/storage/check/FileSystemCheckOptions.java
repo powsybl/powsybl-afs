@@ -8,7 +8,7 @@ package com.powsybl.afs.storage.check;
 
 import java.time.Instant;
 import java.util.Collections;
-import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -17,12 +17,12 @@ import java.util.Set;
 public class FileSystemCheckOptions {
 
     private final Instant inconsistentNodesExpirationTime; //Inconsistent nodes older than this could be deleted
-    private final Set<String> ids;
+    private final Set<String> types;
     private final boolean repair; //option for trying to solve all issues
 
-    FileSystemCheckOptions(Instant expiration, Set<String> ids, boolean repair) {
-        inconsistentNodesExpirationTime = Objects.requireNonNull(expiration);
-        this.ids = Collections.unmodifiableSet(ids);
+    FileSystemCheckOptions(Instant expiration, Set<String> types, boolean repair) {
+        inconsistentNodesExpirationTime = expiration;
+        this.types = Collections.unmodifiableSet(types);
         this.repair = repair;
     }
 
@@ -30,12 +30,12 @@ public class FileSystemCheckOptions {
      * Use this time to compare with node's modification time.
      * @return
      */
-    public Instant getInconsistentNodesExpirationTime() {
-        return inconsistentNodesExpirationTime;
+    public Optional<Instant> getInconsistentNodesExpirationTime() {
+        return Optional.ofNullable(inconsistentNodesExpirationTime);
     }
 
-    public Set<String> getIds() {
-        return ids;
+    public Set<String> getTypes() {
+        return types;
     }
 
     /**

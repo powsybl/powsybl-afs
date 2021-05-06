@@ -55,7 +55,7 @@ public class CassandraAppStorageTest extends AbstractAppStorageTest {
         final FileSystemCheckIssue issue = fileSystemCheckIssues.get(0);
         assertEquals(inconsistentNode.getId(), issue.getUuid().toString());
         assertEquals("inconsistentNode", issue.getName());
-        assertEquals(FileSystemCheckIssue.Type.EXPIRATION_INCONSISTENT, issue.getType());
+        assertEquals("inconsistent", issue.getType());
         assertFalse(issue.isRepaired());
         assertNotNull(storage.getNodeInfo(inconsistentNode.getId()));
 

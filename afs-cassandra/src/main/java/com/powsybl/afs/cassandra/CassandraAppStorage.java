@@ -45,6 +45,8 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
     private static final String BROKEN_DEPENDENCY = "Broken dependency";
 
+    private static final String REF_NOT_FOUND = "reference_not_found";
+
     private final String fileSystemName;
 
     private final Supplier<CassandraContext> contextSupplier;
@@ -1486,33 +1488,44 @@ public class CassandraAppStorage extends AbstractAppStorage {
     public List<FileSystemCheckIssue> checkFileSystem(FileSystemCheckOptions options) {
         List<FileSystemCheckIssue> results = new ArrayList<>();
 
-        checkMissingChildNodeStillReferenced(results, options);
-        checkInconsistent(results, options);
+        if (options.getInconsistentNodesExpirationTime().isPresent()) {
+            checkInconsistent(results, options);
+        }
+        for (String type : options.getTypes()) {
+            if (Objects.equals(REF_NOT_FOUND, type)) {
+                checkReferenceNotFound(results, options);
+            } else {
+                LOGGER.warn("Check {} not supported in {}", type, getClass());
+            }
+        }
 
         return results;
     }
 
-    private void checkMissingChildNodeStillReferenced(List<FileSystemCheckIssue> results, FileSystemCheckOptions options) {
+    private void checkReferenceNotFound(List<FileSystemCheckIssue> results, FileSystemCheckOptions options) {
         List<Statement> statements = new ArrayList<>();
-        final Set<String> ids = options.getIds();
-        for (String id : ids) {
-            final List<NodeInfo> childNodes = getChildNodes(id);
-            for (NodeInfo child : childNodes) {
-                try {
-                    getNodeInfo(child.getId());
-                } catch (CassandraAfsException e) {
-                    final UUID childId = UUID.fromString(child.getId());
-                    results.add(new FileSystemCheckIssue()
-                            .setUuid(childId)
-                            .setName(child.getName())
-                            .setRepaired(options.isRepair())
-                            .setType(FileSystemCheckIssue.Type.MISSING_CHILD_NODE));
-                    if (options.isRepair()) {
-                        statements.add(delete().from(CHILDREN_BY_NAME_AND_CLASS)
-                                .where(eq(ID, UUID.fromString(id)))
-                                .and(eq(CHILD_NAME, child.getName())));
-                    }
-                }
+        Set<ChildNodeInfo> notFoundIds = new HashSet<>();
+        Set<UUID> existingRows = allPrimaryKeys();
+        for (ChildNodeInfo entity : getAllIdsInChildId()) {
+            if (!existingRows.contains(entity.id)) {
+                notFoundIds.add(entity);
+            }
+        }
+
+        for (ChildNodeInfo childNodeInfo : notFoundIds) {
+            final UUID childId = childNodeInfo.id;
+            final FileSystemCheckIssue issue = new FileSystemCheckIssue()
+                    .setUuid(childId)
+                    .setName(childNodeInfo.name)
+                    .setRepaired(options.isRepair())
+                    .setDescription("row is not found but still referenced in " + childNodeInfo.parentId)
+                    .setType(REF_NOT_FOUND);
+            results.add(issue);
+            if (options.isRepair()) {
+                statements.add(delete().from(CHILDREN_BY_NAME_AND_CLASS)
+                        .where(eq(ID, childNodeInfo.parentId))
+                        .and(eq(CHILD_NAME, childNodeInfo.name)));
+                issue.setResolutionDescription("reset null child_name and child_id in " + childNodeInfo.parentId);
             }
         }
         if (options.isRepair()) {
@@ -1522,30 +1535,52 @@ public class CassandraAppStorage extends AbstractAppStorage {
         }
     }
 
+    private Set<ChildNodeInfo> getAllIdsInChildId() {
+        Set<ChildNodeInfo> set = new HashSet<>();
+        ResultSet resultSet = getSession().execute(select(CHILD_ID, CHILD_NAME, ID).from(CHILDREN_BY_NAME_AND_CLASS));
+        for (Row row : resultSet) {
+            final UUID id = row.getUUID(CHILD_ID);
+            if (id != null) {
+                set.add(new ChildNodeInfo(id, row.getString(CHILD_NAME), row.getUUID(ID)));
+            }
+        }
+        return set;
+    }
+
+    private Set<UUID> allPrimaryKeys() {
+        Set<UUID> set = new HashSet<>();
+        ResultSet resultSet = getSession().execute(select(ID).distinct().from(CHILDREN_BY_NAME_AND_CLASS));
+        for (Row row : resultSet) {
+            set.add(row.getUUID(0));
+        }
+        return set;
+    }
+
     private void checkInconsistent(List<FileSystemCheckIssue> results, FileSystemCheckOptions options) {
         ResultSet resultSet = getSession().execute(select(ID, NAME, MODIFICATION_DATE, CONSISTENT)
                 .from(CHILDREN_BY_NAME_AND_CLASS));
         for (Row row : resultSet) {
-            final Optional<FileSystemCheckIssue> issue = buildExpirationInconsisentIssue(row, options);
+            final Optional<FileSystemCheckIssue> issue = buildExpirationInconsistentIssue(row, options.getInconsistentNodesExpirationTime().get());
             issue.ifPresent(results::add);
         }
         if (options.isRepair()) {
             for (FileSystemCheckIssue issue : results) {
-                if (issue.getType() == FileSystemCheckIssue.Type.EXPIRATION_INCONSISTENT) {
+                if (Objects.equals(issue.getType(), "inconsistent")) {
                     repairExpirationInconsistent(issue);
                 }
             }
         }
     }
 
-    private static Optional<FileSystemCheckIssue> buildExpirationInconsisentIssue(Row row, FileSystemCheckOptions options) {
-        return Optional.ofNullable(buildExpirationInconsistent(row, options.isRepair(), options.getInconsistentNodesExpirationTime()));
+    private static Optional<FileSystemCheckIssue> buildExpirationInconsistentIssue(Row row, Instant instant) {
+        return Optional.ofNullable(buildExpirationInconsistent(row,  instant));
     }
 
-    private static FileSystemCheckIssue buildExpirationInconsistent(Row row, boolean repair, Instant instant) {
+    private static FileSystemCheckIssue buildExpirationInconsistent(Row row, Instant instant) {
         if (row.getTimestamp(MODIFICATION_DATE).toInstant().isBefore(instant) && !row.getBool(CONSISTENT)) {
             final FileSystemCheckIssue fileSystemCheckIssue = buildIssue(row);
-            fileSystemCheckIssue.setType(FileSystemCheckIssue.Type.EXPIRATION_INCONSISTENT);
+            fileSystemCheckIssue.setType("inconsistent");
+            fileSystemCheckIssue.setDescription("inconsistent and older than " + instant);
             return fileSystemCheckIssue;
         }
         return null;
@@ -1560,5 +1595,38 @@ public class CassandraAppStorage extends AbstractAppStorage {
     private void repairExpirationInconsistent(FileSystemCheckIssue issue) {
         final UUID uuid = deleteNode(issue.getUuid());
         issue.setRepaired(true);
+        issue.setResolutionDescription("deleted");
+    }
+
+    static class ChildNodeInfo {
+
+        final UUID id;
+        final String name;
+        final UUID parentId;
+
+        ChildNodeInfo(UUID id, String name, UUID parentId) {
+            this.id = id;
+            this.name = name;
+            this.parentId = parentId;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(id);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof ChildNodeInfo)) {
+                return false;
+            }
+
+            ChildNodeInfo that = (ChildNodeInfo) o;
+
+            return id.equals(that.id);
+        }
     }
 }
