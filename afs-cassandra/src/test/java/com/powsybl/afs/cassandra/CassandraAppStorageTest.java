@@ -22,7 +22,7 @@ public class CassandraAppStorageTest extends AbstractAppStorageTest {
     public CassandraCQLUnit cassandraCQLUnit = new CassandraCQLUnit(new ClassPathCQLDataSet("afs.cql", CassandraConstants.AFS_KEYSPACE), null, 20000L);
 
     @Override
-    protected AppStorage createStorage() {
+    public AppStorage createStorage() {
         return new CassandraAppStorage("test", () -> new CassandraTestContext(cassandraCQLUnit),
                 new CassandraAppStorageConfig(), new InMemoryEventsBus());
     }
