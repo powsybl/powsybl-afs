@@ -8,9 +8,9 @@ import com.powsybl.timeseries.storer.query.create.CreateQuery;
 import com.powsybl.timeseries.storer.query.search.SearchQuery;
 import com.powsybl.timeseries.storer.query.search.SearchQueryResults;
 import org.apache.commons.lang3.NotImplementedException;
+import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 
 import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
@@ -30,6 +30,15 @@ public class TimeSeriesSorageDelegate {
 
     private URI timeSeriesServerURI;
 
+    public TimeSeriesSorageDelegate(URI timeSeriesServerURI) {
+        this.timeSeriesServerURI = timeSeriesServerURI;
+    }
+
+    public static Client createClient() {
+        return new ResteasyClientBuilder()
+            .connectionPoolSize(50)
+            .build();
+    }
 
     private WebTarget buildBaseRequest(Client client) {
         return client.target(timeSeriesServerURI)
@@ -39,7 +48,7 @@ public class TimeSeriesSorageDelegate {
     }
 
     public void createAFSAppIfNotExists() {
-        Client client = ClientBuilder.newClient();
+        Client client = createClient();
         try {
             Response response = buildBaseRequest(client).request().get();
 
@@ -71,7 +80,7 @@ public class TimeSeriesSorageDelegate {
         LocalDateTime startDate = Instant.ofEpochMilli(index.getStartTime()).atZone(ZoneId.systemDefault()).toLocalDateTime();
         createQuery.setStartDate(startDate);
 
-        Client client = ClientBuilder.newClient();
+        Client client = createClient();
         try {
             buildBaseRequest(client)
                 .path(AFS_APP)
@@ -84,10 +93,9 @@ public class TimeSeriesSorageDelegate {
 
     public SearchQueryResults performSearch(SearchQuery query) {
 
-
         SearchQueryResults results = null;
 
-        Client client = ClientBuilder.newClient();
+        Client client = createClient();
         try {
             Response response = buildBaseRequest(client)
                 .path(AFS_APP)
@@ -150,15 +158,14 @@ public class TimeSeriesSorageDelegate {
     public Set<Integer> getTimeSeriesDataVersions(String nodeId, String timeSeriesName) {
         SearchQuery searchQuery = new SearchQuery();
         searchQuery.setMatrix(nodeId);
-        if(timeSeriesName != null)
-        {
+        if (timeSeriesName != null) {
             searchQuery.setNames(Collections.singleton(timeSeriesName));
         }
         SearchQueryResults results = performSearch(searchQuery);
         if (results != null) {
             return results.getTimeSeriesInformations()
                 .stream().flatMap(t -> t.getVersions().keySet().stream())
-                .map(t->Integer.parseInt(t))
+                .map(t -> Integer.parseInt(t))
                 .collect(Collectors.toSet());
         }
         return null;

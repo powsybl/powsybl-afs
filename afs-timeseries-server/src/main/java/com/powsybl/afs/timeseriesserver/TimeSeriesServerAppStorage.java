@@ -8,12 +8,13 @@ import org.apache.commons.lang3.NotImplementedException;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-public class TimeSeriesServerAppStorage extends AbstractAppStorage {
+public class TimeSeriesServerAppStorage implements AppStorage {
 
     /**
      * This storage is used for all non-timeseries-related operations
@@ -25,10 +26,9 @@ public class TimeSeriesServerAppStorage extends AbstractAppStorage {
      */
     TimeSeriesSorageDelegate timeSeriesDelegate;
 
-
-    public TimeSeriesServerAppStorage(AppStorage generalDelegate) {
+    public TimeSeriesServerAppStorage(AppStorage generalDelegate, URI timeSeriesServerURI) {
         this.generalDelegate = generalDelegate;
-        timeSeriesDelegate = new TimeSeriesSorageDelegate();
+        timeSeriesDelegate = new TimeSeriesSorageDelegate(timeSeriesServerURI);
         timeSeriesDelegate.createAFSAppIfNotExists();
     }
 
@@ -204,6 +204,11 @@ public class TimeSeriesServerAppStorage extends AbstractAppStorage {
     }
 
     @Override
+    public EventsBus getEventsBus() {
+        return generalDelegate.getEventsBus();
+    }
+
+    @Override
     public void flush() {
         generalDelegate.flush();
     }
@@ -216,5 +221,10 @@ public class TimeSeriesServerAppStorage extends AbstractAppStorage {
     @Override
     public void close() {
         generalDelegate.close();
+    }
+
+    @Override
+    public boolean isConsistent(String nodeId) {
+        return generalDelegate.isConsistent(nodeId);
     }
 }
