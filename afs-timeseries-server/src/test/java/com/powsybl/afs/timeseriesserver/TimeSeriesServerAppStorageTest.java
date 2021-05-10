@@ -1,7 +1,9 @@
 package com.powsybl.afs.timeseriesserver;
 
+import com.powsybl.afs.mapdb.storage.MapDbAppStorage;
 import com.powsybl.afs.storage.AbstractAppStorageTest;
 import com.powsybl.afs.storage.AppStorage;
+import com.powsybl.afs.storage.InMemoryEventsBus;
 import org.junit.Before;
 
 import java.net.URI;
@@ -19,7 +21,7 @@ public class TimeSeriesServerAppStorageTest extends AbstractAppStorageTest {
 
     @Override
     protected AppStorage createStorage() {
-        return null;    //TODO
+        return new TimeSeriesServerAppStorage(MapDbAppStorage.createMem("mem", new InMemoryEventsBus()), timeSeriesServerURI);
     }
 
 }
