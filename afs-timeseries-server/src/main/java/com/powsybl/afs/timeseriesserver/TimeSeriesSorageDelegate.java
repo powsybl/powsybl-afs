@@ -1,5 +1,8 @@
 package com.powsybl.afs.timeseriesserver;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.powsybl.afs.storage.AfsStorageException;
 import com.powsybl.timeseries.RegularTimeSeriesIndex;
 import com.powsybl.timeseries.TimeSeriesDataType;
 import com.powsybl.timeseries.TimeSeriesIndex;
@@ -9,11 +12,14 @@ import com.powsybl.timeseries.storer.query.search.SearchQuery;
 import com.powsybl.timeseries.storer.query.search.SearchQueryResults;
 import org.apache.commons.lang3.NotImplementedException;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
+import java.io.IOException;
 import java.net.URI;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -27,6 +33,8 @@ import java.util.stream.Collectors;
 public class TimeSeriesSorageDelegate {
 
     private static final String AFS_APP = "AFS";
+    private static final Logger LOGGER = LoggerFactory.getLogger(TimeSeriesSorageDelegate.class);
+
 
     private URI timeSeriesServerURI;
 
@@ -57,7 +65,11 @@ public class TimeSeriesSorageDelegate {
                 return;
             }
 
-            buildBaseRequest(client).request().post(Entity.json(AFS_APP));
+            response = buildBaseRequest(client).path(AFS_APP).request().post(Entity.json(""));
+            if(response.getStatus() != 200)
+            {
+                throw new AfsStorageException("Error while initializing AFS timeseries app storage");
+            }
 
         } finally {
             client.close();
@@ -85,7 +97,9 @@ public class TimeSeriesSorageDelegate {
             buildBaseRequest(client)
                 .path(AFS_APP)
                 .path("series")
-                .request().post(Entity.json(createQuery));
+                .request().post(Entity.json(new ObjectMapper().writeValueAsString(createQuery)));
+        } catch (JsonProcessingException e) {
+            LOGGER.error(e.getMessage(), e);
         } finally {
             client.close();
         }
@@ -101,8 +115,11 @@ public class TimeSeriesSorageDelegate {
                 .path(AFS_APP)
                 .path("series")
                 .path("_search")
-                .request().post(Entity.json(query));
-            results = response.readEntity(SearchQueryResults.class);
+                .request().post(Entity.json(new ObjectMapper().writeValueAsString(query)));
+            String json = response.readEntity(String.class);
+            results = new ObjectMapper().readValue(json, SearchQueryResults.class);
+        } catch (IOException e) {
+            LOGGER.error(e.getMessage(), e);
         } finally {
             client.close();
         }
@@ -146,7 +163,7 @@ public class TimeSeriesSorageDelegate {
                 .stream().map(t -> {
                     long startTime = t.getStartDate().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
                     long spacing = t.getTimeStepDuration();
-                    long endTime = startTime + spacing * t.getTimeStepCount();
+                    long endTime = startTime + spacing * (t.getTimeStepCount() - 1);
                     TimeSeriesIndex index = new RegularTimeSeriesIndex(startTime, endTime, spacing);
                     return new TimeSeriesMetadata(t.getName(), TimeSeriesDataType.DOUBLE, t.getTags(), index);
                 })
