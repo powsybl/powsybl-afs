@@ -169,7 +169,7 @@ public class TimeSeriesServerAppStorage extends AbstractAppStorage {
     @Override
     public Map<String, List<DoubleDataChunk>> getDoubleTimeSeriesData(String nodeId, Set<String> timeSeriesNames, int version) {
         //TODO
-        return null;
+        return timeSeriesDelegate.getDoubleTimeSeriesData(nodeId, timeSeriesNames, version);
     }
 
     @Override

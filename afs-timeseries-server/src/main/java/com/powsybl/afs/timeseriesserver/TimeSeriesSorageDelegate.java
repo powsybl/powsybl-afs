@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.afs.storage.AfsStorageException;
 import com.powsybl.timeseries.*;
 import com.powsybl.timeseries.storer.query.create.CreateQuery;
+import com.powsybl.timeseries.storer.query.fetch.FetchQuery;
+import com.powsybl.timeseries.storer.query.fetch.FetchQueryResult;
 import com.powsybl.timeseries.storer.query.publish.PublishQuery;
 import com.powsybl.timeseries.storer.query.search.SearchQuery;
 import com.powsybl.timeseries.storer.query.search.SearchQueryResults;
@@ -23,10 +25,7 @@ import java.net.URI;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class TimeSeriesSorageDelegate {
@@ -65,8 +64,7 @@ public class TimeSeriesSorageDelegate {
             }
 
             response = buildBaseRequest(client).path(AFS_APP).request().post(Entity.json(""));
-            if(response.getStatus() != 200)
-            {
+            if (response.getStatus() != 200) {
                 throw new AfsStorageException("Error while initializing AFS timeseries app storage");
             }
 
@@ -206,8 +204,7 @@ public class TimeSeriesSorageDelegate {
                 .path(AFS_APP)
                 .path("series")
                 .request().put(Entity.json(new ObjectMapper().writeValueAsString(publishQuery)));
-            if(response.getStatus() != 200)
-            {
+            if (response.getStatus() != 200) {
                 throw new AfsStorageException("Error while publishing data to time series server");
             }
         } catch (IOException e) {
@@ -216,5 +213,52 @@ public class TimeSeriesSorageDelegate {
             client.close();
         }
 
+    }
+
+    public Map<String, List<DoubleDataChunk>> getDoubleTimeSeriesData(String nodeId, Set<String> timeSeriesNames, int version) {
+
+        String versionString = String.valueOf(version);
+        SearchQuery searchQuery = new SearchQuery();
+        searchQuery.setMatrix(nodeId);
+        searchQuery.setNames(timeSeriesNames);
+        SearchQueryResults results = performSearch(searchQuery);
+        List<Long> versionIDs = results.getTimeSeriesInformations()
+            .stream()
+            .map(t->t.getVersions().get(versionString))
+            .collect(Collectors.toList());
+
+        Map<Long, String> versionIDToTSName = results.getTimeSeriesInformations()
+            .stream()
+            .collect(Collectors.toMap(t->t.getVersions().get(versionString), t->t.getName()));
+
+        FetchQuery query = new FetchQuery(versionIDs, null, null);
+        Client client = createClient();
+        try {
+            Response response = buildBaseRequest(client)
+                .path(AFS_APP)
+                .path("series")
+                .path("_fetch")
+                .request().post(Entity.json(new ObjectMapper().writeValueAsString(query)));
+            if (response.getStatus() != 200) {
+                throw new AfsStorageException("Error while fetching data from time series server");
+            }
+            String json = response.readEntity(String.class);
+            FetchQueryResult<Double> fetchResults = new ObjectMapper().readValue(json, FetchQueryResult.class);
+
+            Map<String, List<DoubleDataChunk>> toReturn = new HashMap<>();
+            for(int i=0; i<versionIDs.size(); i++)
+            {
+                double[] values = fetchResults.getData().get(i).stream().mapToDouble(Double::doubleValue).toArray();
+                UncompressedDoubleDataChunk chunk = new UncompressedDoubleDataChunk(0, values);
+                toReturn.put(versionIDToTSName.get(versionIDs.get(i)), Arrays.asList(chunk));
+            }
+
+        } catch (IOException e) {
+            LOGGER.error(e.getMessage(), e);
+        } finally {
+            client.close();
+        }
+
+        return null;
     }
 }
