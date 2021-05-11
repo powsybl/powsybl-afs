@@ -205,8 +205,7 @@ public class TimeSeriesSorageDelegate {
             Response response = buildBaseRequest(client)
                 .path(AFS_APP)
                 .path("series")
-                .path("_search")
-                .request().post(Entity.json(new ObjectMapper().writeValueAsString(publishQuery)));
+                .request().put(Entity.json(new ObjectMapper().writeValueAsString(publishQuery)));
             if(response.getStatus() != 200)
             {
                 throw new AfsStorageException("Error while publishing data to time series server");
