@@ -3,6 +3,7 @@ package com.powsybl.afs.timeseriesserver;
 import com.powsybl.afs.storage.*;
 import com.powsybl.afs.storage.events.AppStorageListener;
 import com.powsybl.afs.storage.events.TimeSeriesCreated;
+import com.powsybl.afs.storage.events.TimeSeriesDataUpdated;
 import com.powsybl.timeseries.DoubleDataChunk;
 import com.powsybl.timeseries.StringDataChunk;
 import com.powsybl.timeseries.TimeSeriesMetadata;
@@ -173,7 +174,8 @@ public class TimeSeriesServerAppStorage extends AbstractAppStorage {
 
     @Override
     public void addDoubleTimeSeriesData(String nodeId, int version, String timeSeriesName, List<DoubleDataChunk> chunks) {
-        //TODO
+        timeSeriesDelegate.addDoubleTimeSeriesData(nodeId, version, timeSeriesName, chunks);
+        pushEvent(new TimeSeriesDataUpdated(nodeId, timeSeriesName), APPSTORAGE_TIMESERIES_TOPIC);
     }
 
     @Override

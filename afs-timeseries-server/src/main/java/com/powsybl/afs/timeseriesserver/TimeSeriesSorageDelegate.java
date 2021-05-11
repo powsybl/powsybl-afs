@@ -3,13 +3,12 @@ package com.powsybl.afs.timeseriesserver;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.afs.storage.AfsStorageException;
-import com.powsybl.timeseries.RegularTimeSeriesIndex;
-import com.powsybl.timeseries.TimeSeriesDataType;
-import com.powsybl.timeseries.TimeSeriesIndex;
-import com.powsybl.timeseries.TimeSeriesMetadata;
+import com.powsybl.timeseries.*;
 import com.powsybl.timeseries.storer.query.create.CreateQuery;
+import com.powsybl.timeseries.storer.query.publish.PublishQuery;
 import com.powsybl.timeseries.storer.query.search.SearchQuery;
 import com.powsybl.timeseries.storer.query.search.SearchQueryResults;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.NotImplementedException;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.slf4j.Logger;
@@ -186,5 +185,37 @@ public class TimeSeriesSorageDelegate {
                 .collect(Collectors.toSet());
         }
         return null;
+    }
+
+    public void addDoubleTimeSeriesData(String nodeId, int version, String timeSeriesName, List<DoubleDataChunk> chunks) {
+
+        //First step : retrieve metadata and reconstitute the time series
+        TimeSeriesMetadata metadata = getTimeSeriesMetadata(nodeId, Collections.singleton(timeSeriesName)).get(0);
+        StoredDoubleTimeSeries ts = new StoredDoubleTimeSeries(metadata, chunks);
+
+        //Second step : perform a publish request
+        PublishQuery<Double> publishQuery = new PublishQuery<>();
+        publishQuery.setMatrix(nodeId);
+        publishQuery.setTimeSeriesName(timeSeriesName);
+        publishQuery.setVersionName(String.valueOf(version));
+        publishQuery.setData(ArrayUtils.toObject(ts.toArray()));
+
+        Client client = createClient();
+        try {
+            Response response = buildBaseRequest(client)
+                .path(AFS_APP)
+                .path("series")
+                .path("_search")
+                .request().post(Entity.json(new ObjectMapper().writeValueAsString(publishQuery)));
+            if(response.getStatus() != 200)
+            {
+                throw new AfsStorageException("Error while publishing data to time series server");
+            }
+        } catch (IOException e) {
+            LOGGER.error(e.getMessage(), e);
+        } finally {
+            client.close();
+        }
+
     }
 }
