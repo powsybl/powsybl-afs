@@ -29,7 +29,7 @@ public class AppStorageApplication extends Application {
     private static final Logger LOGGER = LoggerFactory.getLogger(AppStorageApplication.class);
 
     public AppStorageApplication() {
-        ServiceLoader<SwaggerConfigExtension> swaggerConfigExtensionsIterator = ServiceLoader.load(SwaggerConfigExtension.class);
+        ServiceLoader<SwaggerConfigExtension> swaggerConfigExtensionsIterator = ServiceLoader.load(SwaggerConfigExtension.class, AppStorageApplication.class.getClassLoader());
         ArrayList<SwaggerConfigExtension> swaggerConfigExtensions = Lists.newArrayList(swaggerConfigExtensionsIterator.iterator());
         initSwaggerConfig(swaggerConfigExtensions);
     }
