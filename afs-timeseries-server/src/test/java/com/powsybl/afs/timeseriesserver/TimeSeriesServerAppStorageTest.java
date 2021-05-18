@@ -12,6 +12,10 @@ public class TimeSeriesServerAppStorageTest extends AbstractAppStorageTest {
 
     private URI timeSeriesServerURI;
 
+    public TimeSeriesServerAppStorageTest() {
+        super(false, false);
+    }
+
     @Override
     @Before
     public void setUp() throws Exception {
