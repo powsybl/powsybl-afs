@@ -192,7 +192,7 @@ public class TimeSeriesSorageDelegate {
         StoredDoubleTimeSeries ts = new StoredDoubleTimeSeries(metadata, chunks);
 
         //Second step : perform a publish request
-        PublishQuery<Double> publishQuery = new PublishQuery<>();
+        PublishQuery publishQuery = new PublishQuery();
         publishQuery.setMatrix(nodeId);
         publishQuery.setTimeSeriesName(timeSeriesName);
         publishQuery.setVersionName(String.valueOf(version));
@@ -243,7 +243,7 @@ public class TimeSeriesSorageDelegate {
                 throw new AfsStorageException("Error while fetching data from time series server");
             }
             String json = response.readEntity(String.class);
-            FetchQueryResult<Double> fetchResults = new ObjectMapper().readValue(json, FetchQueryResult.class);
+            FetchQueryResult fetchResults = new ObjectMapper().readValue(json, FetchQueryResult.class);
 
             Map<String, List<DoubleDataChunk>> toReturn = new HashMap<>();
             for(int i=0; i<versionIDs.size(); i++)
@@ -252,6 +252,7 @@ public class TimeSeriesSorageDelegate {
                 UncompressedDoubleDataChunk chunk = new UncompressedDoubleDataChunk(0, values);
                 toReturn.put(versionIDToTSName.get(versionIDs.get(i)), Arrays.asList(chunk));
             }
+            return toReturn;
 
         } catch (IOException e) {
             LOGGER.error(e.getMessage(), e);
