@@ -22,6 +22,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -919,6 +921,18 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
     @Override
     public Optional<InputStream> readBinaryData(String nodeId, String name) {
+        final Optional<InputStream> inputStream = readBinaryDataFromColumns(nodeId, name);
+        if (inputStream.isPresent() || config.getRootDir() == null) {
+            return inputStream;
+        }
+        final Path resolve = config.getRootDir().resolve(fileSystemName).resolve(nodeId).resolve(name);
+        if (Files.exists(resolve)) {
+            return Optional.of(new CassandraDiskFileInputStream(resolve.toFile()));
+        }
+        return Optional.empty();
+    }
+
+    private Optional<InputStream> readBinaryDataFromColumns(String nodeId, String name) {
         UUID nodeUuid = checkNodeId(nodeId);
         Objects.requireNonNull(name);
 
@@ -1039,6 +1053,9 @@ public class CassandraAppStorage extends AbstractAppStorage {
         // flush buffer to keep change order
         changeBuffer.flush();
         pushEvent(new NodeDataUpdated(nodeId, name), APPSTORAGE_NODE_TOPIC);
+        if (config.getRootDir() != null) {
+            return new CassandraDiskFileOutputStream(config.getRootDir(), fileSystemName, nodeId, name);
+        }
         return new BinaryDataOutputStream(nodeUuid, name);
     }
 
