@@ -1488,9 +1488,9 @@ public class CassandraAppStorage extends AbstractAppStorage {
     public List<FileSystemCheckIssue> checkFileSystem(FileSystemCheckOptions options) {
         List<FileSystemCheckIssue> results = new ArrayList<>();
 
-        if (options.getInconsistentNodesExpirationTime().isPresent()
-                && !options.getInconsistentNodesExpirationTime().get().equals(Instant.MIN)) {
-            checkInconsistent(results, options);
+        Instant inconsistentNodesExpirationTime = options.getInconsistentNodesExpirationTime().orElse(Instant.MIN);
+        if (!inconsistentNodesExpirationTime.equals(Instant.MIN)) {
+            checkInconsistent(results, inconsistentNodesExpirationTime, options.isRepair());
         }
         for (String type : options.getTypes()) {
             if (Objects.equals(REF_NOT_FOUND, type)) {
@@ -1516,7 +1516,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
         for (ChildNodeInfo childNodeInfo : notFoundIds) {
             final UUID childId = childNodeInfo.id;
             final FileSystemCheckIssue issue = new FileSystemCheckIssue()
-                    .setUuid(childId)
+                    .setNodeId(childId.toString())
                     .setName(childNodeInfo.name)
                     .setRepaired(options.isRepair())
                     .setDescription("row is not found but still referenced in " + childNodeInfo.parentId)
@@ -1557,14 +1557,14 @@ public class CassandraAppStorage extends AbstractAppStorage {
         return set;
     }
 
-    private void checkInconsistent(List<FileSystemCheckIssue> results, FileSystemCheckOptions options) {
+    private void checkInconsistent(List<FileSystemCheckIssue> results, Instant expirationTime, boolean repair) {
         ResultSet resultSet = getSession().execute(select(ID, NAME, MODIFICATION_DATE, CONSISTENT)
                 .from(CHILDREN_BY_NAME_AND_CLASS));
         for (Row row : resultSet) {
-            final Optional<FileSystemCheckIssue> issue = buildExpirationInconsistentIssue(row, options.getInconsistentNodesExpirationTime().get());
+            final Optional<FileSystemCheckIssue> issue = buildExpirationInconsistentIssue(row, expirationTime);
             issue.ifPresent(results::add);
         }
-        if (options.isRepair()) {
+        if (repair) {
             for (FileSystemCheckIssue issue : results) {
                 if (Objects.equals(issue.getType(), "inconsistent")) {
                     repairExpirationInconsistent(issue);
@@ -1589,12 +1589,12 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
     private static FileSystemCheckIssue buildIssue(Row row) {
         final FileSystemCheckIssue issue = new FileSystemCheckIssue();
-        issue.setUuid(row.getUUID(ID)).setName(row.getString(NAME));
+        issue.setNodeId(row.getUUID(ID).toString()).setName(row.getString(NAME));
         return issue;
     }
 
     private void repairExpirationInconsistent(FileSystemCheckIssue issue) {
-        deleteNode(issue.getUuid());
+        deleteNode(issue.getNodeId());
         issue.setRepaired(true);
         issue.setResolutionDescription("deleted");
     }

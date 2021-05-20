@@ -7,14 +7,13 @@
 package com.powsybl.afs.storage.check;
 
 import java.util.Objects;
-import java.util.UUID;
 
 /**
  * @author Yichen TANG <yichen.tang at rte-france.com>
  */
 public class FileSystemCheckIssue {
 
-    private UUID uuid;
+    private String nodeId;
     private String name;
     private String type;
 
@@ -22,12 +21,12 @@ public class FileSystemCheckIssue {
     private String resolutionDescription;
     private boolean repaired;
 
-    public UUID getUuid() {
-        return uuid;
+    public String getNodeId() {
+        return nodeId;
     }
 
-    public FileSystemCheckIssue setUuid(UUID uuid) {
-        this.uuid = Objects.requireNonNull(uuid);
+    public FileSystemCheckIssue setNodeId(String nodeId) {
+        this.nodeId = Objects.requireNonNull(nodeId);
         return this;
     }
 
@@ -79,7 +78,7 @@ public class FileSystemCheckIssue {
     @Override
     public String toString() {
         return "FileSystemCheckIssue{" +
-                "uuid=" + uuid +
+                "nodeId=" + nodeId +
                 ", name='" + name + '\'' +
                 ", type=" + type +
                 ", description=" + description +
