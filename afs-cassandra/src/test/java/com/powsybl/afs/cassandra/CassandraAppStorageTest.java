@@ -6,6 +6,8 @@
  */
 package com.powsybl.afs.cassandra;
 
+import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.utils.UUIDs;
 import com.powsybl.afs.storage.*;
 import com.powsybl.afs.storage.check.FileSystemCheckIssue;
 import com.powsybl.afs.storage.check.FileSystemCheckOptions;
@@ -16,8 +18,15 @@ import org.junit.Rule;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
+import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
+import static com.powsybl.afs.cassandra.CassandraConstants.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.junit.Assert.*;
 
 /**
@@ -36,9 +45,14 @@ public class CassandraAppStorageTest extends AbstractAppStorageTest {
 
     @Override
     protected void nextDependentTests() {
+        testInconsistendNodeRepair();
+        testAbsentChildRepair();
+    }
+
+    void testInconsistendNodeRepair() {
         NodeInfo rootFolderInfo = storage.createRootNodeIfNotExists(storage.getFileSystemName(), FOLDER_PSEUDO_CLASS);
         NodeInfo inconsistentNode = storage.createNode(rootFolderInfo.getId(), "inconsistentNode", FOLDER_PSEUDO_CLASS, "", 0,
-                new NodeGenericMetadata().setString("k", "v"));
+            new NodeGenericMetadata().setString("k", "v"));
         inconsistentNode.setModificationTime(Instant.now().minus(3, ChronoUnit.DAYS).toEpochMilli());
         storage.flush();
 
@@ -47,9 +61,9 @@ public class CassandraAppStorageTest extends AbstractAppStorageTest {
         assertEquals(inconsistentNode.getId(), storage.getInconsistentNodes().get(0).getId());
         storage.flush();
         final FileSystemCheckOptions dryRunOptions = new FileSystemCheckOptionsBuilder()
-                // normal should use minus to check filesystem, but here we could not set modification time to an earlier time
-                .setInconsistentNodesExpirationTime(Instant.now().plus(2, ChronoUnit.DAYS))
-                .dryRun().build();
+            // normal should use minus to check filesystem, but here we could not set modification time to an earlier time
+            .setInconsistentNodesExpirationTime(Instant.now().plus(2, ChronoUnit.DAYS))
+            .dryRun().build();
         final List<FileSystemCheckIssue> fileSystemCheckIssues = storage.checkFileSystem(dryRunOptions);
         assertEquals(1, fileSystemCheckIssues.size());
         final FileSystemCheckIssue issue = fileSystemCheckIssues.get(0);
@@ -60,8 +74,8 @@ public class CassandraAppStorageTest extends AbstractAppStorageTest {
         assertNotNull(storage.getNodeInfo(inconsistentNode.getId()));
 
         final FileSystemCheckOptions repairOption = new FileSystemCheckOptionsBuilder()
-                .setInconsistentNodesExpirationTime(Instant.now().plus(2, ChronoUnit.DAYS))
-                .repair().build();
+            .setInconsistentNodesExpirationTime(Instant.now().plus(2, ChronoUnit.DAYS))
+            .repair().build();
         final List<FileSystemCheckIssue> repairIssue = storage.checkFileSystem(repairOption);
         assertTrue(repairIssue.get(0).isRepaired());
         // check deleted
@@ -71,5 +85,60 @@ public class CassandraAppStorageTest extends AbstractAppStorageTest {
         } catch (CassandraAfsException e) {
             // ignored
         }
+    }
+
+    void testAbsentChildRepair() {
+        NodeInfo root = storage.createRootNodeIfNotExists(storage.getFileSystemName(), FOLDER_PSEUDO_CLASS);
+
+        // add a child which does not exist to root folder
+        Statement statement = insertInto(CHILDREN_BY_NAME_AND_CLASS)
+            .value(ID, UUID.fromString(root.getId()))
+            .value(CHILD_NAME, "absent_child")
+            .value(CHILD_ID, UUIDs.timeBased())
+            .value(CHILD_PSEUDO_CLASS, FOLDER_PSEUDO_CLASS)
+            .value(CHILD_DESCRIPTION, "")
+            .value(CHILD_CONSISTENT, true)
+            .value(CHILD_CREATION_DATE, new Date())
+            .value(CHILD_MODIFICATION_DATE, new Date())
+            .value(CHILD_VERSION, 1)
+            .value(CMT, Collections.emptyMap())
+            .value(CMD, Collections.emptyMap())
+            .value(CMI, Collections.emptyMap())
+            .value(CMB, Collections.emptyMap());
+        cassandraCQLUnit.getSession().execute(statement);
+
+        //Now root has one child, but that child does not exist
+        NodeInfo absentChild = storage.getChildNodes(root.getId()).stream()
+            .filter(nodeInfo -> nodeInfo.getName().equals("absent_child"))
+            .findFirst().orElseThrow(AssertionError::new);
+
+        assertThatExceptionOfType(CassandraAfsException.class)
+            .isThrownBy(() -> storage.getNodeInfo(absentChild.getId()));
+
+        FileSystemCheckOptions noRepair = new FileSystemCheckOptionsBuilder()
+            .addCheckTypes(CassandraAppStorage.REF_NOT_FOUND)
+            .build();
+
+        assertThat(storage.checkFileSystem(noRepair))
+            .hasOnlyOneElementSatisfying(issue -> {
+                assertEquals(CassandraAppStorage.REF_NOT_FOUND, issue.getType());
+                assertEquals("absent_child", issue.getName());
+                assertFalse(issue.isRepaired());
+            });
+
+        //Check again, should still be here
+        assertTrue(storage.getChildNodes(root.getId()).stream()
+            .anyMatch(nodeInfo -> nodeInfo.getName().equals("absent_child")));
+
+        FileSystemCheckOptions repair = new FileSystemCheckOptionsBuilder()
+            .addCheckTypes(CassandraAppStorage.REF_NOT_FOUND)
+            .repair()
+            .build();
+
+        storage.checkFileSystem(repair);
+
+        //Check again, the wrong child should not be here anymore
+        assertFalse(storage.getChildNodes(root.getId()).stream()
+            .anyMatch(nodeInfo -> nodeInfo.getName().equals("absent_child")));
     }
 }

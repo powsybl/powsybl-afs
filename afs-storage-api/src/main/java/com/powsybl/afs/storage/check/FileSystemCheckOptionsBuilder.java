@@ -7,10 +7,7 @@
 package com.powsybl.afs.storage.check;
 
 import java.time.Instant;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Yichen TANG <yichen.tang at rte-france.com>
@@ -50,14 +47,19 @@ public class FileSystemCheckOptionsBuilder {
     /**
      * Add implementation specific check types.
      * For example, in cassandra, "reference_not_found"
-     *
-     * @param types
-     * @return
      */
     public FileSystemCheckOptionsBuilder addCheckTypes(Collection<String> types) {
         Objects.requireNonNull(types);
         this.types.addAll(types);
         return this;
+    }
+
+    /**
+     * Add implementation specific check types.
+     * For example, in cassandra, "reference_not_found"
+     */
+    public FileSystemCheckOptionsBuilder addCheckTypes(String... types) {
+        return addCheckTypes(Arrays.asList(types));
     }
 
     public FileSystemCheckOptions build() {

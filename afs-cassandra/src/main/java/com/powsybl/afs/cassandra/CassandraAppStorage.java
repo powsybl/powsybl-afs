@@ -45,7 +45,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
     private static final String BROKEN_DEPENDENCY = "Broken dependency";
 
-    private static final String REF_NOT_FOUND = "reference_not_found";
+    public static final String REF_NOT_FOUND = "reference_not_found";
 
     private final String fileSystemName;
 
@@ -1594,7 +1594,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
     }
 
     private void repairExpirationInconsistent(FileSystemCheckIssue issue) {
-        final UUID uuid = deleteNode(issue.getUuid());
+        deleteNode(issue.getUuid());
         issue.setRepaired(true);
         issue.setResolutionDescription("deleted");
     }
