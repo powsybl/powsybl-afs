@@ -11,6 +11,7 @@ import com.datastax.driver.core.utils.UUIDs;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.powsybl.afs.storage.*;
 import com.powsybl.afs.storage.buffer.*;
@@ -45,7 +46,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
     private static final String BROKEN_DEPENDENCY = "Broken dependency";
 
-    public static final String REF_NOT_FOUND = "reference_not_found";
+    public static final String REF_NOT_FOUND = "REFERENCE_NOT_FOUND";
 
     private final String fileSystemName;
 
@@ -1485,18 +1486,25 @@ public class CassandraAppStorage extends AbstractAppStorage {
     }
 
     @Override
+    public List<String> getSupportedFileSystemChecks() {
+        return ImmutableList.of(FileSystemCheckOptions.EXPIRED_INCONSISTENT_NODES, REF_NOT_FOUND);
+    }
+
+    @Override
     public List<FileSystemCheckIssue> checkFileSystem(FileSystemCheckOptions options) {
         List<FileSystemCheckIssue> results = new ArrayList<>();
 
-        Instant inconsistentNodesExpirationTime = options.getInconsistentNodesExpirationTime().orElse(Instant.MIN);
-        if (!inconsistentNodesExpirationTime.equals(Instant.MIN)) {
-            checkInconsistent(results, inconsistentNodesExpirationTime, options.isRepair());
-        }
         for (String type : options.getTypes()) {
-            if (Objects.equals(REF_NOT_FOUND, type)) {
-                checkReferenceNotFound(results, options);
-            } else {
-                LOGGER.warn("Check {} not supported in {}", type, getClass());
+            switch (type) {
+                case FileSystemCheckOptions.EXPIRED_INCONSISTENT_NODES:
+                    options.getInconsistentNodesExpirationTime()
+                        .ifPresent(time -> checkInconsistent(results, time, options.isRepair()));
+                    break;
+                case REF_NOT_FOUND:
+                    checkReferenceNotFound(results, options);
+                    break;
+                default:
+                    LOGGER.warn("Check {} not supported in {}", type, getClass());
             }
         }
 
@@ -1517,7 +1525,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
             final UUID childId = childNodeInfo.id;
             final FileSystemCheckIssue issue = new FileSystemCheckIssue()
                     .setNodeId(childId.toString())
-                    .setName(childNodeInfo.name)
+                    .setNodeName(childNodeInfo.name)
                     .setRepaired(options.isRepair())
                     .setDescription("row is not found but still referenced in " + childNodeInfo.parentId)
                     .setType(REF_NOT_FOUND);
@@ -1589,7 +1597,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
     private static FileSystemCheckIssue buildIssue(Row row) {
         final FileSystemCheckIssue issue = new FileSystemCheckIssue();
-        issue.setNodeId(row.getUUID(ID).toString()).setName(row.getString(NAME));
+        issue.setNodeId(row.getUUID(ID).toString()).setNodeName(row.getString(NAME));
         return issue;
     }
 

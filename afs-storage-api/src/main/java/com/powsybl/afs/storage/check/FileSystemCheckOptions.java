@@ -12,9 +12,19 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
+ *
+ * Options for a file system check. It defines what types of issues should be looked for,
+ * and if they should be repaired or not.
+ *
  * @author Yichen TANG <yichen.tang at rte-france.com>
  */
 public class FileSystemCheckOptions {
+
+    /**
+     * If defined in {@link #getTypes()}, the implementation must look for
+     * inconsistent nodes older than a specified date.
+     */
+    public static final String EXPIRED_INCONSISTENT_NODES = "EXPIRED_INCONSISTENT_NODES";
 
     private final Instant inconsistentNodesExpirationTime; //Inconsistent nodes older than this could be deleted
     private final Set<String> types;
@@ -27,19 +37,25 @@ public class FileSystemCheckOptions {
     }
 
     /**
-     * Use this time to compare with node's modification time.
-     * @return
+     * Inconsistent nodes older than this are considered "expired", which means
+     * that their creation will probably never be achieved. If {@link #isRepair()}
+     * is {@code true}, those nodes will be removed.
+     * If absent, nothing is done.
      */
     public Optional<Instant> getInconsistentNodesExpirationTime() {
         return Optional.ofNullable(inconsistentNodesExpirationTime);
     }
 
+    /**
+     * Defines the type of issues which should be looked for.
+     * Types can be implementation-dependent.
+     */
     public Set<String> getTypes() {
         return types;
     }
 
     /**
-     * @return If false, just list issues but not to repair.
+     * If {@code false}, just list issues but don't repair them
      */
     public boolean isRepair() {
         return repair;

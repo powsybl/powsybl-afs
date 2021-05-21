@@ -68,6 +68,18 @@ public class StorageServer {
         return ok(rootNodeInfo);
     }
 
+    @GetMapping(value = "fileSystems/{fileSystemName}/check/types", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ApiOperation (value = "Get supported file system checks")
+    @ApiResponses (value = {
+        @ApiResponse(code = 200, message = "Ok", response = List.class),
+        @ApiResponse(code = 404, message = "File system not found"),
+        @ApiResponse(code = 500, message = "Error")
+    })
+    public ResponseEntity<List<String>> check(@ApiParam(value = "File system name") @PathVariable("fileSystemName") String fileSystemName) {
+        AppStorage storage = appDataWrapper.getStorage(fileSystemName);
+        return ok(storage.getSupportedFileSystemChecks());
+    }
+
     @PostMapping("fileSystems/{fileSystemName}/check")
     @ApiOperation (value = "Check file system")
     @ApiResponses (value = {@ApiResponse(code = 200, message = "Check results", response = FileSystemCheckIssue.class), @ApiResponse(code = 500, message = "Error")})

@@ -9,18 +9,23 @@ package com.powsybl.afs.storage.check;
 import java.util.Objects;
 
 /**
+ * An issue identified during a file system check.
+ *
  * @author Yichen TANG <yichen.tang at rte-france.com>
  */
 public class FileSystemCheckIssue {
 
     private String nodeId;
-    private String name;
+    private String nodeName;
     private String type;
 
     private String description;
     private String resolutionDescription;
     private boolean repaired;
 
+    /**
+     * The id of the node on which the issue was identified
+     */
     public String getNodeId() {
         return nodeId;
     }
@@ -30,15 +35,21 @@ public class FileSystemCheckIssue {
         return this;
     }
 
-    public String getName() {
-        return name;
+    /**
+     * The name of the node on which the issue was identified
+     */
+    public String getNodeName() {
+        return nodeName;
     }
 
-    public FileSystemCheckIssue setName(String name) {
-        this.name = Objects.requireNonNull(name);
+    public FileSystemCheckIssue setNodeName(String nodeName) {
+        this.nodeName = Objects.requireNonNull(nodeName);
         return this;
     }
 
+    /**
+     * The issue type.
+     */
     public String getType() {
         return type;
     }
@@ -48,6 +59,10 @@ public class FileSystemCheckIssue {
         return this;
     }
 
+    /**
+     * {@code true} if the issue has been repaired. If so, a message will describe what has been done.
+     * @see #getResolutionDescription()
+     */
     public boolean isRepaired() {
         return repaired;
     }
@@ -57,6 +72,9 @@ public class FileSystemCheckIssue {
         return this;
     }
 
+    /**
+     * A message describing the identified issue.
+     */
     public String getDescription() {
         return description;
     }
@@ -66,6 +84,9 @@ public class FileSystemCheckIssue {
         return this;
     }
 
+    /**
+     * A message describing what has been done to repair the issue (if repaired).
+     */
     public String getResolutionDescription() {
         return resolutionDescription;
     }
@@ -77,7 +98,7 @@ public class FileSystemCheckIssue {
 
     @Override
     public int hashCode() {
-        return Objects.hash(nodeId, name, type, description, resolutionDescription, repaired);
+        return Objects.hash(nodeId, nodeName, type, description, resolutionDescription, repaired);
     }
 
     @Override
@@ -91,7 +112,7 @@ public class FileSystemCheckIssue {
         FileSystemCheckIssue that = (FileSystemCheckIssue) o;
         return repaired == that.repaired &&
             Objects.equals(nodeId, that.nodeId) &&
-            Objects.equals(name, that.name) &&
+            Objects.equals(nodeName, that.nodeName) &&
             Objects.equals(type, that.type) &&
             Objects.equals(description, that.description) &&
             Objects.equals(resolutionDescription, that.resolutionDescription);
@@ -101,7 +122,7 @@ public class FileSystemCheckIssue {
     public String toString() {
         return "FileSystemCheckIssue{" +
                 "nodeId=" + nodeId +
-                ", name='" + name + '\'' +
+                ", name='" + nodeName + '\'' +
                 ", type=" + type +
                 ", description=" + description +
                 ", resolutionDescription=" + resolutionDescription +

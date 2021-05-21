@@ -248,7 +248,17 @@ public interface AppStorage extends AutoCloseable {
     @Override
     void close();
 
+    /**
+     * Check file system for consistency issues.
+     */
     default List<FileSystemCheckIssue> checkFileSystem(FileSystemCheckOptions options) {
+        return Collections.emptyList();
+    }
+
+    /**
+     * The list of supported file system checks.
+     */
+    default List<String> getSupportedFileSystemChecks() {
         return Collections.emptyList();
     }
 }

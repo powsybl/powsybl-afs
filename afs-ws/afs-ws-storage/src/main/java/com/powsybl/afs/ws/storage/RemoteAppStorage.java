@@ -996,6 +996,20 @@ public class RemoteAppStorage extends AbstractAppStorage {
     }
 
     @Override
+    public List<String> getSupportedFileSystemChecks() {
+        WebTarget target = webTarget.path("fileSystems/{fileSystemName}/check/types")
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName);
+        Response response = target.request(MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .get();
+        try {
+            return readEntityIfOk(response, new GenericType<List<String>>() { });
+        } finally {
+            response.close();
+        }
+    }
+
+    @Override
     public List<FileSystemCheckIssue> checkFileSystem(FileSystemCheckOptions options) {
         Long expirationMillis = options.getInconsistentNodesExpirationTime()
             .map(Instant::toEpochMilli)

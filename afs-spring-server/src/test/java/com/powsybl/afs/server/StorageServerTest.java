@@ -133,7 +133,7 @@ public class StorageServerTest extends AbstractAppStorageTest {
     private static FileSystemCheckIssue issue(boolean repaired) {
         return new FileSystemCheckIssue()
             .setNodeId("id")
-            .setName("toto")
+            .setNodeName("toto")
             .setRepaired(repaired)
             .setDescription("my issue")
             .setType("TEST")
@@ -144,10 +144,15 @@ public class StorageServerTest extends AbstractAppStorageTest {
     public void testFileSystemCheck() {
         AppStorage backendStorage = appDataWrapper.getStorage(FS_TEST_NAME);
 
+        doReturn(Collections.singletonList("TEST"))
+            .when(backendStorage).getSupportedFileSystemChecks();
         doReturn(Collections.singletonList(issue(true)))
             .when(backendStorage).checkFileSystem(argThat(opt -> opt.isRepair() && opt.getTypes().contains("TEST")));
         doReturn(Collections.singletonList(issue(false)))
             .when(backendStorage).checkFileSystem(argThat(opt -> !opt.isRepair() && opt.getTypes().contains("TEST")));
+
+        assertThat(storage.getSupportedFileSystemChecks())
+            .containsExactly("TEST");
 
         final FileSystemCheckOptions dryRunOptions = new FileSystemCheckOptionsBuilder()
             .addCheckTypes("TEST")
