@@ -12,7 +12,10 @@ import com.powsybl.afs.storage.AfsStorageException;
 import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.EventsBus;
 import com.powsybl.afs.storage.NodeInfo;
+import com.powsybl.afs.storage.check.FileSystemCheckIssue;
+import com.powsybl.afs.storage.check.FileSystemCheckOptions;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -238,6 +241,10 @@ public class AppFileSystem implements AutoCloseable {
 
     public boolean isClosed() {
         return storage.isClosed();
+    }
+
+    public List<FileSystemCheckIssue> checkFileSystem(FileSystemCheckOptions options) {
+        return storage.checkFileSystem(options);
     }
 
     @Override

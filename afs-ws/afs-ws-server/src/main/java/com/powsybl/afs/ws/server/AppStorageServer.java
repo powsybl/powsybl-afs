@@ -6,6 +6,7 @@
  */
 package com.powsybl.afs.ws.server;
 
+import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
 import com.powsybl.afs.*;
 import com.powsybl.afs.storage.AppStorage;
@@ -13,6 +14,8 @@ import com.powsybl.afs.storage.NodeDependency;
 import com.powsybl.afs.storage.NodeGenericMetadata;
 import com.powsybl.afs.storage.NodeInfo;
 import com.powsybl.afs.storage.buffer.*;
+import com.powsybl.afs.storage.check.FileSystemCheckIssue;
+import com.powsybl.afs.storage.check.FileSystemCheckOptionsBuilder;
 import com.powsybl.afs.ws.server.utils.AppDataBean;
 import com.powsybl.afs.ws.server.utils.JwtTokenNeeded;
 import com.powsybl.afs.ws.utils.AfsRestApi;
@@ -36,6 +39,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
+import java.time.Instant;
 import java.util.*;
 
 /**
@@ -74,6 +78,30 @@ public class AppStorageServer {
         AppStorage storage = appDataBean.getStorage(fileSystemName);
         NodeInfo rootNodeInfo = storage.createRootNodeIfNotExists(nodeName, nodePseudoClass);
         return Response.ok().entity(rootNodeInfo).build();
+    }
+
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("fileSystems/{fileSystemName}/check")
+    @ApiOperation (value = "Check file system")
+    @ApiResponses (value = {@ApiResponse(code = 200, message = "Check results", response = FileSystemCheckIssue.class), @ApiResponse(code = 500, message = "Error")})
+    public Response check(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
+                          @ApiParam(value = "Issue types to check") @QueryParam("types") String types,
+                          @ApiParam(value = "Inconsistent if older than") @QueryParam("instant") Long instant,
+                          @ApiParam(value = "Try to repair or not") @QueryParam("repair") boolean repair) {
+        AppStorage storage = appDataBean.getStorage(fileSystemName);
+        FileSystemCheckOptionsBuilder builder = new FileSystemCheckOptionsBuilder();
+        if (!Strings.isNullOrEmpty(types)) {
+            builder.addCheckTypes(Arrays.asList(types.split(",")));
+        }
+        if (instant != null) {
+            Instant exp = Instant.ofEpochSecond(instant);
+            builder.setInconsistentNodesExpirationTime(exp);
+        }
+        if (repair) {
+            builder.repair();
+        }
+        return Response.ok().entity(storage.checkFileSystem(builder.build())).build();
     }
 
     @GET
@@ -126,7 +154,7 @@ public class AppStorageServer {
     public Response setMetadata(@ApiParam(value = "File system name") @PathParam("fileSystemName") String fileSystemName,
                                               @ApiParam(value = "Node ID") @PathParam("nodeId") String nodeId,
                                               @ApiParam(value = "Node Meta Data") NodeGenericMetadata nodeMetadata) {
-        logInfo("Udpating metadata for node {}", nodeId);
+        logInfo("Updating metadata for node {}", nodeId);
         AppStorage storage = appDataBean.getStorage(fileSystemName);
         storage.setMetadata(nodeId, nodeMetadata);
         return Response.ok().build();

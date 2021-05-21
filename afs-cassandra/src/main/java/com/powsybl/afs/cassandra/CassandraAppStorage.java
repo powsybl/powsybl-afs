@@ -11,9 +11,12 @@ import com.datastax.driver.core.utils.UUIDs;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.powsybl.afs.storage.*;
 import com.powsybl.afs.storage.buffer.*;
+import com.powsybl.afs.storage.check.FileSystemCheckIssue;
+import com.powsybl.afs.storage.check.FileSystemCheckOptions;
 import com.powsybl.afs.storage.events.*;
 import com.powsybl.timeseries.*;
 import org.apache.commons.lang3.tuple.Pair;
@@ -22,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.ByteBuffer;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -41,6 +45,8 @@ public class CassandraAppStorage extends AbstractAppStorage {
     private static final Logger LOGGER = LoggerFactory.getLogger(CassandraAppStorage.class);
 
     private static final String BROKEN_DEPENDENCY = "Broken dependency";
+
+    public static final String REF_NOT_FOUND = "REFERENCE_NOT_FOUND";
 
     private final String fileSystemName;
 
@@ -1477,5 +1483,159 @@ public class CassandraAppStorage extends AbstractAppStorage {
     public void close() {
         changeBuffer.flush();
         contextSupplier.get().close();
+    }
+
+    @Override
+    public List<String> getSupportedFileSystemChecks() {
+        return ImmutableList.of(FileSystemCheckOptions.EXPIRED_INCONSISTENT_NODES, REF_NOT_FOUND);
+    }
+
+    @Override
+    public List<FileSystemCheckIssue> checkFileSystem(FileSystemCheckOptions options) {
+        List<FileSystemCheckIssue> results = new ArrayList<>();
+
+        for (String type : options.getTypes()) {
+            switch (type) {
+                case FileSystemCheckOptions.EXPIRED_INCONSISTENT_NODES:
+                    options.getInconsistentNodesExpirationTime()
+                        .ifPresent(time -> checkInconsistent(results, time, options.isRepair()));
+                    break;
+                case REF_NOT_FOUND:
+                    checkReferenceNotFound(results, options);
+                    break;
+                default:
+                    LOGGER.warn("Check {} not supported in {}", type, getClass());
+            }
+        }
+
+        return results;
+    }
+
+    private void checkReferenceNotFound(List<FileSystemCheckIssue> results, FileSystemCheckOptions options) {
+        List<Statement> statements = new ArrayList<>();
+        Set<ChildNodeInfo> notFoundIds = new HashSet<>();
+        Set<UUID> existingRows = allPrimaryKeys();
+        for (ChildNodeInfo entity : getAllIdsInChildId()) {
+            if (!existingRows.contains(entity.id)) {
+                notFoundIds.add(entity);
+            }
+        }
+
+        for (ChildNodeInfo childNodeInfo : notFoundIds) {
+            final UUID childId = childNodeInfo.id;
+            final FileSystemCheckIssue issue = new FileSystemCheckIssue()
+                    .setNodeId(childId.toString())
+                    .setNodeName(childNodeInfo.name)
+                    .setRepaired(options.isRepair())
+                    .setDescription("row is not found but still referenced in " + childNodeInfo.parentId)
+                    .setType(REF_NOT_FOUND);
+            results.add(issue);
+            if (options.isRepair()) {
+                statements.add(delete().from(CHILDREN_BY_NAME_AND_CLASS)
+                        .where(eq(ID, childNodeInfo.parentId))
+                        .and(eq(CHILD_NAME, childNodeInfo.name)));
+                issue.setResolutionDescription("reset null child_name and child_id in " + childNodeInfo.parentId);
+            }
+        }
+        if (options.isRepair()) {
+            for (Statement statement : statements) {
+                getSession().execute(statement);
+            }
+        }
+    }
+
+    private Set<ChildNodeInfo> getAllIdsInChildId() {
+        Set<ChildNodeInfo> set = new HashSet<>();
+        ResultSet resultSet = getSession().execute(select(CHILD_ID, CHILD_NAME, ID).from(CHILDREN_BY_NAME_AND_CLASS));
+        for (Row row : resultSet) {
+            final UUID id = row.getUUID(CHILD_ID);
+            if (id != null) {
+                set.add(new ChildNodeInfo(id, row.getString(CHILD_NAME), row.getUUID(ID)));
+            }
+        }
+        return set;
+    }
+
+    private Set<UUID> allPrimaryKeys() {
+        Set<UUID> set = new HashSet<>();
+        ResultSet resultSet = getSession().execute(select(ID).distinct().from(CHILDREN_BY_NAME_AND_CLASS));
+        for (Row row : resultSet) {
+            set.add(row.getUUID(0));
+        }
+        return set;
+    }
+
+    private void checkInconsistent(List<FileSystemCheckIssue> results, Instant expirationTime, boolean repair) {
+        ResultSet resultSet = getSession().execute(select(ID, NAME, MODIFICATION_DATE, CONSISTENT)
+                .from(CHILDREN_BY_NAME_AND_CLASS));
+        for (Row row : resultSet) {
+            final Optional<FileSystemCheckIssue> issue = buildExpirationInconsistentIssue(row, expirationTime);
+            issue.ifPresent(results::add);
+        }
+        if (repair) {
+            for (FileSystemCheckIssue issue : results) {
+                if (Objects.equals(issue.getType(), "inconsistent")) {
+                    repairExpirationInconsistent(issue);
+                }
+            }
+        }
+    }
+
+    private static Optional<FileSystemCheckIssue> buildExpirationInconsistentIssue(Row row, Instant instant) {
+        return Optional.ofNullable(buildExpirationInconsistent(row,  instant));
+    }
+
+    private static FileSystemCheckIssue buildExpirationInconsistent(Row row, Instant instant) {
+        if (row.getTimestamp(MODIFICATION_DATE).toInstant().isBefore(instant) && !row.getBool(CONSISTENT)) {
+            final FileSystemCheckIssue fileSystemCheckIssue = buildIssue(row);
+            fileSystemCheckIssue.setType("inconsistent");
+            fileSystemCheckIssue.setDescription("inconsistent and older than " + instant);
+            return fileSystemCheckIssue;
+        }
+        return null;
+    }
+
+    private static FileSystemCheckIssue buildIssue(Row row) {
+        final FileSystemCheckIssue issue = new FileSystemCheckIssue();
+        issue.setNodeId(row.getUUID(ID).toString()).setNodeName(row.getString(NAME));
+        return issue;
+    }
+
+    private void repairExpirationInconsistent(FileSystemCheckIssue issue) {
+        deleteNode(issue.getNodeId());
+        issue.setRepaired(true);
+        issue.setResolutionDescription("deleted");
+    }
+
+    static class ChildNodeInfo {
+
+        final UUID id;
+        final String name;
+        final UUID parentId;
+
+        ChildNodeInfo(UUID id, String name, UUID parentId) {
+            this.id = id;
+            this.name = name;
+            this.parentId = parentId;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(id);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof ChildNodeInfo)) {
+                return false;
+            }
+
+            ChildNodeInfo that = (ChildNodeInfo) o;
+
+            return id.equals(that.id);
+        }
     }
 }

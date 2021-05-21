@@ -6,6 +6,8 @@
  */
 package com.powsybl.afs.storage;
 
+import com.powsybl.afs.storage.check.FileSystemCheckIssue;
+import com.powsybl.afs.storage.check.FileSystemCheckOptions;
 import com.powsybl.timeseries.DoubleDataChunk;
 import com.powsybl.timeseries.StringDataChunk;
 import com.powsybl.timeseries.TimeSeriesMetadata;
@@ -239,5 +241,15 @@ public class ForwardingAppStorage implements AppStorage {
 
     public EventsBus getEventsBus() {
         return storage.getEventsBus();
+    }
+
+    @Override
+    public List<FileSystemCheckIssue> checkFileSystem(FileSystemCheckOptions options) {
+        return storage.checkFileSystem(options);
+    }
+
+    @Override
+    public List<String> getSupportedFileSystemChecks() {
+        return storage.getSupportedFileSystemChecks();
     }
 }

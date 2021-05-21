@@ -6,8 +6,12 @@
  */
 package com.powsybl.afs.storage;
 
+import com.powsybl.afs.storage.check.FileSystemCheckIssue;
+import com.powsybl.afs.storage.check.FileSystemCheckOptions;
 import com.powsybl.commons.PowsyblException;
-import com.powsybl.timeseries.*;
+import com.powsybl.timeseries.DoubleDataChunk;
+import com.powsybl.timeseries.StringDataChunk;
+import com.powsybl.timeseries.TimeSeriesMetadata;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -243,4 +247,18 @@ public interface AppStorage extends AutoCloseable {
      */
     @Override
     void close();
+
+    /**
+     * Check file system for consistency issues.
+     */
+    default List<FileSystemCheckIssue> checkFileSystem(FileSystemCheckOptions options) {
+        return Collections.emptyList();
+    }
+
+    /**
+     * The list of supported file system checks.
+     */
+    default List<String> getSupportedFileSystemChecks() {
+        return Collections.emptyList();
+    }
 }

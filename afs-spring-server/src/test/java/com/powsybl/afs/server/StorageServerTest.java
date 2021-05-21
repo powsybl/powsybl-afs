@@ -11,10 +11,15 @@ import com.google.common.collect.ImmutableList;
 import com.powsybl.afs.*;
 import com.powsybl.afs.mapdb.storage.MapDbAppStorage;
 import com.powsybl.afs.storage.*;
+import com.powsybl.afs.storage.check.FileSystemCheckIssue;
+import com.powsybl.afs.storage.check.FileSystemCheckOptions;
+import com.powsybl.afs.storage.check.FileSystemCheckOptionsBuilder;
 import com.powsybl.afs.ws.storage.RemoteAppStorage;
 import com.powsybl.afs.ws.storage.RemoteTaskMonitor;
 import com.powsybl.commons.exceptions.UncheckedUriSyntaxException;
 import com.powsybl.computation.ComputationManager;
+import org.assertj.core.api.Assertions;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,11 +34,14 @@ import org.springframework.test.context.junit4.SpringRunner;
 import javax.servlet.ServletContext;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
 /**
@@ -60,7 +68,7 @@ public class StorageServerTest extends AbstractAppStorageTest {
         @Bean
         public AppData getAppData() {
             EventsBus eventBus = new InMemoryEventsBus();
-            AppStorage storage = MapDbAppStorage.createMem("mem", eventBus);
+            AppStorage storage = Mockito.spy(MapDbAppStorage.createMem("mem", eventBus));
             AppFileSystem fs = new AppFileSystem(FS_TEST_NAME, true, storage, new LocalTaskMonitor());
             ComputationManager cm = Mockito.mock(ComputationManager.class);
 
@@ -118,5 +126,50 @@ public class StorageServerTest extends AbstractAppStorageTest {
         // clear events
         eventStack.take();
         eventStack.take();
+
+        testFileSystemCheck();
+    }
+
+    private static FileSystemCheckIssue issue(boolean repaired) {
+        return new FileSystemCheckIssue()
+            .setNodeId("id")
+            .setNodeName("toto")
+            .setRepaired(repaired)
+            .setDescription("my issue")
+            .setType("TEST")
+            .setResolutionDescription(repaired ? "resolved" : "");
+    }
+
+    @Test
+    public void testFileSystemCheck() {
+        AppStorage backendStorage = appDataWrapper.getStorage(FS_TEST_NAME);
+
+        doReturn(Collections.singletonList("TEST"))
+            .when(backendStorage).getSupportedFileSystemChecks();
+        doReturn(Collections.singletonList(issue(true)))
+            .when(backendStorage).checkFileSystem(argThat(opt -> opt.isRepair() && opt.getTypes().contains("TEST")));
+        doReturn(Collections.singletonList(issue(false)))
+            .when(backendStorage).checkFileSystem(argThat(opt -> !opt.isRepair() && opt.getTypes().contains("TEST")));
+
+        assertThat(storage.getSupportedFileSystemChecks())
+            .containsExactly("TEST");
+
+        final FileSystemCheckOptions dryRunOptions = new FileSystemCheckOptionsBuilder()
+            .addCheckTypes("TEST")
+            .dryRun()
+            .build();
+        Assertions.assertThat(storage.checkFileSystem(dryRunOptions))
+            .containsExactly(issue(false));
+
+        final FileSystemCheckOptions repairOptions = new FileSystemCheckOptionsBuilder()
+            .addCheckTypes("TEST")
+            .repair()
+            .build();
+        Assertions.assertThat(storage.checkFileSystem(repairOptions))
+            .containsExactly(issue(true));
+
+        final FileSystemCheckOptions otherFsOptions = new FileSystemCheckOptionsBuilder().build();
+        Assertions.assertThat(storage.checkFileSystem(otherFsOptions))
+            .isEmpty();
     }
 }
