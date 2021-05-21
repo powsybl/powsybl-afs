@@ -6,6 +6,9 @@
  */
 package com.powsybl.afs.storage.check;
 
+import com.google.common.base.MoreObjects;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+
 import java.util.Objects;
 
 /**
@@ -73,6 +76,28 @@ public class FileSystemCheckIssue {
     public FileSystemCheckIssue setResolutionDescription(String resolutionDescription) {
         this.resolutionDescription = resolutionDescription;
         return this;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(nodeId, name, type, description, resolutionDescription, repaired);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        FileSystemCheckIssue that = (FileSystemCheckIssue) o;
+        return repaired == that.repaired &&
+            Objects.equals(nodeId, that.nodeId) &&
+            Objects.equals(name, that.name) &&
+            Objects.equals(type, that.type) &&
+            Objects.equals(description, that.description) &&
+            Objects.equals(resolutionDescription, that.resolutionDescription);
     }
 
     @Override

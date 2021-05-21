@@ -997,11 +997,13 @@ public class RemoteAppStorage extends AbstractAppStorage {
 
     @Override
     public List<FileSystemCheckIssue> checkFileSystem(FileSystemCheckOptions options) {
-        Optional<Instant> optInstant = options.getInconsistentNodesExpirationTime();
+        Long expirationMillis = options.getInconsistentNodesExpirationTime()
+            .map(Instant::toEpochMilli)
+            .orElse(null);
         WebTarget target = webTarget.path("fileSystems/{fileSystemName}/check")
                 .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
                 .queryParam("repair", options.isRepair())
-                .queryParam("instant", optInstant.orElse(Instant.MIN).toEpochMilli())
+                .queryParam("instant", expirationMillis)
                 .queryParam("types", String.join(",", options.getTypes()));
 
         Response response = target.request(MediaType.APPLICATION_JSON)
