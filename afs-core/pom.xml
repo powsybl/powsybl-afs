@@ -15,7 +15,7 @@
     <parent>
         <artifactId>powsybl-afs</artifactId>
         <groupId>com.powsybl</groupId>
-        <version>3.6.0-SNAPSHOT</version>
+        <version>3.7.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>powsybl-afs-core</artifactId>
@@ -113,6 +113,16 @@
             <artifactId>powsybl-tools</artifactId>
             <version>${powsyblcore.version}</version>
             <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.powsybl</groupId>
+            <artifactId>powsybl-config-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.powsybl</groupId>
+            <artifactId>powsybl-iidm-impl</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

@@ -14,12 +14,14 @@ import com.powsybl.commons.datasource.ReadOnlyDataSource;
 import com.powsybl.iidm.import_.Importer;
 import com.powsybl.iidm.import_.ImportersLoader;
 import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.NetworkListener;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 
@@ -77,6 +79,11 @@ public class ImportedCase extends ProjectFile implements ProjectCase {
     @Override
     public Network getNetwork() {
         return findService(NetworkCacheService.class).getNetwork(this);
+    }
+
+    @Override
+    public Network getNetwork(List<NetworkListener> listeners) {
+        return findService(NetworkCacheService.class).getNetwork(this, listeners);
     }
 
     @Override

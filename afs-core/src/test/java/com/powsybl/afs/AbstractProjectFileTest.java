@@ -47,10 +47,11 @@ public abstract class AbstractProjectFileTest {
 
     @Before
     public void setup() throws IOException {
-        network = Mockito.mock(Network.class);
-        Substation s = Mockito.mock(Substation.class);
-        Mockito.when(s.getId()).thenReturn("s1");
-        Mockito.when(network.getSubstations()).thenReturn(Collections.singletonList(s));
+        network = Network.create("test", "test");
+        Substation s = network.newSubstation()
+                .setId("s1")
+                .setTso("TSO")
+                .add();
         ComputationManager computationManager = Mockito.mock(ComputationManager.class);
         storage = createStorage();
         afs = new AppFileSystem("mem", false, storage);
