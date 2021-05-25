@@ -1,6 +1,9 @@
 package com.powsybl.afs.timeseriesserver;
 
 import com.powsybl.afs.storage.*;
+import com.powsybl.afs.storage.events.AppStorageListener;
+import com.powsybl.afs.storage.events.TimeSeriesCreated;
+import com.powsybl.afs.storage.events.TimeSeriesDataUpdated;
 import com.powsybl.timeseries.DoubleDataChunk;
 import com.powsybl.timeseries.StringDataChunk;
 import com.powsybl.timeseries.TimeSeriesMetadata;
@@ -14,20 +17,30 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-public class TimeSeriesServerAppStorage implements AppStorage {
+public class TimeSeriesServerAppStorage extends AbstractAppStorage {
 
     /**
      * This storage is used for all non-timeseries-related operations
      */
-    AppStorage generalDelegate;
+    private AbstractAppStorage generalDelegate;
 
     /**
      * This storage handles all the timeseries-related operations
      */
-    TimeSeriesSorageDelegate timeSeriesDelegate;
+    private TimeSeriesSorageDelegate timeSeriesDelegate;
 
-    public TimeSeriesServerAppStorage(AppStorage generalDelegate, URI timeSeriesServerURI) {
+
+    /**
+     * A listener that copies all event from the general delegate event bus to this class event bus.
+     * This has to be a field because the listeners of an event bus are stored in a WeakReferenceList
+     */
+    private AppStorageListener notifyGeneralDelegateEventListener;
+
+    public TimeSeriesServerAppStorage(AbstractAppStorage generalDelegate, URI timeSeriesServerURI) {
         this.generalDelegate = generalDelegate;
+        eventsBus = new InMemoryEventsBus();
+        notifyGeneralDelegateEventListener = t -> t.getEvents().forEach(e -> pushEvent(e, t.getTopic()));
+        generalDelegate.getEventsBus().addListener(notifyGeneralDelegateEventListener);
         timeSeriesDelegate = new TimeSeriesSorageDelegate(timeSeriesServerURI);
         timeSeriesDelegate.createAFSAppIfNotExists();
     }
@@ -125,6 +138,7 @@ public class TimeSeriesServerAppStorage implements AppStorage {
     @Override
     public void createTimeSeries(String nodeId, TimeSeriesMetadata metadata) {
         timeSeriesDelegate.createTimeSeries(nodeId, metadata);
+        pushEvent(new TimeSeriesCreated(nodeId, metadata.getName()), APPSTORAGE_TIMESERIES_TOPIC);
     }
 
     @Override
@@ -155,12 +169,13 @@ public class TimeSeriesServerAppStorage implements AppStorage {
     @Override
     public Map<String, List<DoubleDataChunk>> getDoubleTimeSeriesData(String nodeId, Set<String> timeSeriesNames, int version) {
         //TODO
-        return null;
+        return timeSeriesDelegate.getDoubleTimeSeriesData(nodeId, timeSeriesNames, version);
     }
 
     @Override
     public void addDoubleTimeSeriesData(String nodeId, int version, String timeSeriesName, List<DoubleDataChunk> chunks) {
-        //TODO
+        timeSeriesDelegate.addDoubleTimeSeriesData(nodeId, version, timeSeriesName, chunks);
+        pushEvent(new TimeSeriesDataUpdated(nodeId, timeSeriesName), APPSTORAGE_TIMESERIES_TOPIC);
     }
 
     @Override
@@ -203,14 +218,11 @@ public class TimeSeriesServerAppStorage implements AppStorage {
         generalDelegate.removeDependency(nodeId, name, toNodeId);
     }
 
-    @Override
-    public EventsBus getEventsBus() {
-        return generalDelegate.getEventsBus();
-    }
 
     @Override
     public void flush() {
         generalDelegate.flush();
+        eventsBus.flush();
     }
 
     @Override
@@ -226,5 +238,25 @@ public class TimeSeriesServerAppStorage implements AppStorage {
     @Override
     public boolean isConsistent(String nodeId) {
         return generalDelegate.isConsistent(nodeId);
+    }
+
+    @Override
+    public void setMetadata(String nodeId, NodeGenericMetadata genericMetadata) {
+        generalDelegate.setMetadata(nodeId, genericMetadata);
+    }
+
+    @Override
+    public void setConsistent(String nodeId) {
+        generalDelegate.setConsistent(nodeId);
+    }
+
+    @Override
+    public List<NodeInfo> getInconsistentNodes() {
+        return generalDelegate.getInconsistentNodes();
+    }
+
+    @Override
+    public void renameNode(String nodeId, String name) {
+        generalDelegate.renameNode(nodeId, name);
     }
 }

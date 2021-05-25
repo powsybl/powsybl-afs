@@ -110,10 +110,9 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>powsybl-afs-ext-base</artifactId>
+            <artifactId>powsybl-afs-mapdb-storage</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
-            <type>test-jar</type>
         </dependency>
     </dependencies>
 
