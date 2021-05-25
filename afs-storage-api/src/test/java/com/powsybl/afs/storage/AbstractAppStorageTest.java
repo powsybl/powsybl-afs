@@ -202,6 +202,10 @@ public abstract class AbstractAppStorageTest {
         DataSource ds1 = new AppStorageDataSource(storage, testFolderInfo.getId(), testFolderInfo.getName());
         try (Writer writer = new OutputStreamWriter(storage.writeBinaryData(testFolderInfo.getId(), "testData1"), StandardCharsets.UTF_8)) {
             writer.write("Content for testData1");
+
+            //Event must not be sent before stream is closed: should still be empty for now
+            storage.flush();
+            assertEventStack();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
