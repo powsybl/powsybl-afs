@@ -514,6 +514,7 @@ public class MapDbAppStorage extends AbstractAppStorage {
         for (UUID childNodeUuid : childNodesMap.get(nodeUuid)) {
             deleteNode(childNodeUuid);
         }
+        final Set<String> tsNames = removeTimeSeries(nodeUuid.toString());
         NodeInfo nodeInfo = nodeInfoMap.remove(nodeUuid);
         nodeConsistencyMap.remove(nodeUuid);
         for (String dataName : dataNamesMap.get(nodeUuid)) {
@@ -549,6 +550,10 @@ public class MapDbAppStorage extends AbstractAppStorage {
             pushEvent(new BackwardDependencyRemoved(link.getNodeUuid().toString(), link.getName()), APPSTORAGE_DEPENDENCY_TOPIC);
         }
         dependencyNodesMap.remove(nodeUuid);
+
+        if (tsNames != null && !tsNames.isEmpty()) {
+            pushEvent(new TimeSeriesCleared(nodeUuid.toString()), APPSTORAGE_TIMESERIES_TOPIC);
+        }
         return parentNodeUuid;
     }
 
@@ -782,6 +787,11 @@ public class MapDbAppStorage extends AbstractAppStorage {
 
     @Override
     public void clearTimeSeries(String nodeId) {
+        removeTimeSeries(nodeId);
+        pushEvent(new TimeSeriesCleared(nodeId), APPSTORAGE_TIMESERIES_TOPIC);
+    }
+
+    private Set<String> removeTimeSeries(String nodeId) {
         UUID nodeUuid = checkNodeId(nodeId);
         Set<String> names = timeSeriesNamesMap.get(nodeUuid);
         if (names != null) {
@@ -794,7 +804,7 @@ public class MapDbAppStorage extends AbstractAppStorage {
         keys.forEach(timeSeriesLastChunkMap::remove);
         clearTimeSeriesData(nodeId, doubleTimeSeriesChunksMap);
         clearTimeSeriesData(nodeId, stringTimeSeriesChunksMap);
-        pushEvent(new TimeSeriesCleared(nodeId), APPSTORAGE_TIMESERIES_TOPIC);
+        return names;
     }
 
     @Override

@@ -805,10 +805,10 @@ public class CassandraAppStorage extends AbstractAppStorage {
                                .and(eq(CHILD_NAME, getNodeName(nodeUuid))));
 
         // data
-        removeAllData(nodeUuid, statements);
+        final List<String> dataNames = prepareRemoveAllDataStatements(nodeUuid, statements);
 
         // time series
-        clearTimeSeries(nodeUuid, statements);
+        final List<String> tsNames = prepareClearTimeSeriesStatements(nodeUuid, statements);
 
         // dependencies
         Map<String, UUID> dependencies = getDependencyInfo(nodeUuid);
@@ -834,6 +834,11 @@ public class CassandraAppStorage extends AbstractAppStorage {
             getSession().execute(statement);
         }
 
+        // send events after statements are executed
+        for (String dataName : dataNames) {
+            pushEvent(new NodeDataRemoved(nodeUuid.toString(), dataName), APPSTORAGE_NODE_TOPIC);
+        }
+
         backwardDependencies.entrySet().stream().flatMap(dep -> dep.getValue().stream().map(depUuid -> Pair.of(dep.getKey(), depUuid))).forEach(dep -> {
             pushEvent(new DependencyRemoved(dep.getValue().toString(), dep.getKey()), APPSTORAGE_DEPENDENCY_TOPIC);
             pushEvent(new BackwardDependencyRemoved(nodeUuid.toString(), dep.getKey()), APPSTORAGE_DEPENDENCY_TOPIC);
@@ -842,6 +847,10 @@ public class CassandraAppStorage extends AbstractAppStorage {
             pushEvent(new DependencyRemoved(nodeUuid.toString(), key), APPSTORAGE_DEPENDENCY_TOPIC);
             pushEvent(new BackwardDependencyRemoved(value.toString(), key), APPSTORAGE_DEPENDENCY_TOPIC);
         });
+
+        if (!tsNames.isEmpty()) {
+            pushEvent(new TimeSeriesCleared(nodeUuid.toString()), APPSTORAGE_TIMESERIES_TOPIC);
+        }
 
         return parentNodeUuid;
     }
@@ -1078,7 +1087,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
         return getDataNames(nodeUuid);
     }
 
-    private void removeData(UUID nodeUuid, String name, List<Statement> statements) {
+    private void prepareRemoveDataStatements(UUID nodeUuid, String name, List<Statement> statements) {
         statements.add(delete()
                 .from(NODE_DATA)
                 .where(eq(ID, nodeUuid))
@@ -1087,13 +1096,15 @@ public class CassandraAppStorage extends AbstractAppStorage {
                 .from(NODE_DATA_NAMES)
                 .where(eq(ID, nodeUuid))
                 .and(eq(NAME, name)));
-        pushEvent(new NodeDataRemoved(nodeUuid.toString(), name), APPSTORAGE_NODE_TOPIC);
     }
 
-    private void removeAllData(UUID nodeUuid, List<Statement> statements) {
+    private List<String> prepareRemoveAllDataStatements(UUID nodeUuid, List<Statement> statements) {
+        List<String> dataNames = new ArrayList<>();
         for (String dataName : getDataNames(nodeUuid)) {
-            removeData(nodeUuid, dataName, statements);
+            prepareRemoveDataStatements(nodeUuid, dataName, statements);
+            dataNames.add(dataName);
         }
+        return dataNames;
     }
 
     @Override
@@ -1115,11 +1126,11 @@ public class CassandraAppStorage extends AbstractAppStorage {
         }
 
         List<Statement> statements = new ArrayList<>();
-        removeData(nodeUuid, name, statements);
+        prepareRemoveDataStatements(nodeUuid, name, statements);
         for (Statement statement : statements) {
             getSession().execute(statement);
         }
-
+        pushEvent(new NodeDataRemoved(nodeUuid.toString(), name), APPSTORAGE_NODE_TOPIC);
         return true;
     }
 
@@ -1302,13 +1313,15 @@ public class CassandraAppStorage extends AbstractAppStorage {
         pushEvent(new TimeSeriesDataUpdated(nodeId, timeSeriesName), APPSTORAGE_TIMESERIES_TOPIC);
     }
 
-    private void clearTimeSeries(UUID nodeUuid, List<Statement> statements) {
+    private List<String> prepareClearTimeSeriesStatements(UUID nodeUuid, List<Statement> statements) {
+        List<String> tsNames = new ArrayList<>();
         statements.add(delete().from(REGULAR_TIME_SERIES).where(eq(ID, nodeUuid)));
         ResultSet resultSet = getSession().execute(select(TIME_SERIES_NAME, VERSION, CHUNK_TYPE)
                 .from(TIME_SERIES_DATA_CHUNK_TYPES)
                 .where(eq(ID, nodeUuid)));
         for (Row row : resultSet) {
             String timeSeriesName = row.getString(0);
+            tsNames.add(timeSeriesName);
             int version = row.getInt(1);
             TimeSeriesChunkType chunkType = TimeSeriesChunkType.values()[row.getInt(2)];
             switch (chunkType) {
@@ -1337,6 +1350,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
             }
         }
         statements.add(delete().from(TIME_SERIES_DATA_CHUNK_TYPES).where(eq(ID, nodeUuid)));
+        return tsNames;
     }
 
     @Override
@@ -1347,7 +1361,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
         changeBuffer.flush();
 
         List<Statement> statements = new ArrayList<>();
-        clearTimeSeries(nodeUuid, statements);
+        prepareClearTimeSeriesStatements(nodeUuid, statements);
         for (Statement statement : statements) {
             getSession().execute(statement);
         }
