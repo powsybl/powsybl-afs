@@ -1035,6 +1035,8 @@ public class CassandraAppStorage extends AbstractAppStorage {
             getSession().execute(insertInto(NODE_DATA_NAMES)
                     .value(ID, nodeUuid)
                     .value(NAME, name));
+
+            pushEvent(new NodeDataUpdated(nodeUuid.toString(), name), APPSTORAGE_NODE_TOPIC);
         }
     }
 
@@ -1044,7 +1046,6 @@ public class CassandraAppStorage extends AbstractAppStorage {
         Objects.requireNonNull(name);
         // flush buffer to keep change order
         changeBuffer.flush();
-        pushEvent(new NodeDataUpdated(nodeId, name), APPSTORAGE_NODE_TOPIC);
         return new BinaryDataOutputStream(nodeUuid, name);
     }
 
