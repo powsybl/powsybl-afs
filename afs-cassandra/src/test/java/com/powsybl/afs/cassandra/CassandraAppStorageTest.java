@@ -26,7 +26,8 @@ import java.util.UUID;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
 import static com.powsybl.afs.cassandra.CassandraConstants.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.Assert.fail;
 import static org.junit.Assert.*;
 
 /**
@@ -48,6 +49,20 @@ public class CassandraAppStorageTest extends AbstractAppStorageTest {
         testSupportedChecks();
         testInconsistendNodeRepair();
         testAbsentChildRepair();
+        testOrphanNodeRepair();
+    }
+
+    private void testOrphanNodeRepair() {
+        NodeInfo orphanNode = storage.createNode(UUIDs.timeBased().toString(), "orphanNodes", FOLDER_PSEUDO_CLASS, "", 0, new NodeGenericMetadata());
+        assertThatThrownBy(() -> storage.getParentNode(orphanNode.getId())).isInstanceOf(NullPointerException.class);
+        FileSystemCheckOptions repairOption = new FileSystemCheckOptionsBuilder()
+                .addCheckTypes(CassandraAppStorage.ORPHAN_NODE)
+                .repair().build();
+        List<FileSystemCheckIssue> issues = storage.checkFileSystem(repairOption);
+        assertThat(issues).hasOnlyOneElementSatisfying(i -> assertEquals(orphanNode.getId(), i.getNodeId()));
+        assertThatThrownBy(() -> storage.getParentNode(orphanNode.getId()))
+                .isInstanceOf(CassandraAfsException.class)
+                .hasMessageContaining("not found");
     }
 
     void testInconsistendNodeRepair() {
