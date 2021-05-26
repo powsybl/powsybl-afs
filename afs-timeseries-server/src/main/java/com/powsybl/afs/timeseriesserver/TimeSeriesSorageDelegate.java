@@ -33,7 +33,6 @@ public class TimeSeriesSorageDelegate {
     private static final String AFS_APP = "AFS";
     private static final Logger LOGGER = LoggerFactory.getLogger(TimeSeriesSorageDelegate.class);
 
-
     private URI timeSeriesServerURI;
 
     public TimeSeriesSorageDelegate(URI timeSeriesServerURI) {
@@ -224,12 +223,12 @@ public class TimeSeriesSorageDelegate {
         SearchQueryResults results = performSearch(searchQuery);
         List<Long> versionIDs = results.getTimeSeriesInformations()
             .stream()
-            .map(t->t.getVersions().get(versionString))
+            .map(t -> t.getVersions().get(versionString))
             .collect(Collectors.toList());
 
         Map<Long, String> versionIDToTSName = results.getTimeSeriesInformations()
             .stream()
-            .collect(Collectors.toMap(t->t.getVersions().get(versionString), t->t.getName()));
+            .collect(Collectors.toMap(t -> t.getVersions().get(versionString), t -> t.getName()));
 
         FetchQuery query = new FetchQuery(versionIDs, null, null);
         Client client = createClient();
@@ -246,8 +245,7 @@ public class TimeSeriesSorageDelegate {
             FetchQueryResult fetchResults = new ObjectMapper().readValue(json, FetchQueryResult.class);
 
             Map<String, List<DoubleDataChunk>> toReturn = new HashMap<>();
-            for(int i=0; i<versionIDs.size(); i++)
-            {
+            for (int i = 0; i < versionIDs.size(); i++) {
                 double[] values = fetchResults.getData().get(i).stream().mapToDouble(Double::doubleValue).toArray();
                 UncompressedDoubleDataChunk chunk = new UncompressedDoubleDataChunk(0, values);
                 toReturn.put(versionIDToTSName.get(versionIDs.get(i)), Arrays.asList(chunk));

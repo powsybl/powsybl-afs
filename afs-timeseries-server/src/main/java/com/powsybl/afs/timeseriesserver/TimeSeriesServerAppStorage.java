@@ -218,7 +218,6 @@ public class TimeSeriesServerAppStorage extends AbstractAppStorage {
         generalDelegate.removeDependency(nodeId, name, toNodeId);
     }
 
-
     @Override
     public void flush() {
         generalDelegate.flush();
