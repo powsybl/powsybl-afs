@@ -30,14 +30,26 @@ import java.util.stream.Collectors;
 
 public class TimeSeriesSorageDelegate {
 
-    private static final String AFS_APP = "AFS";
+    private static final String AFS_DEFAULT_APP = "AFS";
     private static final Logger LOGGER = LoggerFactory.getLogger(TimeSeriesSorageDelegate.class);
 
+    /**
+     * The name of the app in TimeSeriesServer, in which AFS will store time series
+     */
+    private final String app;
 
+    /**
+     * The address of the TimeSeriesServer
+     */
     private URI timeSeriesServerURI;
 
     public TimeSeriesSorageDelegate(URI timeSeriesServerURI) {
+        this(timeSeriesServerURI, AFS_DEFAULT_APP);
+    }
+
+    public TimeSeriesSorageDelegate(URI timeSeriesServerURI, String app) {
         this.timeSeriesServerURI = timeSeriesServerURI;
+        this.app = app;
     }
 
     public static Client createClient() {
@@ -59,11 +71,11 @@ public class TimeSeriesSorageDelegate {
             Response response = buildBaseRequest(client).request().get();
 
             Collection<String> apps = response.readEntity(Collection.class);
-            if (apps.contains(AFS_APP)) {
+            if (apps.contains(app)) {
                 return;
             }
 
-            response = buildBaseRequest(client).path(AFS_APP).request().post(Entity.json(""));
+            response = buildBaseRequest(client).path(app).request().post(Entity.json(""));
             if (response.getStatus() != 200) {
                 throw new AfsStorageException("Error while initializing AFS timeseries app storage");
             }
@@ -92,7 +104,7 @@ public class TimeSeriesSorageDelegate {
         Client client = createClient();
         try {
             buildBaseRequest(client)
-                .path(AFS_APP)
+                .path(app)
                 .path("series")
                 .request().post(Entity.json(new ObjectMapper().writeValueAsString(createQuery)));
         } catch (JsonProcessingException e) {
@@ -109,7 +121,7 @@ public class TimeSeriesSorageDelegate {
         Client client = createClient();
         try {
             Response response = buildBaseRequest(client)
-                .path(AFS_APP)
+                .path(app)
                 .path("series")
                 .path("_search")
                 .request().post(Entity.json(new ObjectMapper().writeValueAsString(query)));
@@ -201,7 +213,7 @@ public class TimeSeriesSorageDelegate {
         Client client = createClient();
         try {
             Response response = buildBaseRequest(client)
-                .path(AFS_APP)
+                .path(app)
                 .path("series")
                 .request().put(Entity.json(new ObjectMapper().writeValueAsString(publishQuery)));
             if (response.getStatus() != 200) {
@@ -224,18 +236,18 @@ public class TimeSeriesSorageDelegate {
         SearchQueryResults results = performSearch(searchQuery);
         List<Long> versionIDs = results.getTimeSeriesInformations()
             .stream()
-            .map(t->t.getVersions().get(versionString))
+            .map(t -> t.getVersions().get(versionString))
             .collect(Collectors.toList());
 
         Map<Long, String> versionIDToTSName = results.getTimeSeriesInformations()
             .stream()
-            .collect(Collectors.toMap(t->t.getVersions().get(versionString), t->t.getName()));
+            .collect(Collectors.toMap(t -> t.getVersions().get(versionString), t -> t.getName()));
 
         FetchQuery query = new FetchQuery(versionIDs, null, null);
         Client client = createClient();
         try {
             Response response = buildBaseRequest(client)
-                .path(AFS_APP)
+                .path(app)
                 .path("series")
                 .path("_fetch")
                 .request().post(Entity.json(new ObjectMapper().writeValueAsString(query)));
@@ -246,8 +258,7 @@ public class TimeSeriesSorageDelegate {
             FetchQueryResult fetchResults = new ObjectMapper().readValue(json, FetchQueryResult.class);
 
             Map<String, List<DoubleDataChunk>> toReturn = new HashMap<>();
-            for(int i=0; i<versionIDs.size(); i++)
-            {
+            for (int i = 0; i < versionIDs.size(); i++) {
                 double[] values = fetchResults.getData().get(i).stream().mapToDouble(Double::doubleValue).toArray();
                 UncompressedDoubleDataChunk chunk = new UncompressedDoubleDataChunk(0, values);
                 toReturn.put(versionIDToTSName.get(versionIDs.get(i)), Arrays.asList(chunk));
