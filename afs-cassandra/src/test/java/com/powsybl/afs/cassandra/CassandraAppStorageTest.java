@@ -16,6 +16,9 @@ import org.cassandraunit.CassandraCQLUnit;
 import org.cassandraunit.dataset.cql.ClassPathCQLDataSet;
 import org.junit.Rule;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
@@ -54,15 +57,30 @@ public class CassandraAppStorageTest extends AbstractAppStorageTest {
 
     private void testOrphanNodeRepair() {
         NodeInfo orphanNode = storage.createNode(UUIDs.timeBased().toString(), "orphanNodes", FOLDER_PSEUDO_CLASS, "", 0, new NodeGenericMetadata());
-        assertThatThrownBy(() -> storage.getParentNode(orphanNode.getId())).isInstanceOf(NullPointerException.class);
+        storage.setConsistent(orphanNode.getId());
+        try (OutputStream os = storage.writeBinaryData(orphanNode.getId(), "blob")) {
+            os.write("word2".getBytes(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            fail();
+        }
+        storage.flush();
+        NodeInfo orphanChild = storage.createNode(orphanNode.getId(), "orphanChild", FOLDER_PSEUDO_CLASS, "", 0, new NodeGenericMetadata());
+        storage.setConsistent(orphanChild.getId());
         FileSystemCheckOptions repairOption = new FileSystemCheckOptionsBuilder()
                 .addCheckTypes(CassandraAppStorage.ORPHAN_NODE)
                 .repair().build();
         List<FileSystemCheckIssue> issues = storage.checkFileSystem(repairOption);
         assertThat(issues).hasOnlyOneElementSatisfying(i -> assertEquals(orphanNode.getId(), i.getNodeId()));
+        assertThatThrownBy(() -> storage.getNodeInfo(orphanNode.getId()))
+                .isInstanceOf(CassandraAfsException.class)
+                .hasMessageContaining("not found");
         assertThatThrownBy(() -> storage.getParentNode(orphanNode.getId()))
                 .isInstanceOf(CassandraAfsException.class)
                 .hasMessageContaining("not found");
+        assertThatThrownBy(() -> storage.getNodeInfo(orphanChild.getId()))
+                .isInstanceOf(CassandraAfsException.class)
+                .hasMessageContaining("not found");
+        assertThat(storage.getDataNames(orphanNode.getId())).isEmpty();
     }
 
     void testInconsistendNodeRepair() {
@@ -162,6 +180,6 @@ public class CassandraAppStorageTest extends AbstractAppStorageTest {
 
     void testSupportedChecks() {
         assertThat(storage.getSupportedFileSystemChecks())
-            .containsExactlyInAnyOrder(CassandraAppStorage.REF_NOT_FOUND, FileSystemCheckOptions.EXPIRED_INCONSISTENT_NODES);
+            .containsExactlyInAnyOrder(CassandraAppStorage.REF_NOT_FOUND, FileSystemCheckOptions.EXPIRED_INCONSISTENT_NODES, CassandraAppStorage.ORPHAN_NODE);
     }
 }

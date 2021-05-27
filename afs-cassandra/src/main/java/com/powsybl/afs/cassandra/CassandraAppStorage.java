@@ -1490,7 +1490,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
     @Override
     public List<String> getSupportedFileSystemChecks() {
-        return ImmutableList.of(FileSystemCheckOptions.EXPIRED_INCONSISTENT_NODES, REF_NOT_FOUND);
+        return ImmutableList.of(FileSystemCheckOptions.EXPIRED_INCONSISTENT_NODES, REF_NOT_FOUND, ORPHAN_NODE);
     }
 
     @Override
@@ -1518,9 +1518,10 @@ public class CassandraAppStorage extends AbstractAppStorage {
     }
 
     private void checkOrphanNode(List<FileSystemCheckIssue> results, FileSystemCheckOptions options) {
-        List<Statement> statements = new ArrayList<>();
         // get all child id which parent name is null
         ResultSet resultSet = getSession().execute(select(ID, CHILD_ID, NAME, CHILD_NAME).from(CHILDREN_BY_NAME_AND_CLASS));
+        List<UUID> orphanIds = new ArrayList<>();
+        Set<UUID> fakeParentIds = new HashSet<>();
         for (Row row : resultSet) {
             if (row.getString(NAME) == null) {
                 UUID nodeId = row.getUUID(CHILD_ID);
@@ -1529,21 +1530,21 @@ public class CassandraAppStorage extends AbstractAppStorage {
                 FileSystemCheckIssue issue = new FileSystemCheckIssue().setNodeId(nodeId.toString())
                         .setNodeName(nodeName)
                         .setType(ORPHAN_NODE)
-                        .setDescription(nodeName + "(" + nodeId + ") is an orphan node. Its fake parent id:" + fakeParentId);
+                        .setDescription(nodeName + "(" + nodeId + ") is an orphan node. Its fake parent id=" + fakeParentId);
                 if (options.isRepair()) {
-                    statements.add(delete().from(CHILDREN_BY_NAME_AND_CLASS)
-                                    .where(eq(ID, nodeId)));
-                    statements.add(delete().from(CHILDREN_BY_NAME_AND_CLASS)
-                                    .where(eq(ID, fakeParentId)));
+                    orphanIds.add(nodeId);
+                    fakeParentIds.add(fakeParentId);
                     issue.setRepaired(true);
-                    issue.setResolutionDescription("Delete row and its parent row");
+                    issue.setResolutionDescription("Deleted node [name=" + nodeName + ", id=" + nodeId + "] and reference to null name node [id=" + fakeParentId + "]");
                 }
                 results.add(issue);
             }
         }
         if (options.isRepair()) {
-            for (Statement statement : statements) {
-                getSession().execute(statement);
+            orphanIds.forEach(this::deleteNode);
+            for (UUID fakeParentId : fakeParentIds) {
+                getSession().execute(delete().from(CHILDREN_BY_NAME_AND_CLASS)
+                        .where(eq(ID, fakeParentId)));
             }
         }
     }
