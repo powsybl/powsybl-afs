@@ -50,6 +50,8 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
     public static final String ORPHAN_NODE = "ORPHAN_NODE";
 
+    public static final String ORPHAN_DATA = "ORPHAN_DATA";
+
     private final String fileSystemName;
 
     private final Supplier<CassandraContext> contextSupplier;
@@ -832,9 +834,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
         statements.add(delete().from(DEPENDENCIES).where(eq(FROM_ID, nodeUuid)));
         statements.add(delete().from(BACKWARD_DEPENDENCIES).where(in(TO_ID, new ArrayList<>(dependencies.values()))));
 
-        for (Statement statement : statements) {
-            getSession().execute(statement);
-        }
+        executeStatements(statements);
 
         backwardDependencies.entrySet().stream().flatMap(dep -> dep.getValue().stream().map(depUuid -> Pair.of(dep.getKey(), depUuid))).forEach(dep -> {
             pushEvent(new DependencyRemoved(dep.getValue().toString(), dep.getKey()), APPSTORAGE_DEPENDENCY_TOPIC);
@@ -1118,9 +1118,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
         List<Statement> statements = new ArrayList<>();
         removeData(nodeUuid, name, statements);
-        for (Statement statement : statements) {
-            getSession().execute(statement);
-        }
+        executeStatements(statements);
 
         return true;
     }
@@ -1350,9 +1348,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
         List<Statement> statements = new ArrayList<>();
         clearTimeSeries(nodeUuid, statements);
-        for (Statement statement : statements) {
-            getSession().execute(statement);
-        }
+        executeStatements(statements);
         pushEvent(new TimeSeriesCleared(nodeUuid.toString()), APPSTORAGE_TIMESERIES_TOPIC);
     }
 
@@ -1490,7 +1486,8 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
     @Override
     public List<String> getSupportedFileSystemChecks() {
-        return ImmutableList.of(FileSystemCheckOptions.EXPIRED_INCONSISTENT_NODES, REF_NOT_FOUND, ORPHAN_NODE);
+        return ImmutableList.of(FileSystemCheckOptions.EXPIRED_INCONSISTENT_NODES,
+                REF_NOT_FOUND, ORPHAN_NODE, ORPHAN_DATA);
     }
 
     @Override
@@ -1509,12 +1506,48 @@ public class CassandraAppStorage extends AbstractAppStorage {
                 case ORPHAN_NODE:
                     checkOrphanNode(results, options);
                     break;
+                case ORPHAN_DATA:
+                    checkOrphanData(results, options);
+                    break;
                 default:
                     LOGGER.warn("Check {} not supported in {}", type, getClass());
             }
         }
 
         return results;
+    }
+
+    private void checkOrphanData(List<FileSystemCheckIssue> results, FileSystemCheckOptions options) {
+        Set<UUID> existingNodeIds = new HashSet<>();
+        Set<UUID> orphanDataIds = new HashSet<>();
+        ResultSet existingNodes = getSession().execute(select(ID).distinct().from(CHILDREN_BY_NAME_AND_CLASS));
+        for (Row row : existingNodes) {
+            existingNodeIds.add(row.getUUID(ID));
+        }
+        ResultSet nodeDatas = getSession().execute(select(ID, NAME).distinct().from(NODE_DATA));
+        for (Row row : nodeDatas) {
+            UUID uuid = row.getUUID(ID);
+            if (!existingNodeIds.contains(uuid)) {
+                orphanDataIds.add(uuid);
+                FileSystemCheckIssue issue = new FileSystemCheckIssue().setNodeName("N/A")
+                        .setNodeId(uuid.toString())
+                        .setType(ORPHAN_DATA)
+                        .setDescription("Orphan data(" + row.getString(NAME) + ") is binding to non-existing node(" + uuid + ")")
+                        .setRepaired(options.isRepair());
+                if (options.isRepair()) {
+                    issue.setRepaired(true)
+                            .setResolutionDescription("Delete orphan data(" + row.getString(NAME) + ").");
+                }
+                results.add(issue);
+            }
+        }
+        if (options.isRepair()) {
+            List<Statement> statements = new ArrayList<>();
+            for (UUID id : orphanDataIds) {
+                removeAllData(id, statements);
+            }
+            executeStatements(statements);
+        }
     }
 
     private void checkOrphanNode(List<FileSystemCheckIssue> results, FileSystemCheckOptions options) {
@@ -1576,9 +1609,13 @@ public class CassandraAppStorage extends AbstractAppStorage {
             }
         }
         if (options.isRepair()) {
-            for (Statement statement : statements) {
-                getSession().execute(statement);
-            }
+            executeStatements(statements);
+        }
+    }
+
+    private void executeStatements(List<Statement> statements) {
+        for (Statement statement : statements) {
+            getSession().execute(statement);
         }
     }
 
