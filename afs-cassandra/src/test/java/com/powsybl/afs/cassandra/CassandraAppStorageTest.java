@@ -214,7 +214,8 @@ public class CassandraAppStorageTest extends AbstractAppStorageTest {
             .containsExactlyInAnyOrder(CassandraAppStorage.REF_NOT_FOUND,
                     FileSystemCheckOptions.EXPIRED_INCONSISTENT_NODES,
                     CassandraAppStorage.ORPHAN_NODE,
-                    CassandraAppStorage.ORPHAN_DATA
+                    CassandraAppStorage.ORPHAN_DATA,
+                    CassandraAppStorage.DISPLAY_TREE
             );
     }
 }

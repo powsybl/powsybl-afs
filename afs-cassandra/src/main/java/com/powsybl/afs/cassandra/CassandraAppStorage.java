@@ -52,6 +52,8 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
     public static final String ORPHAN_DATA = "ORPHAN_DATA";
 
+    public static final String DISPLAY_TREE = "DISPLAY_TREE";
+
     private final String fileSystemName;
 
     private final Supplier<CassandraContext> contextSupplier;
@@ -1487,7 +1489,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
     @Override
     public List<String> getSupportedFileSystemChecks() {
         return ImmutableList.of(FileSystemCheckOptions.EXPIRED_INCONSISTENT_NODES,
-                REF_NOT_FOUND, ORPHAN_NODE, ORPHAN_DATA);
+                REF_NOT_FOUND, ORPHAN_NODE, ORPHAN_DATA, DISPLAY_TREE);
     }
 
     @Override
@@ -1509,12 +1511,20 @@ public class CassandraAppStorage extends AbstractAppStorage {
                 case ORPHAN_DATA:
                     checkOrphanData(results, options);
                     break;
+                case DISPLAY_TREE:
+                    displayTree(results);
+                    break;
                 default:
                     LOGGER.warn("Check {} not supported in {}", type, getClass());
             }
         }
 
         return results;
+    }
+
+    private void displayTree(List<FileSystemCheckIssue> results) {
+        ResultSet allTables = getSession().execute(select(ID, NAME, PSEUDO_CLASS, CHILD_ID, PARENT_ID).from(CHILDREN_BY_NAME_AND_CLASS));
+        results.add(new DisplayTreeIssueBuilder(allTables).build());
     }
 
     private void checkOrphanData(List<FileSystemCheckIssue> results, FileSystemCheckOptions options) {
