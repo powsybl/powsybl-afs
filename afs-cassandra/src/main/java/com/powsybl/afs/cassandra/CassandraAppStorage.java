@@ -378,7 +378,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
     private String getNodeName(UUID nodeUuid) {
         Objects.requireNonNull(nodeUuid);
         ResultSet resultSet = getSession().execute(select(NAME).from(CHILDREN_BY_NAME_AND_CLASS)
-                                                                         .where(eq(ID, nodeUuid)));
+            .where(eq(ID, nodeUuid)));
         Row row = resultSet.one();
         if (row == null) {
             throw createNodeNotFoundException(nodeUuid);
@@ -720,16 +720,14 @@ public class CassandraAppStorage extends AbstractAppStorage {
     }
 
     private UUID getParentNodeUuid(UUID nodeUuid) {
-        ResultSet resultSet = getSession().execute(select(PARENT_ID, CHILD_CONSISTENT).from(CHILDREN_BY_NAME_AND_CLASS)
+        ResultSet resultSet = getSession().execute(select(PARENT_ID)
+                .from(CHILDREN_BY_NAME_AND_CLASS)
                 .where(eq(ID, nodeUuid)));
         Row row = resultSet.one();
         if (row == null) {
             throw createNodeNotFoundException(nodeUuid);
         }
-        if (isConsistentBackwardCompatible(row, 1)) {
-            return row.getUUID(0);
-        }
-        return null;
+        return row.getUUID(0);
     }
 
     @Override
@@ -1433,7 +1431,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
         UUID nodeUuid = checkNodeId(nodeId);
         Set<NodeInfo> backwardDependencies = new HashSet<>();
         ResultSet resultSet = getSession().execute(select(FROM_ID).from(BACKWARD_DEPENDENCIES)
-                                                                          .where(eq(TO_ID, nodeUuid)));
+                                                                  .where(eq(TO_ID, nodeUuid)));
         for (Row row : resultSet) {
             try {
                 backwardDependencies.add(getNodeInfo(row.getUUID(0)));
