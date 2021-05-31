@@ -50,12 +50,12 @@ public class CassandraAppStorageTest extends AbstractAppStorageTest {
     //Most tests in here to minimize test execution time (only initialize cassandra once)
     @Override
     protected void nextDependentTests() {
-        testGetParentWithInconsistentChild();
         testSupportedChecks();
         testInconsistendNodeRepair();
         testAbsentChildRepair();
         testOrphanNodeRepair();
         testOrphanDataRepair();
+        testGetParentWithInconsistentChild();
     }
 
     private void testOrphanDataRepair() {
