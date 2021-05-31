@@ -53,8 +53,39 @@ public class CassandraAppStorageTest extends AbstractAppStorageTest {
         testSupportedChecks();
         testInconsistendNodeRepair();
         testAbsentChildRepair();
-        testGetParentWithInconsistentChild();
         testOrphanNodeRepair();
+        testOrphanDataRepair();
+        testGetParentWithInconsistentChild();
+    }
+
+    private void testOrphanDataRepair() {
+        NodeInfo rootFolderInfo = storage.createRootNodeIfNotExists(storage.getFileSystemName(), FOLDER_PSEUDO_CLASS);
+        try (OutputStream os = storage.writeBinaryData(rootFolderInfo.getId(), "should_exist")) {
+            os.write("word2".getBytes(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            fail();
+        }
+        String orphanDataId = UUIDs.timeBased().toString();
+        try (OutputStream os = storage.writeBinaryData(orphanDataId, "blob")) {
+            os.write("word2".getBytes(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            fail();
+        }
+        assertThat(storage.getDataNames(orphanDataId)).containsOnly("blob");
+        assertAfsNodeNotFound(orphanDataId);
+
+        FileSystemCheckOptions repairOption = new FileSystemCheckOptionsBuilder()
+                .addCheckTypes(CassandraAppStorage.ORPHAN_DATA)
+                .repair().build();
+        List<FileSystemCheckIssue> issues = storage.checkFileSystem(repairOption);
+        assertThat(issues).hasOnlyOneElementSatisfying(i -> {
+            assertEquals(orphanDataId, i.getNodeId());
+            assertEquals(CassandraAppStorage.ORPHAN_DATA, i.getType());
+            assertEquals("N/A", i.getNodeName());
+        });
+
+        assertTrue(storage.dataExists(rootFolderInfo.getId(), "should_exist"));
+        assertFalse(storage.dataExists(orphanDataId, "blob"));
     }
 
     private void testOrphanNodeRepair() {
@@ -73,16 +104,16 @@ public class CassandraAppStorageTest extends AbstractAppStorageTest {
                 .repair().build();
         List<FileSystemCheckIssue> issues = storage.checkFileSystem(repairOption);
         assertThat(issues).hasOnlyOneElementSatisfying(i -> assertEquals(orphanNode.getId(), i.getNodeId()));
-        assertThatThrownBy(() -> storage.getNodeInfo(orphanNode.getId()))
-                .isInstanceOf(CassandraAfsException.class)
-                .hasMessageContaining("not found");
-        assertThatThrownBy(() -> storage.getParentNode(orphanNode.getId()))
-                .isInstanceOf(CassandraAfsException.class)
-                .hasMessageContaining("not found");
-        assertThatThrownBy(() -> storage.getNodeInfo(orphanChild.getId()))
-                .isInstanceOf(CassandraAfsException.class)
-                .hasMessageContaining("not found");
+        assertAfsNodeNotFound(orphanNode.getId());
+        assertAfsNodeNotFound(orphanNode.getId());
+        assertAfsNodeNotFound(orphanChild.getId());
         assertThat(storage.getDataNames(orphanNode.getId())).isEmpty();
+    }
+
+    private void assertAfsNodeNotFound(String id) {
+        assertThatThrownBy(() -> storage.getNodeInfo(id))
+                .isInstanceOf(CassandraAfsException.class)
+                .hasMessageContaining("not found");
     }
 
     void testInconsistendNodeRepair() {
@@ -182,7 +213,11 @@ public class CassandraAppStorageTest extends AbstractAppStorageTest {
 
     void testSupportedChecks() {
         assertThat(storage.getSupportedFileSystemChecks())
-            .containsExactlyInAnyOrder(CassandraAppStorage.REF_NOT_FOUND, FileSystemCheckOptions.EXPIRED_INCONSISTENT_NODES, CassandraAppStorage.ORPHAN_NODE);
+            .containsExactlyInAnyOrder(CassandraAppStorage.REF_NOT_FOUND,
+                    FileSystemCheckOptions.EXPIRED_INCONSISTENT_NODES,
+                    CassandraAppStorage.ORPHAN_NODE,
+                    CassandraAppStorage.ORPHAN_DATA
+            );
     }
 
     private NodeInfo createFolder(NodeInfo parent, String name) {
