@@ -48,6 +48,8 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
     public static final String REF_NOT_FOUND = "REFERENCE_NOT_FOUND";
 
+    public static final String ORPHAN_NODE = "ORPHAN_NODE";
+
     private final String fileSystemName;
 
     private final Supplier<CassandraContext> contextSupplier;
@@ -1489,7 +1491,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
     @Override
     public List<String> getSupportedFileSystemChecks() {
-        return ImmutableList.of(FileSystemCheckOptions.EXPIRED_INCONSISTENT_NODES, REF_NOT_FOUND);
+        return ImmutableList.of(FileSystemCheckOptions.EXPIRED_INCONSISTENT_NODES, REF_NOT_FOUND, ORPHAN_NODE);
     }
 
     @Override
@@ -1505,12 +1507,47 @@ public class CassandraAppStorage extends AbstractAppStorage {
                 case REF_NOT_FOUND:
                     checkReferenceNotFound(results, options);
                     break;
+                case ORPHAN_NODE:
+                    checkOrphanNode(results, options);
+                    break;
                 default:
                     LOGGER.warn("Check {} not supported in {}", type, getClass());
             }
         }
 
         return results;
+    }
+
+    private void checkOrphanNode(List<FileSystemCheckIssue> results, FileSystemCheckOptions options) {
+        // get all child id which parent name is null
+        ResultSet resultSet = getSession().execute(select(ID, CHILD_ID, NAME, CHILD_NAME).from(CHILDREN_BY_NAME_AND_CLASS));
+        List<UUID> orphanIds = new ArrayList<>();
+        Set<UUID> fakeParentIds = new HashSet<>();
+        for (Row row : resultSet) {
+            if (row.getString(NAME) == null) {
+                UUID nodeId = row.getUUID(CHILD_ID);
+                String nodeName = row.getString(CHILD_NAME);
+                UUID fakeParentId = row.getUUID(ID);
+                FileSystemCheckIssue issue = new FileSystemCheckIssue().setNodeId(nodeId.toString())
+                        .setNodeName(nodeName)
+                        .setType(ORPHAN_NODE)
+                        .setDescription(nodeName + "(" + nodeId + ") is an orphan node. Its fake parent id=" + fakeParentId);
+                if (options.isRepair()) {
+                    orphanIds.add(nodeId);
+                    fakeParentIds.add(fakeParentId);
+                    issue.setRepaired(true);
+                    issue.setResolutionDescription("Deleted node [name=" + nodeName + ", id=" + nodeId + "] and reference to null name node [id=" + fakeParentId + "]");
+                }
+                results.add(issue);
+            }
+        }
+        if (options.isRepair()) {
+            orphanIds.forEach(this::deleteNode);
+            for (UUID fakeParentId : fakeParentIds) {
+                getSession().execute(delete().from(CHILDREN_BY_NAME_AND_CLASS)
+                        .where(eq(ID, fakeParentId)));
+            }
+        }
     }
 
     private void checkReferenceNotFound(List<FileSystemCheckIssue> results, FileSystemCheckOptions options) {
