@@ -383,8 +383,8 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
     private String getNodeName(UUID nodeUuid) {
         Objects.requireNonNull(nodeUuid);
-        ResultSet resultSet = getSession().execute(select(NAME).from(CHILDREN_BY_NAME_AND_CLASS)
-                                                                         .where(eq(ID, nodeUuid)));
+        ResultSet resultSet = getSession().execute(select(NAME).distinct().from(CHILDREN_BY_NAME_AND_CLASS)
+            .where(eq(ID, nodeUuid)));
         Row row = resultSet.one();
         if (row == null) {
             throw createNodeNotFoundException(nodeUuid);
@@ -405,7 +405,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
     public boolean isConsistent(String nodeId) {
         UUID nodeUuid = checkNodeId(nodeId);
         Objects.requireNonNull(nodeUuid);
-        ResultSet resultSet = getSession().execute(select(CONSISTENT)
+        ResultSet resultSet = getSession().execute(select(CONSISTENT).distinct()
                 .from(CHILDREN_BY_NAME_AND_CLASS)
                 .where(eq(ID, nodeUuid)));
         Row row = resultSet.one();
@@ -567,6 +567,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
         Objects.requireNonNull(nodeUuid);
         ResultSet resultSet = getSession().execute(select(NAME, PSEUDO_CLASS, DESCRIPTION, CREATION_DATE,
                                                                   MODIFICATION_DATE, VERSION, MT, MD, MI, MB)
+                .distinct()
                 .from(CHILDREN_BY_NAME_AND_CLASS)
                 .where(eq(ID, nodeUuid)));
         Row row = resultSet.one();
@@ -674,9 +675,10 @@ public class CassandraAppStorage extends AbstractAppStorage {
     @Override
     public List<NodeInfo> getInconsistentNodes() {
         List<NodeInfo> childNodesInfo = new ArrayList<>();
-        ResultSet resultSet = getSession().execute(select(CHILD_NAME, CHILD_PSEUDO_CLASS, CHILD_ID, CHILD_DESCRIPTION,
-                CHILD_CREATION_DATE, CHILD_MODIFICATION_DATE, CHILD_VERSION,
-                CMT, CMD, CMI, CMB, CHILD_CONSISTENT)
+        ResultSet resultSet = getSession().execute(select(NAME, PSEUDO_CLASS, ID, DESCRIPTION,
+                    CREATION_DATE, MODIFICATION_DATE, VERSION,
+                    MT, MD, MI, MB, CONSISTENT)
+                .distinct()
                 .from(CHILDREN_BY_NAME_AND_CLASS));
         for (Row row : resultSet) {
             UUID uuid = row.getUUID(2);
@@ -726,16 +728,15 @@ public class CassandraAppStorage extends AbstractAppStorage {
     }
 
     private UUID getParentNodeUuid(UUID nodeUuid) {
-        ResultSet resultSet = getSession().execute(select(PARENT_ID, CHILD_CONSISTENT).from(CHILDREN_BY_NAME_AND_CLASS)
+        ResultSet resultSet = getSession().execute(select(PARENT_ID)
+                .distinct()
+                .from(CHILDREN_BY_NAME_AND_CLASS)
                 .where(eq(ID, nodeUuid)));
         Row row = resultSet.one();
         if (row == null) {
             throw createNodeNotFoundException(nodeUuid);
         }
-        if (isConsistentBackwardCompatible(row, 1)) {
-            return row.getUUID(0);
-        }
-        return null;
+        return row.getUUID(0);
     }
 
     @Override
@@ -1433,7 +1434,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
         UUID nodeUuid = checkNodeId(nodeId);
         Set<NodeInfo> backwardDependencies = new HashSet<>();
         ResultSet resultSet = getSession().execute(select(FROM_ID).from(BACKWARD_DEPENDENCIES)
-                                                                          .where(eq(TO_ID, nodeUuid)));
+                                                                  .where(eq(TO_ID, nodeUuid)));
         for (Row row : resultSet) {
             try {
                 backwardDependencies.add(getNodeInfo(row.getUUID(0)));
@@ -1652,6 +1653,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
     private void checkInconsistent(List<FileSystemCheckIssue> results, Instant expirationTime, boolean repair) {
         ResultSet resultSet = getSession().execute(select(ID, NAME, MODIFICATION_DATE, CONSISTENT)
+                .distinct()
                 .from(CHILDREN_BY_NAME_AND_CLASS));
         for (Row row : resultSet) {
             final Optional<FileSystemCheckIssue> issue = buildExpirationInconsistentIssue(row, expirationTime);

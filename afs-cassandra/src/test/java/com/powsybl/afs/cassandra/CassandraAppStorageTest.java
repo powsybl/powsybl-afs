@@ -47,6 +47,7 @@ public class CassandraAppStorageTest extends AbstractAppStorageTest {
                 new CassandraAppStorageConfig(), new InMemoryEventsBus());
     }
 
+    //Most tests in here to minimize test execution time (only initialize cassandra once)
     @Override
     protected void nextDependentTests() {
         testSupportedChecks();
@@ -54,6 +55,7 @@ public class CassandraAppStorageTest extends AbstractAppStorageTest {
         testAbsentChildRepair();
         testOrphanNodeRepair();
         testOrphanDataRepair();
+        testGetParentWithInconsistentChild();
     }
 
     private void testOrphanDataRepair() {
@@ -217,5 +219,22 @@ public class CassandraAppStorageTest extends AbstractAppStorageTest {
                     CassandraAppStorage.ORPHAN_DATA,
                     CassandraAppStorage.DISPLAY_TREE
             );
+    }
+
+    private NodeInfo createFolder(NodeInfo parent, String name) {
+        return storage.createNode(parent.getId(), name, FOLDER_PSEUDO_CLASS, "", 0,
+            new NodeGenericMetadata());
+    }
+
+    //Test for bugfix where an inconsistent child was "hiding" the parent of the node
+    void testGetParentWithInconsistentChild() {
+        NodeInfo root = storage.createRootNodeIfNotExists(storage.getFileSystemName(), FOLDER_PSEUDO_CLASS);
+        NodeInfo rootChild = createFolder(root, "rootChild");
+        storage.setConsistent(rootChild.getId());
+        createFolder(rootChild, "childChild");
+        assertThat(storage.getParentNode(rootChild.getId()))
+            .hasValueSatisfying(parent -> {
+                assertEquals(root.getId(), parent.getId());
+            });
     }
 }
