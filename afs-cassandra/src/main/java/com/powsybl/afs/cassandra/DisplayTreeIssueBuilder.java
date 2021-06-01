@@ -10,10 +10,10 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.powsybl.afs.storage.check.FileSystemCheckIssue;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Yichen TANG <yichen.tang at rte-france.com>
@@ -82,7 +82,7 @@ class DisplayTreeIssueBuilder {
     static class TreeNode {
         String id;
         String name;
-        List<String> children = new ArrayList<>();
+        Set<String> children = new HashSet<>();
 
         TreeNode(String id) {
             this.id = id;
