@@ -398,13 +398,10 @@ public abstract class AbstractAppStorageTest {
         assertTrue(storage.getTimeSeriesMetadata(testData3Info.getId(), Sets.newHashSet("ts1")).isEmpty());
 
         // 14) add data to double time series
-        if(conservesChunks)
-        {
+        if (conservesChunks) {
             storage.addDoubleTimeSeriesData(testData2Info.getId(), 0, "ts1", Arrays.asList(new UncompressedDoubleDataChunk(2, new double[] {1d, 2d}),
                 new UncompressedDoubleDataChunk(5, new double[] {3d})));
-        }
-        else
-        {
+        } else {
             storage.addDoubleTimeSeriesData(testData2Info.getId(), 0, "ts1", Arrays.asList(new UncompressedDoubleDataChunk(0, new double[] {1d, 2d, 3d})));
         }
 
@@ -424,10 +421,8 @@ public abstract class AbstractAppStorageTest {
             assertEquals(Arrays.asList(new UncompressedDoubleDataChunk(2, new double[] {1d, 2d}),
                 new UncompressedDoubleDataChunk(5, new double[] {3d})),
                 doubleTimeSeriesData.get("ts1"));
-        }
-        else {
-            assertEquals(Arrays.asList(new UncompressedDoubleDataChunk(0, new double[] {1d, 2d, 3d})),
-                doubleTimeSeriesData.get("ts1"));
+        } else {
+            assertEquals(Arrays.asList(new UncompressedDoubleDataChunk(0, new double[]{1d, 2d, 3d})), doubleTimeSeriesData.get("ts1"));
         }
         assertTrue(storage.getDoubleTimeSeriesData(testData3Info.getId(), Sets.newHashSet("ts1"), 0).isEmpty());
 
