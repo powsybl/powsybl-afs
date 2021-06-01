@@ -515,13 +515,11 @@ public class MapDbAppStorage extends AbstractAppStorage {
         }
         NodeInfo nodeInfo = nodeInfoMap.remove(nodeUuid);
         nodeConsistencyMap.remove(nodeUuid);
-        for (String dataName : dataNamesMap.get(nodeUuid)) {
-            boolean removed = dataMap.remove(new NamedLink(nodeUuid, dataName)) != null;
-            if (removed) {
-                pushEvent(new NodeDataRemoved(nodeUuid.toString(), dataName), APPSTORAGE_NODE_TOPIC);
-            }
-        }
-        dataNamesMap.remove(nodeUuid);
+        Set<String> removedData = dataNamesMap.remove(nodeUuid);
+        removedData.forEach(dataName -> {
+            dataMap.remove(new NamedLink(nodeUuid, dataName));
+            pushEvent(new NodeDataRemoved(nodeUuid.toString(), dataName), APPSTORAGE_NODE_TOPIC);
+        });
         childNodesMap.remove(nodeUuid);
         UUID parentNodeUuid = parentNodeMap.remove(nodeUuid);
         removeFromList(childNodesMap, parentNodeUuid, nodeUuid);
