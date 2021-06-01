@@ -1,4 +1,4 @@
-package com.powsybl.afs.timeseriesserver;
+package com.powsybl.afs.timeseriesserver.storage;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,10 +28,9 @@ import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class TimeSeriesSorageDelegate {
+public class TimeSeriesStorageDelegate {
 
-    private static final String AFS_DEFAULT_APP = "AFS";
-    private static final Logger LOGGER = LoggerFactory.getLogger(TimeSeriesSorageDelegate.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TimeSeriesStorageDelegate.class);
 
     /**
      * The name of the app in TimeSeriesServer, in which AFS will store time series
@@ -43,11 +42,7 @@ public class TimeSeriesSorageDelegate {
      */
     private URI timeSeriesServerURI;
 
-    public TimeSeriesSorageDelegate(URI timeSeriesServerURI) {
-        this(timeSeriesServerURI, AFS_DEFAULT_APP);
-    }
-
-    public TimeSeriesSorageDelegate(URI timeSeriesServerURI, String app) {
+    public TimeSeriesStorageDelegate(URI timeSeriesServerURI, String app) {
         this.timeSeriesServerURI = timeSeriesServerURI;
         this.app = app;
     }
