@@ -65,6 +65,7 @@
         <module>afs-ws</module>
         <module>afs-spring-server</module>
         <module>afs-timeseries-server</module>
+        <module>afs-timeseries-server-storage</module>
     </modules>
 
     <properties>
