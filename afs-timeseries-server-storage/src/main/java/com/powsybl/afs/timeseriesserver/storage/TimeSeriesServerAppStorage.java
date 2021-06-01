@@ -1,4 +1,4 @@
-package com.powsybl.afs.timeseriesserver;
+package com.powsybl.afs.timeseriesserver.storage;
 
 import com.powsybl.afs.storage.*;
 import com.powsybl.afs.storage.events.AppStorageListener;
@@ -19,6 +19,11 @@ import java.util.Set;
 
 public class TimeSeriesServerAppStorage extends AbstractAppStorage {
 
+    @FunctionalInterface
+    public interface TimeSeriesServerAppStorageProvider<F, S, T, R> {
+        R apply(F first, S second, T third);
+    }
+
     /**
      * This storage is used for all non-timeseries-related operations
      */
@@ -27,8 +32,7 @@ public class TimeSeriesServerAppStorage extends AbstractAppStorage {
     /**
      * This storage handles all the timeseries-related operations
      */
-    private TimeSeriesSorageDelegate timeSeriesDelegate;
-
+    private TimeSeriesStorageDelegate timeSeriesDelegate;
 
     /**
      * A listener that copies all event from the general delegate event bus to this class event bus.
@@ -36,12 +40,16 @@ public class TimeSeriesServerAppStorage extends AbstractAppStorage {
      */
     private AppStorageListener notifyGeneralDelegateEventListener;
 
-    public TimeSeriesServerAppStorage(AbstractAppStorage generalDelegate, URI timeSeriesServerURI) {
+    public TimeSeriesServerAppStorage(final URI targetURI, final String app, final AbstractAppStorage generalDelegate) {
+        this(generalDelegate, targetURI, app);
+    }
+
+    public TimeSeriesServerAppStorage(final AbstractAppStorage generalDelegate, final URI timeSeriesServerURI, final String app) {
         this.generalDelegate = generalDelegate;
         eventsBus = new InMemoryEventsBus();
         notifyGeneralDelegateEventListener = t -> t.getEvents().forEach(e -> pushEvent(e, t.getTopic()));
         generalDelegate.getEventsBus().addListener(notifyGeneralDelegateEventListener);
-        timeSeriesDelegate = new TimeSeriesSorageDelegate(timeSeriesServerURI);
+        timeSeriesDelegate = new TimeSeriesStorageDelegate(timeSeriesServerURI, app);
         timeSeriesDelegate.createAFSAppIfNotExists();
     }
 
@@ -138,7 +146,7 @@ public class TimeSeriesServerAppStorage extends AbstractAppStorage {
     @Override
     public void createTimeSeries(String nodeId, TimeSeriesMetadata metadata) {
         timeSeriesDelegate.createTimeSeries(nodeId, metadata);
-        pushEvent(new TimeSeriesCreated(nodeId, metadata.getName()), APPSTORAGE_TIMESERIES_TOPIC);
+        pushEvent(new TimeSeriesCreated(nodeId, metadata.getName()), AbstractAppStorage.APPSTORAGE_TIMESERIES_TOPIC);
     }
 
     @Override
@@ -175,7 +183,7 @@ public class TimeSeriesServerAppStorage extends AbstractAppStorage {
     @Override
     public void addDoubleTimeSeriesData(String nodeId, int version, String timeSeriesName, List<DoubleDataChunk> chunks) {
         timeSeriesDelegate.addDoubleTimeSeriesData(nodeId, version, timeSeriesName, chunks);
-        pushEvent(new TimeSeriesDataUpdated(nodeId, timeSeriesName), APPSTORAGE_TIMESERIES_TOPIC);
+        pushEvent(new TimeSeriesDataUpdated(nodeId, timeSeriesName), AbstractAppStorage.APPSTORAGE_TIMESERIES_TOPIC);
     }
 
     @Override

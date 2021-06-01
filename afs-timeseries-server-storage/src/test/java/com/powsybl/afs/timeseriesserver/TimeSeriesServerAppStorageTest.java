@@ -4,6 +4,7 @@ import com.powsybl.afs.mapdb.storage.MapDbAppStorage;
 import com.powsybl.afs.storage.AbstractAppStorageTest;
 import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.InMemoryEventsBus;
+import com.powsybl.afs.timeseriesserver.storage.TimeSeriesServerAppStorage;
 import org.junit.Before;
 
 import java.net.URI;
@@ -11,6 +12,8 @@ import java.net.URI;
 public class TimeSeriesServerAppStorageTest extends AbstractAppStorageTest {
 
     private URI timeSeriesServerURI;
+
+    private static final String AFS_APP = "AFS";
 
     public TimeSeriesServerAppStorageTest() {
         super(false, false);
@@ -25,7 +28,8 @@ public class TimeSeriesServerAppStorageTest extends AbstractAppStorageTest {
 
     @Override
     protected AppStorage createStorage() {
-        return new TimeSeriesServerAppStorage(MapDbAppStorage.createMem("mem", new InMemoryEventsBus()), timeSeriesServerURI);
+        final MapDbAppStorage storage = MapDbAppStorage.createMem("mem", new InMemoryEventsBus());
+        return new TimeSeriesServerAppStorage(storage, timeSeriesServerURI, AFS_APP);
     }
 
 }
