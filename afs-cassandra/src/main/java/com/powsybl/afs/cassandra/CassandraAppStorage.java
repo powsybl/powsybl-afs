@@ -784,7 +784,6 @@ public class CassandraAppStorage extends AbstractAppStorage {
     public String deleteNode(String nodeId) {
         UUID nodeUuid = checkNodeId(nodeId);
         UUID parentNodeUuid = deleteNode(nodeUuid);
-        pushEvent(new NodeRemoved(nodeId, String.valueOf(parentNodeUuid)), APPSTORAGE_NODE_TOPIC);
         return parentNodeUuid != null ? parentNodeUuid.toString() : null;
     }
 
@@ -846,6 +845,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
             pushEvent(new BackwardDependencyRemoved(value.toString(), key), APPSTORAGE_DEPENDENCY_TOPIC);
         });
 
+        pushEvent(new NodeRemoved(nodeUuid.toString(), String.valueOf(parentNodeUuid)), APPSTORAGE_NODE_TOPIC);
         return parentNodeUuid;
     }
 

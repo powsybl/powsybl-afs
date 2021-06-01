@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.junit.Assert.*;
 
 /**
@@ -65,6 +66,22 @@ public abstract class AbstractAppStorageTest {
         for (NodeEvent event : events) {
             assertEquals(event, eventStack.take());
         }
+
+        // assert all events have been checked
+        assertTrue(eventStack.isEmpty());
+    }
+
+    private void assertEventStackInAnyOrder(NodeEvent... expectedEvents) throws InterruptedException {
+        List<NodeEvent> collectedEvents = new ArrayList<>();
+        for (int i = 0; i < expectedEvents.length; i++) {
+            NodeEvent event = eventStack.poll(1, TimeUnit.SECONDS);
+            if (event == null) {
+                break;
+            }
+            collectedEvents.add(event);
+        }
+        assertThat(collectedEvents)
+            .containsExactlyInAnyOrder(expectedEvents);
 
         // assert all events have been checked
         assertTrue(eventStack.isEmpty());
@@ -576,6 +593,8 @@ public abstract class AbstractAppStorageTest {
         assertThat(eventsCatched.get().getEvents().get(0)).isEqualTo(eventToCatch);
         assertEventStack(eventNotToCatch, eventToCatch);
 
+        testCascadingDelete(rootFolderInfo);
+
         nextDependentTests();
     }
 
@@ -671,5 +690,47 @@ public abstract class AbstractAppStorageTest {
         clone.getInts().putAll(metadata.getInts());
         clone.getDoubles().putAll(metadata.getDoubles());
         return clone;
+    }
+
+    private void testCascadingDelete(NodeInfo rootFolderInfo) throws IOException, InterruptedException {
+        NodeInfo subFolder = storage.createNode(rootFolderInfo.getId(), "test-delete", FOLDER_PSEUDO_CLASS, "", 0, new NodeGenericMetadata());
+        storage.setConsistent(subFolder.getId());
+        NodeInfo subSubFolder = storage.createNode(subFolder.getId(), "sub-folder", FOLDER_PSEUDO_CLASS, "", 0, new NodeGenericMetadata());
+        storage.setConsistent(subSubFolder.getId());
+        NodeInfo data1 = storage.createNode(subFolder.getId(), "data1", DATA_FILE_CLASS, "", 0, new NodeGenericMetadata());
+        storage.setConsistent(data1.getId());
+        NodeInfo data2 = storage.createNode(subSubFolder.getId(), "data1", DATA_FILE_CLASS, "", 0, new NodeGenericMetadata());
+        storage.setConsistent(data2.getId());
+
+        try (OutputStream outputStream = storage.writeBinaryData(data1.getId(), "data1")) {
+            outputStream.write("data1".getBytes(StandardCharsets.UTF_8));
+        }
+        try (OutputStream outputStream = storage.writeBinaryData(data2.getId(), "data2")) {
+            outputStream.write("data2".getBytes(StandardCharsets.UTF_8));
+        }
+
+        storage.deleteNode(subFolder.getId());
+        storage.flush();
+
+        //Dicard events up until deletion
+        discardEvents(10);
+
+        assertThatExceptionOfType(RuntimeException.class)
+            .isThrownBy(() -> storage.getNodeInfo(subFolder.getId()));
+        assertThatExceptionOfType(RuntimeException.class)
+            .isThrownBy(() -> storage.getNodeInfo(subSubFolder.getId()));
+        assertThatExceptionOfType(RuntimeException.class)
+            .isThrownBy(() -> storage.getNodeInfo(data1.getId()));
+        assertThatExceptionOfType(RuntimeException.class)
+            .isThrownBy(() -> storage.getNodeInfo(data2.getId()));
+
+        assertEventStackInAnyOrder(
+            new NodeRemoved(subFolder.getId(), rootFolderInfo.getId()),
+            new NodeRemoved(subSubFolder.getId(), subFolder.getId()),
+            new NodeRemoved(data1.getId(), subFolder.getId()),
+            new NodeRemoved(data2.getId(), subSubFolder.getId()),
+            new NodeDataRemoved(data1.getId(), "data1"),
+            new NodeDataRemoved(data2.getId(), "data2")
+        );
     }
 }
