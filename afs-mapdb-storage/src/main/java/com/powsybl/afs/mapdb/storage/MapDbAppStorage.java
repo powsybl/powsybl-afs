@@ -498,7 +498,6 @@ public class MapDbAppStorage extends AbstractAppStorage {
     public String deleteNode(String nodeId) {
         UUID nodeUuid = checkNodeId(nodeId);
         UUID parentNodeUuid = deleteNode(nodeUuid);
-        pushEvent(new NodeRemoved(nodeId, parentNodeUuid.toString()), APPSTORAGE_NODE_TOPIC);
         return parentNodeUuid.toString();
     }
 
@@ -516,10 +515,11 @@ public class MapDbAppStorage extends AbstractAppStorage {
         }
         NodeInfo nodeInfo = nodeInfoMap.remove(nodeUuid);
         nodeConsistencyMap.remove(nodeUuid);
-        for (String dataName : dataNamesMap.get(nodeUuid)) {
+        Set<String> removedData = dataNamesMap.remove(nodeUuid);
+        removedData.forEach(dataName -> {
             dataMap.remove(new NamedLink(nodeUuid, dataName));
-        }
-        dataNamesMap.remove(nodeUuid);
+            pushEvent(new NodeDataRemoved(nodeUuid.toString(), dataName), APPSTORAGE_NODE_TOPIC);
+        });
         childNodesMap.remove(nodeUuid);
         UUID parentNodeUuid = parentNodeMap.remove(nodeUuid);
         removeFromList(childNodesMap, parentNodeUuid, nodeUuid);
@@ -549,6 +549,7 @@ public class MapDbAppStorage extends AbstractAppStorage {
             pushEvent(new BackwardDependencyRemoved(link.getNodeUuid().toString(), link.getName()), APPSTORAGE_DEPENDENCY_TOPIC);
         }
         dependencyNodesMap.remove(nodeUuid);
+        pushEvent(new NodeRemoved(nodeUuid.toString(), parentNodeUuid.toString()), APPSTORAGE_NODE_TOPIC);
         return parentNodeUuid;
     }
 
