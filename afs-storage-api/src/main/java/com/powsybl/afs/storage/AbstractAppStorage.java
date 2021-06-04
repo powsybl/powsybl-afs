@@ -21,7 +21,7 @@ public abstract class AbstractAppStorage implements AppStorage {
 
     protected EventsBus eventsBus;
 
-    private  final Logger logger = LoggerFactory.getLogger(AbstractAppStorage.class);
+    private final Logger logger = LoggerFactory.getLogger(AbstractAppStorage.class);
 
     protected void pushEvent(NodeEvent event, String topic) {
         if (eventsBus == null) {
