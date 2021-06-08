@@ -12,6 +12,8 @@ import com.google.common.base.Stopwatch;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
+import com.powsybl.afs.cassandra.checks.CassandraAppStorageCheckSupport;
+import com.powsybl.afs.cassandra.checks.CassandraAppStorageChecks;
 import com.powsybl.afs.storage.*;
 import com.powsybl.afs.storage.buffer.*;
 import com.powsybl.afs.storage.check.FileSystemCheckIssue;
@@ -327,7 +329,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
         // prepared statement
         preparedStatementsSupplier = Suppliers.memoize(PreparedStatements::new);
-        checks = new CassandraAppStorageChecks(this, this::getSession);
+        checks = new CassandraAppStorageChecks();
     }
 
     @Override
@@ -1490,7 +1492,31 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
     @Override
     public List<FileSystemCheckIssue> checkFileSystem(FileSystemCheckOptions options) {
-        return checks.check(options);
+        return checks.check(checkSupport(), options);
+    }
+
+    /**
+     * Provides access to internal functionalities for maintenance checks
+     */
+    private CassandraAppStorageCheckSupport checkSupport() {
+        return new CassandraAppStorageCheckSupport() {
+            @Override
+            public CassandraAppStorage getStorage() {
+                return CassandraAppStorage.this;
+            }
+
+            @Override
+            public Session getSession() {
+                return CassandraAppStorage.this.getSession();
+            }
+
+            @Override
+            public void removeData(UUID nodeId) {
+                List<Statement> statements = new ArrayList<>();
+                CassandraAppStorage.this.removeAllData(nodeId, statements);
+                executeStatements(statements);
+            }
+        };
     }
 
     private void executeStatements(List<Statement> statements) {

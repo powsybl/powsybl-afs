@@ -8,6 +8,10 @@ package com.powsybl.afs.cassandra;
 
 import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.utils.UUIDs;
+import com.powsybl.afs.cassandra.checks.InvalidNodeCheck;
+import com.powsybl.afs.cassandra.checks.OrphanDataCheck;
+import com.powsybl.afs.cassandra.checks.OrphanNodeCheck;
+import com.powsybl.afs.cassandra.checks.ReferenceNotFoundCheck;
 import com.powsybl.afs.storage.*;
 import com.powsybl.afs.storage.check.FileSystemCheckIssue;
 import com.powsybl.afs.storage.check.FileSystemCheckOptions;
@@ -27,7 +31,6 @@ import java.util.List;
 import java.util.UUID;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
-import static com.powsybl.afs.cassandra.CassandraAppStorageChecks.*;
 import static com.powsybl.afs.cassandra.CassandraConstants.*;
 import static com.powsybl.afs.storage.check.FileSystemCheckOptions.EXPIRED_INCONSISTENT_NODES;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -85,10 +88,10 @@ public class CassandraAppStorageTest extends AbstractAppStorageTest {
         assertThat(storage.getDataNames(orphanDataId)).containsOnly("blob");
         assertAfsNodeNotFound(orphanDataId);
 
-        List<FileSystemCheckIssue> issues = storage.checkFileSystem(repair(ORPHAN_DATA));
+        List<FileSystemCheckIssue> issues = storage.checkFileSystem(repair(OrphanDataCheck.NAME));
         assertThat(issues).hasOnlyOneElementSatisfying(i -> {
             assertEquals(orphanDataId, i.getNodeId());
-            assertEquals(ORPHAN_DATA, i.getType());
+            assertEquals(OrphanDataCheck.NAME, i.getType());
             assertEquals("N/A", i.getNodeName());
         });
 
@@ -107,7 +110,7 @@ public class CassandraAppStorageTest extends AbstractAppStorageTest {
         storage.flush();
         NodeInfo orphanChild = storage.createNode(orphanNode.getId(), "orphanChild", FOLDER_PSEUDO_CLASS, "", 0, new NodeGenericMetadata());
         storage.setConsistent(orphanChild.getId());
-        List<FileSystemCheckIssue> issues = storage.checkFileSystem(repair(ORPHAN_NODE));
+        List<FileSystemCheckIssue> issues = storage.checkFileSystem(repair(OrphanNodeCheck.NAME));
         assertThat(issues).hasOnlyOneElementSatisfying(i -> assertEquals(orphanNode.getId(), i.getNodeId()));
         assertAfsNodeNotFound(orphanNode.getId());
         assertAfsNodeNotFound(orphanNode.getId());
@@ -189,9 +192,9 @@ public class CassandraAppStorageTest extends AbstractAppStorageTest {
         assertThatExceptionOfType(CassandraAfsException.class)
             .isThrownBy(() -> storage.getNodeInfo(absentChild.getId()));
 
-        assertThat(storage.checkFileSystem(dryRun(REF_NOT_FOUND)))
+        assertThat(storage.checkFileSystem(dryRun(ReferenceNotFoundCheck.NAME)))
             .hasOnlyOneElementSatisfying(issue -> {
-                assertEquals(REF_NOT_FOUND, issue.getType());
+                assertEquals(ReferenceNotFoundCheck.NAME, issue.getType());
                 assertEquals("absent_child", issue.getNodeName());
                 assertFalse(issue.isRepaired());
             });
@@ -200,7 +203,7 @@ public class CassandraAppStorageTest extends AbstractAppStorageTest {
         assertTrue(storage.getChildNodes(root.getId()).stream()
             .anyMatch(nodeInfo -> nodeInfo.getName().equals("absent_child")));
 
-        storage.checkFileSystem(repair(REF_NOT_FOUND));
+        storage.checkFileSystem(repair(ReferenceNotFoundCheck.NAME));
 
         //Check again, the wrong child should not be here anymore
         assertFalse(storage.getChildNodes(root.getId()).stream()
@@ -209,11 +212,11 @@ public class CassandraAppStorageTest extends AbstractAppStorageTest {
 
     void testSupportedChecks() {
         assertThat(storage.getSupportedFileSystemChecks())
-            .containsExactlyInAnyOrder(REF_NOT_FOUND,
+            .containsExactlyInAnyOrder(ReferenceNotFoundCheck.NAME,
                     EXPIRED_INCONSISTENT_NODES,
-                    ORPHAN_NODE,
-                    ORPHAN_DATA,
-                    INVALID_NODES
+                    OrphanNodeCheck.NAME,
+                    OrphanDataCheck.NAME,
+                    InvalidNodeCheck.NAME
             );
     }
 
@@ -243,14 +246,14 @@ public class CassandraAppStorageTest extends AbstractAppStorageTest {
             .where(eq(ID, UUID.fromString(created.getId())));
         cassandraCQLUnit.getSession().execute(statement);
 
-        assertThat(storage.checkFileSystem(dryRun(INVALID_NODES)))
+        assertThat(storage.checkFileSystem(dryRun(InvalidNodeCheck.NAME)))
             .hasOnlyOneElementSatisfying(issue -> {
-                assertEquals(INVALID_NODES, issue.getType());
+                assertEquals(InvalidNodeCheck.NAME, issue.getType());
                 assertEquals(created.getId(), issue.getNodeId());
                 assertFalse(issue.isRepaired());
             });
 
-        storage.checkFileSystem(repair(INVALID_NODES));
+        storage.checkFileSystem(repair(InvalidNodeCheck.NAME));
         assertAfsNodeNotFound(created.getId());
     }
 }
