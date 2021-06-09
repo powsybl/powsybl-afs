@@ -11,8 +11,9 @@ import com.datastax.driver.core.utils.UUIDs;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.powsybl.afs.cassandra.checks.CassandraAppStorageCheckSupport;
+import com.powsybl.afs.cassandra.checks.CassandraAppStorageChecks;
 import com.powsybl.afs.storage.*;
 import com.powsybl.afs.storage.buffer.*;
 import com.powsybl.afs.storage.check.FileSystemCheckIssue;
@@ -25,7 +26,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.ByteBuffer;
-import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -46,17 +46,16 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
     private static final String BROKEN_DEPENDENCY = "Broken dependency";
 
-    public static final String REF_NOT_FOUND = "REFERENCE_NOT_FOUND";
-
-    public static final String ORPHAN_NODE = "ORPHAN_NODE";
-
-    public static final String ORPHAN_DATA = "ORPHAN_DATA";
-
     private final String fileSystemName;
 
     private final Supplier<CassandraContext> contextSupplier;
 
     private final CassandraAppStorageConfig config;
+
+    /**
+     * Provides maintenance features
+     */
+    private final CassandraAppStorageChecks checks;
 
     private final class PreparedStatements {
 
@@ -330,6 +329,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
         // prepared statement
         preparedStatementsSupplier = Suppliers.memoize(PreparedStatements::new);
+        checks = new CassandraAppStorageChecks();
     }
 
     @Override
@@ -787,7 +787,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
         return parentNodeUuid != null ? parentNodeUuid.toString() : null;
     }
 
-    private UUID deleteNode(UUID nodeUuid) {
+    UUID deleteNode(UUID nodeUuid) {
         Objects.requireNonNull(nodeUuid);
 
         // flush buffer to keep change order
@@ -1093,7 +1093,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
         pushEvent(new NodeDataRemoved(nodeUuid.toString(), name), APPSTORAGE_NODE_TOPIC);
     }
 
-    private void removeAllData(UUID nodeUuid, List<Statement> statements) {
+    void removeAllData(UUID nodeUuid, List<Statement> statements) {
         for (String dataName : getDataNames(nodeUuid)) {
             removeData(nodeUuid, dataName, statements);
         }
@@ -1487,232 +1487,41 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
     @Override
     public List<String> getSupportedFileSystemChecks() {
-        return ImmutableList.of(FileSystemCheckOptions.EXPIRED_INCONSISTENT_NODES,
-                REF_NOT_FOUND, ORPHAN_NODE, ORPHAN_DATA);
+        return checks.getCheckNames();
     }
 
     @Override
     public List<FileSystemCheckIssue> checkFileSystem(FileSystemCheckOptions options) {
-        List<FileSystemCheckIssue> results = new ArrayList<>();
-
-        for (String type : options.getTypes()) {
-            switch (type) {
-                case FileSystemCheckOptions.EXPIRED_INCONSISTENT_NODES:
-                    options.getInconsistentNodesExpirationTime()
-                        .ifPresent(time -> checkInconsistent(results, time, options.isRepair()));
-                    break;
-                case REF_NOT_FOUND:
-                    checkReferenceNotFound(results, options);
-                    break;
-                case ORPHAN_NODE:
-                    checkOrphanNode(results, options);
-                    break;
-                case ORPHAN_DATA:
-                    checkOrphanData(results, options);
-                    break;
-                default:
-                    LOGGER.warn("Check {} not supported in {}", type, getClass());
-            }
-        }
-
-        return results;
+        return checks.check(checkSupport(), options);
     }
 
-    private void checkOrphanData(List<FileSystemCheckIssue> results, FileSystemCheckOptions options) {
-        Set<UUID> existingNodeIds = new HashSet<>();
-        Set<UUID> orphanDataIds = new HashSet<>();
-        ResultSet existingNodes = getSession().execute(select(ID).distinct().from(CHILDREN_BY_NAME_AND_CLASS));
-        for (Row row : existingNodes) {
-            existingNodeIds.add(row.getUUID(ID));
-        }
-        ResultSet nodeDatas = getSession().execute(select(ID, NAME).distinct().from(NODE_DATA));
-        for (Row row : nodeDatas) {
-            UUID uuid = row.getUUID(ID);
-            if (!existingNodeIds.contains(uuid)) {
-                orphanDataIds.add(uuid);
-                FileSystemCheckIssue issue = new FileSystemCheckIssue().setNodeName("N/A")
-                        .setNodeId(uuid.toString())
-                        .setType(ORPHAN_DATA)
-                        .setDescription("Orphan data(" + row.getString(NAME) + ") is binding to non-existing node(" + uuid + ")")
-                        .setRepaired(options.isRepair());
-                if (options.isRepair()) {
-                    issue.setRepaired(true)
-                            .setResolutionDescription("Delete orphan data(" + row.getString(NAME) + ").");
-                }
-                results.add(issue);
+    /**
+     * Provides access to internal functionalities for maintenance checks
+     */
+    private CassandraAppStorageCheckSupport checkSupport() {
+        return new CassandraAppStorageCheckSupport() {
+            @Override
+            public CassandraAppStorage getStorage() {
+                return CassandraAppStorage.this;
             }
-        }
-        if (options.isRepair()) {
-            List<Statement> statements = new ArrayList<>();
-            for (UUID id : orphanDataIds) {
-                removeAllData(id, statements);
-            }
-            executeStatements(statements);
-        }
-    }
 
-    private void checkOrphanNode(List<FileSystemCheckIssue> results, FileSystemCheckOptions options) {
-        // get all child id which parent name is null
-        ResultSet resultSet = getSession().execute(select(ID, CHILD_ID, NAME, CHILD_NAME).from(CHILDREN_BY_NAME_AND_CLASS));
-        List<UUID> orphanIds = new ArrayList<>();
-        Set<UUID> fakeParentIds = new HashSet<>();
-        for (Row row : resultSet) {
-            if (row.getString(NAME) == null) {
-                UUID nodeId = row.getUUID(CHILD_ID);
-                String nodeName = row.getString(CHILD_NAME);
-                UUID fakeParentId = row.getUUID(ID);
-                FileSystemCheckIssue issue = new FileSystemCheckIssue().setNodeId(nodeId.toString())
-                        .setNodeName(nodeName)
-                        .setType(ORPHAN_NODE)
-                        .setDescription(nodeName + "(" + nodeId + ") is an orphan node. Its fake parent id=" + fakeParentId);
-                if (options.isRepair()) {
-                    orphanIds.add(nodeId);
-                    fakeParentIds.add(fakeParentId);
-                    issue.setRepaired(true);
-                    issue.setResolutionDescription("Deleted node [name=" + nodeName + ", id=" + nodeId + "] and reference to null name node [id=" + fakeParentId + "]");
-                }
-                results.add(issue);
+            @Override
+            public Session getSession() {
+                return CassandraAppStorage.this.getSession();
             }
-        }
-        if (options.isRepair()) {
-            orphanIds.forEach(this::deleteNode);
-            for (UUID fakeParentId : fakeParentIds) {
-                getSession().execute(delete().from(CHILDREN_BY_NAME_AND_CLASS)
-                        .where(eq(ID, fakeParentId)));
-            }
-        }
-    }
 
-    private void checkReferenceNotFound(List<FileSystemCheckIssue> results, FileSystemCheckOptions options) {
-        List<Statement> statements = new ArrayList<>();
-        Set<ChildNodeInfo> notFoundIds = new HashSet<>();
-        Set<UUID> existingRows = allPrimaryKeys();
-        for (ChildNodeInfo entity : getAllIdsInChildId()) {
-            if (!existingRows.contains(entity.id)) {
-                notFoundIds.add(entity);
+            @Override
+            public void removeData(UUID nodeId) {
+                List<Statement> statements = new ArrayList<>();
+                CassandraAppStorage.this.removeAllData(nodeId, statements);
+                executeStatements(statements);
             }
-        }
-
-        for (ChildNodeInfo childNodeInfo : notFoundIds) {
-            final UUID childId = childNodeInfo.id;
-            final FileSystemCheckIssue issue = new FileSystemCheckIssue()
-                    .setNodeId(childId.toString())
-                    .setNodeName(childNodeInfo.name)
-                    .setRepaired(options.isRepair())
-                    .setDescription("row is not found but still referenced in " + childNodeInfo.parentId)
-                    .setType(REF_NOT_FOUND);
-            results.add(issue);
-            if (options.isRepair()) {
-                statements.add(delete().from(CHILDREN_BY_NAME_AND_CLASS)
-                        .where(eq(ID, childNodeInfo.parentId))
-                        .and(eq(CHILD_NAME, childNodeInfo.name)));
-                issue.setResolutionDescription("reset null child_name and child_id in " + childNodeInfo.parentId);
-            }
-        }
-        if (options.isRepair()) {
-            executeStatements(statements);
-        }
+        };
     }
 
     private void executeStatements(List<Statement> statements) {
         for (Statement statement : statements) {
             getSession().execute(statement);
-        }
-    }
-
-    private Set<ChildNodeInfo> getAllIdsInChildId() {
-        Set<ChildNodeInfo> set = new HashSet<>();
-        ResultSet resultSet = getSession().execute(select(CHILD_ID, CHILD_NAME, ID).from(CHILDREN_BY_NAME_AND_CLASS));
-        for (Row row : resultSet) {
-            final UUID id = row.getUUID(CHILD_ID);
-            if (id != null) {
-                set.add(new ChildNodeInfo(id, row.getString(CHILD_NAME), row.getUUID(ID)));
-            }
-        }
-        return set;
-    }
-
-    private Set<UUID> allPrimaryKeys() {
-        Set<UUID> set = new HashSet<>();
-        ResultSet resultSet = getSession().execute(select(ID).distinct().from(CHILDREN_BY_NAME_AND_CLASS));
-        for (Row row : resultSet) {
-            set.add(row.getUUID(0));
-        }
-        return set;
-    }
-
-    private void checkInconsistent(List<FileSystemCheckIssue> results, Instant expirationTime, boolean repair) {
-        ResultSet resultSet = getSession().execute(select(ID, NAME, MODIFICATION_DATE, CONSISTENT)
-                .distinct()
-                .from(CHILDREN_BY_NAME_AND_CLASS));
-        for (Row row : resultSet) {
-            final Optional<FileSystemCheckIssue> issue = buildExpirationInconsistentIssue(row, expirationTime);
-            issue.ifPresent(results::add);
-        }
-        if (repair) {
-            for (FileSystemCheckIssue issue : results) {
-                if (Objects.equals(issue.getType(), "inconsistent")) {
-                    repairExpirationInconsistent(issue);
-                }
-            }
-        }
-    }
-
-    private static Optional<FileSystemCheckIssue> buildExpirationInconsistentIssue(Row row, Instant instant) {
-        return Optional.ofNullable(buildExpirationInconsistent(row,  instant));
-    }
-
-    private static FileSystemCheckIssue buildExpirationInconsistent(Row row, Instant instant) {
-        if (row.getTimestamp(MODIFICATION_DATE).toInstant().isBefore(instant) && !row.getBool(CONSISTENT)) {
-            final FileSystemCheckIssue fileSystemCheckIssue = buildIssue(row);
-            fileSystemCheckIssue.setType("inconsistent");
-            fileSystemCheckIssue.setDescription("inconsistent and older than " + instant);
-            return fileSystemCheckIssue;
-        }
-        return null;
-    }
-
-    private static FileSystemCheckIssue buildIssue(Row row) {
-        final FileSystemCheckIssue issue = new FileSystemCheckIssue();
-        issue.setNodeId(row.getUUID(ID).toString()).setNodeName(row.getString(NAME));
-        return issue;
-    }
-
-    private void repairExpirationInconsistent(FileSystemCheckIssue issue) {
-        deleteNode(issue.getNodeId());
-        issue.setRepaired(true);
-        issue.setResolutionDescription("deleted");
-    }
-
-    static class ChildNodeInfo {
-
-        final UUID id;
-        final String name;
-        final UUID parentId;
-
-        ChildNodeInfo(UUID id, String name, UUID parentId) {
-            this.id = id;
-            this.name = name;
-            this.parentId = parentId;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hashCode(id);
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (!(o instanceof ChildNodeInfo)) {
-                return false;
-            }
-
-            ChildNodeInfo that = (ChildNodeInfo) o;
-
-            return id.equals(that.id);
         }
     }
 }
