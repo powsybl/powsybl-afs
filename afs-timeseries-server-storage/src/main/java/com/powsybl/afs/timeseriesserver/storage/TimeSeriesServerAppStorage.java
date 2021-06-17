@@ -176,7 +176,6 @@ public class TimeSeriesServerAppStorage extends AbstractAppStorage {
 
     @Override
     public Map<String, List<DoubleDataChunk>> getDoubleTimeSeriesData(String nodeId, Set<String> timeSeriesNames, int version) {
-        //TODO
         return timeSeriesDelegate.getDoubleTimeSeriesData(nodeId, timeSeriesNames, version);
     }
 
@@ -188,12 +187,13 @@ public class TimeSeriesServerAppStorage extends AbstractAppStorage {
 
     @Override
     public Map<String, List<StringDataChunk>> getStringTimeSeriesData(String nodeId, Set<String> timeSeriesNames, int version) {
-        throw new NotImplementedException("Not implemented in V1");
+        return timeSeriesDelegate.getStringTimeSeriesData(nodeId, timeSeriesNames, version);
     }
 
     @Override
     public void addStringTimeSeriesData(String nodeId, int version, String timeSeriesName, List<StringDataChunk> chunks) {
-        throw new NotImplementedException("Not implemented in V1");
+        timeSeriesDelegate.addStringTimeSeriesData(nodeId, version, timeSeriesName, chunks);
+        pushEvent(new TimeSeriesDataUpdated(nodeId, timeSeriesName), AbstractAppStorage.APPSTORAGE_TIMESERIES_TOPIC);
     }
 
     @Override
