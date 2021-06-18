@@ -4,14 +4,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.afs.storage.AfsStorageException;
 import com.powsybl.timeseries.*;
-import com.powsybl.timeseries.storer.data.dto.TimeSeriesInfoDto;
 import com.powsybl.timeseries.storer.query.create.CreateQuery;
 import com.powsybl.timeseries.storer.query.fetch.FetchQuery;
 import com.powsybl.timeseries.storer.query.fetch.result.FetchQueryDoubleResult;
-import com.powsybl.timeseries.storer.query.fetch.result.FetchQueryResult;
 import com.powsybl.timeseries.storer.query.fetch.result.FetchQueryStringResult;
 import com.powsybl.timeseries.storer.query.publish.PublishDoubleQuery;
-import com.powsybl.timeseries.storer.query.publish.PublishQuery;
+import com.powsybl.timeseries.storer.query.publish.AbstractPublishQuery;
 import com.powsybl.timeseries.storer.query.publish.PublishStringQuery;
 import com.powsybl.timeseries.storer.query.search.SearchQuery;
 import com.powsybl.timeseries.storer.query.search.SearchQueryResults;
@@ -205,7 +203,7 @@ public class TimeSeriesStorageDelegate {
         StringTimeSeries ts = new StringTimeSeries(metadata, chunks);
 
         // Prepare publish request
-        PublishQuery<String> publishQuery = new PublishStringQuery();
+        AbstractPublishQuery<String> publishQuery = new PublishStringQuery();
         publishQuery.setMatrix(nodeId);
         publishQuery.setTimeSeriesName(timeSeriesName);
         publishQuery.setVersionName(String.valueOf(version));
@@ -230,7 +228,7 @@ public class TimeSeriesStorageDelegate {
         StoredDoubleTimeSeries ts = new StoredDoubleTimeSeries(metadata, chunks);
 
         //Second step : perform a publish request
-        PublishQuery<Double> publishQuery = new PublishDoubleQuery();
+        AbstractPublishQuery<Double> publishQuery = new PublishDoubleQuery();
         publishQuery.setMatrix(nodeId);
         publishQuery.setTimeSeriesName(timeSeriesName);
         publishQuery.setVersionName(String.valueOf(version));
@@ -355,7 +353,7 @@ public class TimeSeriesStorageDelegate {
      *
      * @param publishQuery query to issue
      */
-    private void doPublish(final PublishQuery<?> publishQuery) {
+    private void doPublish(final AbstractPublishQuery<?> publishQuery) {
         // Run request
         Client client = createClient();
         try {
