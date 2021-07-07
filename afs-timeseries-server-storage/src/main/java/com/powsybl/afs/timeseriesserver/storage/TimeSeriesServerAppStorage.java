@@ -7,7 +7,6 @@ import com.powsybl.afs.storage.events.TimeSeriesDataUpdated;
 import com.powsybl.timeseries.DoubleDataChunk;
 import com.powsybl.timeseries.StringDataChunk;
 import com.powsybl.timeseries.TimeSeriesMetadata;
-import org.apache.commons.lang3.NotImplementedException;
 
 import java.io.InputStream;
 import java.io.OutputStream;

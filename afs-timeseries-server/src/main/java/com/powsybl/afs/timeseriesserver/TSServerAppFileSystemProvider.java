@@ -29,9 +29,8 @@ public class TSServerAppFileSystemProvider implements AppFileSystemProvider {
 
     public TSServerAppFileSystemProvider() {
         this(
-                    TSServerAppFileSystemConfig.load(),
-                    TimeSeriesServerAppStorage::new,
-                    (name, path, eventsStore) -> MapDbAppStorage.createMmapFile(name, path.toFile(), eventsStore)
+                TSServerAppFileSystemConfig.load(),
+                TimeSeriesServerAppStorage::new, (name, path, eventsStore) -> MapDbAppStorage.createMmapFile(name, path.toFile(), eventsStore)
         );
     }
 
