@@ -31,7 +31,7 @@ import static org.junit.Assert.assertEquals;
 
 public class TSServerAppFileSystemProviderTest {
 
-    private static final int srvPort = 9876;
+    private static final int SRV_PORT = 9876;
     public static final String DRIVE = "drive";
 
     private TSServerAppFileSystemConfig config;
@@ -54,7 +54,7 @@ public class TSServerAppFileSystemProviderTest {
 
     @Before
     public void setUp() {
-        mockServer = ClientAndServer.startClientAndServer(srvPort);
+        mockServer = ClientAndServer.startClientAndServer(SRV_PORT);
         setupMockServer();
 
         // Setup connection parameters
@@ -103,8 +103,7 @@ public class TSServerAppFileSystemProviderTest {
         ComputationManager computationManager = Mockito.mock(ComputationManager.class);
         final AppFileSystemProviderContext context = new AppFileSystemProviderContext(computationManager, null, new InMemoryEventsBus());
         // Build a new provider
-        final MapDbAppStorage.MapDbAppStorageProvider<String, Path, EventsBus, MapDbAppStorage> delegateAppStorageProvider =
-                    (name, path, eventsStore) -> MapDbAppStorage.createMem(name, eventsStore);
+        final MapDbAppStorage.MapDbAppStorageProvider<String, Path, EventsBus, MapDbAppStorage> delegateAppStorageProvider = (name, path, eventsStore) -> MapDbAppStorage.createMem(name, eventsStore);
         final TimeSeriesServerAppStorage.TimeSeriesServerAppStorageProvider<URI, String, AbstractAppStorage, TimeSeriesServerAppStorage> appStorageProvider = TimeSeriesServerAppStorage::new;
         TSServerAppFileSystemProvider provider = new TSServerAppFileSystemProvider(config, appStorageProvider, delegateAppStorageProvider);
         // Check that FS is correct

@@ -427,7 +427,7 @@ public abstract class AbstractAppStorageTest {
         assertTrue(storage.getDoubleTimeSeriesData(testData3Info.getId(), Sets.newHashSet("ts1"), 0).isEmpty());
 
         // 15) create a second string time series
-        if(handlesStringTimeSeries) {
+        if (handlesStringTimeSeries) {
             TimeSeriesMetadata metadata2 = new TimeSeriesMetadata("ts2",
                 TimeSeriesDataType.STRING,
                 ImmutableMap.of(),

@@ -161,14 +161,13 @@ public class TimeSeriesStorageDelegate {
         SearchQueryResults results = doSearch(nodeId, timeSeriesNames);
         if (results != null) {
             return results.getTimeSeriesInformations()
-                          .stream().map(t -> {
-                            long startTime = t.getStartDate().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
-                            long spacing = t.getTimeStepDuration();
-                            long endTime = startTime + spacing * (t.getTimeStepCount() - 1);
-                            TimeSeriesIndex index = new RegularTimeSeriesIndex(startTime, endTime, spacing);
-                            return new TimeSeriesMetadata(t.getName(), TimeSeriesDataType.DOUBLE, t.getTags(), index);
-                        })
-                          .collect(Collectors.toList());
+                  .stream().map(t -> {
+                      long startTime = t.getStartDate().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+                      long spacing = t.getTimeStepDuration();
+                      long endTime = startTime + spacing * (t.getTimeStepCount() - 1);
+                      TimeSeriesIndex index = new RegularTimeSeriesIndex(startTime, endTime, spacing);
+                      return new TimeSeriesMetadata(t.getName(), TimeSeriesDataType.DOUBLE, t.getTags(), index);
+                  }).collect(Collectors.toList());
         }
         return null;
     }
