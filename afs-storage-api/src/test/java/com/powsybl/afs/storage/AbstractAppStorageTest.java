@@ -44,9 +44,22 @@ public abstract class AbstractAppStorageTest {
 
     protected AppStorage storage;
 
+    protected boolean conservesChunks;
+
+    protected boolean handlesStringTimeSeries;
+
     protected BlockingQueue<NodeEvent> eventStack;
 
     protected AppStorageListener l = eventList -> eventStack.addAll(eventList.getEvents());
+
+    public AbstractAppStorageTest() {
+        this(true, true);
+    }
+
+    public AbstractAppStorageTest(boolean conservesChunks, boolean handlesStringTimeSeries) {
+        this.conservesChunks = conservesChunks;
+        this.handlesStringTimeSeries = handlesStringTimeSeries;
+    }
 
     protected abstract AppStorage createStorage();
 
@@ -406,8 +419,13 @@ public abstract class AbstractAppStorageTest {
         assertTrue(storage.getTimeSeriesMetadata(testData3Info.getId(), Sets.newHashSet("ts1")).isEmpty());
 
         // 14) add data to double time series
-        storage.addDoubleTimeSeriesData(testData2Info.getId(), 0, "ts1", Arrays.asList(new UncompressedDoubleDataChunk(2, new double[] {1d, 2d}),
-                                                                                       new UncompressedDoubleDataChunk(5, new double[] {3d})));
+        if (conservesChunks) {
+            storage.addDoubleTimeSeriesData(testData2Info.getId(), 0, "ts1", Arrays.asList(new UncompressedDoubleDataChunk(2, new double[] {1d, 2d}),
+                new UncompressedDoubleDataChunk(5, new double[] {3d})));
+        } else {
+            storage.addDoubleTimeSeriesData(testData2Info.getId(), 0, "ts1", Arrays.asList(new UncompressedDoubleDataChunk(0, new double[] {1d, 2d, 3d})));
+        }
+
         storage.flush();
 
         // check event
@@ -420,52 +438,58 @@ public abstract class AbstractAppStorageTest {
         // check double time series data query
         Map<String, List<DoubleDataChunk>> doubleTimeSeriesData = storage.getDoubleTimeSeriesData(testData2Info.getId(), Sets.newHashSet("ts1"), 0);
         assertEquals(1, doubleTimeSeriesData.size());
-        assertEquals(Arrays.asList(new UncompressedDoubleDataChunk(2, new double[] {1d, 2d}),
-                                   new UncompressedDoubleDataChunk(5, new double[] {3d})),
-                     doubleTimeSeriesData.get("ts1"));
+        if (conservesChunks) {
+            assertEquals(Arrays.asList(new UncompressedDoubleDataChunk(2, new double[] {1d, 2d}),
+                new UncompressedDoubleDataChunk(5, new double[] {3d})),
+                doubleTimeSeriesData.get("ts1"));
+        } else {
+            assertEquals(Arrays.asList(new UncompressedDoubleDataChunk(0, new double[]{1d, 2d, 3d})), doubleTimeSeriesData.get("ts1"));
+        }
         assertTrue(storage.getDoubleTimeSeriesData(testData3Info.getId(), Sets.newHashSet("ts1"), 0).isEmpty());
 
         // 15) create a second string time series
-        TimeSeriesMetadata metadata2 = new TimeSeriesMetadata("ts2",
-                                                              TimeSeriesDataType.STRING,
-                                                              ImmutableMap.of(),
-                                                              RegularTimeSeriesIndex.create(Interval.parse("2015-01-01T00:00:00Z/2015-01-01T01:15:00Z"),
-                                                                                            Duration.ofMinutes(15)));
-        storage.createTimeSeries(testData2Info.getId(), metadata2);
-        storage.flush();
+        if (handlesStringTimeSeries) {
+            TimeSeriesMetadata metadata2 = new TimeSeriesMetadata("ts2",
+                TimeSeriesDataType.STRING,
+                ImmutableMap.of(),
+                RegularTimeSeriesIndex.create(Interval.parse("2015-01-01T00:00:00Z/2015-01-01T01:15:00Z"),
+                    Duration.ofMinutes(15)));
+            storage.createTimeSeries(testData2Info.getId(), metadata2);
+            storage.flush();
 
-        // check event
-        assertEventStack(new TimeSeriesCreated(testData2Info.getId(), "ts2"));
+            // check event
+            assertEventStack(new TimeSeriesCreated(testData2Info.getId(), "ts2"));
 
-        // check string time series query
-        assertEquals(Sets.newHashSet("ts1", "ts2"), storage.getTimeSeriesNames(testData2Info.getId()));
-        metadataList = storage.getTimeSeriesMetadata(testData2Info.getId(), Sets.newHashSet("ts1"));
-        assertEquals(1, metadataList.size());
+            // check string time series query
+            assertEquals(Sets.newHashSet("ts1", "ts2"), storage.getTimeSeriesNames(testData2Info.getId()));
+            metadataList = storage.getTimeSeriesMetadata(testData2Info.getId(), Sets.newHashSet("ts1"));
+            assertEquals(1, metadataList.size());
 
-        // 16) add data to double time series
-        storage.addStringTimeSeriesData(testData2Info.getId(), 0, "ts2", Arrays.asList(new UncompressedStringDataChunk(2, new String[] {"a", "b"}),
-                                                                                       new UncompressedStringDataChunk(5, new String[] {"c"})));
-        storage.flush();
+            // 16) add data to double time series
+            storage.addStringTimeSeriesData(testData2Info.getId(), 0, "ts2", Arrays.asList(new UncompressedStringDataChunk(2, new String[] {"a", "b"}),
+                new UncompressedStringDataChunk(5, new String[] {"c"})));
+            storage.flush();
 
-        // check event
-        assertEventStack(new TimeSeriesDataUpdated(testData2Info.getId(), "ts2"));
+            // check event
+            assertEventStack(new TimeSeriesDataUpdated(testData2Info.getId(), "ts2"));
 
-        // check string time series data query
-        Map<String, List<StringDataChunk>> stringTimeSeriesData = storage.getStringTimeSeriesData(testData2Info.getId(), Sets.newHashSet("ts2"), 0);
-        assertEquals(1, stringTimeSeriesData.size());
-        assertEquals(Arrays.asList(new UncompressedStringDataChunk(2, new String[] {"a", "b"}),
-                                   new UncompressedStringDataChunk(5, new String[] {"c"})),
-                     stringTimeSeriesData.get("ts2"));
+            // check string time series data query
+            Map<String, List<StringDataChunk>> stringTimeSeriesData = storage.getStringTimeSeriesData(testData2Info.getId(), Sets.newHashSet("ts2"), 0);
+            assertEquals(1, stringTimeSeriesData.size());
+            assertEquals(Arrays.asList(new UncompressedStringDataChunk(2, new String[] {"a", "b"}),
+                new UncompressedStringDataChunk(5, new String[] {"c"})),
+                stringTimeSeriesData.get("ts2"));
 
-        // 17) clear time series
-        storage.clearTimeSeries(testData2Info.getId());
-        storage.flush();
+            // 17) clear time series
+            storage.clearTimeSeries(testData2Info.getId());
+            storage.flush();
 
-        // check event
-        assertEventStack(new TimeSeriesCleared(testData2Info.getId()));
+            // check event
+            assertEventStack(new TimeSeriesCleared(testData2Info.getId()));
 
-        // check there is no more time series
-        assertTrue(storage.getTimeSeriesNames(testData2Info.getId()).isEmpty());
+            // check there is no more time series
+            assertTrue(storage.getTimeSeriesNames(testData2Info.getId()).isEmpty());
+        }
 
         // 18) change parent test
         NodeInfo folder1Info = storage.createNode(rootFolderInfo.getId(), "test1", FOLDER_PSEUDO_CLASS, "", 0, new NodeGenericMetadata());
