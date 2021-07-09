@@ -6,10 +6,10 @@ import com.powsybl.afs.storage.AfsStorageException;
 import com.powsybl.timeseries.*;
 import com.powsybl.timeseries.storer.query.create.CreateQuery;
 import com.powsybl.timeseries.storer.query.fetch.FetchQuery;
-import com.powsybl.timeseries.storer.query.fetch.result.FetchQueryDoubleResult;
-import com.powsybl.timeseries.storer.query.fetch.result.FetchQueryStringResult;
-import com.powsybl.timeseries.storer.query.publish.PublishDoubleQuery;
+import com.powsybl.timeseries.storer.query.fetch.result.AbstractFetchQueryResult;
+import com.powsybl.timeseries.storer.query.fetch.result.FetchQueryMixedResult;
 import com.powsybl.timeseries.storer.query.publish.AbstractPublishQuery;
+import com.powsybl.timeseries.storer.query.publish.PublishDoubleQuery;
 import com.powsybl.timeseries.storer.query.publish.PublishStringQuery;
 import com.powsybl.timeseries.storer.query.search.SearchQuery;
 import com.powsybl.timeseries.storer.query.search.SearchQueryResults;
@@ -252,18 +252,13 @@ public class TimeSeriesStorageDelegate {
         List<Long> versionIDs = searchResults.getVersionIds(versionString);
         Map<Long, String> versionToName = searchResults.getVersionToNameMap(versionString);
         // Then perform the fetch query
-        final Response response = doFetch(versionToName);
-        // Extract fetch result
-        String json = response.readEntity(String.class);
-        FetchQueryStringResult fetchResults;
-        try {
-            fetchResults = new ObjectMapper().readValue(json, FetchQueryStringResult.class);
-        } catch (JsonProcessingException e) {
-            throw new AfsStorageException("Could not process fetch query result into a String query result");
-        }
+        FetchQueryMixedResult fetchResults = (FetchQueryMixedResult) doFetch(versionToName);
         Map<String, List<StringDataChunk>> result = new HashMap<>();
         for (int i = 0; i < versionToName.keySet().size(); i++) {
-            String[] values = fetchResults.getData().get(i).toArray(new String[0]);
+            String[] values = fetchResults.getData().get(i)
+                                          .stream()
+                                          .map(v -> (String) v)
+                                          .toArray(String[]::new);
             StringDataChunk chunk = new UncompressedStringDataChunk(0, values);
             result.put(versionToName.get(versionIDs.get(i)), Collections.singletonList(chunk));
         }
@@ -285,19 +280,15 @@ public class TimeSeriesStorageDelegate {
         List<Long> versionIDs = searchResults.getVersionIds(versionString);
         Map<Long, String> versionToName = searchResults.getVersionToNameMap(versionString);
         // Then perform the fetch query
-        final Response response = doFetch(versionToName);
-        // Extract fetch result
-        String json = response.readEntity(String.class);
-        FetchQueryDoubleResult fetchResults;
-        try {
-            fetchResults = new ObjectMapper().readValue(json, FetchQueryDoubleResult.class);
-        } catch (JsonProcessingException e) {
-            throw new AfsStorageException("Could not process fetch query result into a String query result");
-        }
+        FetchQueryMixedResult fetchResults = (FetchQueryMixedResult) doFetch(versionToName);
         // Extract data from results
         Map<String, List<DoubleDataChunk>> toReturn = new HashMap<>();
         for (int i = 0; i < versionIDs.size(); i++) {
-            double[] values = fetchResults.getData().get(i).stream().mapToDouble(Double::doubleValue).toArray();
+            double[] values = fetchResults.getData()
+                                          .get(i)
+                                          .stream()
+                                          .mapToDouble(val -> ((Number)val).doubleValue())
+                                          .toArray();
             UncompressedDoubleDataChunk chunk = new UncompressedDoubleDataChunk(0, values);
             toReturn.put(versionToName.get(versionIDs.get(i)), Collections.singletonList(chunk));
         }
@@ -326,7 +317,7 @@ public class TimeSeriesStorageDelegate {
      * @param versionToName a map of TS version -> TS name
      * @return fetch HTTP response
      */
-    private Response doFetch(final Map<Long, String> versionToName) {
+    private AbstractFetchQueryResult<?> doFetch(final Map<Long, String> versionToName) {
         // Prepare fetch query
         FetchQuery query = new FetchQuery(versionToName.keySet(), null, null);
         Client client = createClient();
@@ -339,7 +330,9 @@ public class TimeSeriesStorageDelegate {
             if (response.getStatus() != 200) {
                 throw new AfsStorageException("Error while fetching data from time series server");
             }
-            return response;
+
+            String json = response.readEntity(String.class);
+            return new ObjectMapper().readValue(json, AbstractFetchQueryResult.class);
         } catch (JsonProcessingException e) {
             throw new AfsStorageException("Error while fetching data from time series server");
         } finally {
