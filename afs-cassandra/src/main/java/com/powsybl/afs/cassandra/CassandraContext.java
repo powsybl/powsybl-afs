@@ -6,19 +6,17 @@
  */
 package com.powsybl.afs.cassandra;
 
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Session;
+import com.datastax.oss.driver.api.core.CqlSession;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  */
 public interface CassandraContext extends AutoCloseable {
 
-    Cluster getCluster();
-
-    Session getSession();
+    CqlSession getSession();
 
     boolean isClosed();
 
-    @Override void close();
+    @Override
+    void close();
 }

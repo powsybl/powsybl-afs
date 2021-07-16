@@ -8,11 +8,11 @@ package com.powsybl.afs;
 
 import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.computation.ComputationManager;
+import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.Substation;
 import org.junit.After;
 import org.junit.Before;
-import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -52,14 +52,14 @@ public abstract class AbstractProjectFileTest {
                 .setId("s1")
                 .setTso("TSO")
                 .add();
-        ComputationManager computationManager = Mockito.mock(ComputationManager.class);
+        ComputationManager computationManager = new LocalComputationManager();
         storage = createStorage();
         afs = new AppFileSystem("mem", false, storage);
         ad = new AppData(computationManager, computationManager,
-                         Collections.singletonList(computationManager1 -> Collections.singletonList(afs)),
-                         getFileExtensions(),
-                         getProjectFileExtensions(),
-                         getServiceExtensions());
+                Collections.singletonList(computationManager1 -> Collections.singletonList(afs)),
+                getFileExtensions(),
+                getProjectFileExtensions(),
+                getServiceExtensions());
         afs.setData(ad);
     }
 

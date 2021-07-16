@@ -6,12 +6,15 @@
  */
 package com.powsybl.afs.security;
 
-import com.powsybl.iidm.network.*;
+import com.powsybl.iidm.network.Branch;
+import com.powsybl.iidm.network.Country;
+import com.powsybl.iidm.network.Identifiable;
+import com.powsybl.iidm.network.VoltageLevel;
 import com.powsybl.security.LimitViolation;
 import com.powsybl.security.LimitViolationsResult;
-import com.powsybl.security.PostContingencyResult;
 import com.powsybl.security.interceptors.DefaultSecurityAnalysisInterceptor;
-import com.powsybl.security.interceptors.RunningContext;
+import com.powsybl.security.interceptors.SecurityAnalysisResultContext;
+import com.powsybl.security.results.PostContingencyResult;
 
 import java.util.Collections;
 import java.util.Set;
@@ -22,7 +25,7 @@ import java.util.TreeSet;
  */
 public class SubjectInfoInterceptor extends DefaultSecurityAnalysisInterceptor {
 
-    private void addSubjectInfo(RunningContext context, LimitViolationsResult result) {
+    private void addSubjectInfo(SecurityAnalysisResultContext context, LimitViolationsResult result) {
         for (LimitViolation violation : result.getLimitViolations()) {
             Identifiable identifiable = context.getNetwork().getIdentifiable(violation.getSubjectId());
             if (identifiable instanceof Branch) {
@@ -48,12 +51,12 @@ public class SubjectInfoInterceptor extends DefaultSecurityAnalysisInterceptor {
     }
 
     @Override
-    public void onPreContingencyResult(RunningContext context, LimitViolationsResult preContingencyResult) {
+    public void onPreContingencyResult(LimitViolationsResult preContingencyResult, SecurityAnalysisResultContext context) {
         addSubjectInfo(context, preContingencyResult);
     }
 
     @Override
-    public void onPostContingencyResult(RunningContext context, PostContingencyResult postContingencyResult) {
+    public void onPostContingencyResult(PostContingencyResult postContingencyResult, SecurityAnalysisResultContext context) {
         addSubjectInfo(context, postContingencyResult.getLimitViolationsResult());
     }
 }

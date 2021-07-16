@@ -6,14 +6,17 @@
  */
 package com.powsybl.afs.cassandra;
 
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.TableMetadata;
+import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
+import com.datastax.oss.driver.api.core.cql.Row;
+import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
+import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
 
 import java.io.PrintStream;
-import java.util.Collection;
+import java.util.Map;
+import java.util.Optional;
 
-import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.selectFrom;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
@@ -24,15 +27,21 @@ public final class CassandraUtil {
     }
 
     public static void print(CassandraContext context, PrintStream out) {
-        Collection<TableMetadata> tables = context.getCluster().getMetadata()
-                .getKeyspace(CassandraConstants.AFS_KEYSPACE)
-                .getTables();
-        tables.forEach(metadata -> {
-            ResultSet resultSet = context.getSession().execute(select().json().all().from(metadata.getName()));
+
+        Optional<KeyspaceMetadata> keyspace = context.getSession().getMetadata()
+                .getKeyspace(CassandraConstants.AFS_KEYSPACE);
+        if (!keyspace.isPresent()) {
+            return;
+        }
+
+        Map<CqlIdentifier, TableMetadata> tables = keyspace.get().getTables();
+        tables.keySet().forEach(metadata -> {
+            String tableName = tables.get(metadata).getName().toString();
+            ResultSet resultSet = context.getSession().execute(selectFrom(tableName).all().build());
             boolean first = true;
             for (Row row : resultSet) {
                 if (first) {
-                    out.println(metadata.getName() + ":");
+                    out.println(tableName + ":");
                     first = false;
                 }
                 String json = row.getString(0);
