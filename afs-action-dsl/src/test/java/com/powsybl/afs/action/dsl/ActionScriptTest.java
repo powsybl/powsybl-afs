@@ -13,17 +13,16 @@ import com.powsybl.afs.ProjectFileExtension;
 import com.powsybl.afs.mapdb.storage.MapDbAppStorage;
 import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.InMemoryEventsBus;
-import com.powsybl.contingency.BranchContingency;
 import com.powsybl.contingency.Contingency;
+import com.powsybl.contingency.LineContingency;
 import com.powsybl.iidm.network.Line;
 import com.powsybl.iidm.network.Network;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.util.Collections;
 import java.util.List;
-
-import static org.junit.Assert.assertEquals;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
@@ -54,9 +53,12 @@ public class ActionScriptTest extends AbstractProjectFileTest {
                         "}",
                         ""))
                 .build();
-        List<Contingency> contingencies = Collections.singletonList(new Contingency("c1", new BranchContingency("l1")));
+        List<Contingency> contingencies = Collections.singletonList(new Contingency("c1", new LineContingency("l1")));
+
         Network network = Mockito.mock(Network.class);
         Mockito.when((Line) network.getIdentifiable("l1")).thenReturn(Mockito.mock(Line.class));
-        assertEquals(contingencies, actionScript.getContingencies(network));
+
+        Assertions.assertThat(contingencies).hasSameElementsAs(actionScript.getContingencies(network));
+
     }
 }

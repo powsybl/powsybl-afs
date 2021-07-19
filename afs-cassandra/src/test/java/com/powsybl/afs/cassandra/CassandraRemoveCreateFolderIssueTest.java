@@ -6,16 +6,9 @@
  */
 package com.powsybl.afs.cassandra;
 
-import com.powsybl.afs.storage.InMemoryEventsBus;
+import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.NodeGenericMetadata;
 import com.powsybl.afs.storage.NodeInfo;
-import org.cassandraunit.CassandraCQLUnit;
-import org.cassandraunit.dataset.cql.ClassPathCQLDataSet;
-import org.junit.Rule;
-import org.junit.Test;
-
-import java.util.Collections;
-import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -25,15 +18,8 @@ import static org.junit.Assert.assertNotEquals;
  */
 public class CassandraRemoveCreateFolderIssueTest {
 
-    @Rule
-    public CassandraCQLUnit cassandraCQLUnit = new CassandraCQLUnit(new ClassPathCQLDataSet("afs.cql", CassandraConstants.AFS_KEYSPACE), null, 20000L);
-
-    @Test
-    public void test() {
-        CassandraTestContext context = new CassandraTestContext(cassandraCQLUnit);
-        CassandraAppStorageConfig config = new CassandraAppStorageConfig().setBinaryDataChunkSize(10);
-        CassandraAppStorage storage = new CassandraAppStorage("test", () -> context, config, new InMemoryEventsBus());
-        NodeInfo rootNodeId = storage.createRootNodeIfNotExists("test", "folder");
+    public void test(AppStorage storage) {
+        NodeInfo rootNodeId = storage.createRootNodeIfNotExists("CassandraRemoveCreateFolderIssueTest", "folder");
         NodeInfo nodeInfo = storage.createNode(rootNodeId.getId(), "test1", "folder", "", 0, new NodeGenericMetadata());
         storage.flush();
         storage.deleteNode(nodeInfo.getId());
@@ -42,6 +28,6 @@ public class CassandraRemoveCreateFolderIssueTest {
         storage.setConsistent(nodeInfo2.getId());
         storage.flush();
         assertNotEquals(nodeInfo.getId(), nodeInfo2.getId());
-        assertEquals(Collections.singletonList(nodeInfo2.getId()), storage.getChildNodes(rootNodeId.getId()).stream().map(NodeInfo::getId).collect(Collectors.toList()));
+        assertEquals(nodeInfo2.getId(), storage.getChildNode(rootNodeId.getId(), "test1").get().getId());
     }
 }
