@@ -87,7 +87,7 @@ public class StorageServerTest extends AbstractAppStorageTest {
     }
 
     @Override
-    protected AppStorage createStorage() {
+    public AppStorage createStorage() {
         URI restUri = getRestUri();
         return new RemoteAppStorage(FS_TEST_NAME, restUri, "");
     }

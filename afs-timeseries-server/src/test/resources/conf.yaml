@@ -1,0 +1,12 @@
+tsserver-app-file-system:
+  drive-name: "test-fs"
+  remotely-accessible: false
+  app: AFS
+  scheme: http
+  host: localhost
+  port: 8080
+delegate-mapdb-app-file-system:
+  drive-name: "test-fs"
+  remotely-accessible: false
+  db-file: "/db/test.db"
+
