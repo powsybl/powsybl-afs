@@ -6,8 +6,7 @@
  */
 package com.powsybl.afs.cassandra;
 
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Session;
+import com.datastax.oss.driver.api.core.CqlSession;
 import org.cassandraunit.CassandraCQLUnit;
 
 /**
@@ -22,18 +21,13 @@ public class CassandraTestContext implements CassandraContext {
     }
 
     @Override
-    public Cluster getCluster() {
-        return cassandraCQLUnit.getCluster();
-    }
-
-    @Override
-    public Session getSession() {
+    public CqlSession getSession() {
         return cassandraCQLUnit.getSession();
     }
 
     @Override
     public boolean isClosed() {
-        return false;
+        return cassandraCQLUnit.getSession().isClosed();
     }
 
     @Override

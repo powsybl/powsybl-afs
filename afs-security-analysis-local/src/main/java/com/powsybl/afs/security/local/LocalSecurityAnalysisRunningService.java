@@ -6,24 +6,25 @@
  */
 package com.powsybl.afs.security.local;
 
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.powsybl.afs.AfsException;
 import com.powsybl.afs.AppLogger;
 import com.powsybl.afs.ext.base.ProjectCase;
+import com.powsybl.afs.security.SecurityAnalysisRunner;
+import com.powsybl.afs.security.SecurityAnalysisRunningService;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.contingency.ContingenciesProvider;
 import com.powsybl.contingency.EmptyContingencyListProvider;
 import com.powsybl.iidm.network.Network;
+import com.powsybl.security.LimitViolationFilter;
 import com.powsybl.security.SecurityAnalysis;
-import com.powsybl.security.SecurityAnalysisFactory;
 import com.powsybl.security.SecurityAnalysisParameters;
-import com.powsybl.afs.security.SecurityAnalysisRunner;
-import com.powsybl.afs.security.SecurityAnalysisRunningService;
+import com.powsybl.security.SecurityAnalysisReport;
+import com.powsybl.security.detectors.DefaultLimitViolationDetector;
+import com.powsybl.security.interceptors.SecurityAnalysisInterceptor;
 import com.powsybl.security.interceptors.SecurityAnalysisInterceptors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -31,14 +32,6 @@ import java.util.UUID;
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  */
 public class LocalSecurityAnalysisRunningService implements SecurityAnalysisRunningService {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(LocalSecurityAnalysisRunningService.class);
-
-    private final Supplier<SecurityAnalysisFactory> factorySupplier;
-
-    public LocalSecurityAnalysisRunningService(Supplier<SecurityAnalysisFactory> factorySupplier) {
-        this.factorySupplier = Suppliers.memoize(Objects.requireNonNull(factorySupplier));
-    }
 
     @Override
     public void run(SecurityAnalysisRunner runner) {
@@ -57,26 +50,23 @@ public class LocalSecurityAnalysisRunningService implements SecurityAnalysisRunn
 
             logger.log("Loading network...");
             Network network = aCase.getNetwork();
-
-            SecurityAnalysis securityAnalysis = factorySupplier.get().create(network, computationManager, 0);
-
             // add all interceptors
+            List<SecurityAnalysisInterceptor> interceptors = new ArrayList<>();
             for (String interceptorName : SecurityAnalysisInterceptors.getExtensionNames()) {
-                securityAnalysis.addInterceptor(SecurityAnalysisInterceptors.createInterceptor(interceptorName));
+                interceptors.add(SecurityAnalysisInterceptors.createInterceptor(interceptorName));
             }
 
             logger.log("Running security analysis...");
-            securityAnalysis.run(network.getVariantManager().getWorkingVariantId(), parameters, contingencyListProvider)
-                    .handleAsync((result, throwable) -> {
-                        if (throwable == null) {
-                            logger.log("Security analysis complete, storing results...");
-                            runner.writeResult(result);
-                        } else {
-                            logger.log("Security analysis failed");
-                            LOGGER.error(throwable.toString(), throwable);
-                        }
-                        return null;
-                    }).join();
+            SecurityAnalysisReport securityAnalysisReport = SecurityAnalysis.run(network,
+                    network.getVariantManager().getWorkingVariantId(),
+                    new DefaultLimitViolationDetector(),
+                    new LimitViolationFilter(),
+                    computationManager,
+                    parameters,
+                    contingencyListProvider,
+                    interceptors);
+
+            runner.writeResult(securityAnalysisReport.getResult());
         } finally {
             runner.stopTask(taskId);
         }

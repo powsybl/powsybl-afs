@@ -6,16 +6,13 @@
  */
 package com.powsybl.afs.cassandra;
 
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
+import com.datastax.oss.driver.api.core.cql.Row;
 import com.google.common.io.ByteStreams;
-import com.powsybl.afs.storage.InMemoryEventsBus;
+import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.NodeGenericMetadata;
 import com.powsybl.afs.storage.NodeInfo;
 import org.cassandraunit.CassandraCQLUnit;
-import org.cassandraunit.dataset.cql.ClassPathCQLDataSet;
-import org.junit.Rule;
-import org.junit.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,8 +20,8 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
-import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.selectFrom;
 import static com.powsybl.afs.cassandra.CassandraConstants.*;
 import static org.junit.Assert.*;
 
@@ -33,14 +30,8 @@ import static org.junit.Assert.*;
  */
 public class CassandraDataSplitTest {
 
-    @Rule
-    public CassandraCQLUnit cassandraCQLUnit = new CassandraCQLUnit(new ClassPathCQLDataSet("afs.cql", CassandraConstants.AFS_KEYSPACE), null, 20000L);
+    public void test(AppStorage storage, CassandraCQLUnit cassandraCQLUnit) throws IOException {
 
-    @Test
-    public void test() throws IOException {
-        CassandraTestContext cassandraTestContext = new CassandraTestContext(cassandraCQLUnit);
-        CassandraAppStorage storage = new CassandraAppStorage("test", () -> cassandraTestContext,
-                new CassandraAppStorageConfig().setBinaryDataChunkSize(10), new InMemoryEventsBus());
         NodeInfo rootNodeId = storage.createRootNodeIfNotExists("test", "folder");
         NodeInfo nodeInfo = storage.createNode(rootNodeId.getId(), "test1", "folder", "", 0, new NodeGenericMetadata());
         try (OutputStream os = storage.writeBinaryData(nodeInfo.getId(), "a")) {
@@ -89,11 +80,13 @@ public class CassandraDataSplitTest {
         assertEquals("aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd", new String(ByteStreams.toByteArray(is3), StandardCharsets.UTF_8));
         is3.close();
 
-        ResultSet resultSet = cassandraTestContext.getSession().execute(select(CHUNKS_COUNT).from(NODE_DATA)
-                .where(eq(ID, UUID.fromString(nodeInfo.getId())))
-                .and(eq(NAME, "a")));
+        ResultSet resultSet = cassandraCQLUnit.getSession().execute(selectFrom(NODE_DATA)
+                .column(CHUNKS_COUNT)
+                .whereColumn(ID).isEqualTo(literal(UUID.fromString(nodeInfo.getId())))
+                .whereColumn(NAME).isEqualTo(literal("a"))
+                .build());
         Row firstRow = resultSet.one();
         assertNotNull(firstRow);
-        assertEquals(4, firstRow.get(0, Integer.class).intValue());
+        assertEquals(1, firstRow.get(0, Integer.class).intValue());
     }
 }

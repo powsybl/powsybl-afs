@@ -6,39 +6,25 @@
  */
 package com.powsybl.afs.cassandra;
 
-import com.powsybl.afs.storage.InMemoryEventsBus;
+import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.NodeGenericMetadata;
 import com.powsybl.afs.storage.NodeInfo;
-import org.cassandraunit.CassandraCQLUnit;
-import org.cassandraunit.dataset.cql.ClassPathCQLDataSet;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  */
-@Ignore
 public class CassandraRenameIssueTest {
 
-    @Rule
-    public CassandraCQLUnit cassandraCQLUnit = new CassandraCQLUnit(new ClassPathCQLDataSet("afs.cql", CassandraConstants.AFS_KEYSPACE), null, 20000L);
+    public void test(AppStorage storage) {
+        NodeInfo rootNodeId = storage.createRootNodeIfNotExists("CassandraRenameIssueTest", "folder");
+        NodeInfo newNode = storage.createNode(rootNodeId.getId(), "CassandraRenameIssueTest_test2", "folder", "", 0, new NodeGenericMetadata());
+        storage.flush();
+        assertEquals("CassandraRenameIssueTest_test2", storage.getNodeInfo(newNode.getId()).getName());
 
-    @Test
-    public void test() {
-        CassandraTestContext context = new CassandraTestContext(cassandraCQLUnit);
-        CassandraAppStorageConfig config = new CassandraAppStorageConfig().setBinaryDataChunkSize(10);
-        CassandraAppStorage storage = new CassandraAppStorage("test", () -> context, config, new InMemoryEventsBus());
-        NodeInfo rootNodeId = storage.createRootNodeIfNotExists("test", "folder");
-        NodeInfo test1NodeInfo = storage.createNode(rootNodeId.getId(), "test1", "folder", "", 0, new NodeGenericMetadata());
-        storage.createNode(test1NodeInfo.getId(), "test2", "folder", "", 0, new NodeGenericMetadata());
-        storage.createNode(test1NodeInfo.getId(), "test2_bis", "folder", "", 0, new NodeGenericMetadata());
+        storage.renameNode(newNode.getId(), "newtest1");
         storage.flush();
-        storage.renameNode(test1NodeInfo.getId(), "newtest1");
-        storage.flush();
-        assertEquals(2, storage.getChildNodes(test1NodeInfo.getId()).size());
-        assertEquals("newtest1", storage.getNodeInfo(test1NodeInfo.getId()).getName());
+        assertEquals("newtest1", storage.getNodeInfo(newNode.getId()).getName());
     }
 }

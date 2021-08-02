@@ -6,61 +6,45 @@
  */
 package com.powsybl.afs.cassandra;
 
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.ConsistencyLevel;
-import com.datastax.driver.core.QueryOptions;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.CqlSessionBuilder;
 
+import java.net.InetSocketAddress;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  */
 public class CassandraSimpleContext implements CassandraContext {
 
-    private final Cluster cluster;
-    private final Session session;
+    private static final int DEFAULT_PORT = 9042;
+    private final CqlSession session;
 
     public CassandraSimpleContext(List<String> ipAddresses, String localDc) {
-        // load balancing policy
-        DCAwareRoundRobinPolicy.Builder loadBalancingPolicyBuilder = DCAwareRoundRobinPolicy.builder()
-                .withUsedHostsPerRemoteDc(1)
-                .allowRemoteDCsForLocalConsistencyLevel();
+        // init address with default port
+        List<InetSocketAddress> inetSocketAddresses = ipAddresses.stream().map(ip -> new InetSocketAddress(ip, DEFAULT_PORT)).collect(Collectors.toList());
+
+        // build Session
+        CqlSessionBuilder cqlSessionBuilder = new CqlSessionBuilder()
+                .addContactPoints(inetSocketAddresses);
         if (localDc != null) {
-            loadBalancingPolicyBuilder.withLocalDc(localDc);
+            cqlSessionBuilder.withLocalDatacenter(localDc);
         }
-        DCAwareRoundRobinPolicy loadBalancingPolicy = loadBalancingPolicyBuilder.build();
-
-        // query consistency
-        QueryOptions queryOptions = new QueryOptions()
-                .setConsistencyLevel(ConsistencyLevel.LOCAL_ONE)
-                .setSerialConsistencyLevel(ConsistencyLevel.LOCAL_SERIAL);
-
-        // build cluster
-        cluster = Cluster.builder()
-                .addContactPoints(ipAddresses.toArray(new String[ipAddresses.size()]))
-                .withLoadBalancingPolicy(loadBalancingPolicy)
-                .withQueryOptions(queryOptions)
-                .build();
-        session = cluster.connect(CassandraConstants.AFS_KEYSPACE);
+        session = cqlSessionBuilder.build();
     }
 
-    public Cluster getCluster() {
-        return cluster;
-    }
-
-    public Session getSession() {
+    public CqlSession getSession() {
         return session;
     }
 
     @Override
     public boolean isClosed() {
-        return cluster.isClosed();
+        return session.isClosed();
     }
 
     @Override
     public void close() {
-        cluster.close();
+        session.close();
     }
 }
