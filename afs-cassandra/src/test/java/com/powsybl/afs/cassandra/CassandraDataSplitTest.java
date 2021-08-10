@@ -10,9 +10,11 @@ import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.google.common.io.ByteStreams;
 import com.powsybl.afs.storage.AppStorage;
+import com.powsybl.afs.storage.InMemoryEventsBus;
 import com.powsybl.afs.storage.NodeGenericMetadata;
 import com.powsybl.afs.storage.NodeInfo;
 import org.cassandraunit.CassandraCQLUnit;
+import org.cassandraunit.dataset.cql.ClassPathCQLDataSet;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,42 +32,46 @@ import static org.junit.Assert.*;
  */
 public class CassandraDataSplitTest {
 
-    public void test(AppStorage storage, CassandraCQLUnit cassandraCQLUnit) throws IOException {
+    public void test(CassandraCQLUnit cassandraCQLUnit) throws IOException {
 
-        NodeInfo rootNodeId = storage.createRootNodeIfNotExists("test", "folder");
-        NodeInfo nodeInfo = storage.createNode(rootNodeId.getId(), "test1", "folder", "", 0, new NodeGenericMetadata());
-        try (OutputStream os = storage.writeBinaryData(nodeInfo.getId(), "a")) {
+        CassandraTestContext cassandraTestContext = new CassandraTestContext(cassandraCQLUnit);
+        CassandraAppStorage appStorage = new CassandraAppStorage("test", () -> cassandraTestContext,
+                new CassandraAppStorageConfig().setBinaryDataChunkSize(10), new InMemoryEventsBus());
+
+        NodeInfo rootNodeId = appStorage.createRootNodeIfNotExists("test", "folder");
+        NodeInfo nodeInfo = appStorage.createNode(rootNodeId.getId(), "test1", "folder", "", 0, new NodeGenericMetadata());
+        try (OutputStream os = appStorage.writeBinaryData(nodeInfo.getId(), "a")) {
             byte[] bytes = "aaaaaaaaaabbbbbbbbbbcccccccccc".getBytes(StandardCharsets.UTF_8);
             // to emulate a BufferedWriter with 1byte buffer size
             for (int i = 0; i < bytes.length; i++) {
                 os.write(bytes, i, 1);
             }
         }
-        storage.flush();
+        appStorage.flush();
 
-        InputStream is = storage.readBinaryData(nodeInfo.getId(), "a").orElse(null);
+        InputStream is = appStorage.readBinaryData(nodeInfo.getId(), "a").orElse(null);
         assertNotNull(is);
         assertEquals("aaaaaaaaaabbbbbbbbbbcccccccccc", new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8));
         is.close();
 
-        try (OutputStream os = storage.writeBinaryData(nodeInfo.getId(), "a")) {
+        try (OutputStream os = appStorage.writeBinaryData(nodeInfo.getId(), "a")) {
             byte[] bytes = "xaaaaaaaaa".getBytes(StandardCharsets.UTF_8);
             for (int i = 0; i < bytes.length; i++) {
                 os.write(bytes, i, 1);
             }
         }
-        storage.flush();
+        appStorage.flush();
 
-        InputStream is2 = storage.readBinaryData(nodeInfo.getId(), "a").orElse(null);
+        InputStream is2 = appStorage.readBinaryData(nodeInfo.getId(), "a").orElse(null);
         assertNotNull(is2);
         assertEquals("xaaaaaaaaa", new String(ByteStreams.toByteArray(is2), StandardCharsets.UTF_8));
         is2.close();
 
-        assertTrue(storage.removeData(nodeInfo.getId(), "a"));
-        assertTrue(storage.getDataNames(nodeInfo.getId()).isEmpty());
-        assertFalse(storage.readBinaryData(nodeInfo.getId(), "a").isPresent());
+        assertTrue(appStorage.removeData(nodeInfo.getId(), "a"));
+        assertTrue(appStorage.getDataNames(nodeInfo.getId()).isEmpty());
+        assertFalse(appStorage.readBinaryData(nodeInfo.getId(), "a").isPresent());
 
-        try (OutputStream os = storage.writeBinaryData(nodeInfo.getId(), "a")) {
+        try (OutputStream os = appStorage.writeBinaryData(nodeInfo.getId(), "a")) {
             byte[] bytes = "aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd".getBytes(StandardCharsets.UTF_8);
             os.write(bytes, 0, 5);
             os.write(bytes, 5, 10);
@@ -73,9 +79,9 @@ public class CassandraDataSplitTest {
             os.write(bytes, 19, 3);
             os.write(bytes, 22, 18);
         }
-        storage.flush();
+        appStorage.flush();
 
-        InputStream is3 = storage.readBinaryData(nodeInfo.getId(), "a").orElse(null);
+        InputStream is3 = appStorage.readBinaryData(nodeInfo.getId(), "a").orElse(null);
         assertNotNull(is3);
         assertEquals("aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd", new String(ByteStreams.toByteArray(is3), StandardCharsets.UTF_8));
         is3.close();
@@ -87,6 +93,6 @@ public class CassandraDataSplitTest {
                 .build());
         Row firstRow = resultSet.one();
         assertNotNull(firstRow);
-        assertEquals(1, firstRow.get(0, Integer.class).intValue());
+        assertEquals(4, firstRow.get(0, Integer.class).intValue());
     }
 }

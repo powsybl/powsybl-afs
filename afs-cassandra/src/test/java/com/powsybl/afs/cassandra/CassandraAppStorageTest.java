@@ -7,7 +7,9 @@
 package com.powsybl.afs.cassandra;
 
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.powsybl.afs.storage.*;
 import com.powsybl.afs.storage.check.FileSystemCheckIssue;
 import com.powsybl.afs.storage.check.FileSystemCheckOptions;
@@ -24,6 +26,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.insertInto;
@@ -40,12 +43,17 @@ import static org.junit.Assert.*;
 public class CassandraAppStorageTest extends AbstractAppStorageTest {
 
     @Rule
-    public CassandraCQLUnit cassandraCQLUnit = new CassandraCQLUnit(new ClassPathCQLDataSet("afs.cql", CassandraConstants.AFS_KEYSPACE), null, 20000L);
+    public CassandraCQLUnit cassandraCQLUnit = new CassandraCQLUnit(new ClassPathCQLDataSet("afs.cql", AFS_KEYSPACE), null, 20000L);
 
     @Override
     protected AppStorage createStorage() {
         return new CassandraAppStorage("test", () -> new CassandraTestContext(cassandraCQLUnit),
                 new CassandraAppStorageConfig(), new InMemoryEventsBus());
+    }
+
+    protected void clearTables() {
+        Map<CqlIdentifier, TableMetadata> tables = cassandraCQLUnit.getSession().getMetadata().getKeyspace(AFS_KEYSPACE).get().getTables();
+        tables.keySet().forEach(table -> cassandraCQLUnit.getSession().execute(QueryBuilder.truncate(table).build()));
     }
 
     //Most tests in here to minimize test execution time (only initialize cassandra once)
@@ -60,26 +68,33 @@ public class CassandraAppStorageTest extends AbstractAppStorageTest {
 
         CassandraDataSplitTest cassandraDataSplitTest = new CassandraDataSplitTest();
         try {
-            cassandraDataSplitTest.test(storage, cassandraCQLUnit);
+            cassandraDataSplitTest.test(cassandraCQLUnit);
+            clearTables();
         } catch (IOException e) {
             Assert.fail();
         }
 
         CassandraDescriptionIssueTest cassandraDescriptionIssueTest = new CassandraDescriptionIssueTest();
         cassandraDescriptionIssueTest.test(storage);
+        clearTables();
 
         CassandraLeakTest cassandraLeakTest = new CassandraLeakTest();
         cassandraLeakTest.test(storage, cassandraCQLUnit);
+        clearTables();
 
         CassandraRemoveCreateFolderIssueTest cassandraRemoveCreateFolderIssueTest = new CassandraRemoveCreateFolderIssueTest();
         cassandraRemoveCreateFolderIssueTest.test(storage);
+        clearTables();
 
         CassandraRenameIssueTest cassandraRenameIssueTest = new CassandraRenameIssueTest();
         cassandraRenameIssueTest.test(storage);
+        clearTables();
 
         TimeSeriesIssueTest timeSeriesIssueTest = new TimeSeriesIssueTest();
         timeSeriesIssueTest.testEmptyChunks(storage);
+        clearTables();
         timeSeriesIssueTest.testNullString(storage);
+        clearTables();
     }
 
     private void testOrphanDataRepair() {

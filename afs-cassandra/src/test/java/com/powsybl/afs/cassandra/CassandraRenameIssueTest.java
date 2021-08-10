@@ -18,13 +18,15 @@ import static org.junit.Assert.assertEquals;
 public class CassandraRenameIssueTest {
 
     public void test(AppStorage storage) {
-        NodeInfo rootNodeId = storage.createRootNodeIfNotExists("CassandraRenameIssueTest", "folder");
-        NodeInfo newNode = storage.createNode(rootNodeId.getId(), "CassandraRenameIssueTest_test2", "folder", "", 0, new NodeGenericMetadata());
-        storage.flush();
-        assertEquals("CassandraRenameIssueTest_test2", storage.getNodeInfo(newNode.getId()).getName());
 
-        storage.renameNode(newNode.getId(), "newtest1");
+        NodeInfo rootNodeId = storage.createRootNodeIfNotExists("test", "folder");
+        NodeInfo test1NodeInfo = storage.createNode(rootNodeId.getId(), "test1", "folder", "", 0, new NodeGenericMetadata());
         storage.flush();
-        assertEquals("newtest1", storage.getNodeInfo(newNode.getId()).getName());
+        storage.createNode(test1NodeInfo.getId(), "test2", "folder", "", 0, new NodeGenericMetadata());
+        storage.createNode(test1NodeInfo.getId(), "test2_bis", "folder", "", 0, new NodeGenericMetadata());
+        storage.flush();
+        storage.renameNode(test1NodeInfo.getId(), "newtest1");
+        storage.flush();
+        assertEquals("newtest1", storage.getNodeInfo(test1NodeInfo.getId()).getName());
     }
 }
