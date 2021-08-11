@@ -20,8 +20,8 @@ enum NodeMetadataGetter {
     INT("mi", NodeGenericMetadata::getInts),
     BOOLEAN("mb", NodeGenericMetadata::getBooleans);
 
-    private String metaName;
-    final Function<NodeGenericMetadata, Map<String, ?>> sup;
+    private final String metaName;
+    private final Function<NodeGenericMetadata, Map<String, ?>> sup;
 
     NodeMetadataGetter(String metaName, Function<NodeGenericMetadata, Map<String, ?>> sup) {
         this.metaName = metaName;

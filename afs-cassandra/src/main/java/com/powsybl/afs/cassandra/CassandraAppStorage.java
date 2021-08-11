@@ -618,21 +618,13 @@ public class CassandraAppStorage extends AbstractAppStorage {
     }
 
     private static Map<String, Term> addAllMetadata(NodeGenericMetadata genericMetadata) {
-        Map<String, Term> termMap = new HashMap<>();
-        termMap.put(NodeMetadataGetter.STRING.symbol(), literal(NodeMetadataGetter.STRING.apply(genericMetadata)));
-        termMap.put(NodeMetadataGetter.INT.symbol(), literal(NodeMetadataGetter.INT.apply(genericMetadata)));
-        termMap.put(NodeMetadataGetter.BOOLEAN.symbol(), literal(NodeMetadataGetter.BOOLEAN.apply(genericMetadata)));
-        termMap.put(NodeMetadataGetter.DOUBLE.symbol(), literal(NodeMetadataGetter.DOUBLE.apply(genericMetadata)));
-        return termMap;
+        return Arrays.stream(NodeMetadataGetter.values())
+            .collect(Collectors.toUnmodifiableMap(NodeMetadataGetter::symbol, getter -> literal(getter.apply(genericMetadata))));
     }
 
     private static Map<String, Term> addAllChildMetadata(NodeGenericMetadata genericMetadata) {
-        Map<String, Term> termMap = new HashMap<>();
-        termMap.put(NodeMetadataGetter.STRING.childSymbol(), literal(NodeMetadataGetter.STRING.apply(genericMetadata)));
-        termMap.put(NodeMetadataGetter.INT.childSymbol(), literal(NodeMetadataGetter.INT.apply(genericMetadata)));
-        termMap.put(NodeMetadataGetter.BOOLEAN.childSymbol(), literal(NodeMetadataGetter.BOOLEAN.apply(genericMetadata)));
-        termMap.put(NodeMetadataGetter.DOUBLE.childSymbol(), literal(NodeMetadataGetter.DOUBLE.apply(genericMetadata)));
-        return termMap;
+        return Arrays.stream(NodeMetadataGetter.values())
+            .collect(Collectors.toUnmodifiableMap(NodeMetadataGetter::childSymbol, getter -> literal(getter.apply(genericMetadata))));
     }
 
     private static UUID checkNodeId(String nodeId) {
