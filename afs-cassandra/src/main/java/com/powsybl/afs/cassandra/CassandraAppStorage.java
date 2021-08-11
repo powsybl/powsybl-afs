@@ -6,8 +6,11 @@
  */
 package com.powsybl.afs.cassandra;
 
-import com.datastax.driver.core.*;
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.cql.*;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
+import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -34,7 +37,7 @@ import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.*;
 import static com.powsybl.afs.cassandra.CassandraConstants.*;
 
 /**
@@ -73,41 +76,27 @@ public class CassandraAppStorage extends AbstractAppStorage {
         private final PreparedStatement insertStringTimeSeriesDataUncompressedChunksPreparedStmt;
 
         private PreparedStatements() {
-            createTimeSeriesPreparedStmt = getSession().prepare(insertInto(REGULAR_TIME_SERIES)
+            createTimeSeriesPreparedStmt = getSession().prepare(
+                    insertInto(REGULAR_TIME_SERIES)
                     .value(ID, bindMarker())
                     .value(TIME_SERIES_NAME, bindMarker())
                     .value(DATA_TYPE, bindMarker())
                     .value(TIME_SERIES_TAGS, bindMarker())
                     .value(START, bindMarker())
                     .value(END, bindMarker())
-                    .value(SPACING, bindMarker()));
+                    .value(SPACING, bindMarker()).build());
 
-            insertTimeSeriesDataChunksPreparedStmt = getSession().prepare(insertInto(TIME_SERIES_DATA_CHUNK_TYPES)
+            insertTimeSeriesDataChunksPreparedStmt = getSession().prepare(
+                    insertInto(TIME_SERIES_DATA_CHUNK_TYPES)
                     .value(ID, bindMarker())
                     .value(TIME_SERIES_NAME, bindMarker())
                     .value(VERSION, bindMarker())
                     .value(CHUNK_ID, bindMarker())
-                    .value(CHUNK_TYPE, bindMarker()));
+                    .value(CHUNK_TYPE, bindMarker())
+                    .build());
 
-            insertDoubleTimeSeriesDataCompressedChunksPreparedStmt = getSession().prepare(insertInto(DOUBLE_TIME_SERIES_DATA_COMPRESSED_CHUNKS)
-                    .value(ID, bindMarker())
-                    .value(TIME_SERIES_NAME, bindMarker())
-                    .value(VERSION, bindMarker())
-                    .value(CHUNK_ID, bindMarker())
-                    .value(OFFSET, bindMarker())
-                    .value(UNCOMPRESSED_LENGTH, bindMarker())
-                    .value(STEP_VALUES, bindMarker())
-                    .value(STEP_LENGTHS, bindMarker()));
-
-            insertDoubleTimeSeriesDataUncompressedChunksPreparedStmt = getSession().prepare(insertInto(DOUBLE_TIME_SERIES_DATA_UNCOMPRESSED_CHUNKS)
-                    .value(ID, bindMarker())
-                    .value(TIME_SERIES_NAME, bindMarker())
-                    .value(VERSION, bindMarker())
-                    .value(CHUNK_ID, bindMarker())
-                    .value(OFFSET, bindMarker())
-                    .value(VALUES, bindMarker()));
-
-            insertStringTimeSeriesDataCompressedChunksPreparedStmt = getSession().prepare(insertInto(STRING_TIME_SERIES_DATA_COMPRESSED_CHUNKS)
+            insertDoubleTimeSeriesDataCompressedChunksPreparedStmt = getSession().prepare(
+                    insertInto(DOUBLE_TIME_SERIES_DATA_COMPRESSED_CHUNKS)
                     .value(ID, bindMarker())
                     .value(TIME_SERIES_NAME, bindMarker())
                     .value(VERSION, bindMarker())
@@ -115,15 +104,40 @@ public class CassandraAppStorage extends AbstractAppStorage {
                     .value(OFFSET, bindMarker())
                     .value(UNCOMPRESSED_LENGTH, bindMarker())
                     .value(STEP_VALUES, bindMarker())
-                    .value(STEP_LENGTHS, bindMarker()));
+                    .value(STEP_LENGTHS, bindMarker())
+                    .build());
 
-            insertStringTimeSeriesDataUncompressedChunksPreparedStmt = getSession().prepare(insertInto(STRING_TIME_SERIES_DATA_UNCOMPRESSED_CHUNKS)
+            insertDoubleTimeSeriesDataUncompressedChunksPreparedStmt = getSession().prepare(
+                    insertInto(DOUBLE_TIME_SERIES_DATA_UNCOMPRESSED_CHUNKS)
                     .value(ID, bindMarker())
                     .value(TIME_SERIES_NAME, bindMarker())
                     .value(VERSION, bindMarker())
                     .value(CHUNK_ID, bindMarker())
                     .value(OFFSET, bindMarker())
-                    .value(VALUES, bindMarker()));
+                    .value(VALUES, bindMarker())
+                    .build());
+
+            insertStringTimeSeriesDataCompressedChunksPreparedStmt = getSession().prepare(
+                    insertInto(STRING_TIME_SERIES_DATA_COMPRESSED_CHUNKS)
+                    .value(ID, bindMarker())
+                    .value(TIME_SERIES_NAME, bindMarker())
+                    .value(VERSION, bindMarker())
+                    .value(CHUNK_ID, bindMarker())
+                    .value(OFFSET, bindMarker())
+                    .value(UNCOMPRESSED_LENGTH, bindMarker())
+                    .value(STEP_VALUES, bindMarker())
+                    .value(STEP_LENGTHS, bindMarker())
+                    .build());
+
+            insertStringTimeSeriesDataUncompressedChunksPreparedStmt = getSession().prepare(
+                    insertInto(STRING_TIME_SERIES_DATA_UNCOMPRESSED_CHUNKS)
+                    .value(ID, bindMarker())
+                    .value(TIME_SERIES_NAME, bindMarker())
+                    .value(VERSION, bindMarker())
+                    .value(CHUNK_ID, bindMarker())
+                    .value(OFFSET, bindMarker())
+                    .value(VALUES, bindMarker())
+                    .build());
         }
     }
 
@@ -146,14 +160,15 @@ public class CassandraAppStorage extends AbstractAppStorage {
         private void flush(TimeSeriesCreation creation, List<Statement> statements, TimeSeriesWritingContext writingContext) {
             if (creation.getMetadata().getIndex() instanceof RegularTimeSeriesIndex) {
                 RegularTimeSeriesIndex index = (RegularTimeSeriesIndex) creation.getMetadata().getIndex();
-                statements.add(preparedStatementsSupplier.get().createTimeSeriesPreparedStmt.bind()
-                        .setUUID(0, checkNodeId(creation.getNodeId()))
-                        .setString(1, creation.getMetadata().getName())
-                        .setString(2, creation.getMetadata().getDataType().name())
-                        .setMap(3, creation.getMetadata().getTags())
-                        .setTimestamp(4, new Date(index.getStartTime()))
-                        .setTimestamp(5, new Date(index.getEndTime()))
-                        .setLong(6, index.getSpacing()));
+                statements.add(preparedStatementsSupplier.get().createTimeSeriesPreparedStmt
+                        .bind()
+                        .setUuid(ID, checkNodeId(creation.getNodeId()))
+                        .setString(TIME_SERIES_NAME, creation.getMetadata().getName())
+                        .setString(DATA_TYPE, creation.getMetadata().getDataType().name())
+                        .setMap(TIME_SERIES_TAGS, creation.getMetadata().getTags(), String.class, String.class)
+                        .setInstant(START, Instant.ofEpochMilli(index.getStartTime()))
+                        .setInstant(END, Instant.ofEpochMilli(index.getEndTime()))
+                        .setLong(SPACING, index.getSpacing()));
             } else {
                 throw new AssertionError();
             }
@@ -168,7 +183,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
             List<DoubleDataChunk> chunks = addition.getChunks();
 
             for (DoubleDataChunk chunk : chunks) {
-                UUID chunkId = UUIDs.timeBased();
+                UUID chunkId = Uuids.timeBased();
 
                 // skip empty chunks
                 if (chunk.getLength() == 0) {
@@ -176,32 +191,36 @@ public class CassandraAppStorage extends AbstractAppStorage {
                     continue;
                 }
 
-                statements.add(preparedStatementsSupplier.get().insertTimeSeriesDataChunksPreparedStmt.bind()
-                        .setUUID(0, nodeUuid)
-                        .setString(1, timeSeriesName)
-                        .setInt(2, version)
-                        .setUUID(3, chunkId)
-                        .setInt(4, chunk.isCompressed() ? TimeSeriesChunkType.DOUBLE_COMPRESSED.ordinal()
-                                                        : TimeSeriesChunkType.DOUBLE_UNCOMPRESSED.ordinal()));
+                statements.add(preparedStatementsSupplier.get().insertTimeSeriesDataChunksPreparedStmt
+                        .bind()
+                        .setUuid(ID, nodeUuid)
+                        .setString(TIME_SERIES_NAME, timeSeriesName)
+                        .setInt(VERSION, version)
+                        .setUuid(CHUNK_ID, chunkId)
+                        .setInt(CHUNK_TYPE, chunk.isCompressed() ? TimeSeriesChunkType.DOUBLE_COMPRESSED.ordinal()
+                                : TimeSeriesChunkType.DOUBLE_UNCOMPRESSED.ordinal()));
 
                 if (chunk.isCompressed()) {
-                    statements.add(preparedStatementsSupplier.get().insertDoubleTimeSeriesDataCompressedChunksPreparedStmt.bind()
-                            .setUUID(0, nodeUuid)
-                            .setString(1, timeSeriesName)
-                            .setInt(2, version)
-                            .setUUID(3, chunkId)
-                            .setInt(4, chunk.getOffset())
-                            .setInt(5, chunk.getLength())
-                            .setList(6, Arrays.stream(((CompressedDoubleDataChunk) chunk).getStepValues()).boxed().collect(Collectors.toList()))
-                            .setList(7, Arrays.stream(((CompressedDoubleDataChunk) chunk).getStepLengths()).boxed().collect(Collectors.toList())));
+                    statements.add(preparedStatementsSupplier.get().insertDoubleTimeSeriesDataCompressedChunksPreparedStmt
+                            .bind()
+                            .setUuid(ID, nodeUuid)
+                            .setString(TIME_SERIES_NAME, timeSeriesName)
+                            .setInt(VERSION, version)
+                            .setUuid(CHUNK_ID, chunkId)
+                            .setInt(OFFSET, chunk.getOffset())
+                            .setInt(UNCOMPRESSED_LENGTH, chunk.getLength())
+                            .setList(STEP_VALUES, Arrays.stream(((CompressedDoubleDataChunk) chunk).getStepValues()).boxed().collect(Collectors.toList()), Double.class)
+                            .setList(STEP_LENGTHS, Arrays.stream(((CompressedDoubleDataChunk) chunk).getStepLengths()).boxed().collect(Collectors.toList()), Integer.class));
+
                 } else {
-                    statements.add(preparedStatementsSupplier.get().insertDoubleTimeSeriesDataUncompressedChunksPreparedStmt.bind()
-                            .setUUID(0, nodeUuid)
-                            .setString(1, timeSeriesName)
-                            .setInt(2, version)
-                            .setUUID(3, chunkId)
-                            .setInt(4, chunk.getOffset())
-                            .setList(5, Arrays.stream(((UncompressedDoubleDataChunk) chunk).getValues()).boxed().collect(Collectors.toList())));
+                    statements.add(preparedStatementsSupplier.get().insertDoubleTimeSeriesDataUncompressedChunksPreparedStmt
+                            .bind()
+                            .setUuid(ID, nodeUuid)
+                            .setString(TIME_SERIES_NAME, timeSeriesName)
+                            .setInt(VERSION, version)
+                            .setUuid(CHUNK_ID, chunkId)
+                            .setInt(OFFSET, chunk.getOffset())
+                            .setList(VALUES, Arrays.stream(((UncompressedDoubleDataChunk) chunk).getValues()).boxed().collect(Collectors.toList()), Double.class));
                 }
 
                 writingContext.insertedChunkCount++;
@@ -232,7 +251,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
             List<StringDataChunk> chunks = addition.getChunks();
 
             for (StringDataChunk chunk : chunks) {
-                UUID chunkId = UUIDs.timeBased();
+                UUID chunkId = Uuids.timeBased();
 
                 // skip empty chunks
                 if (chunk.getLength() == 0) {
@@ -240,32 +259,39 @@ public class CassandraAppStorage extends AbstractAppStorage {
                     continue;
                 }
 
-                statements.add(preparedStatementsSupplier.get().insertTimeSeriesDataChunksPreparedStmt.bind()
-                        .setUUID(0, nodeUuid)
-                        .setString(1, timeSeriesName)
-                        .setInt(2, version)
-                        .setUUID(3, chunkId)
-                        .setInt(4, chunk.isCompressed() ? TimeSeriesChunkType.STRING_COMPRESSED.ordinal()
-                                                        : TimeSeriesChunkType.STRING_UNCOMPRESSED.ordinal()));
+                statements.add(preparedStatementsSupplier.get().insertTimeSeriesDataChunksPreparedStmt
+                        .bind()
+                        .setUuid(ID, nodeUuid)
+                        .setString(TIME_SERIES_NAME, timeSeriesName)
+                        .setInt(VERSION, version)
+                        .setUuid(CHUNK_ID, chunkId)
+                        .setInt(CHUNK_TYPE, chunk.isCompressed() ? TimeSeriesChunkType.STRING_COMPRESSED.ordinal()
+                                : TimeSeriesChunkType.STRING_UNCOMPRESSED.ordinal()));
 
                 if (chunk.isCompressed()) {
-                    statements.add(preparedStatementsSupplier.get().insertStringTimeSeriesDataCompressedChunksPreparedStmt.bind()
-                            .setUUID(0, nodeUuid)
-                            .setString(1, timeSeriesName)
-                            .setInt(2, version)
-                            .setUUID(3, chunkId)
-                            .setInt(4, chunk.getOffset())
-                            .setInt(5, chunk.getLength())
-                            .setList(6, fixNullValues(((CompressedStringDataChunk) chunk).getStepValues()))
-                            .setList(7, Arrays.stream(((CompressedStringDataChunk) chunk).getStepLengths()).boxed().collect(Collectors.toList())));
+                    statements.add(preparedStatementsSupplier.get().insertStringTimeSeriesDataCompressedChunksPreparedStmt
+                            .bind()
+                            .setUuid(ID, nodeUuid)
+                            .setString(TIME_SERIES_NAME, timeSeriesName)
+                            .setInt(VERSION, version)
+                            .setUuid(CHUNK_ID, chunkId)
+                            .setInt(OFFSET, chunk.getOffset())
+                            .setInt(UNCOMPRESSED_LENGTH, chunk.getLength())
+                            .setList(STEP_VALUES, fixNullValues(((CompressedStringDataChunk) chunk).getStepValues()), String.class)
+                            .setList(STEP_LENGTHS, Arrays.stream(((CompressedStringDataChunk) chunk).getStepLengths())
+                                    .boxed()
+                                    .collect(Collectors.toList()), Integer.class));
+
                 } else {
-                    statements.add(preparedStatementsSupplier.get().insertStringTimeSeriesDataUncompressedChunksPreparedStmt.bind()
-                            .setUUID(0, nodeUuid)
-                            .setString(1, timeSeriesName)
-                            .setInt(2, version)
-                            .setUUID(3, chunkId)
-                            .setInt(4, chunk.getOffset())
-                            .setList(5, fixNullValues(((UncompressedStringDataChunk) chunk).getValues())));
+                    statements.add(preparedStatementsSupplier.get().insertStringTimeSeriesDataUncompressedChunksPreparedStmt
+                            .bind()
+                            .setUuid(ID, nodeUuid)
+                            .setString(TIME_SERIES_NAME, timeSeriesName)
+                            .setInt(VERSION, version)
+                            .setUuid(CHUNK_ID, chunkId)
+                            .setInt(OFFSET, chunk.getOffset())
+                            .setList(VALUES, fixNullValues(((UncompressedStringDataChunk) chunk).getValues()), String.class));
+
                 }
 
                 writingContext.insertedChunkCount++;
@@ -346,7 +372,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
         return new CassandraAfsException("Node '" + nodeId + "' not found");
     }
 
-    private Session getSession() {
+    private CqlSession getSession() {
         return Objects.requireNonNull(contextSupplier.get()).getSession();
     }
 
@@ -354,23 +380,30 @@ public class CassandraAppStorage extends AbstractAppStorage {
     public NodeInfo createRootNodeIfNotExists(String name, String nodePseudoClass) {
         Objects.requireNonNull(name);
         Objects.requireNonNull(nodePseudoClass);
-        // check if root node with same name has already been created
-        ResultSet resultSet = getSession().execute(insertInto(ROOT_NODE)
-                .ifNotExists()
-                .value(ROOT_ID, now())
-                .value(FS_NAME, fileSystemName));
-        boolean rootCreated = resultSet.wasApplied();
 
-        resultSet = getSession().execute(select(ROOT_ID)
-                .from(ROOT_NODE)
-                .where(eq(FS_NAME, fileSystemName)));
-        UUID rootNodeUuid = resultSet.one().getUUID(0);
+        SimpleStatement insertQuery =
+                insertInto(ROOT_NODE)
+                        .value(ROOT_ID, now())
+                        .value(FS_NAME, literal(fileSystemName))
+                        .ifNotExists()
+                        .build();
+
+        // check if root node with same name has already been created
+        ResultSet insertResultSet = getSession().execute(insertQuery);
+        boolean rootCreated = insertResultSet.wasApplied();
+
+        SimpleStatement selectQuery = selectFrom(ROOT_NODE)
+                .column(ROOT_ID)
+                .whereColumn(FS_NAME).isEqualTo(literal(fileSystemName))
+                .build();
+        ResultSet selectResultSet = getSession().execute(selectQuery);
+        UUID rootNodeUuid = selectResultSet.one().getUuid(0);
 
         NodeInfo rootNodeInfo;
         if (rootCreated) {
-            BatchStatement batchStatement = new BatchStatement();
-            rootNodeInfo = createNode(rootNodeUuid, null, name, nodePseudoClass, "", 0, new NodeGenericMetadata(), batchStatement);
-            getSession().execute(batchStatement);
+            BatchStatementBuilder batchStatementBuilder = new BatchStatementBuilder(BatchType.LOGGED);
+            rootNodeInfo = createNode(rootNodeUuid, null, name, nodePseudoClass, "", 0, new NodeGenericMetadata(), batchStatementBuilder);
+            getSession().execute(batchStatementBuilder.build());
             setConsistent(rootNodeInfo.getId());
         } else {
             rootNodeInfo = getNodeInfo(rootNodeUuid);
@@ -381,8 +414,12 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
     private String getNodeName(UUID nodeUuid) {
         Objects.requireNonNull(nodeUuid);
-        ResultSet resultSet = getSession().execute(select(NAME).distinct().from(CHILDREN_BY_NAME_AND_CLASS)
-            .where(eq(ID, nodeUuid)));
+        SimpleStatement selectQuery = selectFrom(CHILDREN_BY_NAME_AND_CLASS)
+                .distinct()
+                .column(NAME)
+                .whereColumn(ID).isEqualTo(literal(nodeUuid))
+                .build();
+        ResultSet resultSet = getSession().execute(selectQuery);
         Row row = resultSet.one();
         if (row == null) {
             throw createNodeNotFoundException(nodeUuid);
@@ -396,16 +433,19 @@ public class CassandraAppStorage extends AbstractAppStorage {
     }
 
     private static boolean isConsistentBackwardCompatible(Row row, int i) {
-        return row.isNull(i) || row.getBool(i);
+        return row.isNull(i) || row.getBoolean(i);
     }
 
     @Override
     public boolean isConsistent(String nodeId) {
         UUID nodeUuid = checkNodeId(nodeId);
         Objects.requireNonNull(nodeUuid);
-        ResultSet resultSet = getSession().execute(select(CONSISTENT).distinct()
-                .from(CHILDREN_BY_NAME_AND_CLASS)
-                .where(eq(ID, nodeUuid)));
+        SimpleStatement selectQuery = selectFrom(CHILDREN_BY_NAME_AND_CLASS)
+                .distinct()
+                .column(CONSISTENT)
+                .whereColumn(ID).isEqualTo(literal(nodeUuid))
+                .build();
+        ResultSet resultSet = getSession().execute(selectQuery);
         Row row = resultSet.one();
         if (row == null) {
             throw createNodeNotFoundException(nodeUuid);
@@ -414,41 +454,39 @@ public class CassandraAppStorage extends AbstractAppStorage {
     }
 
     private NodeInfo createNode(UUID parentNodeUuid, String name, String nodePseudoClass, String description,
-                                int version, NodeGenericMetadata genericMetadata, BatchStatement batchStatement) {
-        return createNode(UUIDs.timeBased(), parentNodeUuid, name, nodePseudoClass, description, version, genericMetadata, batchStatement);
+                                int version, NodeGenericMetadata genericMetadata, BatchStatementBuilder batchStatementBuilder) {
+        return createNode(Uuids.timeBased(), parentNodeUuid, name, nodePseudoClass, description, version, genericMetadata, batchStatementBuilder);
     }
 
     private NodeInfo createNode(UUID nodeUuid, UUID parentNodeUuid, String name, String nodePseudoClass,
                                 String description, int version, NodeGenericMetadata genericMetadata,
-                                BatchStatement batchStatement) {
+                                BatchStatementBuilder batchStatementBuilder) {
         long creationTime = ZonedDateTime.now().toInstant().toEpochMilli();
-        batchStatement.add(insertInto(CHILDREN_BY_NAME_AND_CLASS).value(ID, nodeUuid)
-                                                                 .value(NAME, name)
-                                                                 .value(PARENT_ID, parentNodeUuid)
-                                                                 .value(PSEUDO_CLASS, nodePseudoClass)
-                                                                 .value(DESCRIPTION, description)
-                                                                 .value(CONSISTENT, false)
-                                                                 .value(CREATION_DATE, new Date(creationTime))
-                                                                 .value(MODIFICATION_DATE, new Date(creationTime))
-                                                                 .value(VERSION, version)
-                                                                 .value(MT, genericMetadata.getStrings())
-                                                                 .value(MD, genericMetadata.getDoubles())
-                                                                 .value(MI, genericMetadata.getInts())
-                                                                 .value(MB, genericMetadata.getBooleans()));
+        batchStatementBuilder.addStatement(insertInto(CHILDREN_BY_NAME_AND_CLASS)
+                .value(ID, literal(nodeUuid))
+                .value(NAME, literal(name))
+                .value(PARENT_ID, literal(parentNodeUuid))
+                .value(PSEUDO_CLASS, literal(nodePseudoClass))
+                .value(DESCRIPTION, literal(description))
+                .value(CONSISTENT, literal(false))
+                .value(CREATION_DATE, literal(Instant.ofEpochMilli(creationTime)))
+                .value(MODIFICATION_DATE, literal(Instant.ofEpochMilli(creationTime)))
+                .values(addAllMetadata(genericMetadata))
+                .build());
+
         if (parentNodeUuid != null) {
-            batchStatement.add(insertInto(CHILDREN_BY_NAME_AND_CLASS).value(ID, parentNodeUuid)
-                                                                     .value(CHILD_NAME, name)
-                                                                     .value(CHILD_ID, nodeUuid)
-                                                                     .value(CHILD_PSEUDO_CLASS, nodePseudoClass)
-                                                                     .value(CHILD_DESCRIPTION, description)
-                                                                     .value(CHILD_CONSISTENT, false)
-                                                                     .value(CHILD_CREATION_DATE, new Date(creationTime))
-                                                                     .value(CHILD_MODIFICATION_DATE, new Date(creationTime))
-                                                                     .value(CHILD_VERSION, version)
-                                                                     .value(CMT, genericMetadata.getStrings())
-                                                                     .value(CMD, genericMetadata.getDoubles())
-                                                                     .value(CMI, genericMetadata.getInts())
-                                                                     .value(CMB, genericMetadata.getBooleans()));
+            batchStatementBuilder.addStatement(insertInto(CHILDREN_BY_NAME_AND_CLASS)
+                    .value(ID, literal(parentNodeUuid))
+                    .value(CHILD_NAME, literal(name))
+                    .value(CHILD_ID, literal(nodeUuid))
+                    .value(CHILD_PSEUDO_CLASS, literal(nodePseudoClass))
+                    .value(CHILD_DESCRIPTION, literal(description))
+                    .value(CHILD_CONSISTENT, literal(false))
+                    .value(CHILD_CREATION_DATE, literal(Instant.ofEpochMilli(creationTime)))
+                    .value(CHILD_MODIFICATION_DATE, literal(Instant.ofEpochMilli(creationTime)))
+                    .value(CHILD_VERSION, literal(version))
+                    .values(addAllChildMetadata(genericMetadata))
+                    .build());
         }
         pushEvent(new NodeCreated(nodeUuid.toString(), parentNodeUuid != null ? parentNodeUuid.toString() : null), APPSTORAGE_NODE_TOPIC);
         return new NodeInfo(nodeUuid.toString(), name, nodePseudoClass, description, creationTime, creationTime, version, genericMetadata);
@@ -464,9 +502,9 @@ public class CassandraAppStorage extends AbstractAppStorage {
         // flush buffer to keep change order
         changeBuffer.flush();
 
-        BatchStatement batchStatement = new BatchStatement();
-        NodeInfo nodeInfo = createNode(parentNodeUuid, name, nodePseudoClass, description, version, genericMetadata, batchStatement);
-        getSession().execute(batchStatement);
+        BatchStatementBuilder batchStatementBuilder = new BatchStatementBuilder(BatchType.LOGGED);
+        NodeInfo nodeInfo = createNode(parentNodeUuid, name, nodePseudoClass, description, version, genericMetadata, batchStatementBuilder);
+        getSession().execute(batchStatementBuilder.build());
         return nodeInfo;
     }
 
@@ -478,38 +516,55 @@ public class CassandraAppStorage extends AbstractAppStorage {
         // flush buffer to keep change order
         changeBuffer.flush();
 
-        BatchStatement batchStatement = new BatchStatement();
-        batchStatement.add(update(CHILDREN_BY_NAME_AND_CLASS).with(set(MD, newMetadata.getDoubles()))
-                .where(eq(ID, nodeUuid)));
-        batchStatement.add(update(CHILDREN_BY_NAME_AND_CLASS).with(set(MT, newMetadata.getStrings()))
-                .where(eq(ID, nodeUuid)));
-        batchStatement.add(update(CHILDREN_BY_NAME_AND_CLASS).with(set(MI, newMetadata.getInts()))
-                .where(eq(ID, nodeUuid)));
-        batchStatement.add(update(CHILDREN_BY_NAME_AND_CLASS).with(set(MB, newMetadata.getBooleans()))
-                .where(eq(ID, nodeUuid)));
+        //Update updateCurrantLine = .where(ID).isEqualTo(literal(nodeUuid));
+        BatchStatementBuilder batchStatementBuilder = new BatchStatementBuilder(BatchType.LOGGED);
+        batchStatementBuilder.addStatement(update(CHILDREN_BY_NAME_AND_CLASS)
+                .setColumn(MD, literal(newMetadata.getDoubles()))
+                .whereColumn(ID).isEqualTo(literal(nodeUuid))
+                .build());
+        batchStatementBuilder.addStatement(update(CHILDREN_BY_NAME_AND_CLASS)
+                .setColumn(MT, literal(newMetadata.getStrings()))
+                .whereColumn(ID).isEqualTo(literal(nodeUuid))
+                .build());
+        batchStatementBuilder.addStatement(update(CHILDREN_BY_NAME_AND_CLASS)
+                .setColumn(MI, literal(newMetadata.getInts()))
+                .whereColumn(ID).isEqualTo(literal(nodeUuid))
+                .build());
+        batchStatementBuilder.addStatement(update(CHILDREN_BY_NAME_AND_CLASS)
+                .setColumn(MB, literal(newMetadata.getBooleans()))
+                .whereColumn(ID).isEqualTo(literal(nodeUuid))
+                .build());
 
         UUID parentNodeUuid = getParentNodeUuid(nodeUuid);
         if (parentNodeUuid != null) {
             NodeInfo nodeInfo = getNodeInfo(nodeId);
-            batchStatement.add(update(CHILDREN_BY_NAME_AND_CLASS).with(set(CMD, newMetadata.getDoubles()))
-                    .where(eq(ID, parentNodeUuid))
-                    .and(eq(CHILD_NAME, nodeInfo.getName()))
-                    .and(eq(CHILD_PSEUDO_CLASS, nodeInfo.getPseudoClass())));
-            batchStatement.add(update(CHILDREN_BY_NAME_AND_CLASS).with(set(CMT, newMetadata.getStrings()))
-                    .where(eq(ID, parentNodeUuid))
-                    .and(eq(CHILD_NAME, nodeInfo.getName()))
-                    .and(eq(CHILD_PSEUDO_CLASS, nodeInfo.getPseudoClass())));
-            batchStatement.add(update(CHILDREN_BY_NAME_AND_CLASS).with(set(CMI, newMetadata.getInts()))
-                    .where(eq(ID, parentNodeUuid))
-                    .and(eq(CHILD_NAME, nodeInfo.getName()))
-                    .and(eq(CHILD_PSEUDO_CLASS, nodeInfo.getPseudoClass())));
-            batchStatement.add(update(CHILDREN_BY_NAME_AND_CLASS).with(set(CMB, newMetadata.getBooleans()))
-                    .where(eq(ID, parentNodeUuid))
-                    .and(eq(CHILD_NAME, nodeInfo.getName()))
-                    .and(eq(CHILD_PSEUDO_CLASS, nodeInfo.getPseudoClass())));
+            batchStatementBuilder.addStatement(update(CHILDREN_BY_NAME_AND_CLASS)
+                    .setColumn(CMD, literal(newMetadata.getDoubles()))
+                    .whereColumn(ID).isEqualTo(literal(parentNodeUuid))
+                    .whereColumn(CHILD_NAME).isEqualTo(literal(nodeInfo.getName()))
+                    .whereColumn(CHILD_PSEUDO_CLASS).isEqualTo(literal(nodeInfo.getPseudoClass()))
+                    .build());
+            batchStatementBuilder.addStatement(update(CHILDREN_BY_NAME_AND_CLASS)
+                    .setColumn(CMT, literal(newMetadata.getStrings()))
+                    .whereColumn(ID).isEqualTo(literal(parentNodeUuid))
+                    .whereColumn(CHILD_NAME).isEqualTo(literal(nodeInfo.getName()))
+                    .whereColumn(CHILD_PSEUDO_CLASS).isEqualTo(literal(nodeInfo.getPseudoClass()))
+                    .build());
+            batchStatementBuilder.addStatement(update(CHILDREN_BY_NAME_AND_CLASS)
+                    .setColumn(CMI, literal(newMetadata.getInts()))
+                    .whereColumn(ID).isEqualTo(literal(parentNodeUuid))
+                    .whereColumn(CHILD_NAME).isEqualTo(literal(nodeInfo.getName()))
+                    .whereColumn(CHILD_PSEUDO_CLASS).isEqualTo(literal(nodeInfo.getPseudoClass()))
+                    .build());
+            batchStatementBuilder.addStatement(update(CHILDREN_BY_NAME_AND_CLASS)
+                    .setColumn(CMB, literal(newMetadata.getBooleans()))
+                    .whereColumn(ID).isEqualTo(literal(parentNodeUuid))
+                    .whereColumn(CHILD_NAME).isEqualTo(literal(nodeInfo.getName()))
+                    .whereColumn(CHILD_PSEUDO_CLASS).isEqualTo(literal(nodeInfo.getPseudoClass()))
+                    .build());
         }
 
-        getSession().execute(batchStatement);
+        getSession().execute(batchStatementBuilder.build());
         pushEvent(new NodeMetadataUpdated(nodeId, newMetadata), APPSTORAGE_NODE_TOPIC);
     }
 
@@ -529,25 +584,47 @@ public class CassandraAppStorage extends AbstractAppStorage {
             UUID parentNodeUuid = checkNodeId(parentNode.getId());
 
             // need to remove and re-insert row because child_name is part of partition key
-            getSession().execute(delete().from(CHILDREN_BY_NAME_AND_CLASS)
-                    .where(eq(ID, parentNodeUuid))
-                    .and(eq(CHILD_NAME, nodeInfo.getName())));
-            getSession().execute(insertInto(CHILDREN_BY_NAME_AND_CLASS).value(ID, parentNodeUuid)
-                    .value(CHILD_NAME, name)
-                    .value(CHILD_ID, nodeUuid)
-                    .value(CHILD_PSEUDO_CLASS, nodeInfo.getPseudoClass())
-                    .value(CHILD_DESCRIPTION, nodeInfo.getDescription())
-                    .value(CHILD_CREATION_DATE, new Date(nodeInfo.getCreationTime()))
-                    .value(CHILD_MODIFICATION_DATE, new Date(nodeInfo.getModificationTime()))
-                    .value(CHILD_VERSION, nodeInfo.getVersion())
-                    .value(CMT, nodeInfo.getGenericMetadata().getStrings())
-                    .value(CMD, nodeInfo.getGenericMetadata().getDoubles())
-                    .value(CMI, nodeInfo.getGenericMetadata().getInts())
-                    .value(CMB, nodeInfo.getGenericMetadata().getBooleans()));
-            getSession().execute(update(CHILDREN_BY_NAME_AND_CLASS).with(set(NAME, name))
-                    .where(eq(ID, nodeUuid)));
+            getSession().execute(deleteFrom(CHILDREN_BY_NAME_AND_CLASS)
+                    .whereColumn(ID).isEqualTo(literal(parentNodeUuid))
+                    .whereColumn(CHILD_NAME).isEqualTo(literal(nodeInfo.getName()))
+                    .build());
+
+            getSession().execute(insertInto(CHILDREN_BY_NAME_AND_CLASS)
+                    .value(ID, literal(parentNodeUuid))
+                    .value(CHILD_NAME, literal(name))
+                    .value(CHILD_ID, literal(nodeUuid))
+                    .value(CHILD_PSEUDO_CLASS, literal(nodeInfo.getPseudoClass()))
+                    .value(CHILD_DESCRIPTION, literal(nodeInfo.getDescription()))
+                    .value(CHILD_CREATION_DATE, literal(Instant.ofEpochMilli(nodeInfo.getCreationTime())))
+                    .value(CHILD_MODIFICATION_DATE, literal(Instant.ofEpochMilli(nodeInfo.getModificationTime())))
+                    .value(CHILD_VERSION, literal(nodeInfo.getVersion()))
+                    .values(addAllMetadata(nodeInfo))
+                    .build());
+
+            getSession().execute(update(CHILDREN_BY_NAME_AND_CLASS)
+                    .setColumn(NAME, literal(name))
+                    .whereColumn(ID).isEqualTo(literal(nodeUuid))
+                    .build());
         });
         pushEvent(new NodeNameUpdated(nodeId, name), APPSTORAGE_NODE_TOPIC);
+    }
+
+    private static Map<String, Term> addAllMetadata(NodeInfo nodeInfo) {
+        return addAllMetadata(nodeInfo.getGenericMetadata());
+    }
+
+    private static Map<String, Term> addAllChildMetadata(NodeInfo nodeInfo) {
+        return addAllChildMetadata(nodeInfo.getGenericMetadata());
+    }
+
+    private static Map<String, Term> addAllMetadata(NodeGenericMetadata genericMetadata) {
+        return Arrays.stream(NodeMetadataGetter.values())
+            .collect(Collectors.toUnmodifiableMap(NodeMetadataGetter::symbol, getter -> literal(getter.apply(genericMetadata))));
+    }
+
+    private static Map<String, Term> addAllChildMetadata(NodeGenericMetadata genericMetadata) {
+        return Arrays.stream(NodeMetadataGetter.values())
+            .collect(Collectors.toUnmodifiableMap(NodeMetadataGetter::childSymbol, getter -> literal(getter.apply(genericMetadata))));
     }
 
     private static UUID checkNodeId(String nodeId) {
@@ -563,26 +640,26 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
     private NodeInfo getNodeInfo(UUID nodeUuid) {
         Objects.requireNonNull(nodeUuid);
-        ResultSet resultSet = getSession().execute(select(NAME, PSEUDO_CLASS, DESCRIPTION, CREATION_DATE,
-                                                                  MODIFICATION_DATE, VERSION, MT, MD, MI, MB)
+        ResultSet resultSet = getSession().execute(selectFrom(CHILDREN_BY_NAME_AND_CLASS)
                 .distinct()
-                .from(CHILDREN_BY_NAME_AND_CLASS)
-                .where(eq(ID, nodeUuid)));
+                .columns(NAME, PSEUDO_CLASS, DESCRIPTION, CREATION_DATE, MODIFICATION_DATE, VERSION, MT, MD, MI, MB)
+                .whereColumn(ID).isEqualTo(literal(nodeUuid))
+                .build());
         Row row = resultSet.one();
         if (row == null) {
             throw createNodeNotFoundException(nodeUuid);
         }
         return new NodeInfo(nodeUuid.toString(),
-                            row.getString(0),
-                            row.getString(1),
-                            row.getString(2),
-                            row.getTimestamp(3).getTime(),
-                            row.getTimestamp(4).getTime(),
-                            row.getInt(5),
-                            new NodeGenericMetadata(row.getMap(6, String.class, String.class),
-                                                    row.getMap(7, String.class, Double.class),
-                                                    row.getMap(8, String.class, Integer.class),
-                                                    row.getMap(9, String.class, Boolean.class)));
+                row.getString(0),
+                row.getString(1),
+                row.getString(2),
+                row.getInstant(3).toEpochMilli(),
+                row.getInstant(4).toEpochMilli(),
+                row.getInt(5),
+                new NodeGenericMetadata(row.getMap(6, String.class, String.class),
+                        row.getMap(7, String.class, Double.class),
+                        row.getMap(8, String.class, Integer.class),
+                        row.getMap(9, String.class, Boolean.class)));
     }
 
     private void setAttribute(String nodeId, String attributeName, String childAttributeName, Object newValue) {
@@ -593,17 +670,21 @@ public class CassandraAppStorage extends AbstractAppStorage {
         changeBuffer.flush();
 
         UUID parentNodeId = getParentNodeUuid(nodeUuid);
-        BatchStatement batchStatement = new BatchStatement();
-        batchStatement.add(update(CHILDREN_BY_NAME_AND_CLASS).with(set(attributeName, newValue))
-                .where(eq(ID, nodeUuid)));
+        BatchStatementBuilder batchStatementBuilder = new BatchStatementBuilder(BatchType.LOGGED);
+        batchStatementBuilder.addStatement(update(CHILDREN_BY_NAME_AND_CLASS)
+                .setColumn(attributeName, literal(newValue))
+                .whereColumn(ID).isEqualTo(literal(nodeUuid))
+                .build());
         if (parentNodeId != null) {
             NodeInfo nodeInfo = getNodeInfo(nodeId);
-            batchStatement.add(update(CHILDREN_BY_NAME_AND_CLASS).with(set(childAttributeName, newValue))
-                    .where(eq(ID, parentNodeId))
-                    .and(eq(CHILD_NAME, nodeInfo.getName()))
-                    .and(eq(CHILD_PSEUDO_CLASS, nodeInfo.getPseudoClass())));
+            batchStatementBuilder.addStatement(update(CHILDREN_BY_NAME_AND_CLASS)
+                    .setColumn(childAttributeName, literal(newValue))
+                    .whereColumn(ID).isEqualTo(literal(parentNodeId))
+                    .whereColumn(CHILD_NAME).isEqualTo(literal(nodeInfo.getName()))
+                    .whereColumn(CHILD_PSEUDO_CLASS).isEqualTo(literal(nodeInfo.getPseudoClass()))
+                    .build());
         }
-        getSession().execute(batchStatement);
+        getSession().execute(batchStatementBuilder.build());
     }
 
     @Override
@@ -629,11 +710,12 @@ public class CassandraAppStorage extends AbstractAppStorage {
     private List<UUID> getChildNodeUuids(UUID nodeUuid) {
         Objects.requireNonNull(nodeUuid);
         List<UUID> childNodeUuids = new ArrayList<>();
-        ResultSet resultSet = getSession().execute(select(CHILD_ID, CHILD_CONSISTENT)
-                .from(CHILDREN_BY_NAME_AND_CLASS)
-                .where(eq(ID, nodeUuid)));
+        ResultSet resultSet = getSession().execute(selectFrom(CHILDREN_BY_NAME_AND_CLASS)
+                .columns(CHILD_ID, CHILD_CONSISTENT)
+                .whereColumn(ID).isEqualTo(literal(nodeUuid))
+                .build());
         for (Row row : resultSet) {
-            UUID uuid = row.getUUID(0);
+            UUID uuid = row.getUuid(0);
             if (uuid != null && isConsistentBackwardCompatible(row, 1)) {
                 childNodeUuids.add(uuid);
             }
@@ -645,20 +727,21 @@ public class CassandraAppStorage extends AbstractAppStorage {
     public List<NodeInfo> getChildNodes(String nodeId) {
         UUID nodeUuid = checkNodeId(nodeId);
         List<NodeInfo> childNodesInfo = new ArrayList<>();
-        ResultSet resultSet = getSession().execute(select(CHILD_NAME, CHILD_PSEUDO_CLASS, CHILD_ID, CHILD_DESCRIPTION,
-                CHILD_CREATION_DATE, CHILD_MODIFICATION_DATE, CHILD_VERSION,
-                CMT, CMD, CMI, CMB, CHILD_CONSISTENT)
-                .from(CHILDREN_BY_NAME_AND_CLASS)
-                .where(eq(ID, nodeUuid)));
+        ResultSet resultSet = getSession().execute(selectFrom(CHILDREN_BY_NAME_AND_CLASS)
+                .columns(CHILD_NAME, CHILD_PSEUDO_CLASS, CHILD_ID, CHILD_DESCRIPTION,
+                        CHILD_CREATION_DATE, CHILD_MODIFICATION_DATE, CHILD_VERSION,
+                        CMT, CMD, CMI, CMB, CHILD_CONSISTENT)
+                .whereColumn(ID).isEqualTo(literal(nodeUuid))
+                .build());
         for (Row row : resultSet) {
-            UUID uuid = row.getUUID(2);
+            UUID uuid = row.getUuid(2);
             if (uuid != null && isConsistentBackwardCompatible(row, 11)) {
                 NodeInfo nodeInfo = new NodeInfo(uuid.toString(),
                         row.getString(0),
                         row.getString(1),
                         row.getString(3),
-                        row.getTimestamp(4).getTime(),
-                        row.getTimestamp(5).getTime(),
+                        row.getInstant(4).toEpochMilli(),
+                        row.getInstant(5).toEpochMilli(),
                         row.getInt(6),
                         new NodeGenericMetadata(row.getMap(7, String.class, String.class),
                                 row.getMap(8, String.class, Double.class),
@@ -673,20 +756,22 @@ public class CassandraAppStorage extends AbstractAppStorage {
     @Override
     public List<NodeInfo> getInconsistentNodes() {
         List<NodeInfo> childNodesInfo = new ArrayList<>();
-        ResultSet resultSet = getSession().execute(select(NAME, PSEUDO_CLASS, ID, DESCRIPTION,
-                    CREATION_DATE, MODIFICATION_DATE, VERSION,
-                    MT, MD, MI, MB, CONSISTENT)
+        ResultSet resultSet = getSession().execute(selectFrom(CHILDREN_BY_NAME_AND_CLASS)
                 .distinct()
-                .from(CHILDREN_BY_NAME_AND_CLASS));
+                .columns(NAME, PSEUDO_CLASS, ID, DESCRIPTION,
+                        CREATION_DATE, MODIFICATION_DATE, VERSION,
+                        MT, MD, MI, MB, CONSISTENT)
+                .build());
+
         for (Row row : resultSet) {
-            UUID uuid = row.getUUID(2);
+            UUID uuid = row.getUuid(2);
             if (uuid != null && !isConsistentBackwardCompatible(row, 11)) {
                 NodeInfo nodeInfo = new NodeInfo(uuid.toString(),
                         row.getString(0),
                         row.getString(1),
                         row.getString(3),
-                        row.getTimestamp(4).getTime(),
-                        row.getTimestamp(5).getTime(),
+                        row.getInstant(4).toEpochMilli(),
+                        row.getInstant(5).toEpochMilli(),
                         row.getInt(6),
                         new NodeGenericMetadata(row.getMap(7, String.class, String.class),
                                 row.getMap(8, String.class, Double.class),
@@ -702,39 +787,41 @@ public class CassandraAppStorage extends AbstractAppStorage {
     public Optional<NodeInfo> getChildNode(String nodeId, String name) {
         UUID nodeUuid = checkNodeId(nodeId);
         Objects.requireNonNull(name);
-        ResultSet resultSet = getSession().execute(select(CHILD_ID, CHILD_PSEUDO_CLASS, CHILD_DESCRIPTION,
-                                                                  CHILD_CREATION_DATE, CHILD_MODIFICATION_DATE, CHILD_VERSION,
-                                                                  CMT, CMD, CMI, CMB, CHILD_CONSISTENT)
-                .from(CHILDREN_BY_NAME_AND_CLASS)
-                .where(eq(ID, nodeUuid))
-                .and(eq(CHILD_NAME, name)));
+        ResultSet resultSet = getSession().execute(selectFrom(CHILDREN_BY_NAME_AND_CLASS)
+                .columns(CHILD_ID, CHILD_PSEUDO_CLASS, CHILD_DESCRIPTION,
+                        CHILD_CREATION_DATE, CHILD_MODIFICATION_DATE, CHILD_VERSION,
+                        CMT, CMD, CMI, CMB, CHILD_CONSISTENT)
+                .whereColumn(ID).isEqualTo(literal(nodeUuid))
+                .whereColumn(CHILD_NAME).isEqualTo(literal(name))
+                .build());
         Row row = resultSet.one();
         if (row == null || !isConsistentBackwardCompatible(row, 10)) {
             return Optional.empty();
         }
-        return Optional.of(new NodeInfo(row.getUUID(0).toString(),
-                                        name,
-                                        row.getString(1),
-                                        row.getString(2),
-                                        row.getTimestamp(3).getTime(),
-                                        row.getTimestamp(4).getTime(),
-                                        row.getInt(5),
-                                        new NodeGenericMetadata(row.getMap(6, String.class, String.class),
-                                                row.getMap(7, String.class, Double.class),
-                                                row.getMap(8, String.class, Integer.class),
-                                                row.getMap(9, String.class, Boolean.class))));
+        return Optional.of(new NodeInfo(row.getUuid(0).toString(),
+                name,
+                row.getString(1),
+                row.getString(2),
+                row.getInstant(3).toEpochMilli(),
+                row.getInstant(4).toEpochMilli(),
+                row.getInt(5),
+                new NodeGenericMetadata(row.getMap(6, String.class, String.class),
+                        row.getMap(7, String.class, Double.class),
+                        row.getMap(8, String.class, Integer.class),
+                        row.getMap(9, String.class, Boolean.class))));
     }
 
     private UUID getParentNodeUuid(UUID nodeUuid) {
-        ResultSet resultSet = getSession().execute(select(PARENT_ID)
+        ResultSet resultSet = getSession().execute(selectFrom(CHILDREN_BY_NAME_AND_CLASS)
                 .distinct()
-                .from(CHILDREN_BY_NAME_AND_CLASS)
-                .where(eq(ID, nodeUuid)));
+                .column(PARENT_ID)
+                .whereColumn(ID).isEqualTo(literal(nodeUuid))
+                .build());
         Row row = resultSet.one();
         if (row == null) {
             throw createNodeNotFoundException(nodeUuid);
         }
-        return row.getUUID(0);
+        return row.getUuid(0);
     }
 
     @Override
@@ -758,24 +845,27 @@ public class CassandraAppStorage extends AbstractAppStorage {
             throw new AfsStorageException("Cannot change parent of root folder");
         }
 
-        BatchStatement batchStatement = new BatchStatement();
-        batchStatement.add(update(CHILDREN_BY_NAME_AND_CLASS).with(set(PARENT_ID, newParentNodeUuid))
-                                                               .where(eq(ID, nodeUuid)));
-        batchStatement.add(delete().from(CHILDREN_BY_NAME_AND_CLASS).where(eq(ID, currentParentId))
-                                                                   .and(eq(CHILD_NAME, nodeInfo.getName())));
-        batchStatement.add(insertInto(CHILDREN_BY_NAME_AND_CLASS).value(ID, newParentNodeUuid)
-                                                                   .value(CHILD_NAME, nodeInfo.getName())
-                                                                   .value(CHILD_PSEUDO_CLASS, nodeInfo.getPseudoClass())
-                                                                   .value(CHILD_ID, nodeUuid)
-                                                                   .value(CHILD_DESCRIPTION, nodeInfo.getDescription())
-                                                                   .value(CHILD_CREATION_DATE, new Date(nodeInfo.getCreationTime()))
-                                                                   .value(CHILD_MODIFICATION_DATE, new Date(nodeInfo.getModificationTime()))
-                                                                   .value(CHILD_VERSION, nodeInfo.getVersion())
-                                                                   .value(CMT, nodeInfo.getGenericMetadata().getStrings())
-                                                                   .value(CMD, nodeInfo.getGenericMetadata().getDoubles())
-                                                                   .value(CMI, nodeInfo.getGenericMetadata().getInts())
-                                                                   .value(CMB, nodeInfo.getGenericMetadata().getBooleans()));
-        getSession().execute(batchStatement);
+        BatchStatementBuilder batchStatementBuilder = new BatchStatementBuilder(BatchType.LOGGED);
+        batchStatementBuilder.addStatement(update(CHILDREN_BY_NAME_AND_CLASS)
+                .setColumn(PARENT_ID, literal(newParentNodeUuid))
+                .whereColumn(ID).isEqualTo(literal(nodeUuid))
+                .build());
+        batchStatementBuilder.addStatement(deleteFrom(CHILDREN_BY_NAME_AND_CLASS)
+                .whereColumn(ID).isEqualTo(literal(currentParentId))
+                .whereColumn(CHILD_NAME).isEqualTo(literal(nodeInfo.getName()))
+                .build());
+        batchStatementBuilder.addStatement(insertInto(CHILDREN_BY_NAME_AND_CLASS)
+                .value(ID, literal(newParentNodeUuid))
+                .value(CHILD_NAME, literal(nodeInfo.getName()))
+                .value(CHILD_PSEUDO_CLASS, literal(nodeInfo.getPseudoClass()))
+                .value(CHILD_ID, literal(nodeUuid))
+                .value(CHILD_DESCRIPTION, literal(nodeInfo.getDescription()))
+                .value(CHILD_CREATION_DATE, literal(Instant.ofEpochMilli(nodeInfo.getCreationTime())))
+                .value(CHILD_MODIFICATION_DATE, literal(Instant.ofEpochMilli(nodeInfo.getModificationTime())))
+                .value(CHILD_VERSION, literal(nodeInfo.getVersion()))
+                .values(addAllChildMetadata(nodeInfo))
+                .build());
+        getSession().execute(batchStatementBuilder.build());
 
         pushEvent(new ParentChanged(nodeId, currentParentId.toString(), newParentNodeId), APPSTORAGE_NODE_TOPIC);
     }
@@ -798,43 +888,62 @@ public class CassandraAppStorage extends AbstractAppStorage {
             deleteNode(childNodeUuid);
         }
 
-        List<Statement> statements = new ArrayList<>();
+        BatchStatementBuilder batchStatementBuilder = new BatchStatementBuilder(BatchType.UNLOGGED);
 
         // children
-        statements.add(delete().from(CHILDREN_BY_NAME_AND_CLASS)
-                               .where(eq(ID, nodeUuid)));
+        batchStatementBuilder.addStatement(deleteFrom(CHILDREN_BY_NAME_AND_CLASS)
+                .whereColumn(ID).isEqualTo(literal(nodeUuid))
+                .build());
         UUID parentNodeUuid = getParentNodeUuid(nodeUuid);
-        statements.add(delete().from(CHILDREN_BY_NAME_AND_CLASS)
-                               .where(eq(ID, parentNodeUuid))
-                               .and(eq(CHILD_NAME, getNodeName(nodeUuid))));
+        batchStatementBuilder.addStatement(deleteFrom(CHILDREN_BY_NAME_AND_CLASS)
+                .whereColumn(ID).isEqualTo(literal(parentNodeUuid))
+                .whereColumn(CHILD_NAME).isEqualTo(literal(getNodeName(nodeUuid)))
+                .build());
 
         // data
-        removeAllData(nodeUuid, statements);
+        removeAllData(nodeUuid, batchStatementBuilder);
 
         // time series
-        clearTimeSeries(nodeUuid, statements);
+        clearTimeSeries(nodeUuid, batchStatementBuilder);
 
         // dependencies
         Map<String, UUID> dependencies = getDependencyInfo(nodeUuid);
-        ResultSet resultSet = getSession().execute(select(NAME, FROM_ID).from(BACKWARD_DEPENDENCIES)
-                                                                                .where(eq(TO_ID, nodeUuid)));
-
         Map<String, List<UUID>> backwardDependencies = new HashMap<>();
+
+        ResultSet resultSet = getSession().execute(selectFrom(BACKWARD_DEPENDENCIES)
+                .columns(NAME, FROM_ID)
+                .whereColumn(TO_ID).isEqualTo(literal(nodeUuid))
+                .build());
+
         for (Row row : resultSet) {
             String name = row.getString(0);
-            UUID otherNodeUuid = row.getUUID(1);
+            UUID otherNodeUuid = row.getUuid(1);
             List<UUID> uuids = backwardDependencies.computeIfAbsent(name, depName -> new ArrayList<>());
             uuids.add(otherNodeUuid);
             backwardDependencies.put(name, uuids);
-            statements.add(delete().from(DEPENDENCIES).where(eq(FROM_ID, otherNodeUuid))
-                                                      .and(eq(NAME, name))
-                                                      .and(eq(TO_ID, nodeUuid)));
+            batchStatementBuilder.addStatement(deleteFrom(DEPENDENCIES)
+                    .whereColumn(FROM_ID).isEqualTo(literal(otherNodeUuid))
+                    .whereColumn(NAME).isEqualTo(literal(name))
+                    .whereColumn(TO_ID).isEqualTo(literal(nodeUuid))
+                    .build());
         }
 
-        statements.add(delete().from(DEPENDENCIES).where(eq(FROM_ID, nodeUuid)));
-        statements.add(delete().from(BACKWARD_DEPENDENCIES).where(in(TO_ID, new ArrayList<>(dependencies.values()))));
+        batchStatementBuilder.addStatement(deleteFrom(DEPENDENCIES)
+                .whereColumn(FROM_ID)
+                .isEqualTo(literal(nodeUuid))
+                .build());
 
-        executeStatements(statements);
+        List<Term> listDependencies = dependencies.values().stream()
+                .map(dep -> literal(dep))
+                .collect(Collectors.toList());
+
+        if (!listDependencies.isEmpty()) {
+            batchStatementBuilder.addStatement(deleteFrom(BACKWARD_DEPENDENCIES)
+                    .whereColumn(TO_ID).in(listDependencies)
+                    .build());
+        }
+
+        getSession().execute(batchStatementBuilder.build());
 
         backwardDependencies.entrySet().stream().flatMap(dep -> dep.getValue().stream().map(depUuid -> Pair.of(dep.getKey(), depUuid))).forEach(dep -> {
             pushEvent(new DependencyRemoved(dep.getValue().toString(), dep.getKey()), APPSTORAGE_DEPENDENCY_TOPIC);
@@ -864,7 +973,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
         private BinaryDataInputStream(UUID nodeUuid, String name, Row firstRow) {
             this.nodeUuid = Objects.requireNonNull(nodeUuid);
             this.name = Objects.requireNonNull(name);
-            buffer = new ByteArrayInputStream(firstRow.getBytes(0).array());
+            buffer = new ByteArrayInputStream(firstRow.getByteBuffer(0).array());
             try {
                 gzis = new GZIPInputStream(buffer);
             } catch (IOException e) {
@@ -899,10 +1008,12 @@ public class CassandraAppStorage extends AbstractAppStorage {
             c = supplier.getAsInt();
             if (c == -1) {
                 // try to get next chunk
-                ResultSet resultSet = getSession().execute(select(CHUNK).from(NODE_DATA)
-                        .where(eq(ID, nodeUuid))
-                        .and(eq(NAME, name))
-                        .and(eq(CHUNK_NUM, chunkNum)));
+                ResultSet resultSet = getSession().execute(selectFrom(NODE_DATA)
+                        .column(CHUNK)
+                        .whereColumn(ID).isEqualTo(literal(nodeUuid))
+                        .whereColumn(NAME).isEqualTo(literal(name))
+                        .whereColumn(CHUNK_NUM).isEqualTo(literal(chunkNum))
+                        .build());
                 Row row = resultSet.one();
                 if (row != null) {
                     try {
@@ -910,7 +1021,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);
                     }
-                    byte[] array = row.getBytes(0).array();
+                    byte[] array = row.getByteBuffer(0).array();
                     buffer = new ByteArrayInputStream(array);
                     try {
                         gzis = new GZIPInputStream(buffer);
@@ -932,10 +1043,12 @@ public class CassandraAppStorage extends AbstractAppStorage {
         Objects.requireNonNull(name);
 
         // get first chunk
-        ResultSet resultSet = getSession().execute(select(CHUNK).from(NODE_DATA)
-                .where(eq(ID, nodeUuid))
-                .and(eq(NAME, name))
-                .and(eq(CHUNK_NUM, 0)));
+        ResultSet resultSet = getSession().execute(selectFrom(NODE_DATA)
+                .column(CHUNK)
+                .whereColumn(ID).isEqualTo(literal(nodeUuid))
+                .whereColumn(NAME).isEqualTo(literal(name))
+                .whereColumn(CHUNK_NUM).isEqualTo(literal(0))
+                .build());
         Row firstRow = resultSet.one();
         if (firstRow == null) {
             return Optional.empty();
@@ -981,11 +1094,12 @@ public class CassandraAppStorage extends AbstractAppStorage {
             }
 
             getSession().execute(insertInto(NODE_DATA)
-                    .value(ID, nodeUuid)
-                    .value(NAME, name)
-                    .value(CHUNK_NUM, chunkNum++)
-                    .value(CHUNKS_COUNT, chunkNum)
-                    .value(CHUNK, ByteBuffer.wrap(buffer.toByteArray())));
+                    .value(ID, literal(nodeUuid))
+                    .value(NAME, literal(name))
+                    .value(CHUNK_NUM, literal(chunkNum++))
+                    .value(CHUNKS_COUNT, literal(chunkNum))
+                    .value(CHUNK, literal(ByteBuffer.wrap(buffer.toByteArray())))
+                    .build());
             buffer = new ByteArrayOutputStream(config.getBinaryDataChunkSize());
             try {
                 gzos = new GZIPOutputStream(buffer);
@@ -1036,8 +1150,9 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
             // update data names
             getSession().execute(insertInto(NODE_DATA_NAMES)
-                    .value(ID, nodeUuid)
-                    .value(NAME, name));
+                    .value(ID, literal(nodeUuid))
+                    .value(NAME, literal(name))
+                    .build());
 
             pushEvent(new NodeDataUpdated(nodeUuid.toString(), name), APPSTORAGE_NODE_TOPIC);
         }
@@ -1056,18 +1171,20 @@ public class CassandraAppStorage extends AbstractAppStorage {
     public boolean dataExists(String nodeId, String name) {
         UUID nodeUuid = checkNodeId(nodeId);
         Objects.requireNonNull(name);
-        ResultSet resultSet = getSession().execute(select().countAll()
-                                                                   .from(NODE_DATA_NAMES)
-                                                                   .where(eq(ID, nodeUuid))
-                                                                   .and(eq(NAME, name)));
+        ResultSet resultSet = getSession().execute(selectFrom(NODE_DATA_NAMES)
+                .countAll()
+                .whereColumn(ID).isEqualTo(literal(nodeUuid))
+                .whereColumn(NAME).isEqualTo(literal(name))
+                .build());
         Row row = resultSet.one();
         return row.getLong(0) > 0;
     }
 
     private Set<String> getDataNames(UUID nodeUuid) {
-        ResultSet resultSet = getSession().execute(select(NAME)
-                .from(NODE_DATA_NAMES)
-                .where(eq(ID, nodeUuid)));
+        ResultSet resultSet = getSession().execute(selectFrom(NODE_DATA_NAMES)
+                .column(NAME)
+                .whereColumn(ID).isEqualTo(literal(nodeUuid))
+                .build());
         Set<String> dataNames = new HashSet<>();
         for (Row row : resultSet) {
             dataNames.add(row.getString(0));
@@ -1081,21 +1198,21 @@ public class CassandraAppStorage extends AbstractAppStorage {
         return getDataNames(nodeUuid);
     }
 
-    private void removeData(UUID nodeUuid, String name, List<Statement> statements) {
-        statements.add(delete()
-                .from(NODE_DATA)
-                .where(eq(ID, nodeUuid))
-                .and(eq(NAME, name)));
-        statements.add(delete()
-                .from(NODE_DATA_NAMES)
-                .where(eq(ID, nodeUuid))
-                .and(eq(NAME, name)));
+    private void removeData(UUID nodeUuid, String name, BatchStatementBuilder batchStatementBuilder) {
+        batchStatementBuilder.addStatement(deleteFrom(NODE_DATA)
+                .whereColumn(ID).isEqualTo(literal(nodeUuid))
+                .whereColumn(NAME).isEqualTo(literal(name))
+                .build());
+        batchStatementBuilder.addStatement(deleteFrom(NODE_DATA_NAMES)
+                .whereColumn(ID).isEqualTo(literal(nodeUuid))
+                .whereColumn(NAME).isEqualTo(literal(name))
+                .build());
         pushEvent(new NodeDataRemoved(nodeUuid.toString(), name), APPSTORAGE_NODE_TOPIC);
     }
 
-    private void removeAllData(UUID nodeUuid, List<Statement> statements) {
+    private void removeAllData(UUID nodeUuid, BatchStatementBuilder batchStatementBuilder) {
         for (String dataName : getDataNames(nodeUuid)) {
-            removeData(nodeUuid, dataName, statements);
+            removeData(nodeUuid, dataName, batchStatementBuilder);
         }
     }
 
@@ -1106,10 +1223,11 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
         // get chunk num list
         List<Integer> chunks = new ArrayList<>(1);
-        ResultSet resultSet = getSession().execute(select(CHUNKS_COUNT)
-                .from(NODE_DATA)
-                .where(eq(ID, nodeUuid))
-                .and(eq(NAME, name)));
+        ResultSet resultSet = getSession().execute(selectFrom(NODE_DATA)
+                .column(CHUNKS_COUNT)
+                .whereColumn(ID).isEqualTo(literal(nodeUuid))
+                .whereColumn(NAME).isEqualTo(literal(name))
+                .build());
         for (Row row : resultSet) {
             chunks.add(row.getInt(0));
         }
@@ -1117,9 +1235,9 @@ public class CassandraAppStorage extends AbstractAppStorage {
             return false;
         }
 
-        List<Statement> statements = new ArrayList<>();
-        removeData(nodeUuid, name, statements);
-        executeStatements(statements);
+        BatchStatementBuilder batchStatementBuilder = new BatchStatementBuilder(BatchType.UNLOGGED);
+        removeData(nodeUuid, name, batchStatementBuilder);
+        getSession().execute(batchStatementBuilder.build());
 
         return true;
     }
@@ -1135,9 +1253,10 @@ public class CassandraAppStorage extends AbstractAppStorage {
     public Set<String> getTimeSeriesNames(String nodeId) {
         UUID nodeUuid = checkNodeId(nodeId);
         Set<String> timeSeriesNames = new TreeSet<>();
-        ResultSet resultSet = getSession().execute(select(TIME_SERIES_NAME)
-                .from(REGULAR_TIME_SERIES)
-                .where(eq(ID, nodeUuid)));
+        ResultSet resultSet = getSession().execute(selectFrom(REGULAR_TIME_SERIES)
+                .column(TIME_SERIES_NAME)
+                .whereColumn(ID).isEqualTo(literal(nodeUuid))
+                .build());
         for (Row row : resultSet) {
             timeSeriesNames.add(row.getString(0));
         }
@@ -1148,9 +1267,11 @@ public class CassandraAppStorage extends AbstractAppStorage {
     public boolean timeSeriesExists(String nodeId, String timeSeriesName) {
         UUID nodeUuid = checkNodeId(nodeId);
         Objects.requireNonNull(timeSeriesName);
-        ResultSet resultSet = getSession().execute(select().countAll()
-                .from(REGULAR_TIME_SERIES)
-                .where(eq(ID, nodeUuid)).and(eq(TIME_SERIES_NAME, timeSeriesName)));
+        ResultSet resultSet = getSession().execute(selectFrom(REGULAR_TIME_SERIES)
+                .countAll()
+                .whereColumn(ID).isEqualTo(literal(nodeUuid))
+                .whereColumn(TIME_SERIES_NAME).isEqualTo(literal(timeSeriesName))
+                .build());
         Row row = resultSet.one();
         return row.getLong(0) > 0;
     }
@@ -1163,17 +1284,22 @@ public class CassandraAppStorage extends AbstractAppStorage {
             throw new IllegalArgumentException("Empty time series name list");
         }
         List<TimeSeriesMetadata> timeSeries = new ArrayList<>();
-        ResultSet resultSet = getSession().execute(select(TIME_SERIES_NAME, DATA_TYPE, TIME_SERIES_TAGS, START, END, SPACING)
-                .from(REGULAR_TIME_SERIES)
-                .where(eq(ID, nodeUuid))
-                .and(in(TIME_SERIES_NAME, new ArrayList<>(timeSeriesNames))));
+
+        List<Term> timeSeriesNamesList = timeSeriesNames.stream()
+                .map(QueryBuilder::literal)
+                .collect(Collectors.toList());
+        ResultSet resultSet = getSession().execute(selectFrom(REGULAR_TIME_SERIES)
+                .columns(TIME_SERIES_NAME, DATA_TYPE, TIME_SERIES_TAGS, START, END, SPACING)
+                .whereColumn(ID).isEqualTo(literal(nodeUuid))
+                .whereColumn(TIME_SERIES_NAME).in(timeSeriesNamesList)
+                .build());
         for (Row row : resultSet) {
             timeSeries.add(new TimeSeriesMetadata(row.getString(0),
-                                                  TimeSeriesDataType.valueOf(row.getString(1)),
-                                                  row.getMap(2, String.class, String.class),
-                                                  new RegularTimeSeriesIndex(row.getTimestamp(3).getTime(),
-                                                                             row.getTimestamp(4).getTime(),
-                                                                             row.getLong(5))));
+                    TimeSeriesDataType.valueOf(row.getString(1)),
+                    row.getMap(2, String.class, String.class),
+                    new RegularTimeSeriesIndex(row.getInstant(3).toEpochMilli(),
+                            row.getInstant(4).toEpochMilli(),
+                            row.getLong(5))));
         }
         return timeSeries;
     }
@@ -1182,9 +1308,10 @@ public class CassandraAppStorage extends AbstractAppStorage {
     public Set<Integer> getTimeSeriesDataVersions(String nodeId) {
         UUID nodeUuid = checkNodeId(nodeId);
         Set<Integer> versions = new TreeSet<>();
-        ResultSet resultSet = getSession().execute(select(VERSION)
-                .from(TIME_SERIES_DATA_CHUNK_TYPES)
-                .where(eq(ID, nodeUuid)));
+        ResultSet resultSet = getSession().execute(selectFrom(TIME_SERIES_DATA_CHUNK_TYPES)
+                .column(VERSION)
+                .whereColumn(ID).isEqualTo(literal(nodeUuid))
+                .build());
         for (Row row : resultSet) {
             versions.add(row.getInt(0));
         }
@@ -1196,10 +1323,11 @@ public class CassandraAppStorage extends AbstractAppStorage {
         UUID nodeUuid = checkNodeId(nodeId);
         Objects.requireNonNull(timeSeriesName);
         Set<Integer> versions = new TreeSet<>();
-        ResultSet resultSet = getSession().execute(select(VERSION)
-                .from(TIME_SERIES_DATA_CHUNK_TYPES)
-                .where(eq(ID, nodeUuid))
-                .and(eq(TIME_SERIES_NAME, timeSeriesName)));
+        ResultSet resultSet = getSession().execute(selectFrom(TIME_SERIES_DATA_CHUNK_TYPES)
+                .column(VERSION)
+                .whereColumn(ID).isEqualTo(literal(nodeUuid))
+                .whereColumn(TIME_SERIES_NAME).isEqualTo(literal(timeSeriesName))
+                .build());
         for (Row row : resultSet) {
             versions.add(row.getInt(0));
         }
@@ -1215,11 +1343,12 @@ public class CassandraAppStorage extends AbstractAppStorage {
         Map<String, List<DoubleDataChunk>> timeSeriesData = new HashMap<>();
 
         for (List<String> timeSeriesNamesPartition : Lists.partition(new ArrayList<>(timeSeriesNames), config.getDoubleQueryPartitionSize())) {
-            ResultSet resultSet = getSession().execute(select(TIME_SERIES_NAME, OFFSET, VALUES)
-                    .from(DOUBLE_TIME_SERIES_DATA_UNCOMPRESSED_CHUNKS)
-                    .where(eq(ID, nodeUuid))
-                    .and(in(TIME_SERIES_NAME, timeSeriesNamesPartition))
-                    .and(eq(VERSION, version)));
+            ResultSet resultSet = getSession().execute(selectFrom(DOUBLE_TIME_SERIES_DATA_UNCOMPRESSED_CHUNKS)
+                    .columns(TIME_SERIES_NAME, OFFSET, VALUES)
+                    .whereColumn(ID).isEqualTo(literal(nodeUuid))
+                    .whereColumn(TIME_SERIES_NAME).in(timeSeriesNamesPartition.stream().map(QueryBuilder::literal).collect(Collectors.toList()))
+                    .whereColumn(VERSION).isEqualTo(literal(version))
+                    .build());
             for (Row row : resultSet) {
                 String name = row.getString(0);
                 int offset = row.getInt(1);
@@ -1228,11 +1357,12 @@ public class CassandraAppStorage extends AbstractAppStorage {
                         .add(new UncompressedDoubleDataChunk(offset, values.stream().mapToDouble(Double::valueOf).toArray()));
             }
 
-            resultSet = getSession().execute(select(TIME_SERIES_NAME, OFFSET, UNCOMPRESSED_LENGTH, STEP_VALUES, STEP_LENGTHS)
-                    .from(DOUBLE_TIME_SERIES_DATA_COMPRESSED_CHUNKS)
-                    .where(eq(ID, nodeUuid))
-                    .and(in(TIME_SERIES_NAME, timeSeriesNamesPartition))
-                    .and(eq(VERSION, version)));
+            resultSet = getSession().execute(selectFrom(DOUBLE_TIME_SERIES_DATA_COMPRESSED_CHUNKS)
+                    .columns(TIME_SERIES_NAME, OFFSET, UNCOMPRESSED_LENGTH, STEP_VALUES, STEP_LENGTHS)
+                    .whereColumn(ID).isEqualTo(literal(nodeUuid))
+                    .whereColumn(TIME_SERIES_NAME).in(timeSeriesNamesPartition.stream().map(QueryBuilder::literal).collect(Collectors.toList()))
+                    .whereColumn(VERSION).isEqualTo(literal(version))
+                    .build());
             for (Row row : resultSet) {
                 String name = row.getString(0);
                 int offset = row.getInt(1);
@@ -1241,8 +1371,8 @@ public class CassandraAppStorage extends AbstractAppStorage {
                 List<Integer> stepLengths = row.getList(4, Integer.class);
                 timeSeriesData.computeIfAbsent(name, k -> new ArrayList<>())
                         .add(new CompressedDoubleDataChunk(offset, length,
-                                                            stepValues.stream().mapToDouble(Double::valueOf).toArray(),
-                                                            stepLengths.stream().mapToInt(Integer::valueOf).toArray()));
+                                stepValues.stream().mapToDouble(Double::valueOf).toArray(),
+                                stepLengths.stream().mapToInt(Integer::valueOf).toArray()));
             }
         }
         return timeSeriesData;
@@ -1257,11 +1387,12 @@ public class CassandraAppStorage extends AbstractAppStorage {
         Map<String, List<StringDataChunk>> timeSeriesData = new HashMap<>();
 
         for (List<String> timeSeriesNamesPartition : Lists.partition(new ArrayList<>(timeSeriesNames), config.getStringQueryPartitionSize())) {
-            ResultSet resultSet = getSession().execute(select(TIME_SERIES_NAME, OFFSET, VALUES)
-                .from(STRING_TIME_SERIES_DATA_UNCOMPRESSED_CHUNKS)
-                .where(eq(ID, nodeUuid))
-                .and(in(TIME_SERIES_NAME, timeSeriesNamesPartition))
-                .and(eq(VERSION, version)));
+            ResultSet resultSet = getSession().execute(selectFrom(STRING_TIME_SERIES_DATA_UNCOMPRESSED_CHUNKS)
+                    .columns(TIME_SERIES_NAME, OFFSET, VALUES)
+                    .whereColumn(ID).isEqualTo(literal(nodeUuid))
+                    .whereColumn(TIME_SERIES_NAME).in(timeSeriesNamesPartition.stream().map(QueryBuilder::literal).collect(Collectors.toList()))
+                    .whereColumn(VERSION).isEqualTo(literal(version))
+                    .build());
             for (Row row : resultSet) {
                 String name = row.getString(0);
                 int offset = row.getInt(1);
@@ -1270,11 +1401,12 @@ public class CassandraAppStorage extends AbstractAppStorage {
                         .add(new UncompressedStringDataChunk(offset, values.toArray(new String[values.size()])));
             }
 
-            resultSet = getSession().execute(select(TIME_SERIES_NAME, OFFSET, UNCOMPRESSED_LENGTH, STEP_VALUES, STEP_LENGTHS)
-                    .from(STRING_TIME_SERIES_DATA_COMPRESSED_CHUNKS)
-                    .where(eq(ID, nodeUuid))
-                    .and(in(TIME_SERIES_NAME, timeSeriesNamesPartition))
-                    .and(eq(VERSION, version)));
+            resultSet = getSession().execute(selectFrom(STRING_TIME_SERIES_DATA_COMPRESSED_CHUNKS)
+                    .columns(TIME_SERIES_NAME, OFFSET, UNCOMPRESSED_LENGTH, STEP_VALUES, STEP_LENGTHS)
+                    .whereColumn(ID).isEqualTo(literal(nodeUuid))
+                    .whereColumn(TIME_SERIES_NAME).in(timeSeriesNamesPartition.stream().map(QueryBuilder::literal).collect(Collectors.toList()))
+                    .whereColumn(VERSION).isEqualTo(literal(version))
+                    .build());
             for (Row row : resultSet) {
                 String name = row.getString(0);
                 int offset = row.getInt(1);
@@ -1283,8 +1415,8 @@ public class CassandraAppStorage extends AbstractAppStorage {
                 List<Integer> stepLengths = row.getList(4, Integer.class);
                 timeSeriesData.computeIfAbsent(name, k -> new ArrayList<>())
                         .add(new CompressedStringDataChunk(offset, length,
-                                                            stepValues.toArray(new String[stepValues.size()]),
-                                                            stepLengths.stream().mapToInt(Integer::valueOf).toArray()));
+                                stepValues.toArray(new String[stepValues.size()]),
+                                stepLengths.stream().mapToInt(Integer::valueOf).toArray()));
             }
         }
 
@@ -1303,41 +1435,50 @@ public class CassandraAppStorage extends AbstractAppStorage {
         pushEvent(new TimeSeriesDataUpdated(nodeId, timeSeriesName), APPSTORAGE_TIMESERIES_TOPIC);
     }
 
-    private void clearTimeSeries(UUID nodeUuid, List<Statement> statements) {
-        statements.add(delete().from(REGULAR_TIME_SERIES).where(eq(ID, nodeUuid)));
-        ResultSet resultSet = getSession().execute(select(TIME_SERIES_NAME, VERSION, CHUNK_TYPE)
-                .from(TIME_SERIES_DATA_CHUNK_TYPES)
-                .where(eq(ID, nodeUuid)));
+    private void clearTimeSeries(UUID nodeUuid, BatchStatementBuilder batchStatementBuilder) {
+        batchStatementBuilder.addStatement(deleteFrom(REGULAR_TIME_SERIES)
+                .whereColumn(ID).isEqualTo(literal(nodeUuid))
+                .build());
+        ResultSet resultSet = getSession().execute(selectFrom(TIME_SERIES_DATA_CHUNK_TYPES)
+                .columns(TIME_SERIES_NAME, VERSION, CHUNK_TYPE)
+                .whereColumn(ID).isEqualTo(literal(nodeUuid))
+                .build());
         for (Row row : resultSet) {
             String timeSeriesName = row.getString(0);
             int version = row.getInt(1);
             TimeSeriesChunkType chunkType = TimeSeriesChunkType.values()[row.getInt(2)];
             switch (chunkType) {
                 case DOUBLE_UNCOMPRESSED:
-                    statements.add(delete().from(DOUBLE_TIME_SERIES_DATA_UNCOMPRESSED_CHUNKS)
-                            .where(eq(ID, nodeUuid)).and(eq(TIME_SERIES_NAME, timeSeriesName))
-                                                    .and(eq(VERSION, version)));
+                    batchStatementBuilder.addStatement(deleteFrom(DOUBLE_TIME_SERIES_DATA_UNCOMPRESSED_CHUNKS)
+                            .whereColumn(ID).isEqualTo(literal(nodeUuid)).whereColumn(TIME_SERIES_NAME).isEqualTo(literal(timeSeriesName))
+                            .whereColumn(VERSION).isEqualTo(literal(version))
+                            .build());
                     break;
                 case DOUBLE_COMPRESSED:
-                    statements.add(delete().from(DOUBLE_TIME_SERIES_DATA_COMPRESSED_CHUNKS)
-                            .where(eq(ID, nodeUuid)).and(eq(TIME_SERIES_NAME, timeSeriesName))
-                                                    .and(eq(VERSION, version)));
+                    batchStatementBuilder.addStatement(deleteFrom(DOUBLE_TIME_SERIES_DATA_COMPRESSED_CHUNKS)
+                            .whereColumn(ID).isEqualTo(literal(nodeUuid)).whereColumn(TIME_SERIES_NAME).isEqualTo(literal(timeSeriesName))
+                            .whereColumn(VERSION).isEqualTo(literal(version))
+                            .build());
                     break;
                 case STRING_UNCOMPRESSED:
-                    statements.add(delete().from(STRING_TIME_SERIES_DATA_UNCOMPRESSED_CHUNKS)
-                            .where(eq(ID, nodeUuid)).and(eq(TIME_SERIES_NAME, timeSeriesName))
-                                                    .and(eq(VERSION, version)));
+                    batchStatementBuilder.addStatement(deleteFrom(STRING_TIME_SERIES_DATA_UNCOMPRESSED_CHUNKS)
+                            .whereColumn(ID).isEqualTo(literal(nodeUuid)).whereColumn(TIME_SERIES_NAME).isEqualTo(literal(timeSeriesName))
+                            .whereColumn(VERSION).isEqualTo(literal(version))
+                            .build());
                     break;
                 case STRING_COMPRESSED:
-                    statements.add(delete().from(STRING_TIME_SERIES_DATA_COMPRESSED_CHUNKS)
-                            .where(eq(ID, nodeUuid)).and(eq(TIME_SERIES_NAME, timeSeriesName))
-                                                    .and(eq(VERSION, version)));
+                    batchStatementBuilder.addStatement(deleteFrom(STRING_TIME_SERIES_DATA_COMPRESSED_CHUNKS)
+                            .whereColumn(ID).isEqualTo(literal(nodeUuid)).whereColumn(TIME_SERIES_NAME).isEqualTo(literal(timeSeriesName))
+                            .whereColumn(VERSION).isEqualTo(literal(version))
+                            .build());
                     break;
                 default:
                     throw new AssertionError("Unknown chunk type " + chunkType);
             }
         }
-        statements.add(delete().from(TIME_SERIES_DATA_CHUNK_TYPES).where(eq(ID, nodeUuid)));
+        batchStatementBuilder.addStatement(deleteFrom(TIME_SERIES_DATA_CHUNK_TYPES)
+                .whereColumn(ID).isEqualTo(literal(nodeUuid))
+                .build());
     }
 
     @Override
@@ -1347,9 +1488,9 @@ public class CassandraAppStorage extends AbstractAppStorage {
         // flush buffer to keep change order
         changeBuffer.flush();
 
-        List<Statement> statements = new ArrayList<>();
-        clearTimeSeries(nodeUuid, statements);
-        executeStatements(statements);
+        BatchStatementBuilder batchStatementBuilder = new BatchStatementBuilder(BatchType.UNLOGGED);
+        clearTimeSeries(nodeUuid, batchStatementBuilder);
+        getSession().execute(batchStatementBuilder.build());
         pushEvent(new TimeSeriesCleared(nodeUuid.toString()), APPSTORAGE_TIMESERIES_TOPIC);
     }
 
@@ -1362,16 +1503,20 @@ public class CassandraAppStorage extends AbstractAppStorage {
         // flush buffer to keep change order
         changeBuffer.flush();
 
-        BatchStatement batchStatement = new BatchStatement();
+        BatchStatementBuilder batchStatementBuilder = new BatchStatementBuilder(BatchType.LOGGED);
 
-        batchStatement.add(insertInto(DEPENDENCIES).value(FROM_ID, nodeUuid)
-                                                   .value(NAME, name)
-                                                   .value(TO_ID, toNodeUuid)
-                                                   .value("dep_id", now()));
-        batchStatement.add(insertInto(BACKWARD_DEPENDENCIES).value(TO_ID, toNodeUuid)
-                                                            .value(NAME, name)
-                                                            .value(FROM_ID, nodeUuid));
-        getSession().execute(batchStatement);
+        batchStatementBuilder.addStatement(insertInto(DEPENDENCIES)
+                .value(FROM_ID, literal(nodeUuid))
+                .value(NAME, literal(name))
+                .value(TO_ID, literal(toNodeUuid))
+                .value("dep_id", literal(Uuids.timeBased()))
+                .build());
+        batchStatementBuilder.addStatement(insertInto(BACKWARD_DEPENDENCIES)
+                .value(TO_ID, literal(toNodeUuid))
+                .value(NAME, literal(name))
+                .value(FROM_ID, literal(nodeUuid))
+                .build());
+        getSession().execute(batchStatementBuilder.build());
         pushEvent(new DependencyAdded(nodeId, name),
                 String.valueOf(APPSTORAGE_DEPENDENCY_TOPIC));
         pushEvent(new BackwardDependencyAdded(toNodeId, name),
@@ -1381,10 +1526,12 @@ public class CassandraAppStorage extends AbstractAppStorage {
     private Map<String, UUID> getDependencyInfo(UUID nodeUuid) {
         Objects.requireNonNull(nodeUuid);
         Map<String, UUID> dependencies = new HashMap<>();
-        ResultSet resultSet = getSession().execute(select(TO_ID, NAME).from(DEPENDENCIES)
-                                                                          .where(eq(FROM_ID, nodeUuid)));
+        ResultSet resultSet = getSession().execute(selectFrom(DEPENDENCIES)
+                .columns(TO_ID, NAME)
+                .whereColumn(FROM_ID).isEqualTo(literal(nodeUuid))
+                .build());
         for (Row row : resultSet) {
-            dependencies.put(row.getString(1), row.getUUID(0));
+            dependencies.put(row.getString(1), row.getUuid(0));
         }
         return dependencies;
     }
@@ -1394,11 +1541,13 @@ public class CassandraAppStorage extends AbstractAppStorage {
         UUID nodeUuid = checkNodeId(nodeId);
         Objects.requireNonNull(name);
         Set<NodeInfo> dependencies = new HashSet<>();
-        ResultSet resultSet = getSession().execute(select(TO_ID)
-                .from(DEPENDENCIES)
-                .where(eq(FROM_ID, nodeUuid)).and(eq(NAME, name)));
+        ResultSet resultSet = getSession().execute(selectFrom(DEPENDENCIES)
+                .column(TO_ID)
+                .whereColumn(FROM_ID).isEqualTo(literal(nodeUuid))
+                .whereColumn(NAME).isEqualTo(literal(name))
+                .build());
         for (Row row : resultSet) {
-            UUID toNodeUuid = row.getUUID(0);
+            UUID toNodeUuid = row.getUuid(0);
             try {
                 dependencies.add(getNodeInfo(toNodeUuid));
             } catch (CassandraAfsException e) {
@@ -1412,11 +1561,12 @@ public class CassandraAppStorage extends AbstractAppStorage {
     public Set<NodeDependency> getDependencies(String nodeId) {
         UUID nodeUuid = checkNodeId(nodeId);
         Set<NodeDependency> dependencies = new HashSet<>();
-        ResultSet resultSet = getSession().execute(select(TO_ID, NAME)
-                .from(DEPENDENCIES)
-                .where(eq(FROM_ID, nodeUuid)));
+        ResultSet resultSet = getSession().execute(selectFrom(DEPENDENCIES)
+                .columns(TO_ID, NAME)
+                .whereColumn(FROM_ID).isEqualTo(literal(nodeUuid))
+                .build());
         for (Row row : resultSet) {
-            UUID toNodeUuid = row.getUUID(0);
+            UUID toNodeUuid = row.getUuid(0);
             String name = row.getString(1);
             try {
                 dependencies.add(new NodeDependency(name, getNodeInfo(toNodeUuid)));
@@ -1431,11 +1581,13 @@ public class CassandraAppStorage extends AbstractAppStorage {
     public Set<NodeInfo> getBackwardDependencies(String nodeId) {
         UUID nodeUuid = checkNodeId(nodeId);
         Set<NodeInfo> backwardDependencies = new HashSet<>();
-        ResultSet resultSet = getSession().execute(select(FROM_ID).from(BACKWARD_DEPENDENCIES)
-                                                                  .where(eq(TO_ID, nodeUuid)));
+        ResultSet resultSet = getSession().execute(selectFrom(BACKWARD_DEPENDENCIES)
+                .column(FROM_ID)
+                .whereColumn(TO_ID).isEqualTo(literal(nodeUuid))
+                .build());
         for (Row row : resultSet) {
             try {
-                backwardDependencies.add(getNodeInfo(row.getUUID(0)));
+                backwardDependencies.add(getNodeInfo(row.getUuid(0)));
             } catch (CassandraAfsException e) {
                 LOGGER.warn(BROKEN_DEPENDENCY, e);
             }
@@ -1452,18 +1604,20 @@ public class CassandraAppStorage extends AbstractAppStorage {
         // flush buffer to keep change order
         changeBuffer.flush();
 
-        BatchStatement batchStatement = new BatchStatement();
+        BatchStatementBuilder batchStatementBuilder = new BatchStatementBuilder(BatchType.LOGGED);
 
-        batchStatement.add(delete().from(DEPENDENCIES)
-                .where(eq(FROM_ID, nodeUuid))
-                .and(eq(NAME, name))
-                .and(eq(TO_ID, toNodeUuid)));
-        batchStatement.add(delete().from(BACKWARD_DEPENDENCIES)
-                .where(eq(TO_ID, toNodeUuid))
-                .and(eq(NAME, name))
-                .and(eq(FROM_ID, nodeUuid)));
+        batchStatementBuilder.addStatement(deleteFrom(DEPENDENCIES)
+                .whereColumn(FROM_ID).isEqualTo(literal(nodeUuid))
+                .whereColumn(NAME).isEqualTo(literal(name))
+                .whereColumn(TO_ID).isEqualTo(literal(toNodeUuid))
+                .build());
+        batchStatementBuilder.addStatement(deleteFrom(BACKWARD_DEPENDENCIES)
+                .whereColumn(TO_ID).isEqualTo(literal(toNodeUuid))
+                .whereColumn(NAME).isEqualTo(literal(name))
+                .whereColumn(FROM_ID).isEqualTo(literal(nodeUuid))
+                .build());
 
-        getSession().execute(batchStatement);
+        getSession().execute(batchStatementBuilder.build());
         pushEvent(new DependencyRemoved(nodeId, name), APPSTORAGE_DEPENDENCY_TOPIC);
         pushEvent(new BackwardDependencyRemoved(toNodeId, name), APPSTORAGE_DEPENDENCY_TOPIC);
     }
@@ -1499,7 +1653,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
             switch (type) {
                 case FileSystemCheckOptions.EXPIRED_INCONSISTENT_NODES:
                     options.getInconsistentNodesExpirationTime()
-                        .ifPresent(time -> checkInconsistent(results, time, options.isRepair()));
+                            .ifPresent(time -> checkInconsistent(results, time, options.isRepair()));
                     break;
                 case REF_NOT_FOUND:
                     checkReferenceNotFound(results, options);
@@ -1521,13 +1675,19 @@ public class CassandraAppStorage extends AbstractAppStorage {
     private void checkOrphanData(List<FileSystemCheckIssue> results, FileSystemCheckOptions options) {
         Set<UUID> existingNodeIds = new HashSet<>();
         Set<UUID> orphanDataIds = new HashSet<>();
-        ResultSet existingNodes = getSession().execute(select(ID).distinct().from(CHILDREN_BY_NAME_AND_CLASS));
+        ResultSet existingNodes = getSession().execute(selectFrom(CHILDREN_BY_NAME_AND_CLASS)
+                .distinct()
+                .column(ID)
+                .build());
         for (Row row : existingNodes) {
-            existingNodeIds.add(row.getUUID(ID));
+            existingNodeIds.add(row.getUuid(ID));
         }
-        ResultSet nodeDatas = getSession().execute(select(ID, NAME).distinct().from(NODE_DATA));
+        ResultSet nodeDatas = getSession().execute(selectFrom(NODE_DATA)
+                .distinct()
+                .columns(ID, NAME)
+                .build());
         for (Row row : nodeDatas) {
-            UUID uuid = row.getUUID(ID);
+            UUID uuid = row.getUuid(ID);
             if (!existingNodeIds.contains(uuid)) {
                 orphanDataIds.add(uuid);
                 FileSystemCheckIssue issue = new FileSystemCheckIssue().setNodeName("N/A")
@@ -1543,24 +1703,26 @@ public class CassandraAppStorage extends AbstractAppStorage {
             }
         }
         if (options.isRepair()) {
-            List<Statement> statements = new ArrayList<>();
+            BatchStatementBuilder batchStatementBuilder = new BatchStatementBuilder(BatchType.UNLOGGED);
             for (UUID id : orphanDataIds) {
-                removeAllData(id, statements);
+                removeAllData(id, batchStatementBuilder);
             }
-            executeStatements(statements);
+            getSession().execute(batchStatementBuilder.build());
         }
     }
 
     private void checkOrphanNode(List<FileSystemCheckIssue> results, FileSystemCheckOptions options) {
         // get all child id which parent name is null
-        ResultSet resultSet = getSession().execute(select(ID, CHILD_ID, NAME, CHILD_NAME).from(CHILDREN_BY_NAME_AND_CLASS));
+        ResultSet resultSet = getSession().execute(selectFrom(CHILDREN_BY_NAME_AND_CLASS)
+                .columns(ID, CHILD_ID, NAME, CHILD_NAME)
+                .build());
         List<UUID> orphanIds = new ArrayList<>();
         Set<UUID> fakeParentIds = new HashSet<>();
         for (Row row : resultSet) {
             if (row.getString(NAME) == null) {
-                UUID nodeId = row.getUUID(CHILD_ID);
+                UUID nodeId = row.getUuid(CHILD_ID);
                 String nodeName = row.getString(CHILD_NAME);
-                UUID fakeParentId = row.getUUID(ID);
+                UUID fakeParentId = row.getUuid(ID);
                 FileSystemCheckIssue issue = new FileSystemCheckIssue().setNodeId(nodeId.toString())
                         .setNodeName(nodeName)
                         .setType(ORPHAN_NODE)
@@ -1577,14 +1739,15 @@ public class CassandraAppStorage extends AbstractAppStorage {
         if (options.isRepair()) {
             orphanIds.forEach(this::deleteNode);
             for (UUID fakeParentId : fakeParentIds) {
-                getSession().execute(delete().from(CHILDREN_BY_NAME_AND_CLASS)
-                        .where(eq(ID, fakeParentId)));
+                getSession().execute(deleteFrom(CHILDREN_BY_NAME_AND_CLASS)
+                        .whereColumn(ID).isEqualTo(literal(fakeParentId))
+                        .build());
             }
         }
     }
 
     private void checkReferenceNotFound(List<FileSystemCheckIssue> results, FileSystemCheckOptions options) {
-        List<Statement> statements = new ArrayList<>();
+        List<SimpleStatement> statements = new ArrayList<>();
         Set<ChildNodeInfo> notFoundIds = new HashSet<>();
         Set<UUID> existingRows = allPrimaryKeys();
         for (ChildNodeInfo entity : getAllIdsInChildId()) {
@@ -1603,9 +1766,10 @@ public class CassandraAppStorage extends AbstractAppStorage {
                     .setType(REF_NOT_FOUND);
             results.add(issue);
             if (options.isRepair()) {
-                statements.add(delete().from(CHILDREN_BY_NAME_AND_CLASS)
-                        .where(eq(ID, childNodeInfo.parentId))
-                        .and(eq(CHILD_NAME, childNodeInfo.name)));
+                statements.add(deleteFrom(CHILDREN_BY_NAME_AND_CLASS)
+                        .whereColumn(ID).isEqualTo(literal(childNodeInfo.parentId))
+                        .whereColumn(CHILD_NAME).isEqualTo(literal(childNodeInfo.name))
+                        .build());
                 issue.setResolutionDescription("reset null child_name and child_id in " + childNodeInfo.parentId);
             }
         }
@@ -1614,7 +1778,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
         }
     }
 
-    private void executeStatements(List<Statement> statements) {
+    private void executeStatements(List<SimpleStatement> statements) {
         for (Statement statement : statements) {
             getSession().execute(statement);
         }
@@ -1622,11 +1786,13 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
     private Set<ChildNodeInfo> getAllIdsInChildId() {
         Set<ChildNodeInfo> set = new HashSet<>();
-        ResultSet resultSet = getSession().execute(select(CHILD_ID, CHILD_NAME, ID).from(CHILDREN_BY_NAME_AND_CLASS));
+        ResultSet resultSet = getSession().execute(selectFrom(CHILDREN_BY_NAME_AND_CLASS)
+                .columns(CHILD_ID, CHILD_NAME, ID)
+                .build());
         for (Row row : resultSet) {
-            final UUID id = row.getUUID(CHILD_ID);
+            final UUID id = row.getUuid(CHILD_ID);
             if (id != null) {
-                set.add(new ChildNodeInfo(id, row.getString(CHILD_NAME), row.getUUID(ID)));
+                set.add(new ChildNodeInfo(id, row.getString(CHILD_NAME), row.getUuid(ID)));
             }
         }
         return set;
@@ -1634,17 +1800,21 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
     private Set<UUID> allPrimaryKeys() {
         Set<UUID> set = new HashSet<>();
-        ResultSet resultSet = getSession().execute(select(ID).distinct().from(CHILDREN_BY_NAME_AND_CLASS));
+        ResultSet resultSet = getSession().execute(selectFrom(CHILDREN_BY_NAME_AND_CLASS)
+                .distinct()
+                .column(ID)
+                .build());
         for (Row row : resultSet) {
-            set.add(row.getUUID(0));
+            set.add(row.getUuid(0));
         }
         return set;
     }
 
     private void checkInconsistent(List<FileSystemCheckIssue> results, Instant expirationTime, boolean repair) {
-        ResultSet resultSet = getSession().execute(select(ID, NAME, MODIFICATION_DATE, CONSISTENT)
+        ResultSet resultSet = getSession().execute(selectFrom(CHILDREN_BY_NAME_AND_CLASS)
                 .distinct()
-                .from(CHILDREN_BY_NAME_AND_CLASS));
+                .columns(ID, NAME, MODIFICATION_DATE, CONSISTENT)
+                .build());
         for (Row row : resultSet) {
             final Optional<FileSystemCheckIssue> issue = buildExpirationInconsistentIssue(row, expirationTime);
             issue.ifPresent(results::add);
@@ -1659,11 +1829,11 @@ public class CassandraAppStorage extends AbstractAppStorage {
     }
 
     private static Optional<FileSystemCheckIssue> buildExpirationInconsistentIssue(Row row, Instant instant) {
-        return Optional.ofNullable(buildExpirationInconsistent(row,  instant));
+        return Optional.ofNullable(buildExpirationInconsistent(row, instant));
     }
 
     private static FileSystemCheckIssue buildExpirationInconsistent(Row row, Instant instant) {
-        if (row.getTimestamp(MODIFICATION_DATE).toInstant().isBefore(instant) && !row.getBool(CONSISTENT)) {
+        if (row.getInstant(MODIFICATION_DATE).isBefore(instant) && !row.getBool(CONSISTENT)) {
             final FileSystemCheckIssue fileSystemCheckIssue = buildIssue(row);
             fileSystemCheckIssue.setType("inconsistent");
             fileSystemCheckIssue.setDescription("inconsistent and older than " + instant);
@@ -1674,7 +1844,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
     private static FileSystemCheckIssue buildIssue(Row row) {
         final FileSystemCheckIssue issue = new FileSystemCheckIssue();
-        issue.setNodeId(row.getUUID(ID).toString()).setNodeName(row.getString(NAME));
+        issue.setNodeId(row.getUuid(ID).toString()).setNodeName(row.getString(NAME));
         return issue;
     }
 

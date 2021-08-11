@@ -7,13 +7,10 @@
 package com.powsybl.afs.security.local;
 
 import com.google.auto.service.AutoService;
-import com.google.common.base.Supplier;
 import com.powsybl.afs.ServiceCreationContext;
 import com.powsybl.afs.ServiceExtension;
-import com.powsybl.commons.config.ComponentDefaultConfig;
-import com.powsybl.security.SecurityAnalysisFactory;
-import com.powsybl.security.SecurityAnalysisFactoryImpl;
 import com.powsybl.afs.security.SecurityAnalysisRunningService;
+import com.powsybl.security.SecurityAnalysis;
 
 import java.util.Objects;
 
@@ -23,14 +20,14 @@ import java.util.Objects;
 @AutoService(ServiceExtension.class)
 public class LocalSecurityAnalysisRunningServiceExtension implements ServiceExtension<SecurityAnalysisRunningService> {
 
-    private final Supplier<SecurityAnalysisFactory> factorySupplier;
+    private final SecurityAnalysis.Runner runner;
 
     public LocalSecurityAnalysisRunningServiceExtension() {
-        this(() -> ComponentDefaultConfig.load().newFactoryImpl(SecurityAnalysisFactory.class, SecurityAnalysisFactoryImpl.class));
+        this(SecurityAnalysis.find());
     }
 
-    public LocalSecurityAnalysisRunningServiceExtension(Supplier<SecurityAnalysisFactory> factorySupplier) {
-        this.factorySupplier = Objects.requireNonNull(factorySupplier);
+    public LocalSecurityAnalysisRunningServiceExtension(SecurityAnalysis.Runner runner) {
+        this.runner = Objects.requireNonNull(runner);
     }
 
     @Override
@@ -40,6 +37,6 @@ public class LocalSecurityAnalysisRunningServiceExtension implements ServiceExte
 
     @Override
     public SecurityAnalysisRunningService createService(ServiceCreationContext context) {
-        return new LocalSecurityAnalysisRunningService(factorySupplier);
+        return new LocalSecurityAnalysisRunningService(runner);
     }
 }

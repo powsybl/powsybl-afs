@@ -6,7 +6,6 @@
  */
 package com.powsybl.afs.cassandra;
 
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.google.auto.service.AutoService;
 import com.powsybl.afs.AppFileSystem;
 import com.powsybl.afs.AppFileSystemProvider;
@@ -43,17 +42,13 @@ public class CassandraAppFileSystemProvider implements AppFileSystemProvider {
 
     private static CassandraAppFileSystem createFileSystem(CassandraAppFileSystemConfig fileSystemConfig,
                                                            CassandraAppStorageConfig storageConfig, EventsBus eventsBus) {
-        try {
-            return new CassandraAppFileSystem(fileSystemConfig.getDriveName(),
-                                              fileSystemConfig.isRemotelyAccessible(),
-                                              new CassandraAppStorage(fileSystemConfig.getDriveName(),
-                                                  () -> new CassandraSimpleContext(fileSystemConfig.getIpAddresses().stream().distinct().collect(Collectors.toList()),
-                                                                                   fileSystemConfig.getLocalDc()),
-                                                  storageConfig, eventsBus));
-        } catch (NoHostAvailableException e) {
-            LOGGER.error(e.toString(), e);
-            return null;
-        }
+        return new CassandraAppFileSystem(fileSystemConfig.getDriveName(),
+                fileSystemConfig.isRemotelyAccessible(),
+                new CassandraAppStorage(fileSystemConfig.getDriveName(),
+                    () -> new CassandraSimpleContext(fileSystemConfig.getIpAddresses().stream().distinct().collect(Collectors.toList()),
+                            fileSystemConfig.getLocalDc()),
+                    storageConfig, eventsBus));
+
     }
 
     @Override

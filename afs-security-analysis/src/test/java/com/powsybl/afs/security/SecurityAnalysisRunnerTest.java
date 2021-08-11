@@ -9,6 +9,9 @@ package com.powsybl.afs.security;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableList;
 import com.powsybl.afs.*;
+import com.powsybl.afs.contingency.ContingencyStore;
+import com.powsybl.afs.contingency.ContingencyStoreBuilder;
+import com.powsybl.afs.contingency.ContingencyStoreExtension;
 import com.powsybl.afs.ext.base.*;
 import com.powsybl.afs.mapdb.storage.MapDbAppStorage;
 import com.powsybl.afs.storage.AppStorage;
@@ -19,19 +22,15 @@ import com.powsybl.commons.datasource.DataSource;
 import com.powsybl.commons.datasource.ReadOnlyDataSource;
 import com.powsybl.contingency.BranchContingency;
 import com.powsybl.contingency.Contingency;
-import com.powsybl.afs.contingency.ContingencyStore;
-import com.powsybl.afs.contingency.ContingencyStoreBuilder;
-import com.powsybl.afs.contingency.ContingencyStoreExtension;
 import com.powsybl.iidm.import_.ImportConfig;
 import com.powsybl.iidm.import_.Importer;
 import com.powsybl.iidm.import_.ImportersLoader;
 import com.powsybl.iidm.import_.ImportersLoaderList;
 import com.powsybl.iidm.network.Network;
-import com.powsybl.iidm.network.VariantManager;
+import com.powsybl.iidm.network.test.EurostagTutorialExample1Factory;
 import com.powsybl.security.*;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -93,10 +92,7 @@ public class SecurityAnalysisRunnerTest extends AbstractProjectFileTest {
 
         @Override
         public Network importData(ReadOnlyDataSource dataSource, Properties parameters) {
-            Network network = Mockito.mock(Network.class);
-            VariantManager variantManager = Mockito.mock(VariantManager.class);
-            Mockito.when(variantManager.getWorkingVariantId()).thenReturn("s1");
-            Mockito.when(network.getVariantManager()).thenReturn(variantManager);
+            Network network = EurostagTutorialExample1Factory.createWithFixedCurrentLimits();
             return network;
         }
 
@@ -120,8 +116,8 @@ public class SecurityAnalysisRunnerTest extends AbstractProjectFileTest {
     @Override
     protected List<ProjectFileExtension> getProjectFileExtensions() {
         return ImmutableList.of(new ImportedCaseExtension(importersLoader, new ImportConfig()),
-                                new ContingencyStoreExtension(),
-                                new SecurityAnalysisRunnerExtension(new SecurityAnalysisParameters()));
+                new ContingencyStoreExtension(),
+                new SecurityAnalysisRunnerExtension(new SecurityAnalysisParameters()));
     }
 
     @Override
@@ -150,7 +146,7 @@ public class SecurityAnalysisRunnerTest extends AbstractProjectFileTest {
     @Test
     public void test() {
         Case aCase = afs.getRootFolder().getChild(Case.class, "network")
-                                        .orElseThrow(AssertionError::new);
+                .orElseThrow(AssertionError::new);
 
         // create project in the root folder
         Project project = afs.getRootFolder().createProject("project");
@@ -164,7 +160,8 @@ public class SecurityAnalysisRunnerTest extends AbstractProjectFileTest {
         ContingencyStore contingencyStore = project.getRootFolder().fileBuilder(ContingencyStoreBuilder.class)
                 .withName("contingencies")
                 .build();
-        contingencyStore.write(new Contingency("c1", new BranchContingency("l1")));
+        contingencyStore.write(new Contingency("c1", new BranchContingency("NHV1_NHV2_1")),
+                new Contingency("c1", new BranchContingency("NHV1_NHV2_2")));
 
         // create a security analysis runner that point to imported case
         SecurityAnalysisRunner runner = project.getRootFolder().fileBuilder(SecurityAnalysisRunnerBuilder.class)
@@ -185,10 +182,10 @@ public class SecurityAnalysisRunnerTest extends AbstractProjectFileTest {
         // check default parameters can be changed
         SecurityAnalysisParameters parameters = runner.readParameters();
         assertNotNull(parameters);
-        assertFalse(parameters.getLoadFlowParameters().isSpecificCompatibility());
-        parameters.getLoadFlowParameters().setSpecificCompatibility(true);
+        assertFalse(parameters.getLoadFlowParameters().isTwtSplitShuntAdmittance());
+        parameters.getLoadFlowParameters().setTwtSplitShuntAdmittance(true);
         runner.writeParameters(parameters);
-        assertTrue(runner.readParameters().getLoadFlowParameters().isSpecificCompatibility());
+        assertTrue(runner.readParameters().getLoadFlowParameters().isTwtSplitShuntAdmittance());
 
         // run security analysis
         runner.run();
@@ -198,7 +195,7 @@ public class SecurityAnalysisRunnerTest extends AbstractProjectFileTest {
         SecurityAnalysisResult result = runner.readResult();
         assertNotNull(result);
         assertNotNull(result.getPreContingencyResult());
-        assertEquals(1, result.getPreContingencyResult().getLimitViolations().size());
+        assertEquals(1, result.getPreContingencyResult().getLimitViolationsResult().getLimitViolations().size());
 
         // clear results
         runner.clearResult();
