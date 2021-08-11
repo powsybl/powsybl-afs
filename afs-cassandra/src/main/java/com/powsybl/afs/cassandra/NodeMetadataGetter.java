@@ -36,7 +36,7 @@ enum NodeMetadataGetter {
         return metaName;
     }
 
-    String csymbol() {
+    String childSymbol() {
         return "c" + metaName;
     }
 

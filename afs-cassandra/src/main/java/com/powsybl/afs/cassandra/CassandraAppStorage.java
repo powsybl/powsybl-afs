@@ -632,10 +632,10 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
     private Map<String,Term> addAllCMetadata(NodeGenericMetadata genericMetadata){
         Map<String,Term> termMap = new HashMap<>();
-        termMap.put(NodeMetadataGetter.STRING.csymbol(),literal(NodeMetadataGetter.STRING.apply(genericMetadata)));
-        termMap.put(NodeMetadataGetter.INT.csymbol(),literal(NodeMetadataGetter.INT.apply(genericMetadata)));
-        termMap.put(NodeMetadataGetter.BOOLEAN.csymbol(),literal(NodeMetadataGetter.BOOLEAN.apply(genericMetadata)));
-        termMap.put(NodeMetadataGetter.DOUBLE.csymbol(),literal(NodeMetadataGetter.DOUBLE.apply(genericMetadata)));
+        termMap.put(NodeMetadataGetter.STRING.childSymbol(),literal(NodeMetadataGetter.STRING.apply(genericMetadata)));
+        termMap.put(NodeMetadataGetter.INT.childSymbol(),literal(NodeMetadataGetter.INT.apply(genericMetadata)));
+        termMap.put(NodeMetadataGetter.BOOLEAN.childSymbol(),literal(NodeMetadataGetter.BOOLEAN.apply(genericMetadata)));
+        termMap.put(NodeMetadataGetter.DOUBLE.childSymbol(),literal(NodeMetadataGetter.DOUBLE.apply(genericMetadata)));
         return termMap;
     }
 
