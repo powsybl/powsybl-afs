@@ -57,13 +57,18 @@ public class CassandraAppStorageTest extends AbstractAppStorageTest {
                 new CassandraAppStorageConfig(), new InMemoryEventsBus());
     }
 
-    protected void clearTables() {
+    /**
+     * Clears tables and event stack between tests
+     */
+    protected void clear() {
         Map<CqlIdentifier, TableMetadata> tables = cassandraCQLUnit.getSession()
             .getMetadata()
             .getKeyspace(AFS_KEYSPACE)
             .orElseThrow(AssertionError::new)
             .getTables();
         tables.keySet().forEach(table -> cassandraCQLUnit.getSession().execute(QueryBuilder.truncate(table).build()));
+
+        eventStack.clear();
     }
 
     //Most tests in here to minimize test execution time (only initialize cassandra once)
@@ -75,36 +80,31 @@ public class CassandraAppStorageTest extends AbstractAppStorageTest {
         testOrphanNodeRepair();
         testOrphanDataRepair();
         testGetParentWithInconsistentChild();
+        clear();
 
-        CassandraDataSplitTest cassandraDataSplitTest = new CassandraDataSplitTest();
         try {
-            cassandraDataSplitTest.test(cassandraCQLUnit);
-            clearTables();
+            new CassandraDataSplitTest().test(cassandraCQLUnit);
+            clear();
         } catch (IOException e) {
             Assert.fail();
         }
 
-        CassandraDescriptionIssueTest cassandraDescriptionIssueTest = new CassandraDescriptionIssueTest();
-        cassandraDescriptionIssueTest.test(storage);
-        clearTables();
+        new CassandraDescriptionIssueTest().test(storage);
+        clear();
 
-        CassandraLeakTest cassandraLeakTest = new CassandraLeakTest();
-        cassandraLeakTest.test(storage, cassandraCQLUnit);
-        clearTables();
+        new CassandraLeakTest().test(storage, cassandraCQLUnit);
+        clear();
 
-        CassandraRemoveCreateFolderIssueTest cassandraRemoveCreateFolderIssueTest = new CassandraRemoveCreateFolderIssueTest();
-        cassandraRemoveCreateFolderIssueTest.test(storage);
-        clearTables();
+        new CassandraRemoveCreateFolderIssueTest().test(storage);
+        clear();
 
-        CassandraRenameIssueTest cassandraRenameIssueTest = new CassandraRenameIssueTest();
-        cassandraRenameIssueTest.test(storage);
-        clearTables();
+        new CassandraRenameIssueTest().test(storage);
+        clear();
 
-        TimeSeriesIssueTest timeSeriesIssueTest = new TimeSeriesIssueTest();
-        timeSeriesIssueTest.testEmptyChunks(storage);
-        clearTables();
-        timeSeriesIssueTest.testNullString(storage);
-        clearTables();
+        new TimeSeriesIssueTest().testEmptyChunks(storage);
+        clear();
+        new TimeSeriesIssueTest().testNullString(storage);
+        clear();
     }
 
     private void testOrphanDataRepair() {

@@ -22,11 +22,14 @@ public class CassandraRenameIssueTest {
         NodeInfo rootNodeId = storage.createRootNodeIfNotExists("test", "folder");
         NodeInfo test1NodeInfo = storage.createNode(rootNodeId.getId(), "test1", "folder", "", 0, new NodeGenericMetadata());
         storage.flush();
-        storage.createNode(test1NodeInfo.getId(), "test2", "folder", "", 0, new NodeGenericMetadata());
-        storage.createNode(test1NodeInfo.getId(), "test2_bis", "folder", "", 0, new NodeGenericMetadata());
+        NodeInfo test2 = storage.createNode(test1NodeInfo.getId(), "test2", "folder", "", 0, new NodeGenericMetadata());
+        storage.setConsistent(test2.getId());
+        NodeInfo test2Bis = storage.createNode(test1NodeInfo.getId(), "test2_bis", "folder", "", 0, new NodeGenericMetadata());
+        storage.setConsistent(test2Bis.getId());
         storage.flush();
         storage.renameNode(test1NodeInfo.getId(), "newtest1");
         storage.flush();
+        assertEquals(2, storage.getChildNodes(test1NodeInfo.getId()).size());
         assertEquals("newtest1", storage.getNodeInfo(test1NodeInfo.getId()).getName());
     }
 }
