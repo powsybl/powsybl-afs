@@ -15,10 +15,10 @@ import com.powsybl.afs.storage.*;
 import com.powsybl.afs.storage.check.FileSystemCheckIssue;
 import com.powsybl.afs.storage.check.FileSystemCheckOptions;
 import com.powsybl.afs.storage.check.FileSystemCheckOptionsBuilder;
+import org.apache.commons.lang3.SystemUtils;
 import org.cassandraunit.CassandraCQLUnit;
 import org.cassandraunit.dataset.cql.ClassPathCQLDataSet;
-import org.junit.Assert;
-import org.junit.Rule;
+import org.junit.*;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -45,6 +45,11 @@ public class CassandraAppStorageTest extends AbstractAppStorageTest {
 
     @Rule
     public CassandraCQLUnit cassandraCQLUnit = new CassandraCQLUnit(new ClassPathCQLDataSet("afs.cql", AFS_KEYSPACE), null, 20000L);
+
+    @BeforeClass
+    public static void dontRunOnWindows() {
+        Assume.assumeFalse(SystemUtils.IS_OS_WINDOWS);
+    }
 
     @Override
     protected AppStorage createStorage() {
