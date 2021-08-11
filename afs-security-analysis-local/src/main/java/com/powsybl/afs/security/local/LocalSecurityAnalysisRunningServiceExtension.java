@@ -10,12 +10,25 @@ import com.google.auto.service.AutoService;
 import com.powsybl.afs.ServiceCreationContext;
 import com.powsybl.afs.ServiceExtension;
 import com.powsybl.afs.security.SecurityAnalysisRunningService;
+import com.powsybl.security.SecurityAnalysis;
+
+import java.util.Objects;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  */
 @AutoService(ServiceExtension.class)
 public class LocalSecurityAnalysisRunningServiceExtension implements ServiceExtension<SecurityAnalysisRunningService> {
+
+    private final SecurityAnalysis.Runner runner;
+
+    public LocalSecurityAnalysisRunningServiceExtension() {
+        this(SecurityAnalysis.find());
+    }
+
+    public LocalSecurityAnalysisRunningServiceExtension(SecurityAnalysis.Runner runner) {
+        this.runner = Objects.requireNonNull(runner);
+    }
 
     @Override
     public ServiceKey<SecurityAnalysisRunningService> getServiceKey() {
@@ -24,6 +37,6 @@ public class LocalSecurityAnalysisRunningServiceExtension implements ServiceExte
 
     @Override
     public SecurityAnalysisRunningService createService(ServiceCreationContext context) {
-        return new LocalSecurityAnalysisRunningService();
+        return new LocalSecurityAnalysisRunningService(runner);
     }
 }

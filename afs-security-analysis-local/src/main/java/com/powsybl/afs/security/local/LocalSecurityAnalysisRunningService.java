@@ -33,6 +33,12 @@ import java.util.UUID;
  */
 public class LocalSecurityAnalysisRunningService implements SecurityAnalysisRunningService {
 
+    private final SecurityAnalysis.Runner securityAnalysis;
+
+    public LocalSecurityAnalysisRunningService(SecurityAnalysis.Runner securityAnalysis) {
+        this.securityAnalysis = Objects.requireNonNull(securityAnalysis);
+    }
+
     @Override
     public void run(SecurityAnalysisRunner runner) {
         Objects.requireNonNull(runner);
@@ -57,7 +63,7 @@ public class LocalSecurityAnalysisRunningService implements SecurityAnalysisRunn
             }
 
             logger.log("Running security analysis...");
-            SecurityAnalysisReport securityAnalysisReport = SecurityAnalysis.run(network,
+            SecurityAnalysisReport securityAnalysisReport = securityAnalysis.run(network,
                     network.getVariantManager().getWorkingVariantId(),
                     new DefaultLimitViolationDetector(),
                     new LimitViolationFilter(),

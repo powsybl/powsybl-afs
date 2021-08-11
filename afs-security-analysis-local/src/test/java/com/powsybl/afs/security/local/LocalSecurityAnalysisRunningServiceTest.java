@@ -10,7 +10,12 @@ import com.google.common.collect.ImmutableList;
 import com.powsybl.afs.ServiceExtension;
 import com.powsybl.afs.ext.base.LocalNetworkCacheServiceExtension;
 import com.powsybl.afs.security.SecurityAnalysisRunnerTest;
+import com.powsybl.security.SecurityAnalysis;
+import com.powsybl.security.SecurityAnalysisProvider;
+import org.junit.Assert;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 /**
@@ -18,8 +23,17 @@ import java.util.List;
  */
 public class LocalSecurityAnalysisRunningServiceTest extends SecurityAnalysisRunnerTest {
 
+    @Override
     protected List<ServiceExtension> getServiceExtensions() {
-        return ImmutableList.of(new LocalSecurityAnalysisRunningServiceExtension(),
-                new LocalNetworkCacheServiceExtension());
+        //Workaround private constructor issue
+        try {
+            Constructor<SecurityAnalysis.Runner> constructor = SecurityAnalysis.Runner.class.getDeclaredConstructor(SecurityAnalysisProvider.class);
+            constructor.setAccessible(true);
+            SecurityAnalysis.Runner runner = constructor.newInstance(new SecurityAnalysisProviderMock());
+            return ImmutableList.of(new LocalSecurityAnalysisRunningServiceExtension(runner),
+                    new LocalNetworkCacheServiceExtension());
+        } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
+            throw new AssertionError();
+        }
     }
 }
