@@ -96,13 +96,6 @@
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
-        <!--dependency>
-            <groupId>com.powsybl</groupId>
-            <artifactId>powsybl-security-analysis-default</artifactId>
-            <version>${powsyblcore.version}</version>
-            <type>test-jar</type>
-            <scope>test</scope>
-        </dependency-->
         <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-config-test</artifactId>
@@ -120,13 +113,6 @@
             <artifactId>powsybl-iidm-test</artifactId>
             <version>${powsyblcore.version}</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.powsybl</groupId>
-            <artifactId>powsybl-tools</artifactId>
-            <version>${powsyblcore.version}</version>
-            <scope>test</scope>
-            <type>test-jar</type>
         </dependency>
     </dependencies>
 
