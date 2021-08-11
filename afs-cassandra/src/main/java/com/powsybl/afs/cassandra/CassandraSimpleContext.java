@@ -6,11 +6,8 @@
  */
 package com.powsybl.afs.cassandra;
 
-import com.datastax.dse.protocol.internal.request.query.DseQueryOptions;
-import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.CqlSessionBuilder;
-import com.datastax.oss.protocol.internal.request.query.QueryOptions;
 
 import java.net.InetSocketAddress;
 import java.util.List;

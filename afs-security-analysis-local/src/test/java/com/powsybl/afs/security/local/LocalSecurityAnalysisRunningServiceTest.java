@@ -12,7 +12,6 @@ import com.powsybl.afs.ext.base.LocalNetworkCacheServiceExtension;
 import com.powsybl.afs.security.SecurityAnalysisRunnerTest;
 import com.powsybl.security.SecurityAnalysis;
 import com.powsybl.security.SecurityAnalysisProvider;
-import org.junit.Assert;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;

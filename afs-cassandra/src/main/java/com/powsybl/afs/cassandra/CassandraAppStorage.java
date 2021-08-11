@@ -165,11 +165,10 @@ public class CassandraAppStorage extends AbstractAppStorage {
                         .setUuid(ID, checkNodeId(creation.getNodeId()))
                         .setString(TIME_SERIES_NAME, creation.getMetadata().getName())
                         .setString(DATA_TYPE, creation.getMetadata().getDataType().name())
-                        .setMap(TIME_SERIES_TAGS, creation.getMetadata().getTags(),String.class,String.class)
+                        .setMap(TIME_SERIES_TAGS, creation.getMetadata().getTags(), String.class, String.class)
                         .setInstant(START, Instant.ofEpochMilli(index.getStartTime()))
                         .setInstant(END, Instant.ofEpochMilli(index.getEndTime()))
-                        .setLong(SPACING, index.getSpacing())
-                        );
+                        .setLong(SPACING, index.getSpacing()));
             } else {
                 throw new AssertionError();
             }
@@ -199,8 +198,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
                         .setInt(VERSION, version)
                         .setUuid(CHUNK_ID, chunkId)
                         .setInt(CHUNK_TYPE, chunk.isCompressed() ? TimeSeriesChunkType.DOUBLE_COMPRESSED.ordinal()
-                                : TimeSeriesChunkType.DOUBLE_UNCOMPRESSED.ordinal())
-                        );
+                                : TimeSeriesChunkType.DOUBLE_UNCOMPRESSED.ordinal()));
 
                 if (chunk.isCompressed()) {
                     statements.add(preparedStatementsSupplier.get().insertDoubleTimeSeriesDataCompressedChunksPreparedStmt
@@ -211,9 +209,8 @@ public class CassandraAppStorage extends AbstractAppStorage {
                             .setUuid(CHUNK_ID, chunkId)
                             .setInt(OFFSET, chunk.getOffset())
                             .setInt(UNCOMPRESSED_LENGTH, chunk.getLength())
-                            .setList(STEP_VALUES, Arrays.stream(((CompressedDoubleDataChunk) chunk).getStepValues()).boxed().collect(Collectors.toList()),Double.class)
-                            .setList(STEP_LENGTHS, Arrays.stream(((CompressedDoubleDataChunk) chunk).getStepLengths()).boxed().collect(Collectors.toList()),Integer.class)
-                            );
+                            .setList(STEP_VALUES, Arrays.stream(((CompressedDoubleDataChunk) chunk).getStepValues()).boxed().collect(Collectors.toList()), Double.class)
+                            .setList(STEP_LENGTHS, Arrays.stream(((CompressedDoubleDataChunk) chunk).getStepLengths()).boxed().collect(Collectors.toList()), Integer.class));
 
                 } else {
                     statements.add(preparedStatementsSupplier.get().insertDoubleTimeSeriesDataUncompressedChunksPreparedStmt
@@ -223,8 +220,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
                             .setInt(VERSION, version)
                             .setUuid(CHUNK_ID, chunkId)
                             .setInt(OFFSET, chunk.getOffset())
-                            .setList(VALUES, Arrays.stream(((UncompressedDoubleDataChunk) chunk).getValues()).boxed().collect(Collectors.toList()),Double.class));
-
+                            .setList(VALUES, Arrays.stream(((UncompressedDoubleDataChunk) chunk).getValues()).boxed().collect(Collectors.toList()), Double.class));
                 }
 
                 writingContext.insertedChunkCount++;
@@ -270,8 +266,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
                         .setInt(VERSION, version)
                         .setUuid(CHUNK_ID, chunkId)
                         .setInt(CHUNK_TYPE, chunk.isCompressed() ? TimeSeriesChunkType.STRING_COMPRESSED.ordinal()
-                                : TimeSeriesChunkType.STRING_UNCOMPRESSED.ordinal())
-                        );
+                                : TimeSeriesChunkType.STRING_UNCOMPRESSED.ordinal()));
 
                 if (chunk.isCompressed()) {
                     statements.add(preparedStatementsSupplier.get().insertStringTimeSeriesDataCompressedChunksPreparedStmt
@@ -282,11 +277,10 @@ public class CassandraAppStorage extends AbstractAppStorage {
                             .setUuid(CHUNK_ID, chunkId)
                             .setInt(OFFSET, chunk.getOffset())
                             .setInt(UNCOMPRESSED_LENGTH, chunk.getLength())
-                            .setList(STEP_VALUES, fixNullValues(((CompressedStringDataChunk) chunk).getStepValues()),String.class)
+                            .setList(STEP_VALUES, fixNullValues(((CompressedStringDataChunk) chunk).getStepValues()), String.class)
                             .setList(STEP_LENGTHS, Arrays.stream(((CompressedStringDataChunk) chunk).getStepLengths())
                                     .boxed()
-                                    .collect(Collectors.toList()),Integer.class)
-                            );
+                                    .collect(Collectors.toList()), Integer.class));
 
                 } else {
                     statements.add(preparedStatementsSupplier.get().insertStringTimeSeriesDataUncompressedChunksPreparedStmt
@@ -296,7 +290,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
                             .setInt(VERSION, version)
                             .setUuid(CHUNK_ID, chunkId)
                             .setInt(OFFSET, chunk.getOffset())
-                            .setList(VALUES, fixNullValues(((UncompressedStringDataChunk) chunk).getValues()),String.class));
+                            .setList(VALUES, fixNullValues(((UncompressedStringDataChunk) chunk).getValues()), String.class));
 
                 }
 
@@ -491,7 +485,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
                     .value(CHILD_CREATION_DATE, literal(Instant.ofEpochMilli(creationTime)))
                     .value(CHILD_MODIFICATION_DATE, literal(Instant.ofEpochMilli(creationTime)))
                     .value(CHILD_VERSION, literal(version))
-                    .values(addAllCMetadata(genericMetadata))
+                    .values(addAllChildMetadata(genericMetadata))
                     .build());
         }
         pushEvent(new NodeCreated(nodeUuid.toString(), parentNodeUuid != null ? parentNodeUuid.toString() : null), APPSTORAGE_NODE_TOPIC);
@@ -615,30 +609,31 @@ public class CassandraAppStorage extends AbstractAppStorage {
         pushEvent(new NodeNameUpdated(nodeId, name), APPSTORAGE_NODE_TOPIC);
     }
 
-    private Map<String,Term> addAllMetadata(NodeInfo nodeInfo){
+    private static Map<String, Term> addAllMetadata(NodeInfo nodeInfo) {
         return addAllMetadata(nodeInfo.getGenericMetadata());
     }
-    private Map<String,Term> addAllCMetadata(NodeInfo nodeInfo){
-        return addAllCMetadata(nodeInfo.getGenericMetadata());
+
+    private static Map<String, Term> addAllChildMetadata(NodeInfo nodeInfo) {
+        return addAllChildMetadata(nodeInfo.getGenericMetadata());
     }
-    private Map<String,Term> addAllMetadata(NodeGenericMetadata genericMetadata){
-        Map<String,Term> termMap = new HashMap<>();
-        termMap.put(NodeMetadataGetter.STRING.symbol(),literal(NodeMetadataGetter.STRING.apply(genericMetadata)));
-        termMap.put(NodeMetadataGetter.INT.symbol(),literal(NodeMetadataGetter.INT.apply(genericMetadata)));
-        termMap.put(NodeMetadataGetter.BOOLEAN.symbol(),literal(NodeMetadataGetter.BOOLEAN.apply(genericMetadata)));
-        termMap.put(NodeMetadataGetter.DOUBLE.symbol(),literal(NodeMetadataGetter.DOUBLE.apply(genericMetadata)));
+
+    private static Map<String, Term> addAllMetadata(NodeGenericMetadata genericMetadata) {
+        Map<String, Term> termMap = new HashMap<>();
+        termMap.put(NodeMetadataGetter.STRING.symbol(), literal(NodeMetadataGetter.STRING.apply(genericMetadata)));
+        termMap.put(NodeMetadataGetter.INT.symbol(), literal(NodeMetadataGetter.INT.apply(genericMetadata)));
+        termMap.put(NodeMetadataGetter.BOOLEAN.symbol(), literal(NodeMetadataGetter.BOOLEAN.apply(genericMetadata)));
+        termMap.put(NodeMetadataGetter.DOUBLE.symbol(), literal(NodeMetadataGetter.DOUBLE.apply(genericMetadata)));
         return termMap;
     }
 
-    private Map<String,Term> addAllCMetadata(NodeGenericMetadata genericMetadata){
-        Map<String,Term> termMap = new HashMap<>();
-        termMap.put(NodeMetadataGetter.STRING.childSymbol(),literal(NodeMetadataGetter.STRING.apply(genericMetadata)));
-        termMap.put(NodeMetadataGetter.INT.childSymbol(),literal(NodeMetadataGetter.INT.apply(genericMetadata)));
-        termMap.put(NodeMetadataGetter.BOOLEAN.childSymbol(),literal(NodeMetadataGetter.BOOLEAN.apply(genericMetadata)));
-        termMap.put(NodeMetadataGetter.DOUBLE.childSymbol(),literal(NodeMetadataGetter.DOUBLE.apply(genericMetadata)));
+    private static Map<String, Term> addAllChildMetadata(NodeGenericMetadata genericMetadata) {
+        Map<String, Term> termMap = new HashMap<>();
+        termMap.put(NodeMetadataGetter.STRING.childSymbol(), literal(NodeMetadataGetter.STRING.apply(genericMetadata)));
+        termMap.put(NodeMetadataGetter.INT.childSymbol(), literal(NodeMetadataGetter.INT.apply(genericMetadata)));
+        termMap.put(NodeMetadataGetter.BOOLEAN.childSymbol(), literal(NodeMetadataGetter.BOOLEAN.apply(genericMetadata)));
+        termMap.put(NodeMetadataGetter.DOUBLE.childSymbol(), literal(NodeMetadataGetter.DOUBLE.apply(genericMetadata)));
         return termMap;
     }
-
 
     private static UUID checkNodeId(String nodeId) {
         Objects.requireNonNull(nodeId);
@@ -876,7 +871,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
                 .value(CHILD_CREATION_DATE, literal(Instant.ofEpochMilli(nodeInfo.getCreationTime())))
                 .value(CHILD_MODIFICATION_DATE, literal(Instant.ofEpochMilli(nodeInfo.getModificationTime())))
                 .value(CHILD_VERSION, literal(nodeInfo.getVersion()))
-                .values(addAllCMetadata(nodeInfo))
+                .values(addAllChildMetadata(nodeInfo))
                 .build());
         getSession().execute(batchStatementBuilder.build());
 

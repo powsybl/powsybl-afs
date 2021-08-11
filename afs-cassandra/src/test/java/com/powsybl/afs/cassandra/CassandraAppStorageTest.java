@@ -6,6 +6,7 @@
  */
 package com.powsybl.afs.cassandra;
 
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -52,7 +53,11 @@ public class CassandraAppStorageTest extends AbstractAppStorageTest {
     }
 
     protected void clearTables() {
-        Map<CqlIdentifier, TableMetadata> tables = cassandraCQLUnit.getSession().getMetadata().getKeyspace(AFS_KEYSPACE).get().getTables();
+        Map<CqlIdentifier, TableMetadata> tables = cassandraCQLUnit.getSession()
+            .getMetadata()
+            .getKeyspace(AFS_KEYSPACE)
+            .orElseThrow(AssertionError::new)
+            .getTables();
         tables.keySet().forEach(table -> cassandraCQLUnit.getSession().execute(QueryBuilder.truncate(table).build()));
     }
 
