@@ -53,7 +53,7 @@ public class LocalTaskMonitor implements TaskMonitor {
             tasks.put(task.getId(), task);
 
             // notification
-            notifyListeners(new StartTaskEvent(task.getId(), revision, name), task.getProjectId());
+            notifyListeners(new StartTaskEvent(task.getId(), revision, name, nodeId), task.getProjectId());
 
             return task;
         } finally {
