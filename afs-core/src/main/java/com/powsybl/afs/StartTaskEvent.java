@@ -20,19 +20,34 @@ public class StartTaskEvent extends TaskEvent {
     @JsonProperty("name")
     private final String name;
 
+    @JsonProperty("nodeId")
+    private final String nodeId;
+
     @JsonCreator
-    public StartTaskEvent(@JsonProperty("taskId") UUID taskId, @JsonProperty("revision") long revision, @JsonProperty("name") String name) {
+    public StartTaskEvent(@JsonProperty("taskId") UUID taskId,
+                          @JsonProperty("revision") long revision,
+                          @JsonProperty("name") String name,
+                          @JsonProperty("nodeId") String nodeId) {
         super(taskId, revision);
         this.name = Objects.requireNonNull(name);
+        this.nodeId = nodeId;
+    }
+
+    public StartTaskEvent(@JsonProperty("taskId") UUID taskId, @JsonProperty("revision") long revision, @JsonProperty("name") String name) {
+        this(taskId, revision, name, null);
     }
 
     public String getName() {
         return name;
     }
 
+    public String getNodeId() {
+        return nodeId;
+    }
+
     @Override
     public int hashCode() {
-        return Objects.hash(taskId, revision, name);
+        return Objects.hash(taskId, revision, name, nodeId);
     }
 
     @Override
@@ -41,13 +56,14 @@ public class StartTaskEvent extends TaskEvent {
             StartTaskEvent other = (StartTaskEvent) obj;
             return taskId.equals(other.taskId) &&
                     revision == other.revision &&
-                    name.equals(other.name);
+                    name.equals(other.name) &&
+                    nodeId.equals(other.nodeId);
         }
         return false;
     }
 
     @Override
     public String toString() {
-        return "StartTaskEvent(taskId=" + taskId + ", revision=" + revision + ", name=" + name + ")";
+        return "StartTaskEvent(taskId=" + taskId + ", revision=" + revision + ", nodeId=" + nodeId + ", name=" + name + ")";
     }
 }
