@@ -54,10 +54,12 @@ public class StartTaskEvent extends TaskEvent {
     public boolean equals(Object obj) {
         if (obj instanceof StartTaskEvent) {
             StartTaskEvent other = (StartTaskEvent) obj;
+            if (nodeId != null && !nodeId.equals(other.nodeId)) {
+                return false;
+            }
             return taskId.equals(other.taskId) &&
                     revision == other.revision &&
-                    name.equals(other.name) &&
-                    nodeId.equals(other.nodeId);
+                    name.equals(other.name);
         }
         return false;
     }

@@ -157,7 +157,7 @@ public class LocalTaskMonitorTest extends AbstractProjectFileTest {
     @Test
     public void startTaskEventTest() throws IOException {
         TaskEvent event = new StartTaskEvent(new UUID(0L, 0L), 0L, "e1");
-        assertEquals("StartTaskEvent(taskId=00000000-0000-0000-0000-000000000000, revision=0, name=e1)", event.toString());
+        assertEquals("StartTaskEvent(taskId=00000000-0000-0000-0000-000000000000, revision=0, nodeId=null, name=e1)", event.toString());
         ObjectMapper objectMapper = JsonUtil.createObjectMapper();
         String json = objectMapper.writerWithDefaultPrettyPrinter()
                 .writeValueAsString(event);
@@ -166,7 +166,8 @@ public class LocalTaskMonitorTest extends AbstractProjectFileTest {
                 "  \"@c\" : \".StartTaskEvent\",",
                 "  \"taskId\" : \"00000000-0000-0000-0000-000000000000\",",
                 "  \"revision\" : 0,",
-                "  \"name\" : \"e1\"",
+                "  \"name\" : \"e1\",",
+                "  \"nodeId\" : null",
                 "}");
         assertEquals(jsonRef, json);
         TaskEvent event2 = objectMapper.readValue(json, TaskEvent.class);
