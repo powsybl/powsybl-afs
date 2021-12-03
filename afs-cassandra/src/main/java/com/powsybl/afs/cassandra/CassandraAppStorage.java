@@ -6,8 +6,109 @@
  */
 package com.powsybl.afs.cassandra;
 
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.bindMarker;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.deleteFrom;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.insertInto;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.now;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.selectFrom;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.update;
+import static com.powsybl.afs.cassandra.CassandraConstants.BACKWARD_DEPENDENCIES;
+import static com.powsybl.afs.cassandra.CassandraConstants.CHILDREN_BY_NAME_AND_CLASS;
+import static com.powsybl.afs.cassandra.CassandraConstants.CHILD_CONSISTENT;
+import static com.powsybl.afs.cassandra.CassandraConstants.CHILD_CREATION_DATE;
+import static com.powsybl.afs.cassandra.CassandraConstants.CHILD_DESCRIPTION;
+import static com.powsybl.afs.cassandra.CassandraConstants.CHILD_ID;
+import static com.powsybl.afs.cassandra.CassandraConstants.CHILD_MODIFICATION_DATE;
+import static com.powsybl.afs.cassandra.CassandraConstants.CHILD_NAME;
+import static com.powsybl.afs.cassandra.CassandraConstants.CHILD_PSEUDO_CLASS;
+import static com.powsybl.afs.cassandra.CassandraConstants.CHILD_VERSION;
+import static com.powsybl.afs.cassandra.CassandraConstants.CHUNK;
+import static com.powsybl.afs.cassandra.CassandraConstants.CHUNKS_COUNT;
+import static com.powsybl.afs.cassandra.CassandraConstants.CHUNK_ID;
+import static com.powsybl.afs.cassandra.CassandraConstants.CHUNK_NUM;
+import static com.powsybl.afs.cassandra.CassandraConstants.CHUNK_TYPE;
+import static com.powsybl.afs.cassandra.CassandraConstants.CMB;
+import static com.powsybl.afs.cassandra.CassandraConstants.CMD;
+import static com.powsybl.afs.cassandra.CassandraConstants.CMI;
+import static com.powsybl.afs.cassandra.CassandraConstants.CMT;
+import static com.powsybl.afs.cassandra.CassandraConstants.CONSISTENT;
+import static com.powsybl.afs.cassandra.CassandraConstants.CREATION_DATE;
+import static com.powsybl.afs.cassandra.CassandraConstants.DATA_TYPE;
+import static com.powsybl.afs.cassandra.CassandraConstants.DEPENDENCIES;
+import static com.powsybl.afs.cassandra.CassandraConstants.DESCRIPTION;
+import static com.powsybl.afs.cassandra.CassandraConstants.DOUBLE_TIME_SERIES_DATA_COMPRESSED_CHUNKS;
+import static com.powsybl.afs.cassandra.CassandraConstants.DOUBLE_TIME_SERIES_DATA_UNCOMPRESSED_CHUNKS;
+import static com.powsybl.afs.cassandra.CassandraConstants.END;
+import static com.powsybl.afs.cassandra.CassandraConstants.FROM_ID;
+import static com.powsybl.afs.cassandra.CassandraConstants.FS_NAME;
+import static com.powsybl.afs.cassandra.CassandraConstants.ID;
+import static com.powsybl.afs.cassandra.CassandraConstants.MB;
+import static com.powsybl.afs.cassandra.CassandraConstants.MD;
+import static com.powsybl.afs.cassandra.CassandraConstants.MI;
+import static com.powsybl.afs.cassandra.CassandraConstants.MODIFICATION_DATE;
+import static com.powsybl.afs.cassandra.CassandraConstants.MT;
+import static com.powsybl.afs.cassandra.CassandraConstants.NAME;
+import static com.powsybl.afs.cassandra.CassandraConstants.NODE_DATA;
+import static com.powsybl.afs.cassandra.CassandraConstants.NODE_DATA_NAMES;
+import static com.powsybl.afs.cassandra.CassandraConstants.OFFSET;
+import static com.powsybl.afs.cassandra.CassandraConstants.PARENT_ID;
+import static com.powsybl.afs.cassandra.CassandraConstants.PSEUDO_CLASS;
+import static com.powsybl.afs.cassandra.CassandraConstants.REGULAR_TIME_SERIES;
+import static com.powsybl.afs.cassandra.CassandraConstants.ROOT_ID;
+import static com.powsybl.afs.cassandra.CassandraConstants.ROOT_NODE;
+import static com.powsybl.afs.cassandra.CassandraConstants.SPACING;
+import static com.powsybl.afs.cassandra.CassandraConstants.START;
+import static com.powsybl.afs.cassandra.CassandraConstants.STEP_LENGTHS;
+import static com.powsybl.afs.cassandra.CassandraConstants.STEP_VALUES;
+import static com.powsybl.afs.cassandra.CassandraConstants.STRING_TIME_SERIES_DATA_COMPRESSED_CHUNKS;
+import static com.powsybl.afs.cassandra.CassandraConstants.STRING_TIME_SERIES_DATA_UNCOMPRESSED_CHUNKS;
+import static com.powsybl.afs.cassandra.CassandraConstants.TIME_SERIES_DATA_CHUNK_TYPES;
+import static com.powsybl.afs.cassandra.CassandraConstants.TIME_SERIES_NAME;
+import static com.powsybl.afs.cassandra.CassandraConstants.TIME_SERIES_TAGS;
+import static com.powsybl.afs.cassandra.CassandraConstants.TO_ID;
+import static com.powsybl.afs.cassandra.CassandraConstants.UNCOMPRESSED_LENGTH;
+import static com.powsybl.afs.cassandra.CassandraConstants.VALUES;
+import static com.powsybl.afs.cassandra.CassandraConstants.VERSION;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UncheckedIOException;
+import java.nio.ByteBuffer;
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.function.IntSupplier;
+import java.util.stream.Collectors;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
+
+import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.cql.*;
+import com.datastax.oss.driver.api.core.cql.BatchStatementBuilder;
+import com.datastax.oss.driver.api.core.cql.BatchType;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
+import com.datastax.oss.driver.api.core.cql.Row;
+import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
@@ -16,29 +117,49 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.powsybl.afs.storage.*;
-import com.powsybl.afs.storage.buffer.*;
+import com.powsybl.afs.storage.AbstractAppStorage;
+import com.powsybl.afs.storage.AfsStorageException;
+import com.powsybl.afs.storage.EventsBus;
+import com.powsybl.afs.storage.NodeDependency;
+import com.powsybl.afs.storage.NodeGenericMetadata;
+import com.powsybl.afs.storage.NodeInfo;
+import com.powsybl.afs.storage.buffer.DoubleTimeSeriesChunksAddition;
+import com.powsybl.afs.storage.buffer.StorageChange;
+import com.powsybl.afs.storage.buffer.StorageChangeBuffer;
+import com.powsybl.afs.storage.buffer.StorageChangeFlusher;
+import com.powsybl.afs.storage.buffer.StorageChangeSet;
+import com.powsybl.afs.storage.buffer.StringTimeSeriesChunksAddition;
+import com.powsybl.afs.storage.buffer.TimeSeriesCreation;
 import com.powsybl.afs.storage.check.FileSystemCheckIssue;
 import com.powsybl.afs.storage.check.FileSystemCheckOptions;
-import com.powsybl.afs.storage.events.*;
-import com.powsybl.timeseries.*;
-import org.apache.commons.lang3.tuple.Pair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.powsybl.afs.storage.events.BackwardDependencyAdded;
+import com.powsybl.afs.storage.events.BackwardDependencyRemoved;
+import com.powsybl.afs.storage.events.DependencyAdded;
+import com.powsybl.afs.storage.events.DependencyRemoved;
+import com.powsybl.afs.storage.events.NodeConsistent;
+import com.powsybl.afs.storage.events.NodeCreated;
+import com.powsybl.afs.storage.events.NodeDataRemoved;
+import com.powsybl.afs.storage.events.NodeDataUpdated;
+import com.powsybl.afs.storage.events.NodeDescriptionUpdated;
+import com.powsybl.afs.storage.events.NodeMetadataUpdated;
+import com.powsybl.afs.storage.events.NodeNameUpdated;
+import com.powsybl.afs.storage.events.NodeRemoved;
+import com.powsybl.afs.storage.events.ParentChanged;
+import com.powsybl.afs.storage.events.TimeSeriesCleared;
+import com.powsybl.afs.storage.events.TimeSeriesCreated;
+import com.powsybl.afs.storage.events.TimeSeriesDataUpdated;
+import com.powsybl.timeseries.CompressedDoubleDataChunk;
+import com.powsybl.timeseries.CompressedStringDataChunk;
+import com.powsybl.timeseries.DoubleDataChunk;
+import com.powsybl.timeseries.RegularTimeSeriesIndex;
+import com.powsybl.timeseries.StringDataChunk;
+import com.powsybl.timeseries.TimeSeriesDataType;
+import com.powsybl.timeseries.TimeSeriesMetadata;
+import com.powsybl.timeseries.TimeSeriesVersions;
+import com.powsybl.timeseries.UncompressedDoubleDataChunk;
+import com.powsybl.timeseries.UncompressedStringDataChunk;
 
-import java.io.*;
-import java.nio.ByteBuffer;
-import java.time.Instant;
-import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.function.IntSupplier;
-import java.util.stream.Collectors;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
-
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.*;
-import static com.powsybl.afs.cassandra.CassandraConstants.*;
+import io.netty.util.internal.shaded.org.jctools.queues.MessagePassingQueue.Consumer;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
@@ -401,9 +522,9 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
         NodeInfo rootNodeInfo;
         if (rootCreated) {
-            BatchStatementBuilder batchStatementBuilder = new BatchStatementBuilder(BatchType.LOGGED);
-            rootNodeInfo = createNode(rootNodeUuid, null, name, nodePseudoClass, "", 0, new NodeGenericMetadata(), batchStatementBuilder);
-            getSession().execute(batchStatementBuilder.build());
+            BatchStatementBuilder batchStatements = new BatchStatementBuilder(BatchType.LOGGED);
+            rootNodeInfo = createNode(rootNodeUuid, null, name, nodePseudoClass, "", 0, new NodeGenericMetadata(), batchStatements);
+            getSession().execute(batchStatements.build());
             setConsistent(rootNodeInfo.getId());
         } else {
             rootNodeInfo = getNodeInfo(rootNodeUuid);
@@ -454,15 +575,15 @@ public class CassandraAppStorage extends AbstractAppStorage {
     }
 
     private NodeInfo createNode(UUID parentNodeUuid, String name, String nodePseudoClass, String description,
-                                int version, NodeGenericMetadata genericMetadata, BatchStatementBuilder batchStatementBuilder) {
-        return createNode(Uuids.timeBased(), parentNodeUuid, name, nodePseudoClass, description, version, genericMetadata, batchStatementBuilder);
+                                int version, NodeGenericMetadata genericMetadata, BatchStatementBuilder batchStatements) {
+        return createNode(Uuids.timeBased(), parentNodeUuid, name, nodePseudoClass, description, version, genericMetadata, batchStatements);
     }
 
     private NodeInfo createNode(UUID nodeUuid, UUID parentNodeUuid, String name, String nodePseudoClass,
                                 String description, int version, NodeGenericMetadata genericMetadata,
-                                BatchStatementBuilder batchStatementBuilder) {
+                                BatchStatementBuilder batchStatements) {
         long creationTime = ZonedDateTime.now().toInstant().toEpochMilli();
-        batchStatementBuilder.addStatement(insertInto(CHILDREN_BY_NAME_AND_CLASS)
+        batchStatements.addStatement(insertInto(CHILDREN_BY_NAME_AND_CLASS)
                 .value(ID, literal(nodeUuid))
                 .value(NAME, literal(name))
                 .value(PARENT_ID, literal(parentNodeUuid))
@@ -475,7 +596,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
                 .build());
 
         if (parentNodeUuid != null) {
-            batchStatementBuilder.addStatement(insertInto(CHILDREN_BY_NAME_AND_CLASS)
+            batchStatements.addStatement(insertInto(CHILDREN_BY_NAME_AND_CLASS)
                     .value(ID, literal(parentNodeUuid))
                     .value(CHILD_NAME, literal(name))
                     .value(CHILD_ID, literal(nodeUuid))
@@ -502,9 +623,9 @@ public class CassandraAppStorage extends AbstractAppStorage {
         // flush buffer to keep change order
         changeBuffer.flush();
 
-        BatchStatementBuilder batchStatementBuilder = new BatchStatementBuilder(BatchType.LOGGED);
-        NodeInfo nodeInfo = createNode(parentNodeUuid, name, nodePseudoClass, description, version, genericMetadata, batchStatementBuilder);
-        getSession().execute(batchStatementBuilder.build());
+        BatchStatementBuilder batchStatements = new BatchStatementBuilder(BatchType.LOGGED);
+        NodeInfo nodeInfo = createNode(parentNodeUuid, name, nodePseudoClass, description, version, genericMetadata, batchStatements);
+        getSession().execute(batchStatements.build());
         return nodeInfo;
     }
 
@@ -517,20 +638,20 @@ public class CassandraAppStorage extends AbstractAppStorage {
         changeBuffer.flush();
 
         //Update updateCurrantLine = .where(ID).isEqualTo(literal(nodeUuid));
-        BatchStatementBuilder batchStatementBuilder = new BatchStatementBuilder(BatchType.LOGGED);
-        batchStatementBuilder.addStatement(update(CHILDREN_BY_NAME_AND_CLASS)
+        BatchStatementBuilder batchStatements = new BatchStatementBuilder(BatchType.LOGGED);
+        batchStatements.addStatement(update(CHILDREN_BY_NAME_AND_CLASS)
                 .setColumn(MD, literal(newMetadata.getDoubles()))
                 .whereColumn(ID).isEqualTo(literal(nodeUuid))
                 .build());
-        batchStatementBuilder.addStatement(update(CHILDREN_BY_NAME_AND_CLASS)
+        batchStatements.addStatement(update(CHILDREN_BY_NAME_AND_CLASS)
                 .setColumn(MT, literal(newMetadata.getStrings()))
                 .whereColumn(ID).isEqualTo(literal(nodeUuid))
                 .build());
-        batchStatementBuilder.addStatement(update(CHILDREN_BY_NAME_AND_CLASS)
+        batchStatements.addStatement(update(CHILDREN_BY_NAME_AND_CLASS)
                 .setColumn(MI, literal(newMetadata.getInts()))
                 .whereColumn(ID).isEqualTo(literal(nodeUuid))
                 .build());
-        batchStatementBuilder.addStatement(update(CHILDREN_BY_NAME_AND_CLASS)
+        batchStatements.addStatement(update(CHILDREN_BY_NAME_AND_CLASS)
                 .setColumn(MB, literal(newMetadata.getBooleans()))
                 .whereColumn(ID).isEqualTo(literal(nodeUuid))
                 .build());
@@ -538,25 +659,25 @@ public class CassandraAppStorage extends AbstractAppStorage {
         UUID parentNodeUuid = getParentNodeUuid(nodeUuid);
         if (parentNodeUuid != null) {
             NodeInfo nodeInfo = getNodeInfo(nodeId);
-            batchStatementBuilder.addStatement(update(CHILDREN_BY_NAME_AND_CLASS)
+            batchStatements.addStatement(update(CHILDREN_BY_NAME_AND_CLASS)
                     .setColumn(CMD, literal(newMetadata.getDoubles()))
                     .whereColumn(ID).isEqualTo(literal(parentNodeUuid))
                     .whereColumn(CHILD_NAME).isEqualTo(literal(nodeInfo.getName()))
                     .whereColumn(CHILD_PSEUDO_CLASS).isEqualTo(literal(nodeInfo.getPseudoClass()))
                     .build());
-            batchStatementBuilder.addStatement(update(CHILDREN_BY_NAME_AND_CLASS)
+            batchStatements.addStatement(update(CHILDREN_BY_NAME_AND_CLASS)
                     .setColumn(CMT, literal(newMetadata.getStrings()))
                     .whereColumn(ID).isEqualTo(literal(parentNodeUuid))
                     .whereColumn(CHILD_NAME).isEqualTo(literal(nodeInfo.getName()))
                     .whereColumn(CHILD_PSEUDO_CLASS).isEqualTo(literal(nodeInfo.getPseudoClass()))
                     .build());
-            batchStatementBuilder.addStatement(update(CHILDREN_BY_NAME_AND_CLASS)
+            batchStatements.addStatement(update(CHILDREN_BY_NAME_AND_CLASS)
                     .setColumn(CMI, literal(newMetadata.getInts()))
                     .whereColumn(ID).isEqualTo(literal(parentNodeUuid))
                     .whereColumn(CHILD_NAME).isEqualTo(literal(nodeInfo.getName()))
                     .whereColumn(CHILD_PSEUDO_CLASS).isEqualTo(literal(nodeInfo.getPseudoClass()))
                     .build());
-            batchStatementBuilder.addStatement(update(CHILDREN_BY_NAME_AND_CLASS)
+            batchStatements.addStatement(update(CHILDREN_BY_NAME_AND_CLASS)
                     .setColumn(CMB, literal(newMetadata.getBooleans()))
                     .whereColumn(ID).isEqualTo(literal(parentNodeUuid))
                     .whereColumn(CHILD_NAME).isEqualTo(literal(nodeInfo.getName()))
@@ -564,7 +685,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
                     .build());
         }
 
-        getSession().execute(batchStatementBuilder.build());
+        getSession().execute(batchStatements.build());
         pushEvent(new NodeMetadataUpdated(nodeId, newMetadata), APPSTORAGE_NODE_TOPIC);
     }
 
@@ -670,21 +791,21 @@ public class CassandraAppStorage extends AbstractAppStorage {
         changeBuffer.flush();
 
         UUID parentNodeId = getParentNodeUuid(nodeUuid);
-        BatchStatementBuilder batchStatementBuilder = new BatchStatementBuilder(BatchType.LOGGED);
-        batchStatementBuilder.addStatement(update(CHILDREN_BY_NAME_AND_CLASS)
+        BatchStatementBuilder batchStatements = new BatchStatementBuilder(BatchType.LOGGED);
+        batchStatements.addStatement(update(CHILDREN_BY_NAME_AND_CLASS)
                 .setColumn(attributeName, literal(newValue))
                 .whereColumn(ID).isEqualTo(literal(nodeUuid))
                 .build());
         if (parentNodeId != null) {
             NodeInfo nodeInfo = getNodeInfo(nodeId);
-            batchStatementBuilder.addStatement(update(CHILDREN_BY_NAME_AND_CLASS)
+            batchStatements.addStatement(update(CHILDREN_BY_NAME_AND_CLASS)
                     .setColumn(childAttributeName, literal(newValue))
                     .whereColumn(ID).isEqualTo(literal(parentNodeId))
                     .whereColumn(CHILD_NAME).isEqualTo(literal(nodeInfo.getName()))
                     .whereColumn(CHILD_PSEUDO_CLASS).isEqualTo(literal(nodeInfo.getPseudoClass()))
                     .build());
         }
-        getSession().execute(batchStatementBuilder.build());
+        getSession().execute(batchStatements.build());
     }
 
     @Override
@@ -845,16 +966,16 @@ public class CassandraAppStorage extends AbstractAppStorage {
             throw new AfsStorageException("Cannot change parent of root folder");
         }
 
-        BatchStatementBuilder batchStatementBuilder = new BatchStatementBuilder(BatchType.LOGGED);
-        batchStatementBuilder.addStatement(update(CHILDREN_BY_NAME_AND_CLASS)
+        BatchStatementBuilder batchStatements = new BatchStatementBuilder(BatchType.LOGGED);
+        batchStatements.addStatement(update(CHILDREN_BY_NAME_AND_CLASS)
                 .setColumn(PARENT_ID, literal(newParentNodeUuid))
                 .whereColumn(ID).isEqualTo(literal(nodeUuid))
                 .build());
-        batchStatementBuilder.addStatement(deleteFrom(CHILDREN_BY_NAME_AND_CLASS)
+        batchStatements.addStatement(deleteFrom(CHILDREN_BY_NAME_AND_CLASS)
                 .whereColumn(ID).isEqualTo(literal(currentParentId))
                 .whereColumn(CHILD_NAME).isEqualTo(literal(nodeInfo.getName()))
                 .build());
-        batchStatementBuilder.addStatement(insertInto(CHILDREN_BY_NAME_AND_CLASS)
+        batchStatements.addStatement(insertInto(CHILDREN_BY_NAME_AND_CLASS)
                 .value(ID, literal(newParentNodeUuid))
                 .value(CHILD_NAME, literal(nodeInfo.getName()))
                 .value(CHILD_PSEUDO_CLASS, literal(nodeInfo.getPseudoClass()))
@@ -865,7 +986,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
                 .value(CHILD_VERSION, literal(nodeInfo.getVersion()))
                 .values(addAllChildMetadata(nodeInfo))
                 .build());
-        getSession().execute(batchStatementBuilder.build());
+        getSession().execute(batchStatements.build());
 
         pushEvent(new ParentChanged(nodeId, currentParentId.toString(), newParentNodeId), APPSTORAGE_NODE_TOPIC);
     }
@@ -875,6 +996,39 @@ public class CassandraAppStorage extends AbstractAppStorage {
         UUID nodeUuid = checkNodeId(nodeId);
         UUID parentNodeUuid = deleteNode(nodeUuid);
         return parentNodeUuid != null ? parentNodeUuid.toString() : null;
+    }
+    
+    static class BatchStatements {
+
+    	private static final int DEFAULT_COUNT_TRESHOLD = 50_000;
+
+    	private final int countTreshold;
+    	private final java.util.function.Supplier<BatchStatementBuilder> supplier;
+    	private final Consumer<BatchStatementBuilder> consumer;
+    	BatchStatementBuilder batchStatementBuilder;
+
+    	BatchStatements(java.util.function.Supplier<BatchStatementBuilder> supplier, Consumer<BatchStatementBuilder> consumer, int threshold) {
+    		this.countTreshold = threshold;
+    		this.supplier = supplier;
+    		this.consumer = consumer;
+    		this.batchStatementBuilder = supplier.get();
+    	}
+
+		public BatchStatements(java.util.function.Supplier<BatchStatementBuilder> supplier, Consumer<BatchStatementBuilder> consumer) {
+			this(supplier, consumer, DEFAULT_COUNT_TRESHOLD);
+		}
+
+		public void addStatement(SimpleStatement statement) {
+			if (batchStatementBuilder.getStatementsCount() >= countTreshold) {
+				execute();
+			}
+            batchStatementBuilder.addStatement(statement);
+		}
+
+		public void execute() {
+			consumer.accept(batchStatementBuilder);
+            batchStatementBuilder = supplier.get();
+		}
     }
 
     private UUID deleteNode(UUID nodeUuid) {
@@ -888,23 +1042,26 @@ public class CassandraAppStorage extends AbstractAppStorage {
             deleteNode(childNodeUuid);
         }
 
-        BatchStatementBuilder batchStatementBuilder = new BatchStatementBuilder(BatchType.UNLOGGED);
+        BatchStatements batchStatements = new BatchStatements(
+        		() -> new BatchStatementBuilder(BatchType.UNLOGGED),
+        		builder -> getSession().execute(builder.build())
+        		);
 
         // children
-        batchStatementBuilder.addStatement(deleteFrom(CHILDREN_BY_NAME_AND_CLASS)
+        batchStatements.addStatement(deleteFrom(CHILDREN_BY_NAME_AND_CLASS)
                 .whereColumn(ID).isEqualTo(literal(nodeUuid))
                 .build());
         UUID parentNodeUuid = getParentNodeUuid(nodeUuid);
-        batchStatementBuilder.addStatement(deleteFrom(CHILDREN_BY_NAME_AND_CLASS)
+        batchStatements.addStatement(deleteFrom(CHILDREN_BY_NAME_AND_CLASS)
                 .whereColumn(ID).isEqualTo(literal(parentNodeUuid))
                 .whereColumn(CHILD_NAME).isEqualTo(literal(getNodeName(nodeUuid)))
                 .build());
 
         // data
-        removeAllData(nodeUuid, batchStatementBuilder);
+        removeAllData(nodeUuid, batchStatements);
 
         // time series
-        clearTimeSeries(nodeUuid, batchStatementBuilder);
+        clearTimeSeries(nodeUuid, batchStatements);
 
         // dependencies
         Map<String, UUID> dependencies = getDependencyInfo(nodeUuid);
@@ -921,14 +1078,14 @@ public class CassandraAppStorage extends AbstractAppStorage {
             List<UUID> uuids = backwardDependencies.computeIfAbsent(name, depName -> new ArrayList<>());
             uuids.add(otherNodeUuid);
             backwardDependencies.put(name, uuids);
-            batchStatementBuilder.addStatement(deleteFrom(DEPENDENCIES)
+            batchStatements.addStatement(deleteFrom(DEPENDENCIES)
                     .whereColumn(FROM_ID).isEqualTo(literal(otherNodeUuid))
                     .whereColumn(NAME).isEqualTo(literal(name))
                     .whereColumn(TO_ID).isEqualTo(literal(nodeUuid))
                     .build());
         }
 
-        batchStatementBuilder.addStatement(deleteFrom(DEPENDENCIES)
+        batchStatements.addStatement(deleteFrom(DEPENDENCIES)
                 .whereColumn(FROM_ID)
                 .isEqualTo(literal(nodeUuid))
                 .build());
@@ -938,12 +1095,12 @@ public class CassandraAppStorage extends AbstractAppStorage {
                 .collect(Collectors.toList());
 
         if (!listDependencies.isEmpty()) {
-            batchStatementBuilder.addStatement(deleteFrom(BACKWARD_DEPENDENCIES)
+            batchStatements.addStatement(deleteFrom(BACKWARD_DEPENDENCIES)
                     .whereColumn(TO_ID).in(listDependencies)
                     .build());
         }
 
-        getSession().execute(batchStatementBuilder.build());
+        batchStatements.execute();
 
         backwardDependencies.entrySet().stream().flatMap(dep -> dep.getValue().stream().map(depUuid -> Pair.of(dep.getKey(), depUuid))).forEach(dep -> {
             pushEvent(new DependencyRemoved(dep.getValue().toString(), dep.getKey()), APPSTORAGE_DEPENDENCY_TOPIC);
@@ -1198,21 +1355,21 @@ public class CassandraAppStorage extends AbstractAppStorage {
         return getDataNames(nodeUuid);
     }
 
-    private void removeData(UUID nodeUuid, String name, BatchStatementBuilder batchStatementBuilder) {
-        batchStatementBuilder.addStatement(deleteFrom(NODE_DATA)
+    private void removeData(UUID nodeUuid, String name, BatchStatements batchStatements) {
+        batchStatements.addStatement(deleteFrom(NODE_DATA)
                 .whereColumn(ID).isEqualTo(literal(nodeUuid))
                 .whereColumn(NAME).isEqualTo(literal(name))
                 .build());
-        batchStatementBuilder.addStatement(deleteFrom(NODE_DATA_NAMES)
+        batchStatements.addStatement(deleteFrom(NODE_DATA_NAMES)
                 .whereColumn(ID).isEqualTo(literal(nodeUuid))
                 .whereColumn(NAME).isEqualTo(literal(name))
                 .build());
         pushEvent(new NodeDataRemoved(nodeUuid.toString(), name), APPSTORAGE_NODE_TOPIC);
     }
 
-    private void removeAllData(UUID nodeUuid, BatchStatementBuilder batchStatementBuilder) {
+    private void removeAllData(UUID nodeUuid, BatchStatements batchStatements) {
         for (String dataName : getDataNames(nodeUuid)) {
-            removeData(nodeUuid, dataName, batchStatementBuilder);
+            removeData(nodeUuid, dataName, batchStatements);
         }
     }
 
@@ -1235,9 +1392,12 @@ public class CassandraAppStorage extends AbstractAppStorage {
             return false;
         }
 
-        BatchStatementBuilder batchStatementBuilder = new BatchStatementBuilder(BatchType.UNLOGGED);
-        removeData(nodeUuid, name, batchStatementBuilder);
-        getSession().execute(batchStatementBuilder.build());
+        BatchStatements batchStatements = new BatchStatements(
+        		() -> new BatchStatementBuilder(BatchType.UNLOGGED),
+        		builder -> getSession().execute(builder.build())
+        		);
+        removeData(nodeUuid, name, batchStatements);
+        batchStatements.execute();
 
         return true;
     }
@@ -1435,8 +1595,8 @@ public class CassandraAppStorage extends AbstractAppStorage {
         pushEvent(new TimeSeriesDataUpdated(nodeId, timeSeriesName), APPSTORAGE_TIMESERIES_TOPIC);
     }
 
-    private void clearTimeSeries(UUID nodeUuid, BatchStatementBuilder batchStatementBuilder) {
-        batchStatementBuilder.addStatement(deleteFrom(REGULAR_TIME_SERIES)
+    private void clearTimeSeries(UUID nodeUuid, BatchStatements batchStatements) {
+        batchStatements.addStatement(deleteFrom(REGULAR_TIME_SERIES)
                 .whereColumn(ID).isEqualTo(literal(nodeUuid))
                 .build());
         ResultSet resultSet = getSession().execute(selectFrom(TIME_SERIES_DATA_CHUNK_TYPES)
@@ -1449,25 +1609,25 @@ public class CassandraAppStorage extends AbstractAppStorage {
             TimeSeriesChunkType chunkType = TimeSeriesChunkType.values()[row.getInt(2)];
             switch (chunkType) {
                 case DOUBLE_UNCOMPRESSED:
-                    batchStatementBuilder.addStatement(deleteFrom(DOUBLE_TIME_SERIES_DATA_UNCOMPRESSED_CHUNKS)
+                    batchStatements.addStatement(deleteFrom(DOUBLE_TIME_SERIES_DATA_UNCOMPRESSED_CHUNKS)
                             .whereColumn(ID).isEqualTo(literal(nodeUuid)).whereColumn(TIME_SERIES_NAME).isEqualTo(literal(timeSeriesName))
                             .whereColumn(VERSION).isEqualTo(literal(version))
                             .build());
                     break;
                 case DOUBLE_COMPRESSED:
-                    batchStatementBuilder.addStatement(deleteFrom(DOUBLE_TIME_SERIES_DATA_COMPRESSED_CHUNKS)
+                    batchStatements.addStatement(deleteFrom(DOUBLE_TIME_SERIES_DATA_COMPRESSED_CHUNKS)
                             .whereColumn(ID).isEqualTo(literal(nodeUuid)).whereColumn(TIME_SERIES_NAME).isEqualTo(literal(timeSeriesName))
                             .whereColumn(VERSION).isEqualTo(literal(version))
                             .build());
                     break;
                 case STRING_UNCOMPRESSED:
-                    batchStatementBuilder.addStatement(deleteFrom(STRING_TIME_SERIES_DATA_UNCOMPRESSED_CHUNKS)
+                    batchStatements.addStatement(deleteFrom(STRING_TIME_SERIES_DATA_UNCOMPRESSED_CHUNKS)
                             .whereColumn(ID).isEqualTo(literal(nodeUuid)).whereColumn(TIME_SERIES_NAME).isEqualTo(literal(timeSeriesName))
                             .whereColumn(VERSION).isEqualTo(literal(version))
                             .build());
                     break;
                 case STRING_COMPRESSED:
-                    batchStatementBuilder.addStatement(deleteFrom(STRING_TIME_SERIES_DATA_COMPRESSED_CHUNKS)
+                    batchStatements.addStatement(deleteFrom(STRING_TIME_SERIES_DATA_COMPRESSED_CHUNKS)
                             .whereColumn(ID).isEqualTo(literal(nodeUuid)).whereColumn(TIME_SERIES_NAME).isEqualTo(literal(timeSeriesName))
                             .whereColumn(VERSION).isEqualTo(literal(version))
                             .build());
@@ -1476,7 +1636,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
                     throw new AssertionError("Unknown chunk type " + chunkType);
             }
         }
-        batchStatementBuilder.addStatement(deleteFrom(TIME_SERIES_DATA_CHUNK_TYPES)
+        batchStatements.addStatement(deleteFrom(TIME_SERIES_DATA_CHUNK_TYPES)
                 .whereColumn(ID).isEqualTo(literal(nodeUuid))
                 .build());
     }
@@ -1488,9 +1648,12 @@ public class CassandraAppStorage extends AbstractAppStorage {
         // flush buffer to keep change order
         changeBuffer.flush();
 
-        BatchStatementBuilder batchStatementBuilder = new BatchStatementBuilder(BatchType.UNLOGGED);
-        clearTimeSeries(nodeUuid, batchStatementBuilder);
-        getSession().execute(batchStatementBuilder.build());
+        BatchStatements batchStatements = new BatchStatements(
+        		() -> new BatchStatementBuilder(BatchType.UNLOGGED),
+        		builder -> getSession().execute(builder.build())
+        		);
+        clearTimeSeries(nodeUuid, batchStatements);
+        batchStatements.execute();
         pushEvent(new TimeSeriesCleared(nodeUuid.toString()), APPSTORAGE_TIMESERIES_TOPIC);
     }
 
@@ -1503,20 +1666,20 @@ public class CassandraAppStorage extends AbstractAppStorage {
         // flush buffer to keep change order
         changeBuffer.flush();
 
-        BatchStatementBuilder batchStatementBuilder = new BatchStatementBuilder(BatchType.LOGGED);
+        BatchStatementBuilder batchStatements = new BatchStatementBuilder(BatchType.LOGGED);
 
-        batchStatementBuilder.addStatement(insertInto(DEPENDENCIES)
+        batchStatements.addStatement(insertInto(DEPENDENCIES)
                 .value(FROM_ID, literal(nodeUuid))
                 .value(NAME, literal(name))
                 .value(TO_ID, literal(toNodeUuid))
                 .value("dep_id", literal(Uuids.timeBased()))
                 .build());
-        batchStatementBuilder.addStatement(insertInto(BACKWARD_DEPENDENCIES)
+        batchStatements.addStatement(insertInto(BACKWARD_DEPENDENCIES)
                 .value(TO_ID, literal(toNodeUuid))
                 .value(NAME, literal(name))
                 .value(FROM_ID, literal(nodeUuid))
                 .build());
-        getSession().execute(batchStatementBuilder.build());
+        getSession().execute(batchStatements.build());
         pushEvent(new DependencyAdded(nodeId, name),
                 String.valueOf(APPSTORAGE_DEPENDENCY_TOPIC));
         pushEvent(new BackwardDependencyAdded(toNodeId, name),
@@ -1604,20 +1767,20 @@ public class CassandraAppStorage extends AbstractAppStorage {
         // flush buffer to keep change order
         changeBuffer.flush();
 
-        BatchStatementBuilder batchStatementBuilder = new BatchStatementBuilder(BatchType.LOGGED);
+        BatchStatementBuilder batchStatements = new BatchStatementBuilder(BatchType.LOGGED);
 
-        batchStatementBuilder.addStatement(deleteFrom(DEPENDENCIES)
+        batchStatements.addStatement(deleteFrom(DEPENDENCIES)
                 .whereColumn(FROM_ID).isEqualTo(literal(nodeUuid))
                 .whereColumn(NAME).isEqualTo(literal(name))
                 .whereColumn(TO_ID).isEqualTo(literal(toNodeUuid))
                 .build());
-        batchStatementBuilder.addStatement(deleteFrom(BACKWARD_DEPENDENCIES)
+        batchStatements.addStatement(deleteFrom(BACKWARD_DEPENDENCIES)
                 .whereColumn(TO_ID).isEqualTo(literal(toNodeUuid))
                 .whereColumn(NAME).isEqualTo(literal(name))
                 .whereColumn(FROM_ID).isEqualTo(literal(nodeUuid))
                 .build());
 
-        getSession().execute(batchStatementBuilder.build());
+        getSession().execute(batchStatements.build());
         pushEvent(new DependencyRemoved(nodeId, name), APPSTORAGE_DEPENDENCY_TOPIC);
         pushEvent(new BackwardDependencyRemoved(toNodeId, name), APPSTORAGE_DEPENDENCY_TOPIC);
     }
@@ -1703,11 +1866,14 @@ public class CassandraAppStorage extends AbstractAppStorage {
             }
         }
         if (options.isRepair()) {
-            BatchStatementBuilder batchStatementBuilder = new BatchStatementBuilder(BatchType.UNLOGGED);
+        	BatchStatements batchStatements = new BatchStatements(
+            		() -> new BatchStatementBuilder(BatchType.UNLOGGED),
+            		builder -> getSession().execute(builder.build())
+            		);
             for (UUID id : orphanDataIds) {
-                removeAllData(id, batchStatementBuilder);
+                removeAllData(id, batchStatements);
             }
-            getSession().execute(batchStatementBuilder.build());
+            batchStatements.execute();
         }
     }
 
@@ -1833,7 +1999,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
     }
 
     private static FileSystemCheckIssue buildExpirationInconsistent(Row row, Instant instant) {
-        if (row.getInstant(MODIFICATION_DATE).isBefore(instant) && !row.getBool(CONSISTENT)) {
+        if (row.getInstant(MODIFICATION_DATE).isBefore(instant) && !row.getBoolean(CONSISTENT)) {
             final FileSystemCheckIssue fileSystemCheckIssue = buildIssue(row);
             fileSystemCheckIssue.setType("inconsistent");
             fileSystemCheckIssue.setDescription("inconsistent and older than " + instant);
