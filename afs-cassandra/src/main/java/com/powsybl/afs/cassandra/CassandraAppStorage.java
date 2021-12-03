@@ -199,66 +199,66 @@ public class CassandraAppStorage extends AbstractAppStorage {
         private PreparedStatements() {
             createTimeSeriesPreparedStmt = getSession().prepare(
                     insertInto(REGULAR_TIME_SERIES)
-                    .value(ID, bindMarker())
-                    .value(TIME_SERIES_NAME, bindMarker())
-                    .value(DATA_TYPE, bindMarker())
-                    .value(TIME_SERIES_TAGS, bindMarker())
-                    .value(START, bindMarker())
-                    .value(END, bindMarker())
-                    .value(SPACING, bindMarker()).build());
+                            .value(ID, bindMarker())
+                            .value(TIME_SERIES_NAME, bindMarker())
+                            .value(DATA_TYPE, bindMarker())
+                            .value(TIME_SERIES_TAGS, bindMarker())
+                            .value(START, bindMarker())
+                            .value(END, bindMarker())
+                            .value(SPACING, bindMarker()).build());
 
             insertTimeSeriesDataChunksPreparedStmt = getSession().prepare(
                     insertInto(TIME_SERIES_DATA_CHUNK_TYPES)
-                    .value(ID, bindMarker())
-                    .value(TIME_SERIES_NAME, bindMarker())
-                    .value(VERSION, bindMarker())
-                    .value(CHUNK_ID, bindMarker())
-                    .value(CHUNK_TYPE, bindMarker())
-                    .build());
+                            .value(ID, bindMarker())
+                            .value(TIME_SERIES_NAME, bindMarker())
+                            .value(VERSION, bindMarker())
+                            .value(CHUNK_ID, bindMarker())
+                            .value(CHUNK_TYPE, bindMarker())
+                            .build());
 
             insertDoubleTimeSeriesDataCompressedChunksPreparedStmt = getSession().prepare(
                     insertInto(DOUBLE_TIME_SERIES_DATA_COMPRESSED_CHUNKS)
-                    .value(ID, bindMarker())
-                    .value(TIME_SERIES_NAME, bindMarker())
-                    .value(VERSION, bindMarker())
-                    .value(CHUNK_ID, bindMarker())
-                    .value(OFFSET, bindMarker())
-                    .value(UNCOMPRESSED_LENGTH, bindMarker())
-                    .value(STEP_VALUES, bindMarker())
-                    .value(STEP_LENGTHS, bindMarker())
-                    .build());
+                            .value(ID, bindMarker())
+                            .value(TIME_SERIES_NAME, bindMarker())
+                            .value(VERSION, bindMarker())
+                            .value(CHUNK_ID, bindMarker())
+                            .value(OFFSET, bindMarker())
+                            .value(UNCOMPRESSED_LENGTH, bindMarker())
+                            .value(STEP_VALUES, bindMarker())
+                            .value(STEP_LENGTHS, bindMarker())
+                            .build());
 
             insertDoubleTimeSeriesDataUncompressedChunksPreparedStmt = getSession().prepare(
                     insertInto(DOUBLE_TIME_SERIES_DATA_UNCOMPRESSED_CHUNKS)
-                    .value(ID, bindMarker())
-                    .value(TIME_SERIES_NAME, bindMarker())
-                    .value(VERSION, bindMarker())
-                    .value(CHUNK_ID, bindMarker())
-                    .value(OFFSET, bindMarker())
-                    .value(VALUES, bindMarker())
-                    .build());
+                            .value(ID, bindMarker())
+                            .value(TIME_SERIES_NAME, bindMarker())
+                            .value(VERSION, bindMarker())
+                            .value(CHUNK_ID, bindMarker())
+                            .value(OFFSET, bindMarker())
+                            .value(VALUES, bindMarker())
+                            .build());
 
             insertStringTimeSeriesDataCompressedChunksPreparedStmt = getSession().prepare(
                     insertInto(STRING_TIME_SERIES_DATA_COMPRESSED_CHUNKS)
-                    .value(ID, bindMarker())
-                    .value(TIME_SERIES_NAME, bindMarker())
-                    .value(VERSION, bindMarker())
-                    .value(CHUNK_ID, bindMarker())
-                    .value(OFFSET, bindMarker())
-                    .value(UNCOMPRESSED_LENGTH, bindMarker())
-                    .value(STEP_VALUES, bindMarker())
-                    .value(STEP_LENGTHS, bindMarker())
-                    .build());
+                            .value(ID, bindMarker())
+                            .value(TIME_SERIES_NAME, bindMarker())
+                            .value(VERSION, bindMarker())
+                            .value(CHUNK_ID, bindMarker())
+                            .value(OFFSET, bindMarker())
+                            .value(UNCOMPRESSED_LENGTH, bindMarker())
+                            .value(STEP_VALUES, bindMarker())
+                            .value(STEP_LENGTHS, bindMarker())
+                            .build());
 
             insertStringTimeSeriesDataUncompressedChunksPreparedStmt = getSession().prepare(
                     insertInto(STRING_TIME_SERIES_DATA_UNCOMPRESSED_CHUNKS)
-                    .value(ID, bindMarker())
-                    .value(TIME_SERIES_NAME, bindMarker())
-                    .value(VERSION, bindMarker())
-                    .value(CHUNK_ID, bindMarker())
-                    .value(OFFSET, bindMarker())
-                    .value(VALUES, bindMarker())
-                    .build());
+                            .value(ID, bindMarker())
+                            .value(TIME_SERIES_NAME, bindMarker())
+                            .value(VERSION, bindMarker())
+                            .value(CHUNK_ID, bindMarker())
+                            .value(OFFSET, bindMarker())
+                            .value(VALUES, bindMarker())
+                            .build());
         }
     }
 
@@ -740,12 +740,12 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
     private static Map<String, Term> addAllMetadata(NodeGenericMetadata genericMetadata) {
         return Arrays.stream(NodeMetadataGetter.values())
-            .collect(Collectors.toUnmodifiableMap(NodeMetadataGetter::symbol, getter -> literal(getter.apply(genericMetadata))));
+                .collect(Collectors.toUnmodifiableMap(NodeMetadataGetter::symbol, getter -> literal(getter.apply(genericMetadata))));
     }
 
     private static Map<String, Term> addAllChildMetadata(NodeGenericMetadata genericMetadata) {
         return Arrays.stream(NodeMetadataGetter.values())
-            .collect(Collectors.toUnmodifiableMap(NodeMetadataGetter::childSymbol, getter -> literal(getter.apply(genericMetadata))));
+                .collect(Collectors.toUnmodifiableMap(NodeMetadataGetter::childSymbol, getter -> literal(getter.apply(genericMetadata))));
     }
 
     private static UUID checkNodeId(String nodeId) {
@@ -997,38 +997,36 @@ public class CassandraAppStorage extends AbstractAppStorage {
         UUID parentNodeUuid = deleteNode(nodeUuid);
         return parentNodeUuid != null ? parentNodeUuid.toString() : null;
     }
-    
+
     static class BatchStatements {
+        private static final int DEFAULT_COUNT_TRESHOLD = 50_000;
+        private final int countTreshold;
+        private final java.util.function.Supplier<BatchStatementBuilder> supplier;
+        private final Consumer<BatchStatementBuilder> consumer;
+        BatchStatementBuilder batchStatementBuilder;
 
-    	private static final int DEFAULT_COUNT_TRESHOLD = 50_000;
+        BatchStatements(java.util.function.Supplier<BatchStatementBuilder> supplier, Consumer<BatchStatementBuilder> consumer, int threshold) {
+            this.countTreshold = threshold;
+            this.supplier = supplier;
+            this.consumer = consumer;
+            this.batchStatementBuilder = supplier.get();
+        }
 
-    	private final int countTreshold;
-    	private final java.util.function.Supplier<BatchStatementBuilder> supplier;
-    	private final Consumer<BatchStatementBuilder> consumer;
-    	BatchStatementBuilder batchStatementBuilder;
+        public BatchStatements(java.util.function.Supplier<BatchStatementBuilder> supplier, Consumer<BatchStatementBuilder> consumer) {
+            this(supplier, consumer, DEFAULT_COUNT_TRESHOLD);
+        }
 
-    	BatchStatements(java.util.function.Supplier<BatchStatementBuilder> supplier, Consumer<BatchStatementBuilder> consumer, int threshold) {
-    		this.countTreshold = threshold;
-    		this.supplier = supplier;
-    		this.consumer = consumer;
-    		this.batchStatementBuilder = supplier.get();
-    	}
-
-		public BatchStatements(java.util.function.Supplier<BatchStatementBuilder> supplier, Consumer<BatchStatementBuilder> consumer) {
-			this(supplier, consumer, DEFAULT_COUNT_TRESHOLD);
-		}
-
-		public void addStatement(SimpleStatement statement) {
-			if (batchStatementBuilder.getStatementsCount() >= countTreshold) {
-				execute();
-			}
+        public void addStatement(SimpleStatement statement) {
+            if (batchStatementBuilder.getStatementsCount() >= countTreshold) {
+                execute();
+            }
             batchStatementBuilder.addStatement(statement);
-		}
+        }
 
-		public void execute() {
-			consumer.accept(batchStatementBuilder);
+        public void execute() {
+            consumer.accept(batchStatementBuilder);
             batchStatementBuilder = supplier.get();
-		}
+        }
     }
 
     private UUID deleteNode(UUID nodeUuid) {
@@ -1042,10 +1040,8 @@ public class CassandraAppStorage extends AbstractAppStorage {
             deleteNode(childNodeUuid);
         }
 
-        BatchStatements batchStatements = new BatchStatements(
-        		() -> new BatchStatementBuilder(BatchType.UNLOGGED),
-        		builder -> getSession().execute(builder.build())
-        		);
+        BatchStatements batchStatements = new BatchStatements(() ->
+                new BatchStatementBuilder(BatchType.UNLOGGED), builder -> getSession().execute(builder.build()));
 
         // children
         batchStatements.addStatement(deleteFrom(CHILDREN_BY_NAME_AND_CLASS)
@@ -1392,10 +1388,8 @@ public class CassandraAppStorage extends AbstractAppStorage {
             return false;
         }
 
-        BatchStatements batchStatements = new BatchStatements(
-        		() -> new BatchStatementBuilder(BatchType.UNLOGGED),
-        		builder -> getSession().execute(builder.build())
-        		);
+        BatchStatements batchStatements = new BatchStatements(() ->
+                new BatchStatementBuilder(BatchType.UNLOGGED), builder -> getSession().execute(builder.build()));
         removeData(nodeUuid, name, batchStatements);
         batchStatements.execute();
 
@@ -1648,10 +1642,8 @@ public class CassandraAppStorage extends AbstractAppStorage {
         // flush buffer to keep change order
         changeBuffer.flush();
 
-        BatchStatements batchStatements = new BatchStatements(
-        		() -> new BatchStatementBuilder(BatchType.UNLOGGED),
-        		builder -> getSession().execute(builder.build())
-        		);
+        BatchStatements batchStatements = new BatchStatements(() ->
+                new BatchStatementBuilder(BatchType.UNLOGGED), builder -> getSession().execute(builder.build()));
         clearTimeSeries(nodeUuid, batchStatements);
         batchStatements.execute();
         pushEvent(new TimeSeriesCleared(nodeUuid.toString()), APPSTORAGE_TIMESERIES_TOPIC);
@@ -1866,10 +1858,8 @@ public class CassandraAppStorage extends AbstractAppStorage {
             }
         }
         if (options.isRepair()) {
-        	BatchStatements batchStatements = new BatchStatements(
-            		() -> new BatchStatementBuilder(BatchType.UNLOGGED),
-            		builder -> getSession().execute(builder.build())
-            		);
+            BatchStatements batchStatements = new BatchStatements(() ->
+                    new BatchStatementBuilder(BatchType.UNLOGGED), builder -> getSession().execute(builder.build()));
             for (UUID id : orphanDataIds) {
                 removeAllData(id, batchStatements);
             }
