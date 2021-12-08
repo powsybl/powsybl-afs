@@ -522,7 +522,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
         NodeInfo rootNodeInfo;
         if (rootCreated) {
-            BatchStatementBuilder batchStatements = new BatchStatementBuilder(BatchType.LOGGED);
+            BatchStatementBuilder batchStatements = new BatchStatementBuilder(BatchType.UNLOGGED);
             rootNodeInfo = createNode(rootNodeUuid, null, name, nodePseudoClass, "", 0, new NodeGenericMetadata(), batchStatements);
             getSession().execute(batchStatements.build());
             setConsistent(rootNodeInfo.getId());
@@ -623,7 +623,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
         // flush buffer to keep change order
         changeBuffer.flush();
 
-        BatchStatementBuilder batchStatements = new BatchStatementBuilder(BatchType.LOGGED);
+        BatchStatementBuilder batchStatements = new BatchStatementBuilder(BatchType.UNLOGGED);
         NodeInfo nodeInfo = createNode(parentNodeUuid, name, nodePseudoClass, description, version, genericMetadata, batchStatements);
         getSession().execute(batchStatements.build());
         return nodeInfo;
@@ -638,7 +638,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
         changeBuffer.flush();
 
         //Update updateCurrantLine = .where(ID).isEqualTo(literal(nodeUuid));
-        BatchStatementBuilder batchStatements = new BatchStatementBuilder(BatchType.LOGGED);
+        BatchStatementBuilder batchStatements = new BatchStatementBuilder(BatchType.UNLOGGED);
         batchStatements.addStatement(update(CHILDREN_BY_NAME_AND_CLASS)
                 .setColumn(MD, literal(newMetadata.getDoubles()))
                 .whereColumn(ID).isEqualTo(literal(nodeUuid))
@@ -791,7 +791,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
         changeBuffer.flush();
 
         UUID parentNodeId = getParentNodeUuid(nodeUuid);
-        BatchStatementBuilder batchStatements = new BatchStatementBuilder(BatchType.LOGGED);
+        BatchStatementBuilder batchStatements = new BatchStatementBuilder(BatchType.UNLOGGED);
         batchStatements.addStatement(update(CHILDREN_BY_NAME_AND_CLASS)
                 .setColumn(attributeName, literal(newValue))
                 .whereColumn(ID).isEqualTo(literal(nodeUuid))
@@ -966,7 +966,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
             throw new AfsStorageException("Cannot change parent of root folder");
         }
 
-        BatchStatementBuilder batchStatements = new BatchStatementBuilder(BatchType.LOGGED);
+        BatchStatementBuilder batchStatements = new BatchStatementBuilder(BatchType.UNLOGGED);
         batchStatements.addStatement(update(CHILDREN_BY_NAME_AND_CLASS)
                 .setColumn(PARENT_ID, literal(newParentNodeUuid))
                 .whereColumn(ID).isEqualTo(literal(nodeUuid))
@@ -1658,7 +1658,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
         // flush buffer to keep change order
         changeBuffer.flush();
 
-        BatchStatementBuilder batchStatements = new BatchStatementBuilder(BatchType.LOGGED);
+        BatchStatementBuilder batchStatements = new BatchStatementBuilder(BatchType.UNLOGGED);
 
         batchStatements.addStatement(insertInto(DEPENDENCIES)
                 .value(FROM_ID, literal(nodeUuid))
@@ -1759,7 +1759,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
         // flush buffer to keep change order
         changeBuffer.flush();
 
-        BatchStatementBuilder batchStatements = new BatchStatementBuilder(BatchType.LOGGED);
+        BatchStatementBuilder batchStatements = new BatchStatementBuilder(BatchType.UNLOGGED);
 
         batchStatements.addStatement(deleteFrom(DEPENDENCIES)
                 .whereColumn(FROM_ID).isEqualTo(literal(nodeUuid))
