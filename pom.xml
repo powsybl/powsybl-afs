@@ -19,7 +19,7 @@
         <relativePath/>
     </parent>
     <artifactId>powsybl-afs</artifactId>
-    <version>4.0.1</version>
+    <version>4.0.2</version>
     <packaging>pom</packaging>
 
     <name>powsybl-afs</name>
