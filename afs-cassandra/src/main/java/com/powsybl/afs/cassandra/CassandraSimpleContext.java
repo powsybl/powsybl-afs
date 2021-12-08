@@ -6,10 +6,14 @@
  */
 package com.powsybl.afs.cassandra;
 
+import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.CqlSessionBuilder;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 
 import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,7 +35,16 @@ public class CassandraSimpleContext implements CassandraContext {
             cqlSessionBuilder.withLocalDatacenter(localDc);
         }
         cqlSessionBuilder.withKeyspace(CassandraConstants.AFS_KEYSPACE);
-        session = cqlSessionBuilder.build();
+        DriverConfigLoader loader =
+                DriverConfigLoader.programmaticBuilder()
+                        .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(12))
+                        .withDuration(DefaultDriverOption.CONNECTION_CONNECT_TIMEOUT, Duration.ofSeconds(10))
+                        .withDuration(DefaultDriverOption.CONNECTION_INIT_QUERY_TIMEOUT, Duration.ofSeconds(10))
+                        .withString(DefaultDriverOption.REQUEST_SERIAL_CONSISTENCY, ConsistencyLevel.LOCAL_SERIAL.name())
+                        .build();
+        session = cqlSessionBuilder
+                .withConfigLoader(loader)
+                .build();
     }
 
     public CqlSession getSession() {
