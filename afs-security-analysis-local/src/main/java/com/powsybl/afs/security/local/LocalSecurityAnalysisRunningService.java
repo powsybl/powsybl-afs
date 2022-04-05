@@ -65,11 +65,11 @@ public class LocalSecurityAnalysisRunningService implements SecurityAnalysisRunn
             logger.log("Running security analysis...");
             SecurityAnalysisReport securityAnalysisReport = securityAnalysis.run(network,
                     network.getVariantManager().getWorkingVariantId(),
-                    new DefaultLimitViolationDetector(),
-                    new LimitViolationFilter(),
-                    computationManager,
-                    parameters,
                     contingencyListProvider,
+                    parameters,
+                    computationManager,
+                    new LimitViolationFilter(),
+                    new DefaultLimitViolationDetector(),
                     interceptors);
 
             runner.writeResult(securityAnalysisReport.getResult());
