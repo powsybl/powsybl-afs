@@ -88,7 +88,7 @@
         <mapdb.version>3.0.6</mapdb.version>
         <maven.core.version>3.3.9</maven.core.version>
         <mockito.version>3.3.3</mockito.version>
-        <resteasy.version>3.1.4.Final</resteasy.version>
+        <resteasy.version>3.14.0.Final</resteasy.version>
         <shrinkwrap-resolver.version>2.2.6</shrinkwrap-resolver.version>
         <slf4j.version>1.7.22</slf4j.version>
         <springfox.version>2.9.2</springfox.version>
