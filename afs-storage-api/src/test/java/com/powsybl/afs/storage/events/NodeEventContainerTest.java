@@ -11,7 +11,6 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-
 /**
  * @author Chamseddine Benhamed <Chamseddine.Benhamed at rte-france.com>
  */
