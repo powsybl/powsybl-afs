@@ -37,7 +37,7 @@ public class CassandraSimpleContext implements CassandraContext {
         cqlSessionBuilder.withKeyspace(CassandraConstants.AFS_KEYSPACE);
         DriverConfigLoader loader =
                 DriverConfigLoader.programmaticBuilder()
-                        .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(12))
+                        .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
                         .withDuration(DefaultDriverOption.CONNECTION_CONNECT_TIMEOUT, Duration.ofSeconds(10))
                         .withDuration(DefaultDriverOption.CONNECTION_INIT_QUERY_TIMEOUT, Duration.ofSeconds(10))
                         .withString(DefaultDriverOption.REQUEST_SERIAL_CONSISTENCY, ConsistencyLevel.LOCAL_SERIAL.name())
