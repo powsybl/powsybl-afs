@@ -178,7 +178,6 @@ public class AppFileSystem implements AutoCloseable {
         return fetchNode(nodeId, true);
     }
 
-
     /**
      * Get a project by its ID
      *
