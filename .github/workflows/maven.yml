@@ -18,7 +18,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: 'zulu'
-          java-version: '11.0.14'
+          java-version: '11.0.14'  # arquillian tests fail on 11.0.15+, should probably upgrade there instead
           cache: 'maven'
 
       - name: Build with Maven
