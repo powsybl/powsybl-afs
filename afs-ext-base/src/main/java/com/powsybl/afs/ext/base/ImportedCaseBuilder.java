@@ -58,6 +58,8 @@ public class ImportedCaseBuilder implements ProjectFileBuilder<ImportedCase> {
 
     private final Properties parameters = new Properties();
 
+    private CompressedInput compressedInput;
+
     public ImportedCaseBuilder(ProjectFileBuildContext context, ImportersLoader importersLoader, ImportConfig importConfig) {
         this(context, new ExportersServiceLoader(), importersLoader, importConfig);
     }
@@ -88,6 +90,15 @@ public class ImportedCaseBuilder implements ProjectFileBuilder<ImportedCase> {
         withDatasource(Importers.createDataSource(file));
         if (name == null) {
             name = DataSourceUtil.getBaseName(file);
+        }
+        return this;
+    }
+
+    public ImportedCaseBuilder withCompressedInput(CompressedInput input) {
+        Objects.requireNonNull(input);
+        importer = Importers.findImporter(input.asDatasource(), importersLoader, context.getProject().getFileSystem().getData().getShortTimeExecutionComputationManager(), importConfig);
+        if (importer == null) {
+            throw new AfsException("No importer found for this data source");
         }
         return this;
     }
@@ -140,7 +151,11 @@ public class ImportedCaseBuilder implements ProjectFileBuilder<ImportedCase> {
                 new NodeGenericMetadata().setString(ImportedCase.FORMAT, importer.getFormat()));
 
         // store case data
-        importer.copy(dataSource, new AppStorageDataSource(context.getStorage(), info.getId(), info.getName()));
+        if (compressedInput != null) {
+            context.getStorage().writeBinaryData(info.getId(), "compressedData");
+        } else {
+            importer.copy(dataSource, new AppStorageDataSource(context.getStorage(), info.getId(), info.getName()));
+        }
 
         // store parameters
         try (Writer writer = new OutputStreamWriter(context.getStorage().writeBinaryData(info.getId(), ImportedCase.PARAMETERS), StandardCharsets.UTF_8)) {
