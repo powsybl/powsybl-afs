@@ -857,41 +857,22 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
         private ByteArrayInputStream buffer;
 
-        private GZIPInputStream gzis;
-
         private int chunkNum = 1;
 
         private BinaryDataInputStream(UUID nodeUuid, String name, Row firstRow) {
             this.nodeUuid = Objects.requireNonNull(nodeUuid);
             this.name = Objects.requireNonNull(name);
             buffer = new ByteArrayInputStream(firstRow.getBytes(0).array());
-            try {
-                gzis = new GZIPInputStream(buffer);
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
         }
 
         @Override
         public int read() {
-            return read(() -> {
-                try {
-                    return gzis.read();
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            });
+            return read(() -> buffer.read());
         }
 
         @Override
         public int read(byte[] b, int off, int len) throws IOException {
-            return read(() -> {
-                try {
-                    return gzis.read(b, off, len);
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            });
+            return read(() -> buffer.read(b, off, len));
         }
 
         private int read(IntSupplier supplier) {
@@ -906,17 +887,12 @@ public class CassandraAppStorage extends AbstractAppStorage {
                 Row row = resultSet.one();
                 if (row != null) {
                     try {
-                        gzis.close();
+                        buffer.close();
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);
                     }
                     byte[] array = row.getBytes(0).array();
                     buffer = new ByteArrayInputStream(array);
-                    try {
-                        gzis = new GZIPInputStream(buffer);
-                    } catch (IOException e) {
-                        throw new UncheckedIOException(e);
-                    }
                     c = supplier.getAsInt();
                     chunkNum++;
                 }
@@ -956,21 +932,14 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
         private int chunkNum = 0;
 
-        private GZIPOutputStream gzos;
-
         private BinaryDataOutputStream(UUID nodeUuid, String name) {
             this.nodeUuid = Objects.requireNonNull(nodeUuid);
             this.name = Objects.requireNonNull(name);
-            try {
-                gzos = new GZIPOutputStream(buffer);
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
         }
 
         private void execute() {
             try {
-                gzos.close();
+                buffer.close();
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
@@ -987,11 +956,6 @@ public class CassandraAppStorage extends AbstractAppStorage {
                     .value(CHUNKS_COUNT, chunkNum)
                     .value(CHUNK, ByteBuffer.wrap(buffer.toByteArray())));
             buffer = new ByteArrayOutputStream(config.getBinaryDataChunkSize());
-            try {
-                gzos = new GZIPOutputStream(buffer);
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
         }
 
         private void executeIfNecessary() {
@@ -1003,7 +967,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
         @Override
         public void write(int b) throws IOException {
-            gzos.write(b);
+            buffer.write(b);
             count++;
             executeIfNecessary();
         }
@@ -1015,14 +979,14 @@ public class CassandraAppStorage extends AbstractAppStorage {
                 long writtenLen = 0;
                 while (writtenLen < len) {
                     long chunkLen = Math.min(config.getBinaryDataChunkSize() - count, len - writtenLen);
-                    gzos.write(b, chunkOffset, (int) chunkLen);
+                    buffer.write(b, chunkOffset, (int) chunkLen);
                     count += chunkLen;
                     writtenLen += chunkLen;
                     chunkOffset += chunkLen;
                     executeIfNecessary();
                 }
             } else {
-                gzos.write(b, off, len);
+                buffer.write(b, off, len);
                 count += len;
                 executeIfNecessary();
             }
