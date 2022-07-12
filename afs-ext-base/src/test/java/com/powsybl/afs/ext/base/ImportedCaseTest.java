@@ -24,18 +24,21 @@ import com.powsybl.iidm.import_.ImportersLoaderList;
 import com.powsybl.iidm.network.DefaultNetworkListener;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.NetworkListener;
+import com.powsybl.iidm.xml.NetworkXml;
 import com.powsybl.iidm.xml.XMLExporter;
 import com.powsybl.iidm.xml.XMLImporter;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
@@ -218,5 +221,55 @@ public class ImportedCaseTest extends AbstractProjectFileTest {
                 .build();
         assertNotNull(importedCase2);
         assertEquals("NetworkID", importedCase2.getName());
+    }
+
+    @Test
+    public void testCompressedInput() throws IOException {
+        Folder root = afs.getRootFolder();
+
+        // create project
+        Project project = root.createProject("project");
+        assertNotNull(project);
+
+        // create project folder
+        ProjectFolder folder = project.getRootFolder().createFolder("folder");
+        assertTrue(folder.getChildren().isEmpty());
+
+        Network network = Network.create("NetworkID", "scripting");
+
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        try (OutputStream os = new GZIPOutputStream(bos)) {
+            NetworkXml.write(network, os);
+        }
+        bos.close();
+        byte[] compressedNetwork = bos.toByteArray();
+        CompressedInput input = new CompressedInput() {
+            @Override
+            public String getName() {
+                return "network.xiidm";
+            }
+
+            @Override
+            public InputStream newCompressedInputStream() {
+                return new ByteArrayInputStream(compressedNetwork);
+            }
+
+            @Override
+            public InputStream newUncompressedInputStream() {
+                try {
+                    return new GZIPInputStream(newCompressedInputStream());
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            }
+        };
+
+        ImportedCase importedCase1 = folder.fileBuilder(ImportedCaseBuilder.class)
+                .withCompressedInput(input)
+                .build();
+        assertNotNull(importedCase1);
+        assertEquals("network", importedCase1.getName());
+
+        assertNotNull(importedCase1.getNetwork());
     }
 }

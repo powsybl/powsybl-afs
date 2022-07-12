@@ -16,14 +16,13 @@ import com.powsybl.iidm.import_.ImportersLoader;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.NetworkListener;
 
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Properties;
+import java.util.zip.GZIPInputStream;
 
 /**
  *  A type of {@code ProjectFile} which represents a {@link Network} imported to the project,
@@ -38,6 +37,7 @@ public class ImportedCase extends ProjectFile implements ProjectCase {
 
     static final String FORMAT = "format";
     static final String PARAMETERS = "parameters";
+    static final String CONTENT_DATA_START = "content__";
 
     private final ImportersLoader importersLoader;
 
@@ -47,7 +47,45 @@ public class ImportedCase extends ProjectFile implements ProjectCase {
     }
 
     public ReadOnlyDataSource getDataSource() {
+        String contentDataName = storage.getDataNames(info.getId()).stream()
+                .filter(name -> name.startsWith(CONTENT_DATA_START))
+                .findFirst()
+                .orElse(null);
+
+        if (contentDataName != null) {
+            String filename = contentDataName.substring(CONTENT_DATA_START.length(), contentDataName.length());
+            CompressedInput input = new CompressedInput() {
+                @Override
+                public String getName() {
+                    return filename;
+                }
+
+                @Override
+                public InputStream newCompressedInputStream() {
+                    return storage.readBinaryData(info.getId(), contentDataName)
+                            .orElse(null);
+                }
+
+                @Override
+                public InputStream newUncompressedInputStream() {
+                    return storage.readBinaryData(info.getId(), contentDataName)
+                            .map(is -> {
+                                try {
+                                    return new GZIPInputStream(is);
+                                } catch (IOException exc) {
+                                    throw new UncheckedIOException(exc);
+                                }
+                            })
+                            .orElse(null);
+                }
+            };
+            return input.asDatasource();
+        }
         return new AppStorageDataSource(storage, info.getId(), info.getName());
+    }
+
+    static String getContentDataName(String filename) {
+        return CONTENT_DATA_START + filename;
     }
 
     public Properties getParameters() {

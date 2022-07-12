@@ -11,7 +11,9 @@ import com.powsybl.afs.ProjectFileBuildContext;
 import com.powsybl.afs.ProjectFileBuilder;
 import com.powsybl.afs.ProjectFileCreationContext;
 import com.powsybl.afs.ext.base.events.CaseImported;
-import com.powsybl.afs.storage.*;
+import com.powsybl.afs.storage.AppStorageDataSource;
+import com.powsybl.afs.storage.NodeGenericMetadata;
+import com.powsybl.afs.storage.NodeInfo;
 import com.powsybl.commons.datasource.DataSource;
 import com.powsybl.commons.datasource.DataSourceUtil;
 import com.powsybl.commons.datasource.MemDataSource;
@@ -24,11 +26,10 @@ import com.powsybl.iidm.import_.Importer;
 import com.powsybl.iidm.import_.Importers;
 import com.powsybl.iidm.import_.ImportersLoader;
 import com.powsybl.iidm.network.Network;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.UncheckedIOException;
-import java.io.Writer;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Map;
@@ -100,6 +101,8 @@ public class ImportedCaseBuilder implements ProjectFileBuilder<ImportedCase> {
         if (importer == null) {
             throw new AfsException("No importer found for this data source");
         }
+        compressedInput = input;
+        name = FilenameUtils.getBaseName(input.getName());
         return this;
     }
 
@@ -135,7 +138,7 @@ public class ImportedCaseBuilder implements ProjectFileBuilder<ImportedCase> {
 
     @Override
     public ImportedCase build() {
-        if (dataSource == null) {
+        if (dataSource == null && compressedInput == null) {
             throw new AfsException("Case or data source is not set");
         }
         if (name == null) {
@@ -152,7 +155,13 @@ public class ImportedCaseBuilder implements ProjectFileBuilder<ImportedCase> {
 
         // store case data
         if (compressedInput != null) {
-            context.getStorage().writeBinaryData(info.getId(), "compressedData");
+            String dataName = ImportedCase.getContentDataName(compressedInput.getName());
+            try (OutputStream os = context.getStorage().writeBinaryData(info.getId(), dataName);
+                 InputStream is = compressedInput.newCompressedInputStream()) {
+                IOUtils.copy(is, os);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
         } else {
             importer.copy(dataSource, new AppStorageDataSource(context.getStorage(), info.getId(), info.getName()));
         }
