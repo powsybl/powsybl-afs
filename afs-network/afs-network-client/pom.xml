@@ -15,7 +15,7 @@
     <parent>
         <groupId>com.powsybl</groupId>
         <artifactId>powsybl-afs-network</artifactId>
-        <version>4.0.5-SNAPSHOT</version>
+        <version>4.0.5</version>
     </parent>
 
     <artifactId>powsybl-afs-network-client</artifactId>
