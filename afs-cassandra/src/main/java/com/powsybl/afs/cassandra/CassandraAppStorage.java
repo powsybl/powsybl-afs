@@ -719,7 +719,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
                     .value(CHILD_CREATION_DATE, literal(Instant.ofEpochMilli(nodeInfo.getCreationTime())))
                     .value(CHILD_MODIFICATION_DATE, literal(Instant.ofEpochMilli(nodeInfo.getModificationTime())))
                     .value(CHILD_VERSION, literal(nodeInfo.getVersion()))
-                    .values(addAllMetadata(nodeInfo))
+                    .values(addAllChildMetadata(nodeInfo))
                     .build());
 
             getSession().execute(update(CHILDREN_BY_NAME_AND_CLASS)
