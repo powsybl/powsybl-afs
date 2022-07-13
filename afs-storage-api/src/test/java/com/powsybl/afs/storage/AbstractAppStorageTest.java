@@ -317,6 +317,8 @@ public abstract class AbstractAppStorageTest {
         assertEquals(ImmutableMap.of("i1", 2), testData2Info.getGenericMetadata().getInts());
         assertEquals(ImmutableMap.of("b1", false), testData2Info.getGenericMetadata().getBooleans());
 
+        assertEqualsFromParent(testData2Info);
+
         // 10) check data node 2 binary data write
         try (OutputStream os = storage.writeBinaryData(testData2Info.getId(), "blob")) {
             os.write("word2".getBytes(StandardCharsets.UTF_8));
@@ -525,7 +527,8 @@ public abstract class AbstractAppStorageTest {
         assertTrue(storage.getDependencies(folder3Info.getId(), "dep2").isEmpty());
 
         // 19) rename node test
-        NodeInfo folder5Info = storage.createNode(rootFolderInfo.getId(), "test5", FOLDER_PSEUDO_CLASS, "", 0, new NodeGenericMetadata());
+        NodeGenericMetadata folder5Metadata = new NodeGenericMetadata().setString("k", "v");
+        NodeInfo folder5Info = storage.createNode(rootFolderInfo.getId(), "test5", FOLDER_PSEUDO_CLASS, "", 0, folder5Metadata);
         storage.setConsistent(folder5Info.getId());
         NodeInfo folder51Info = storage.createNode(folder5Info.getId(), "child_of_test5", FOLDER_PSEUDO_CLASS, "", 0, new NodeGenericMetadata());
         NodeInfo folder52Info = storage.createNode(folder5Info.getId(), "another_child_of_test5", FOLDER_PSEUDO_CLASS, "", 0, new NodeGenericMetadata());
@@ -542,6 +545,8 @@ public abstract class AbstractAppStorageTest {
         assertEquals(2, storage.getChildNodes(folder5Info.getId()).size());
         assertTrue(storage.getChildNode(folder5Info.getId(), "child_of_test5").isPresent());
         assertTrue(storage.getChildNode(folder5Info.getId(), "another_child_of_test5").isPresent());
+        assertEquals("v", folder5Info.getGenericMetadata().getString("k"));
+        assertEqualsFromParent(folder5Info);
 
         NodeInfo folder6Info = storage.createNode(rootFolderInfo.getId(), "test6", FOLDER_PSEUDO_CLASS, "", 0, new NodeGenericMetadata());
         storage.setConsistent(folder6Info.getId());
@@ -599,6 +604,17 @@ public abstract class AbstractAppStorageTest {
         testCascadingDelete(rootFolderInfo);
 
         nextDependentTests();
+    }
+
+    /**
+     * Checks consistency between this node info, and the same node info retrieved from the parent.
+     */
+    private void assertEqualsFromParent(NodeInfo node) {
+        NodeInfo parent = storage.getParentNode(node.getId())
+                .orElseThrow(AssertionError::new);
+        NodeInfo nodeFromParent = storage.getChildNode(parent.getId(), node.getName())
+                .orElseThrow(AssertionError::new);
+        assertEquals(node, nodeFromParent);
     }
 
     protected void nextDependentTests() throws InterruptedException {
