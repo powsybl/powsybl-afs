@@ -38,7 +38,7 @@ public class LocalCaseScanner implements LocalFileScanner {
     public LocalFile scanFile(Path path, LocalFileScannerContext context) {
         if (Files.isRegularFile(path)) {
             ReadOnlyDataSource dataSource = Importers.createDataSource(path);
-            for (Importer importer : Importers.list(importersLoader, context.getComputationManager(), importConfig)) {
+            for (Importer importer : Importer.list(importersLoader, context.getComputationManager(), importConfig)) {
                 if (importer.exists(dataSource)) {
                     return new LocalCase(path, importer);
                 }

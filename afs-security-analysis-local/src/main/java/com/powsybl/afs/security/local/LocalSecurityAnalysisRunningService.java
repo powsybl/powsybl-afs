@@ -23,10 +23,7 @@ import com.powsybl.security.detectors.DefaultLimitViolationDetector;
 import com.powsybl.security.interceptors.SecurityAnalysisInterceptor;
 import com.powsybl.security.interceptors.SecurityAnalysisInterceptors;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
@@ -70,7 +67,10 @@ public class LocalSecurityAnalysisRunningService implements SecurityAnalysisRunn
                     computationManager,
                     new LimitViolationFilter(),
                     new DefaultLimitViolationDetector(),
-                    interceptors);
+                    interceptors,
+                    Collections.emptyList(),
+                    Collections.emptyList()
+                    );
 
             runner.writeResult(securityAnalysisReport.getResult());
         } finally {
