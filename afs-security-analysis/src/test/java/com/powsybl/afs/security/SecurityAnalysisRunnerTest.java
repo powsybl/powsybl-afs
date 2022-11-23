@@ -22,12 +22,13 @@ import com.powsybl.commons.datasource.DataSource;
 import com.powsybl.commons.datasource.ReadOnlyDataSource;
 import com.powsybl.contingency.BranchContingency;
 import com.powsybl.contingency.Contingency;
-import com.powsybl.iidm.import_.ImportConfig;
-import com.powsybl.iidm.import_.Importer;
-import com.powsybl.iidm.import_.ImportersLoader;
-import com.powsybl.iidm.import_.ImportersLoaderList;
+import com.powsybl.iidm.network.ImportConfig;
+import com.powsybl.iidm.network.Importer;
+import com.powsybl.iidm.network.ImportersLoader;
+import com.powsybl.iidm.network.ImportersLoaderList;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.test.EurostagTutorialExample1Factory;
+import com.powsybl.loadflow.LoadFlowResult;
 import com.powsybl.security.*;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,8 +46,9 @@ import static org.junit.Assert.*;
 public class SecurityAnalysisRunnerTest extends AbstractProjectFileTest {
 
     private static SecurityAnalysisResult createResult() {
-        LimitViolationsResult preContingencyResult = new LimitViolationsResult(true, ImmutableList.of(new LimitViolation("s1", LimitViolationType.HIGH_VOLTAGE, 400.0, 1f, 440.0)));
-        return new SecurityAnalysisResult(preContingencyResult, Collections.emptyList());
+        LimitViolationsResult preContingencyResult = new LimitViolationsResult(ImmutableList
+                .of(new LimitViolation("s1", LimitViolationType.HIGH_VOLTAGE, 400.0, 1f, 440.0)));
+        return new SecurityAnalysisResult(preContingencyResult, LoadFlowResult.ComponentResult.Status.CONVERGED, Collections.emptyList());
     }
 
     private static class SecurityAnalysisServiceMock implements SecurityAnalysisRunningService {

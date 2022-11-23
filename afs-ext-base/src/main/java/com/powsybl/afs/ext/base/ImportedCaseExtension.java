@@ -10,11 +10,11 @@ import com.google.auto.service.AutoService;
 import com.powsybl.afs.ProjectFileBuildContext;
 import com.powsybl.afs.ProjectFileCreationContext;
 import com.powsybl.afs.ProjectFileExtension;
-import com.powsybl.iidm.export.ExportersLoader;
-import com.powsybl.iidm.export.ExportersServiceLoader;
-import com.powsybl.iidm.import_.ImportConfig;
-import com.powsybl.iidm.import_.ImportersLoader;
-import com.powsybl.iidm.import_.ImportersServiceLoader;
+import com.powsybl.iidm.network.ExportersLoader;
+import com.powsybl.iidm.network.ExportersServiceLoader;
+import com.powsybl.iidm.network.ImportConfig;
+import com.powsybl.iidm.network.ImportersLoader;
+import com.powsybl.iidm.network.ImportersServiceLoader;
 
 import java.util.Objects;
 
