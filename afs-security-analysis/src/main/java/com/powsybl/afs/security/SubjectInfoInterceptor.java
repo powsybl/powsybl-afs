@@ -12,6 +12,7 @@ import com.powsybl.security.LimitViolationsResult;
 import com.powsybl.security.interceptors.DefaultSecurityAnalysisInterceptor;
 import com.powsybl.security.interceptors.SecurityAnalysisResultContext;
 import com.powsybl.security.results.PostContingencyResult;
+import com.powsybl.security.results.PreContingencyResult;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -72,8 +73,8 @@ public class SubjectInfoInterceptor extends DefaultSecurityAnalysisInterceptor {
     }
 
     @Override
-    public void onPreContingencyResult(LimitViolationsResult preContingencyResult, SecurityAnalysisResultContext context) {
-        addSubjectInfo(context, preContingencyResult);
+    public void onPreContingencyResult(PreContingencyResult preContingencyResult, SecurityAnalysisResultContext context) {
+        addSubjectInfo(context, preContingencyResult.getLimitViolationsResult());
     }
 
     @Override

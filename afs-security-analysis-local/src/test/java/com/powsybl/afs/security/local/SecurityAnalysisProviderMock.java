@@ -11,6 +11,7 @@ import com.powsybl.commons.reporter.Reporter;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.contingency.ContingenciesProvider;
 import com.powsybl.iidm.network.Network;
+import com.powsybl.loadflow.LoadFlowResult;
 import com.powsybl.security.*;
 import com.powsybl.security.action.Action;
 import com.powsybl.security.interceptors.SecurityAnalysisInterceptor;
@@ -50,12 +51,11 @@ public class SecurityAnalysisProviderMock implements SecurityAnalysisProvider {
             List<Action> actions,
             List<StateMonitor> monitors,
             Reporter reporter) {
-        LimitViolationsResult preContingencyResult = new LimitViolationsResult(true,
-                ImmutableList.of(
-                        new LimitViolation("s1", LimitViolationType.HIGH_VOLTAGE, 400.0, 1f, 440.0)
-                )
+        LimitViolationsResult preContingencyResult = new LimitViolationsResult(
+                ImmutableList.of(new LimitViolation("s1", LimitViolationType.HIGH_VOLTAGE, 400.0, 1f, 440.0))
         );
-        SecurityAnalysisResult result = new SecurityAnalysisResult(preContingencyResult, Collections.emptyList());
+        SecurityAnalysisResult result = new SecurityAnalysisResult(preContingencyResult,
+                LoadFlowResult.ComponentResult.Status.CONVERGED, Collections.emptyList());
         return CompletableFuture.completedFuture(new SecurityAnalysisReport(result));
     }
 }

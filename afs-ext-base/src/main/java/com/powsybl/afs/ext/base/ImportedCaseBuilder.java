@@ -16,13 +16,12 @@ import com.powsybl.commons.datasource.DataSource;
 import com.powsybl.commons.datasource.DataSourceUtil;
 import com.powsybl.commons.datasource.MemDataSource;
 import com.powsybl.commons.datasource.ReadOnlyDataSource;
-import com.powsybl.iidm.export.Exporters;
-import com.powsybl.iidm.export.ExportersLoader;
-import com.powsybl.iidm.export.ExportersServiceLoader;
-import com.powsybl.iidm.import_.ImportConfig;
-import com.powsybl.iidm.import_.Importer;
-import com.powsybl.iidm.import_.Importers;
-import com.powsybl.iidm.import_.ImportersLoader;
+import com.powsybl.iidm.network.ExportersLoader;
+import com.powsybl.iidm.network.ExportersServiceLoader;
+import com.powsybl.iidm.network.ImportConfig;
+import com.powsybl.iidm.network.Importer;
+import com.powsybl.iidm.network.Importers;
+import com.powsybl.iidm.network.ImportersLoader;
 import com.powsybl.iidm.network.Network;
 
 import java.io.IOException;
@@ -108,7 +107,7 @@ public class ImportedCaseBuilder implements ProjectFileBuilder<ImportedCase> {
             name = network.getId();
         }
         DataSource memDataSource = new MemDataSource();
-        Exporters.export(exportersLoader, "XIIDM", network, null, memDataSource);
+        network.write(exportersLoader, "XIIDM", null, memDataSource);
         return withDatasource(memDataSource);
     }
 

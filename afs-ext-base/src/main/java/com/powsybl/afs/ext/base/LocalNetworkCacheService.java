@@ -9,7 +9,7 @@ package com.powsybl.afs.ext.base;
 import com.powsybl.afs.AfsException;
 import com.powsybl.afs.ProjectFile;
 import com.powsybl.commons.datasource.ReadOnlyDataSource;
-import com.powsybl.iidm.import_.Importer;
+import com.powsybl.iidm.network.Importer;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.NetworkListener;
 import groovy.json.JsonOutput;
