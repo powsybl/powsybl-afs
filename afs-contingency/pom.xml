@@ -14,7 +14,7 @@
     <parent>
         <groupId>com.powsybl</groupId>
         <artifactId>powsybl-afs</artifactId>
-        <version>5.0.1-SNAPSHOT</version>
+        <version>5.0.1</version>
     </parent>
 
     <artifactId>powsybl-afs-contingency</artifactId>
