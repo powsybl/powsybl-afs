@@ -123,7 +123,7 @@ public abstract class AbstractAppStorageTest {
         assertTrue(storage.getChildNodes(rootFolderInfo.getId()).isEmpty());
 
         // 2) create a test folder
-        NodeInfo testFolderInfo = storage.createNode(rootFolderInfo.getId(), "test", FOLDER_PSEUDO_CLASS, "", 0,
+        NodeInfo testFolderInfo = storage.createNode(rootFolderInfo.getId(), "test", FOLDER_PSEUDO_CLASS, "", 12,
                 new NodeGenericMetadata().setString("k", "v"));
         storage.flush();
 
@@ -144,17 +144,18 @@ public abstract class AbstractAppStorageTest {
         assertEquals(rootFolderInfo, storage.getParentNode(testFolderInfo.getId()).orElseThrow(AssertionError::new));
 
         // check test folder infos are corrects
-        assertEquals(testFolderInfo.getId(), storage.getNodeInfo(testFolderInfo.getId()).getId());
-        assertEquals("test", storage.getNodeInfo(testFolderInfo.getId()).getName());
-        assertEquals(FOLDER_PSEUDO_CLASS, storage.getNodeInfo(testFolderInfo.getId()).getPseudoClass());
-        assertEquals(0, storage.getNodeInfo(testFolderInfo.getId()).getVersion());
-        assertEquals(Collections.singletonMap("k", "v"), storage.getNodeInfo(testFolderInfo.getId()).getGenericMetadata().getStrings());
-        assertTrue(storage.getNodeInfo(testFolderInfo.getId()).getGenericMetadata().getDoubles().isEmpty());
-        assertTrue(storage.getNodeInfo(testFolderInfo.getId()).getGenericMetadata().getInts().isEmpty());
-        assertTrue(storage.getNodeInfo(testFolderInfo.getId()).getGenericMetadata().getBooleans().isEmpty());
-        assertEquals("", storage.getNodeInfo(testFolderInfo.getId()).getDescription());
-        assertTrue(storage.getNodeInfo(testFolderInfo.getId()).getCreationTime() > 0);
-        assertTrue(storage.getNodeInfo(testFolderInfo.getId()).getModificationTime() > 0);
+        NodeInfo retrievedTestFolderInfo = storage.getNodeInfo(testFolderInfo.getId());
+        assertEquals(testFolderInfo.getId(), retrievedTestFolderInfo.getId());
+        assertEquals("test", retrievedTestFolderInfo.getName());
+        assertEquals(FOLDER_PSEUDO_CLASS, retrievedTestFolderInfo.getPseudoClass());
+        assertEquals(12, retrievedTestFolderInfo.getVersion());
+        assertEquals(Collections.singletonMap("k", "v"), retrievedTestFolderInfo.getGenericMetadata().getStrings());
+        assertTrue(retrievedTestFolderInfo.getGenericMetadata().getDoubles().isEmpty());
+        assertTrue(retrievedTestFolderInfo.getGenericMetadata().getInts().isEmpty());
+        assertTrue(retrievedTestFolderInfo.getGenericMetadata().getBooleans().isEmpty());
+        assertEquals("", retrievedTestFolderInfo.getDescription());
+        assertTrue(retrievedTestFolderInfo.getCreationTime() > 0);
+        assertTrue(retrievedTestFolderInfo.getModificationTime() > 0);
 
         // check test folder is empty
         assertTrue(storage.getChildNodes(testFolderInfo.getId()).isEmpty());
