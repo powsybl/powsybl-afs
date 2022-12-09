@@ -7,7 +7,7 @@
     <parent>
         <groupId>com.powsybl</groupId>
         <artifactId>powsybl-afs</artifactId>
-        <version>5.0.2</version>
+        <version>5.0.3-SNAPSHOT</version>
     </parent>
 
     <artifactId>powsybl-afs-spring-server</artifactId>
