@@ -472,6 +472,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
                 .value(CONSISTENT, literal(false))
                 .value(CREATION_DATE, literal(Instant.ofEpochMilli(creationTime)))
                 .value(MODIFICATION_DATE, literal(Instant.ofEpochMilli(creationTime)))
+                .value(VERSION, literal(version))
                 .values(addAllMetadata(genericMetadata))
                 .build());
 
