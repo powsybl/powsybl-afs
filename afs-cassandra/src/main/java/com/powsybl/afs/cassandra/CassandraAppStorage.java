@@ -589,6 +589,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
             getSession().execute(deleteFrom(CHILDREN_BY_NAME_AND_CLASS)
                     .whereColumn(ID).isEqualTo(literal(parentNodeUuid))
                     .whereColumn(CHILD_NAME).isEqualTo(literal(nodeInfo.getName()))
+                    .whereColumn(CHILD_PSEUDO_CLASS).isEqualTo(literal(nodeInfo.getPseudoClass()))
                     .build());
 
             getSession().execute(insertInto(CHILDREN_BY_NAME_AND_CLASS)
