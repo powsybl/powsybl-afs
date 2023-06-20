@@ -123,6 +123,11 @@ public class LocalNetworkCacheService implements NetworkCacheService {
     }
 
     @Override
+    public <T extends ProjectFile & ProjectCase> String getOutput(T projectCase) {
+        return cache.get(projectCase).getOutput();
+    }
+
+    @Override
     public <T extends ProjectFile & ProjectCase> void invalidateCache(T projectCase) {
         cache.invalidate(projectCase);
     }
