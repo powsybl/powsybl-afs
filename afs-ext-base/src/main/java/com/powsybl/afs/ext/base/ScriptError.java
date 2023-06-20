@@ -9,6 +9,7 @@ package com.powsybl.afs.ext.base;
 import groovy.lang.GroovyRuntimeException;
 import org.codehaus.groovy.control.ErrorCollector;
 import org.codehaus.groovy.control.MultipleCompilationErrorsException;
+import org.codehaus.groovy.control.messages.ExceptionMessage;
 import org.codehaus.groovy.control.messages.Message;
 import org.codehaus.groovy.control.messages.SyntaxErrorMessage;
 import org.codehaus.groovy.syntax.SyntaxException;
@@ -46,8 +47,11 @@ public class ScriptError implements Serializable {
                 SyntaxException cause = ((SyntaxErrorMessage) error).getCause();
                 return new ScriptError(cause.getMessage(), cause.getStartLine(), cause.getStartColumn(),
                         cause.getEndLine(), cause.getEndColumn());
+            } else if (error instanceof ExceptionMessage) {
+                Exception cause = ((ExceptionMessage) error).getCause();
+                return new ScriptError(cause.getMessage(), -1, -1, -1, -1);
             } else {
-                throw new AssertionError("SyntaxErrorMessage is expected");
+                throw new AssertionError("SyntaxErrorMessage or ExceptionMessage is expected");
             }
         } else {
             throw new AssertionError("At least one error is expected");

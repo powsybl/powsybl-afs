@@ -38,7 +38,9 @@ public class ScriptException extends PowsyblException {
         List<String> lines = new ArrayList<>(4);
         lines.add("\t" + MessageFormat.format(RESOURCE_BUNDLE.getString("ScriptError"), error.getMessage()));
         lines.add("\t" + MessageFormat.format(RESOURCE_BUNDLE.getString("File"), projectFilePath));
-        lines.add("\t" + MessageFormat.format(RESOURCE_BUNDLE.getString("Line"), error.getStartLine()));
+        if (error.getStartLine() != -1) {
+            lines.add("\t" + MessageFormat.format(RESOURCE_BUNDLE.getString("Line"), error.getStartLine()));
+        }
         if (error.getStartColumn() != -1) {
             lines.add("\t" + MessageFormat.format(RESOURCE_BUNDLE.getString("Column"), error.getStartColumn()));
         }
