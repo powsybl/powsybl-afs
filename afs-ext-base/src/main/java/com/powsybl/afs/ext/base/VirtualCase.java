@@ -59,6 +59,10 @@ public class VirtualCase extends ProjectFile implements ProjectCase {
         invalidate();
     }
 
+    public String getOutput() {
+        return findService(NetworkCacheService.class).getOutput(this);
+    }
+
     @Override
     public String queryNetwork(ScriptType scriptType, String scriptContent) {
         Objects.requireNonNull(scriptType);

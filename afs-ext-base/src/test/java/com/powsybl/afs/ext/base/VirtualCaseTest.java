@@ -136,10 +136,12 @@ public class VirtualCaseTest extends AbstractProjectFileTest {
         assertEquals(1, script.getBackwardDependencies().size());
         assertNotNull(virtualCase.getNetwork());
         assertFalse(virtualCase.mandatoryDependenciesAreMissing());
+        assertEquals("hello", virtualCase.getOutput());
 
         // test cache invalidation
         script.writeScript("print 'bye'");
         assertNotNull(virtualCase.getNetwork());
+        assertEquals("bye", virtualCase.getOutput());
 
         virtualCase.delete();
         assertTrue(importedCase.getBackwardDependencies().isEmpty());
