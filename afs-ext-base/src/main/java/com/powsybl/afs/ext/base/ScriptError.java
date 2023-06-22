@@ -39,6 +39,14 @@ public class ScriptError implements Serializable {
         this.endColumn = endColumn;
     }
 
+    public ScriptError(String message) {
+        this.message = Objects.requireNonNull(message);
+        this.startLine = -1;
+        this.startColumn = -1;
+        this.endLine = -1;
+        this.endColumn = -1;
+    }
+
     public static ScriptError fromGroovyException(MultipleCompilationErrorsException e) {
         ErrorCollector errorCollector = e.getErrorCollector();
         if (errorCollector.getErrorCount() > 0) {
@@ -49,7 +57,7 @@ public class ScriptError implements Serializable {
                         cause.getEndLine(), cause.getEndColumn());
             } else if (error instanceof ExceptionMessage) {
                 Exception cause = ((ExceptionMessage) error).getCause();
-                return new ScriptError(cause.getMessage(), -1, -1, -1, -1);
+                return new ScriptError(cause.getMessage());
             } else {
                 throw new AssertionError("SyntaxErrorMessage or ExceptionMessage is expected");
             }
