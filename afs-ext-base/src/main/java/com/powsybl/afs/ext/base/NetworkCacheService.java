@@ -9,6 +9,7 @@ package com.powsybl.afs.ext.base;
 import com.powsybl.afs.ProjectFile;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.NetworkListener;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 
@@ -30,4 +31,8 @@ public interface NetworkCacheService {
     <T extends ProjectFile & ProjectCase> void addListener(T projectCase, ProjectCaseListener listener);
 
     <T extends ProjectFile & ProjectCase> void removeListener(T projectCase, ProjectCaseListener listener);
+
+    default <T extends ProjectFile & ProjectCase> String getOutput(T projectCase) {
+        return StringUtils.EMPTY;
+    }
 }
