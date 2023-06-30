@@ -9,6 +9,7 @@ package com.powsybl.afs.ext.base;
 import groovy.lang.GroovyRuntimeException;
 import org.codehaus.groovy.control.ErrorCollector;
 import org.codehaus.groovy.control.MultipleCompilationErrorsException;
+import org.codehaus.groovy.control.messages.ExceptionMessage;
 import org.codehaus.groovy.control.messages.Message;
 import org.codehaus.groovy.control.messages.SyntaxErrorMessage;
 import org.codehaus.groovy.syntax.SyntaxException;
@@ -38,6 +39,14 @@ public class ScriptError implements Serializable {
         this.endColumn = endColumn;
     }
 
+    public ScriptError(String message) {
+        this.message = Objects.requireNonNull(message);
+        this.startLine = -1;
+        this.startColumn = -1;
+        this.endLine = -1;
+        this.endColumn = -1;
+    }
+
     public static ScriptError fromGroovyException(MultipleCompilationErrorsException e) {
         ErrorCollector errorCollector = e.getErrorCollector();
         if (errorCollector.getErrorCount() > 0) {
@@ -46,8 +55,11 @@ public class ScriptError implements Serializable {
                 SyntaxException cause = ((SyntaxErrorMessage) error).getCause();
                 return new ScriptError(cause.getMessage(), cause.getStartLine(), cause.getStartColumn(),
                         cause.getEndLine(), cause.getEndColumn());
+            } else if (error instanceof ExceptionMessage) {
+                Exception cause = ((ExceptionMessage) error).getCause();
+                return new ScriptError(cause.getMessage());
             } else {
-                throw new AssertionError("SyntaxErrorMessage is expected");
+                throw new AssertionError("SyntaxErrorMessage or ExceptionMessage is expected");
             }
         } else {
             throw new AssertionError("At least one error is expected");
