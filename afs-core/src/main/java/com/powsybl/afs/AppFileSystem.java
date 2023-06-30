@@ -116,7 +116,7 @@ public class AppFileSystem implements AutoCloseable {
 
         // get file info
         NodeInfo projectFileInfo = storage.getNodeInfo(projectFileId);
-        Project project = createProject(projectFileId, projectFileInfo);
+        Project project = createProject(projectFileInfo);
 
         // then create the file
         ProjectFile projectFile = project.createProjectFile(projectFileInfo);
@@ -140,21 +140,12 @@ public class AppFileSystem implements AutoCloseable {
         Objects.requireNonNull(nodeId);
 
         NodeInfo projectFileInfo = storage.getNodeInfo(nodeId);
-        NodeInfo parentInfo = storage.getParentNode(projectFileInfo.getId()).orElse(null);
-        while (parentInfo != null && !Project.PSEUDO_CLASS.equals(parentInfo.getPseudoClass())) {
-            parentInfo = storage.getParentNode(parentInfo.getId()).orElse(null);
-        }
+        NodeInfo projectInfo = searchProject(projectFileInfo.getId());
 
-        NodeInfo projectInfo = parentInfo;
-        while (projectInfo != null && !Project.PSEUDO_CLASS.equals(projectInfo.getPseudoClass())) {
-            projectInfo = storage.getParentNode(projectInfo.getId()).orElse(null);
-        }
-        Project project = projectInfo != null && Project.PSEUDO_CLASS.equals(projectInfo.getPseudoClass()) ?
-                new Project(new FileCreationContext(projectInfo, storage, this)) : null;
-
-        if (parentInfo == null || project == null) {
+        if (projectInfo == null) {
             return createNode(projectFileInfo);
         }
+        Project project = new Project(new FileCreationContext(projectInfo, storage, this));
 
         ProjectFileCreationContext context = new ProjectFileCreationContext(projectFileInfo, storage, project, connected);
 
@@ -204,26 +195,35 @@ public class AppFileSystem implements AutoCloseable {
         // get file info
         NodeInfo projectFolderInfo = storage.getNodeInfo(projectFolderId);
 
-        // walk the node hierarchy until finding a project
-        Project project = createProject(projectFolderId, projectFolderInfo);
+        Project project = createProject(projectFolderInfo);
 
         // then create and return the projectFolder
-
         return project.createProjectFolder(projectFolderInfo);
     }
 
-    private Project createProject(String projectNodeId, NodeInfo projectNodeInfo) {
-        // walk the node hierarchy until finding a project
-        NodeInfo parentInfo = storage.getParentNode(projectNodeInfo.getId()).orElse(null);
-        while (parentInfo != null && !Project.PSEUDO_CLASS.equals(parentInfo.getPseudoClass())) {
-            parentInfo = storage.getParentNode(parentInfo.getId()).orElse(null);
-        }
+    private Project createProject(NodeInfo projectNodeInfo) {
+        NodeInfo parentInfo = searchProject(projectNodeInfo.getId());
+
         if (parentInfo == null) {
-            throw new AfsException("Node '" + projectNodeId + " parent project cannot be found.");
+            throw new AfsException("Node '" + projectNodeInfo.getId() + " parent project cannot be found.");
         }
 
         // create the project
         return new Project(new FileCreationContext(parentInfo, storage, this));
+    }
+
+    /**
+     * Find the project of the node
+     * @param nodeId The node id
+     * @return Project info or null if not found
+     */
+    protected NodeInfo searchProject(String nodeId) {
+        // walk the node hierarchy until finding a project
+        NodeInfo parentInfo = storage.getParentNode(nodeId).orElse(null);
+        while (parentInfo != null && !Project.PSEUDO_CLASS.equals(parentInfo.getPseudoClass())) {
+            parentInfo = storage.getParentNode(parentInfo.getId()).orElse(null);
+        }
+        return parentInfo;
     }
 
     public TaskMonitor getTaskMonitor() {
