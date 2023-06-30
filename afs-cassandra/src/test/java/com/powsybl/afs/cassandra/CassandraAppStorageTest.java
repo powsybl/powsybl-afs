@@ -101,6 +101,9 @@ public class CassandraAppStorageTest extends AbstractAppStorageTest {
         new CassandraRenameIssueTest().test(storage);
         clear();
 
+        new CassandraRenameIssueTest().testRenameChildWithSameName(storage);
+        clear();
+
         new TimeSeriesIssueTest().testEmptyChunks(storage);
         clear();
         new TimeSeriesIssueTest().testNullString(storage);
