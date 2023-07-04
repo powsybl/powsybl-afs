@@ -9,15 +9,15 @@ package com.powsybl.afs.ws.storage;
 import com.powsybl.afs.ws.storage.websocket.AutoReconnectionConnectionManager;
 import com.powsybl.afs.ws.storage.websocket.WebsocketConnectionManager;
 import com.powsybl.commons.util.WeakListenerList;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javax.websocket.Session;
 import java.net.URI;
 import java.util.concurrent.*;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -28,7 +28,7 @@ public class NodeEventClientReconnectionTest {
 
     private Session session;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         session = mock(Session.class);
         when(session.getId()).thenReturn("session-id");

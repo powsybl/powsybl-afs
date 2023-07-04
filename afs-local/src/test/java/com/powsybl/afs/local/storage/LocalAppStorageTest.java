@@ -19,9 +19,9 @@ import com.powsybl.computation.ComputationManager;
 import com.powsybl.iidm.network.ImportConfig;
 import com.powsybl.iidm.network.ImportersLoaderList;
 import com.powsybl.iidm.network.Network;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.nio.file.FileSystem;
@@ -32,12 +32,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  */
-public class LocalAppStorageTest {
+class LocalAppStorageTest {
 
     private FileSystem fileSystem;
 
@@ -47,8 +47,8 @@ public class LocalAppStorageTest {
 
     private LocalAppStorage storage;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp() throws Exception {
         fileSystem = Jimfs.newFileSystem(Configuration.unix());
         Path rootDir = fileSystem.getPath("/cases");
         Files.createDirectories(rootDir);
@@ -63,20 +63,20 @@ public class LocalAppStorageTest {
         storage = new LocalAppStorage(rootDir, "mem", fileExtensions, Collections.emptyList(), computationManager);
     }
 
-    @After
-    public void tearDown() throws Exception {
+    @AfterEach
+    void tearDown() throws Exception {
         storage.close();
         fileSystem.close();
     }
 
-    @Test(expected = AssertionError.class)
-    public void testConsistent() {
+    @Test
+    void testConsistent() {
         NodeInfo rootNodeInfo = storage.createRootNodeIfNotExists("mem", Folder.PSEUDO_CLASS);
-        storage.setConsistent(rootNodeInfo.getId());
+        assertThrows(AssertionError.class, () -> storage.setConsistent(rootNodeInfo.getId()));
     }
 
     @Test
-    public void test() {
+    void test() {
         NodeInfo rootNodeInfo = storage.createRootNodeIfNotExists("mem", Folder.PSEUDO_CLASS);
         assertEquals("mem", rootNodeInfo.getName());
         assertFalse(storage.isWritable(rootNodeInfo.getId()));

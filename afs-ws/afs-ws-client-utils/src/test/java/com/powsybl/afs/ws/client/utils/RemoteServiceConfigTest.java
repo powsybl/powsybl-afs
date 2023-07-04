@@ -10,14 +10,14 @@ import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import com.powsybl.commons.config.InMemoryPlatformConfig;
 import com.powsybl.commons.config.MapModuleConfig;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
@@ -26,12 +26,12 @@ public class RemoteServiceConfigTest {
 
     private FileSystem fileSystem;
 
-    @Before
-    public void createFileSystem() {
+    @BeforeEach
+    void createFileSystem() {
         fileSystem = Jimfs.newFileSystem(Configuration.unix());
     }
 
-    @After
+    @AfterEach
     public void closeFileSystem() throws IOException {
         fileSystem.close();
     }

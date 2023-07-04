@@ -13,12 +13,12 @@ import com.powsybl.afs.storage.InMemoryEventsBus;
 import com.powsybl.afs.storage.NodeGenericMetadata;
 import com.powsybl.afs.storage.NodeInfo;
 import com.powsybl.computation.ComputationManager;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
 
@@ -31,8 +31,8 @@ public class ProjectTest {
     private AppStorage storage;
     private AppFileSystem afs;
 
-    @Before
-    public void setup() {
+    @BeforeEach
+    void setup() {
         storage = MapDbAppStorage.createMem("mem", new InMemoryEventsBus());
 
         ComputationManager computationManager = Mockito.mock(ComputationManager.class);
@@ -53,7 +53,7 @@ public class ProjectTest {
         assertTrue(storage.getNodeInfo(projectFolder.getId()).getModificationTime() > 0);
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         storage.close();
     }

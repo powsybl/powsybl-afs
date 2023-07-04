@@ -16,12 +16,12 @@ import com.powsybl.security.LimitViolationType;
 import com.powsybl.security.LimitViolationsResult;
 import com.powsybl.security.interceptors.DefaultSecurityAnalysisResultContext;
 import com.powsybl.security.results.PreContingencyResult;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>

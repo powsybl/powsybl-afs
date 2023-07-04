@@ -12,7 +12,7 @@ import com.powsybl.afs.TaskEvent;
 import com.powsybl.afs.TaskListener;
 import com.powsybl.afs.TaskMonitor;
 import com.powsybl.afs.server.AppDataWrapper;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;

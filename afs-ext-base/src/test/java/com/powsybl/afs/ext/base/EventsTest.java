@@ -9,12 +9,12 @@ package com.powsybl.afs.ext.base;
 import com.powsybl.afs.ext.base.events.CaseImported;
 import com.powsybl.afs.ext.base.events.ScriptModified;
 import com.powsybl.afs.ext.base.events.VirtualCaseCreated;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Paths;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>

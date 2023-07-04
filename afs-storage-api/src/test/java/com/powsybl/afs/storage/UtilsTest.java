@@ -7,15 +7,15 @@
 
 package com.powsybl.afs.storage;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Valentin Berthault <valentin.berthault at rte-france.com>
@@ -25,8 +25,8 @@ public class UtilsTest {
 
     private Path rootDir;
 
-    @Before
-    public void setup() throws IOException {
+    @BeforeEach
+    void setup() throws IOException {
         rootDir = Files.createTempDirectory("test1");
         Path folder = rootDir.resolve("test");
         Files.createDirectory(folder);
@@ -34,7 +34,7 @@ public class UtilsTest {
         Files.createFile(folder.resolve("test1"));
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         Utils.deleteDirectory(rootDir);
     }

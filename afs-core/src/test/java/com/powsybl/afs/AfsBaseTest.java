@@ -20,9 +20,9 @@ import com.powsybl.iidm.network.NetworkFactoryService;
 import com.powsybl.timeseries.RegularTimeSeriesIndex;
 import com.powsybl.timeseries.TimeSeriesDataType;
 import com.powsybl.timeseries.TimeSeriesMetadata;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.threeten.extra.Interval;
 
@@ -37,7 +37,7 @@ import java.time.Duration;
 import java.util.*;
 import java.util.function.BiConsumer;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
@@ -52,8 +52,8 @@ public class AfsBaseTest {
 
     private AppData ad;
 
-    @Before
-    public void setup() {
+    @BeforeEach
+    void setup() {
         fileSystem = Jimfs.newFileSystem(Configuration.unix());
         ComputationManager computationManager = Mockito.mock(ComputationManager.class);
         ad = new AppData(computationManager, computationManager, Collections.emptyList(),
@@ -66,7 +66,7 @@ public class AfsBaseTest {
         ad.addFileSystem(afs);
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         storage.close();
         fileSystem.close();

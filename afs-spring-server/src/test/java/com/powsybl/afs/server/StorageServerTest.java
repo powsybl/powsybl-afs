@@ -19,7 +19,7 @@ import com.powsybl.afs.ws.storage.RemoteTaskMonitor;
 import com.powsybl.commons.exceptions.UncheckedUriSyntaxException;
 import com.powsybl.computation.ComputationManager;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;

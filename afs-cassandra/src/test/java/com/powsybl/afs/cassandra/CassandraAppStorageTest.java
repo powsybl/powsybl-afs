@@ -18,7 +18,8 @@ import com.powsybl.afs.storage.check.FileSystemCheckOptionsBuilder;
 import org.apache.commons.lang3.SystemUtils;
 import org.cassandraunit.CassandraCQLUnit;
 import org.cassandraunit.dataset.cql.ClassPathCQLDataSet;
-import org.junit.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.Rule;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -35,8 +36,9 @@ import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 import static com.powsybl.afs.cassandra.CassandraConstants.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.Assert.fail;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
@@ -46,9 +48,9 @@ public class CassandraAppStorageTest extends AbstractAppStorageTest {
     @Rule
     public CassandraCQLUnit cassandraCQLUnit = new CassandraCQLUnit(new ClassPathCQLDataSet("afs.cql", AFS_KEYSPACE), null, 20000L);
 
-    @BeforeClass
+    @BeforeAll
     public static void dontRunOnWindows() {
-        Assume.assumeFalse(SystemUtils.IS_OS_WINDOWS);
+        assumeFalse(SystemUtils.IS_OS_WINDOWS);
     }
 
     @Override
@@ -86,7 +88,7 @@ public class CassandraAppStorageTest extends AbstractAppStorageTest {
             new CassandraDataSplitTest().test(cassandraCQLUnit);
             clear();
         } catch (IOException e) {
-            Assert.fail();
+            fail();
         }
 
         new CassandraDescriptionIssueTest().test(storage);
@@ -187,7 +189,7 @@ public class CassandraAppStorageTest extends AbstractAppStorageTest {
         final List<FileSystemCheckIssue> fileSystemCheckIssues = storage.checkFileSystem(dryRunOptions);
         assertEquals(1, fileSystemCheckIssues.size());
         final FileSystemCheckIssue issue = fileSystemCheckIssues.get(0);
-        assertEquals(inconsistentNode.getId(), issue.getNodeId().toString());
+        assertEquals(inconsistentNode.getId(), issue.getNodeId());
         assertEquals("inconsistentNode", issue.getNodeName());
         assertEquals("inconsistent", issue.getType());
         assertFalse(issue.isRepaired());
