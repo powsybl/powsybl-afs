@@ -6,7 +6,11 @@
  */
 package com.powsybl.afs.ext.base;
 
+import com.powsybl.computation.ComputationManager;
+import com.powsybl.computation.DefaultComputationManagerConfig;
 import com.powsybl.iidm.network.Network;
+import com.powsybl.scripting.groovy.GroovyScriptExtension;
+import com.powsybl.scripting.groovy.GroovyScripts;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
 import groovy.lang.MissingMethodException;
@@ -15,6 +19,7 @@ import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.MultipleCompilationErrorsException;
 
 import java.io.*;
+import java.util.ServiceLoader;
 
 /**
  *
@@ -27,7 +32,7 @@ public final class ScriptUtils {
     private ScriptUtils() {
     }
 
-    private static ScriptResult<Object> runGroovyScript(Network network, Reader reader) {
+    private static ScriptResult<Object> runGroovyScript(Network network, Reader reader, Iterable<GroovyScriptExtension> extensions) {
         String output = "";
         ScriptError error = null;
         Object value = null;
@@ -37,8 +42,15 @@ public final class ScriptUtils {
             binding.setProperty("network", network);
             binding.setProperty("out", outputWriter);
 
-            CompilerConfiguration config = new CompilerConfiguration();
-            GroovyShell shell = new GroovyShell(binding, config);
+            // Computation manager
+            DefaultComputationManagerConfig config = DefaultComputationManagerConfig.load();
+            binding.setProperty("computationManager", config.createShortTimeExecutionComputationManager());
+
+            // load extensions
+            extensions.forEach(extension -> extension.load(binding, (ComputationManager) binding.getProperty("computationManager")));
+
+            CompilerConfiguration compilerConfig = new CompilerConfiguration();
+            GroovyShell shell = new GroovyShell(binding, compilerConfig);
             value = shell.evaluate(reader, SCRIPT_FILE_NAME);
             outputWriter.flush();
             output = outputWriter.toString();
@@ -53,9 +65,13 @@ public final class ScriptUtils {
     }
 
     static ScriptResult<Object> runScript(Network network, ScriptType scriptType, String scriptContent) {
+        return runScript(network, scriptType, scriptContent, ServiceLoader.load(GroovyScriptExtension.class, GroovyScripts.class.getClassLoader()));
+    }
+
+    static ScriptResult<Object> runScript(Network network, ScriptType scriptType, String scriptContent, Iterable<GroovyScriptExtension> extensions) {
         try (Reader reader = new StringReader(scriptContent)) {
             if (scriptType == ScriptType.GROOVY) {
-                return runGroovyScript(network, reader);
+                return runGroovyScript(network, reader, extensions);
             } else {
                 throw new AssertionError("Script type " + scriptType + " not supported");
             }
