@@ -45,7 +45,7 @@ public class WebSocketServer implements WebSocketConfigurer {
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry
-            .addHandler(new NodeEventHandler(appDataWrapper, webSocketContext),  "/messages/afs/" + StorageServer.API_VERSION + "/node_events/{fileSystemName}")
+            .addHandler(new NodeEventHandler(appDataWrapper, webSocketContext), "/messages/afs/" + StorageServer.API_VERSION + "/node_events/{fileSystemName}")
             .addHandler(new TaskEventHandler(appDataWrapper, webSocketContext), "/messages/afs/" + StorageServer.API_VERSION + "/task_events/{fileSystemName}/{projectId}")
             .setAllowedOrigins("*")
             .addInterceptors(new UriTemplateHandshakeInterceptor());

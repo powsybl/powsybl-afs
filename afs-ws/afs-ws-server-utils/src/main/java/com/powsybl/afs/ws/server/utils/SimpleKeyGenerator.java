@@ -12,7 +12,7 @@ import java.security.Key;
 /**
  * @author Ali Tahanout <ali.tahanout at rte-france.com>
  */
-public class SimpleKeyGenerator  implements KeyGenerator {
+public class SimpleKeyGenerator implements KeyGenerator {
 
     private static final String SIMPLE_KEY = "simplekey";
 
