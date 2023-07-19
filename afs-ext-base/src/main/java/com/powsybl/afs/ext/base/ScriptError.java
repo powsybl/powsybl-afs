@@ -118,7 +118,7 @@ public class ScriptError implements Serializable {
 
     @Override
     public String toString() {
-        return "ScriptError(message=" + message + ", startLine=" + startLine  + ", startColumn=" + startColumn +
+        return "ScriptError(message=" + message + ", startLine=" + startLine + ", startColumn=" + startColumn +
                 ", endLine=" + endLine + ", endColumn=" + endColumn + ")";
     }
 }

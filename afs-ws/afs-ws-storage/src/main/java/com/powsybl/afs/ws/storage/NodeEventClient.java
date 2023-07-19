@@ -23,7 +23,7 @@ import java.util.Objects;
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  */
-@ClientEndpoint(decoders = {NodeEventListDecoder.class},  encoders = {NodeEventContainerEncoder.class})
+@ClientEndpoint(decoders = {NodeEventListDecoder.class}, encoders = {NodeEventContainerEncoder.class})
 public class NodeEventClient implements AutoCloseable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NodeEventClient.class);

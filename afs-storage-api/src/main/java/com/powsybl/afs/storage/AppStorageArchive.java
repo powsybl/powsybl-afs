@@ -77,7 +77,7 @@ public class AppStorageArchive {
 
         @Override
         public String toString() {
-            return "Dependency(nodeId=" + nodeId + ", name=" + name  + ")";
+            return "Dependency(nodeId=" + nodeId + ", name=" + name + ")";
         }
     }
 
@@ -179,7 +179,7 @@ public class AppStorageArchive {
         return blackList == null || blackList.stream().noneMatch(element -> element.contains(dataName));
     }
 
-    private void writeData(NodeInfo nodeInfo, Path nodeDir, ArchiveContext archiveDependencies)  throws IOException {
+    private void writeData(NodeInfo nodeInfo, Path nodeDir, ArchiveContext archiveDependencies) throws IOException {
 
         Set<String> dataNames = storage.getDataNames(nodeInfo.getId());
         if (dataNames.isEmpty()) {

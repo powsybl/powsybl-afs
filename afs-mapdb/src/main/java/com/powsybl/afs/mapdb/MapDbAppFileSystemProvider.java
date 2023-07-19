@@ -42,7 +42,7 @@ public class MapDbAppFileSystemProvider implements AppFileSystemProvider {
     public List<AppFileSystem> getFileSystems(AppFileSystemProviderContext context) {
 
         return configs.stream()
-                .map(config ->  {
+                .map(config -> {
                     MapDbAppStorage storage = storageProvider.apply(config.getDriveName(), config.getDbFile(), context.getEventsBus());
                     return new MapDbAppFileSystem(config.getDriveName(), config.isRemotelyAccessible(), storage);
                 })

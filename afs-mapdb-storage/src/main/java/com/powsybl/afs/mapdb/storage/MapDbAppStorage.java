@@ -365,10 +365,10 @@ public class MapDbAppStorage extends AbstractAppStorage {
     private List<NodeInfo> getInconsistentNodes(String nodeId) {
         List<UUID> childNodes = getAllChildNodes(nodeId);
 
-        List<NodeInfo> inconsistentNodesInfos =  childNodes.stream().map(this::getNodeInfo)
+        List<NodeInfo> inconsistentNodesInfos = childNodes.stream().map(this::getNodeInfo)
                 .filter(nodeInfo -> !isConsistent(nodeInfo.getId()))
                 .collect(Collectors.toList());
-        List<NodeInfo> consistentNodesInfos =  childNodes.stream().map(this::getNodeInfo)
+        List<NodeInfo> consistentNodesInfos = childNodes.stream().map(this::getNodeInfo)
                 .filter(nodeInfo -> isConsistent(nodeInfo.getId()))
                 .collect(Collectors.toList());
 
