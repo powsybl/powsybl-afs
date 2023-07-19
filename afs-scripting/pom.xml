@@ -52,13 +52,18 @@
     <dependencies>
         <!-- Compilation dependencies -->
         <dependency>
-            <groupId>com.powsybl</groupId>
-            <artifactId>powsybl-scripting</artifactId>
-        </dependency>
-        <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>powsybl-afs-core</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>powsybl-afs-ext-base</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.powsybl</groupId>
+            <artifactId>powsybl-iidm-scripting</artifactId>
         </dependency>
         <dependency>
             <groupId>com.powsybl</groupId>
@@ -66,8 +71,7 @@
         </dependency>
         <dependency>
             <groupId>com.powsybl</groupId>
-            <artifactId>powsybl-afs-ext-base</artifactId>
-            <version>${project.version}</version>
+            <artifactId>powsybl-scripting</artifactId>
         </dependency>
 
         <!-- Test dependencies -->
@@ -111,14 +115,8 @@
         </dependency>
         <dependency>
             <groupId>com.powsybl</groupId>
-            <artifactId>powsybl-iidm-scripting</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.powsybl</groupId>
             <artifactId>powsybl-iidm-test</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
-
 </project>

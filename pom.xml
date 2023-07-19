@@ -15,7 +15,7 @@
     <parent>
         <groupId>com.powsybl</groupId>
         <artifactId>powsybl-parent</artifactId>
-        <version>4</version>
+        <version>12</version>
         <relativePath/>
     </parent>
     <artifactId>powsybl-afs</artifactId>
@@ -98,7 +98,7 @@
         <wildfly.dist.version>11.0.0.Final</wildfly.dist.version>
         <wildflyarquilliancontainerembedded.version>2.1.0.Final</wildflyarquilliancontainerembedded.version>
 
-        <powsyblcore.version>5.3.2</powsyblcore.version>
+        <powsyblcore.version>5.4.0-SNAPSHOT</powsyblcore.version>
     </properties>
 
     <profiles>
@@ -188,6 +188,11 @@
             <dependency>
                 <groupId>com.powsybl</groupId>
                 <artifactId>powsybl-contingency-api</artifactId>
+                <version>${powsyblcore.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.powsybl</groupId>
+                <artifactId>powsybl-iidm-scripting</artifactId>
                 <version>${powsyblcore.version}</version>
             </dependency>
             <dependency>
@@ -313,12 +318,6 @@
             </dependency>
             <dependency>
                 <groupId>com.powsybl</groupId>
-                <artifactId>powsybl-iidm-scripting</artifactId>
-                <version>${powsyblcore.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.powsybl</groupId>
                 <artifactId>powsybl-iidm-test</artifactId>
                 <version>${powsyblcore.version}</version>
                 <scope>test</scope>
@@ -350,7 +349,6 @@
                 <groupId>org.cassandraunit</groupId>
                 <artifactId>cassandra-unit</artifactId>
                 <version>${cassandraunit.version}</version>
-
                 <scope>test</scope>
             </dependency>
             <dependency>
