@@ -47,7 +47,7 @@ public class TaskEventHandler extends TextWebSocketHandler {
 
         TaskListener listener = new TaskListener() {
 
-            private final WebSocketSession internalSession =  WebSocketUtils.concurrent(session);
+            private final WebSocketSession internalSession = WebSocketUtils.concurrent(session);
 
             @Override
             public String getProjectId() {

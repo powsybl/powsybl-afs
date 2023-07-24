@@ -179,7 +179,7 @@ public class AppFileSystemTool implements Tool {
             String fileSystemName = line.getOptionValue(UNARCHIVE);
             AppFileSystem fs = appData.getFileSystem(fileSystemName);
             if (fs == null) {
-                throw new  AfsException("File system '" + fileSystemName + "' not found");
+                throw new AfsException("File system '" + fileSystemName + "' not found");
             }
             Path dir = context.getFileSystem().getPath(line.getOptionValue(DIR));
             boolean mustZip = line.hasOption(ZIP);
@@ -195,7 +195,7 @@ public class AppFileSystemTool implements Tool {
             String fileSystemName = line.getOptionValue(ARCHIVE);
             AppFileSystem fs = appData.getFileSystem(fileSystemName);
             if (fs == null) {
-                throw new  AfsException("File system '" + fileSystemName + "' not found");
+                throw new AfsException("File system '" + fileSystemName + "' not found");
             }
             Path dir = context.getFileSystem().getPath(line.getOptionValue(DIR));
             boolean mustZip = line.hasOption(ZIP);

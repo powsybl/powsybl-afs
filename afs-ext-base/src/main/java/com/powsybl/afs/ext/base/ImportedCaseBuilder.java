@@ -20,7 +20,6 @@ import com.powsybl.iidm.network.ExportersLoader;
 import com.powsybl.iidm.network.ExportersServiceLoader;
 import com.powsybl.iidm.network.ImportConfig;
 import com.powsybl.iidm.network.Importer;
-import com.powsybl.iidm.network.Importers;
 import com.powsybl.iidm.network.ImportersLoader;
 import com.powsybl.iidm.network.Network;
 
@@ -84,7 +83,7 @@ public class ImportedCaseBuilder implements ProjectFileBuilder<ImportedCase> {
     }
 
     public ImportedCaseBuilder withFile(Path file) {
-        withDatasource(Importers.createDataSource(file));
+        withDatasource(DataSource.fromPath(file));
         if (name == null) {
             name = DataSourceUtil.getBaseName(file);
         }

@@ -12,7 +12,6 @@ import com.powsybl.afs.storage.NodeGenericMetadata;
 import com.powsybl.commons.datasource.DataSource;
 import com.powsybl.commons.datasource.DataSourceUtil;
 import com.powsybl.iidm.network.Importer;
-import com.powsybl.iidm.network.Importers;
 import com.powsybl.timeseries.DoubleDataChunk;
 import com.powsybl.timeseries.StringDataChunk;
 import com.powsybl.timeseries.TimeSeriesMetadata;
@@ -67,7 +66,7 @@ public class LocalCase implements LocalFile {
 
     @Override
     public Optional<InputStream> readBinaryData(String name) {
-        DataSource dataSource = Importers.createDataSource(file);
+        DataSource dataSource = DataSource.fromPath(file);
         return AppStorageDataSource.Name.parse(name, new AppStorageDataSource.NameHandler<Optional<InputStream>>() {
             @Override
             public Optional<InputStream> onSuffixAndExtension(AppStorageDataSource.SuffixAndExtension suffixAndExtension) throws IOException {
@@ -88,7 +87,7 @@ public class LocalCase implements LocalFile {
 
     @Override
     public boolean dataExists(String name) {
-        DataSource dataSource = Importers.createDataSource(file);
+        DataSource dataSource = DataSource.fromPath(file);
         return AppStorageDataSource.Name.parse(name, new AppStorageDataSource.NameHandler<Boolean>() {
             @Override
             public Boolean onSuffixAndExtension(AppStorageDataSource.SuffixAndExtension suffixAndExtension) throws IOException {
@@ -109,7 +108,7 @@ public class LocalCase implements LocalFile {
 
     @Override
     public Set<String> getDataNames() {
-        DataSource dataSource = Importers.createDataSource(file);
+        DataSource dataSource = DataSource.fromPath(file);
         try {
             Set<String> names = dataSource.listNames(".*");
             LOG.info("LocalCase::getDataNames()");

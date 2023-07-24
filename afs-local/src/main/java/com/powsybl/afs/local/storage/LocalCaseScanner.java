@@ -7,6 +7,7 @@
 package com.powsybl.afs.local.storage;
 
 import com.google.auto.service.AutoService;
+import com.powsybl.commons.datasource.DataSource;
 import com.powsybl.commons.datasource.ReadOnlyDataSource;
 import com.powsybl.iidm.network.*;
 
@@ -37,7 +38,7 @@ public class LocalCaseScanner implements LocalFileScanner {
     @Override
     public LocalFile scanFile(Path path, LocalFileScannerContext context) {
         if (Files.isRegularFile(path)) {
-            ReadOnlyDataSource dataSource = Importers.createDataSource(path);
+            ReadOnlyDataSource dataSource = DataSource.fromPath(path);
             for (Importer importer : Importer.list(importersLoader, context.getComputationManager(), importConfig)) {
                 if (importer.exists(dataSource)) {
                     return new LocalCase(path, importer);

@@ -19,7 +19,7 @@ import javax.enterprise.inject.Specializes;
 import javax.inject.Singleton;
 import java.util.Collections;
 
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
