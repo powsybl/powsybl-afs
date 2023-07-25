@@ -19,7 +19,7 @@
         <relativePath/>
     </parent>
     <artifactId>powsybl-afs</artifactId>
-    <version>5.1.0-SNAPSHOT</version>
+    <version>5.2.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>powsybl-afs</name>
@@ -88,7 +88,7 @@
         <mapdb.version>3.0.6</mapdb.version>
         <maven.core.version>3.3.9</maven.core.version>
         <mockito.version>3.8.0</mockito.version>
-        <resteasy.version>3.1.4.Final</resteasy.version>
+        <resteasy.version>3.14.0.Final</resteasy.version>
         <shrinkwrap-resolver.version>2.2.6</shrinkwrap-resolver.version>
         <slf4j.version>1.7.22</slf4j.version>
         <springboot.version>2.2.13.RELEASE</springboot.version>
@@ -344,7 +344,6 @@
                 <groupId>org.cassandraunit</groupId>
                 <artifactId>cassandra-unit</artifactId>
                 <version>${cassandraunit.version}</version>
-
                 <scope>test</scope>
             </dependency>
             <dependency>
