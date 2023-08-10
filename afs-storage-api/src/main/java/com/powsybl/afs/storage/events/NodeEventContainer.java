@@ -26,7 +26,7 @@ public class NodeEventContainer {
     @JsonProperty("topic")
     private final String topic;
 
-    public  NodeEventContainer() {
+    public NodeEventContainer() {
         this.topic = null;
         this.nodeEvent = null;
         this.fileSystemName = null;

@@ -23,7 +23,7 @@ import javax.websocket.server.ServerEndpoint;
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  */
 @ServerEndpoint(value = "/messages/" + AfsRestApi.RESOURCE_ROOT + "/" + AfsRestApi.VERSION + "/node_events/{fileSystemName}",
-                encoders = {NodeEventListEncoder.class},  decoders = {NodeEventContainerDecoder.class})
+                encoders = {NodeEventListEncoder.class}, decoders = {NodeEventContainerDecoder.class})
 public class NodeEventServer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NodeEventServer.class);

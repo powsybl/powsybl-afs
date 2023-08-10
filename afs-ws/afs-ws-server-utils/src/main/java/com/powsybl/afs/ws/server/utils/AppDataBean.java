@@ -68,7 +68,7 @@ public class AppDataBean {
     public <T extends ProjectFile, U> U getProjectFile(String fileSystemName, String nodeId, Class<T> clazz, Class<U> clazz2) {
         T projectFile = getProjectFile(fileSystemName, nodeId, clazz);
         if (!(clazz2.isAssignableFrom(projectFile.getClass()))) {
-            throw new AfsException("Project file '" + nodeId  + "' is not a " + clazz2.getName());
+            throw new AfsException("Project file '" + nodeId + "' is not a " + clazz2.getName());
         }
         return (U) projectFile;
     }

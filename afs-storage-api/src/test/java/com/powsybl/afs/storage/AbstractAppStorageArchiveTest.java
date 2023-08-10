@@ -59,7 +59,7 @@ public abstract class AbstractAppStorageArchiveTest {
     protected abstract AppStorage createStorage();
 
     @Test
-    public void archive() throws IOException  {
+    public void archive() throws IOException {
         // create test case
         NodeInfo rootFolderInfo = storage.createRootNodeIfNotExists(storage.getFileSystemName(), AbstractAppStorageTest.FOLDER_PSEUDO_CLASS);
         storage.setConsistent(rootFolderInfo.getId());
