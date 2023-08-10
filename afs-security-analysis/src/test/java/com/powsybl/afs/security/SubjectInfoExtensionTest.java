@@ -24,10 +24,10 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  */
-public class SubjectInfoExtensionTest {
+class SubjectInfoExtensionTest {
 
     @Test
-    public void test() throws IOException {
+    void test() throws IOException {
         SubjectInfoExtension extension = new SubjectInfoExtension(new TreeSet<>(Arrays.asList(Country.FR, Country.BE)),
                                                                   new TreeSet<>(Arrays.asList(225d, 400d)));
         assertEquals(Sets.newHashSet(225d, 400d), extension.getNominalVoltages());

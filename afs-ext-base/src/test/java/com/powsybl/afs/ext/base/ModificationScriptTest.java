@@ -101,11 +101,11 @@ public class ModificationScriptTest extends AbstractProjectFileTest {
         assertNotNull(include1);
         script.addScript(include1);
         String contentWithInclude = script.readScript(true);
-        assertEquals(contentWithInclude, "var foo=\"bar\"\n\nprintln 'bye'");
+        assertEquals("var foo=\"bar\"\n\nprintln 'bye'", contentWithInclude);
 
         script.addScript(include1);
         contentWithInclude = script.readScript(true);
-        assertEquals(contentWithInclude, "var foo=\"bar\"\n\nvar foo=\"bar\"\n\nprintln 'bye'");
+        assertEquals("var foo=\"bar\"\n\nvar foo=\"bar\"\n\nprintln 'bye'", contentWithInclude);
 
         ModificationScript include2 = rootFolder.fileBuilder(ModificationScriptBuilder.class)
                 .withName("include_script2")
@@ -116,7 +116,7 @@ public class ModificationScriptTest extends AbstractProjectFileTest {
         script.addScript(include1);
         script.addScript(include2);
         contentWithInclude = script.readScript(true);
-        assertEquals(contentWithInclude, "var foo=\"bar\"\n\nvar p0=1\n\nprintln 'bye'");
+        assertEquals("var foo=\"bar\"\n\nvar p0=1\n\nprintln 'bye'", contentWithInclude);
 
         ModificationScript include3 = rootFolder.fileBuilder(ModificationScriptBuilder.class)
                 .withName("include_script3")
@@ -126,11 +126,11 @@ public class ModificationScriptTest extends AbstractProjectFileTest {
         script.addScript(include3);
         script.removeScript(include2.getId());
         contentWithInclude = script.readScript(true);
-        assertEquals(contentWithInclude, "var foo=\"bar\"\n\nvar pmax=2\n\nprintln 'bye'");
+        assertEquals("var foo=\"bar\"\n\nvar pmax=2\n\nprintln 'bye'", contentWithInclude);
 
         include3.addScript(include2);
         contentWithInclude = script.readScript(true);
-        assertEquals(contentWithInclude, "var foo=\"bar\"\n\nvar p0=1\n\nvar pmax=2\n\nprintln 'bye'");
+        assertEquals("var foo=\"bar\"\n\nvar p0=1\n\nvar pmax=2\n\nprintln 'bye'", contentWithInclude);
 
         List<AbstractScript> includes = script.getIncludedScripts();
         assertEquals(2, includes.size());
@@ -161,10 +161,14 @@ public class ModificationScriptTest extends AbstractProjectFileTest {
         assertThatCode(() -> script.switchIncludedDependencies(0, -1)).isInstanceOf(AfsException.class);
         assertThatCode(() -> script.switchIncludedDependencies(1, 2)).isInstanceOf(AfsException.class);
 
-        assertThatCode(() -> rootFolder.fileBuilder(GenericScriptBuilder.class).build()).isInstanceOf(AfsException.class).hasMessage("Name is not set");
-        assertThatCode(() -> rootFolder.fileBuilder(GenericScriptBuilder.class).withName("foo").build()).isInstanceOf(AfsException.class).hasMessage("Script type is not set");
-        assertThatCode(() -> rootFolder.fileBuilder(GenericScriptBuilder.class).withName("foo").withType(ScriptType.GROOVY).build()).isInstanceOf(AfsException.class).hasMessage("Content is not set");
-        assertThatCode(() -> rootFolder.fileBuilder(GenericScriptBuilder.class).withName("include_script2").withType(ScriptType.GROOVY).withContent("hello").build()).isInstanceOf(AfsException.class).hasMessage("Parent folder already contains a 'include_script2' node");
+        GenericScriptBuilder genericScriptBuilder = rootFolder.fileBuilder(GenericScriptBuilder.class);
+        assertThatCode(genericScriptBuilder::build).isInstanceOf(AfsException.class).hasMessage("Name is not set");
+        genericScriptBuilder.withName("foo");
+        assertThatCode(genericScriptBuilder::build).isInstanceOf(AfsException.class).hasMessage("Script type is not set");
+        genericScriptBuilder.withType(ScriptType.GROOVY);
+        assertThatCode(genericScriptBuilder::build).isInstanceOf(AfsException.class).hasMessage("Content is not set");
+        genericScriptBuilder.withName("include_script2").withType(ScriptType.GROOVY).withContent("hello");
+        assertThatCode(genericScriptBuilder::build).isInstanceOf(AfsException.class).hasMessage("Parent folder already contains a 'include_script2' node");
 
         //assert that the cache is correctly cleared
         assertEquals("include_script1", include1.getName());

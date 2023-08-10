@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  */
-public class RemoteServiceConfigTest {
+class RemoteServiceConfigTest {
 
     private FileSystem fileSystem;
 
@@ -32,12 +32,12 @@ public class RemoteServiceConfigTest {
     }
 
     @AfterEach
-    public void closeFileSystem() throws IOException {
+    void closeFileSystem() throws IOException {
         fileSystem.close();
     }
 
     @Test
-    public void test() {
+    void test() {
         RemoteServiceConfig config = new RemoteServiceConfig("host", "test", 443, true);
         assertEquals("https://host:443/test", config.getRestUri().toString());
         assertEquals("wss://host:443/test", config.getWsUri().toString());
@@ -48,13 +48,13 @@ public class RemoteServiceConfigTest {
     }
 
     @Test
-    public void string() {
+    void string() {
         RemoteServiceConfig config = new RemoteServiceConfig("host", "test", 443, true);
         assertEquals("RemoteServiceConfig{hostName=host, appName=test, port=443, secure=true, autoReconnectionEnabled=false, reconnectionDelay=60}", config.toString());
     }
 
     @Test
-    public void readFromPlatformConfig() {
+    void readFromPlatformConfig() {
         InMemoryPlatformConfig platformConfig = new InMemoryPlatformConfig(fileSystem);
 
         MapModuleConfig moduleConfig = platformConfig.createModuleConfig("remote-service");

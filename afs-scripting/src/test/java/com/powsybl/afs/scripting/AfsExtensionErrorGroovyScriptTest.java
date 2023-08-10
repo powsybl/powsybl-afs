@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  */
-public class AfsExtensionErrorGroovyScriptTest extends AbstractGroovyScriptTest {
+class AfsExtensionErrorGroovyScriptTest extends AbstractGroovyScriptTest {
 
     @Override
     protected AppStorage createStorage() {
@@ -43,7 +43,7 @@ public class AfsExtensionErrorGroovyScriptTest extends AbstractGroovyScriptTest 
 
     @Override
     @Test
-    public void test() throws IOException {
+    void test() throws IOException {
         assertThrows(AfsException.class, super::test);
     }
 }

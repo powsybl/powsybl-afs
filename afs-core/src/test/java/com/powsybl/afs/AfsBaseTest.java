@@ -42,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  */
-public class AfsBaseTest {
+class AfsBaseTest {
 
     private FileSystem fileSystem;
 
@@ -73,7 +73,7 @@ public class AfsBaseTest {
     }
 
     @Test
-    public void baseTest() {
+    void baseTest() {
         assertSame(InMemoryEventsBus.class, ad.getEventsBus().getClass());
         assertSame(afs, ad.getFileSystem("mem"));
         assertNull(ad.getFileSystem("???"));
@@ -238,7 +238,7 @@ public class AfsBaseTest {
     }
 
     @Test
-    public void archiveAndUnarchiveTestWithZip() throws IOException {
+    void archiveAndUnarchiveTestWithZip() throws IOException {
         Project project = afs.getRootFolder().createProject("test");
         ProjectFolder rootFolder = project.getRootFolder();
         ProjectFolder dir1 = rootFolder.createFolder("dir1");
@@ -256,7 +256,7 @@ public class AfsBaseTest {
     }
 
     @Test
-    public void archiveAndUnarchiveTestWithDirAndBlackList() throws IOException {
+    void archiveAndUnarchiveTestWithDirAndBlackList() throws IOException {
         Project project = afs.getRootFolder().createProject("test");
         ProjectFolder rootFolder = project.getRootFolder();
         ProjectFolder dir1 = rootFolder.createFolder("dir1");
@@ -282,7 +282,7 @@ public class AfsBaseTest {
     }
 
     @Test
-    public void archiveAndUnarchiveTestWithDependency() throws IOException {
+    void archiveAndUnarchiveTestWithDependency() throws IOException {
         /* In this test, there are two directories each with a file
            There is a dependency between the first and the second file
            Test archive and unarchive the first directory with these dependencies */
@@ -321,7 +321,7 @@ public class AfsBaseTest {
     }
 
     @Test
-    public void archiveAndUnarchiveTestRemoveTS() throws IOException {
+    void archiveAndUnarchiveTestRemoveTS() throws IOException {
         Project project = afs.getRootFolder().createProject("test");
         ProjectFolder rootFolder = project.getRootFolder();
         ProjectFolder dir1 = rootFolder.createFolder("dir1");
@@ -348,7 +348,7 @@ public class AfsBaseTest {
     }
 
     @Test
-    public void archiveAndUnarchiveTestWithDependencies() throws IOException {
+    void archiveAndUnarchiveTestWithDependencies() throws IOException {
 
         /* In this test, there are two directories, one with a file and the second with two files
            There is a dependency between the first and the second file and between the second an the third
@@ -397,7 +397,7 @@ public class AfsBaseTest {
     }
 
     @Test
-    public void archiveAndUnarchiveTestWithDeepDependencies() throws IOException {
+    void archiveAndUnarchiveTestWithDeepDependencies() throws IOException {
 
         /* In this test, there are two directories, one with two files and the second with one file
            There is a dependency between the first and the second file and between the second an the third
@@ -446,7 +446,7 @@ public class AfsBaseTest {
     }
 
     @Test
-    public void moveToTest() {
+    void moveToTest() {
         Project project = afs.getRootFolder().createProject("test");
         ProjectFolder test1 = project.getRootFolder().createFolder("test1");
         ProjectFolder test2 = project.getRootFolder().createFolder("test2");
@@ -463,7 +463,7 @@ public class AfsBaseTest {
     }
 
     @Test
-    public void findProjectFolderTest() {
+    void findProjectFolderTest() {
 
         Project project = afs.getRootFolder().createProject("test");
         ProjectFolder test1 = project.getRootFolder().createFolder("test1");
@@ -477,7 +477,7 @@ public class AfsBaseTest {
     }
 
     @Test
-    public void findProjectFileTest() {
+    void findProjectFileTest() {
         Project project = afs.getRootFolder().createProject("test");
         FooFile createdFile = project.getRootFolder().fileBuilder(FooFileBuilder.class)
                 .withName("foo")
@@ -495,7 +495,7 @@ public class AfsBaseTest {
     }
 
     @Test
-    public void findProjectTest() {
+    void findProjectTest() {
         Project project = afs.getRootFolder().createProject("test");
         Project foundProject = afs.findProject(project.getId()).orElse(null);
         assertNotNull(foundProject);
@@ -509,7 +509,7 @@ public class AfsBaseTest {
     }
 
     @Test
-    public void fetchNodeTest() {
+    void fetchNodeTest() {
         Folder folder = afs.getRootFolder().createFolder("testFolder");
         Project project = folder.createProject("test");
         FooFile createdFile = project.getRootFolder().fileBuilder(FooFileBuilder.class)
@@ -552,7 +552,7 @@ public class AfsBaseTest {
     }
 
     @Test
-    public void hasDeepDependencyTest() {
+    void hasDeepDependencyTest() {
         Project project = afs.getRootFolder().createProject("test");
         FooFile createdFile = project.getRootFolder().fileBuilder(FooFileBuilder.class)
                 .withName("foo")

@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  */
-public class DependencyCacheTest extends AbstractProjectFileTest {
+class DependencyCacheTest extends AbstractProjectFileTest {
 
     class Tic extends ProjectFile {
 
@@ -158,7 +158,7 @@ public class DependencyCacheTest extends AbstractProjectFileTest {
     }
 
     @Test
-    public void test() {
+    void test() {
         Project project = afs.getRootFolder().createProject("project");
         Tic tic = project.getRootFolder().fileBuilder(TicBuilder.class).setName("tic").build();
         Tic tic2 = project.getRootFolder().fileBuilder(TicBuilder.class).setName("tic2").build();

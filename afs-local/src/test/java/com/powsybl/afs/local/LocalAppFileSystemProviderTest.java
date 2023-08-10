@@ -31,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  */
-public class LocalAppFileSystemProviderTest {
+class LocalAppFileSystemProviderTest {
 
     private FileSystem fileSystem;
 
@@ -41,12 +41,12 @@ public class LocalAppFileSystemProviderTest {
     }
 
     @AfterEach
-    public void tearDown() throws Exception {
+    void tearDown() throws Exception {
         fileSystem.close();
     }
 
     @Test
-    public void test() {
+    void test() {
         ComputationManager computationManager = Mockito.mock(ComputationManager.class);
         LocalAppFileSystemConfig config = new LocalAppFileSystemConfig("drive", true, fileSystem.getPath("/work"));
         LocalFileScanner extension = new LocalCaseScanner(new ImportConfig(), new ImportersLoaderList());

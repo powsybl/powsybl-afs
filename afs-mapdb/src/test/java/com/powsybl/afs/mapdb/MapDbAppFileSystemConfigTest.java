@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  */
-public class MapDbAppFileSystemConfigTest {
+class MapDbAppFileSystemConfigTest {
 
     private FileSystem fileSystem;
 
@@ -46,12 +46,12 @@ public class MapDbAppFileSystemConfigTest {
     }
 
     @AfterEach
-    public void tearDown() throws Exception {
+    void tearDown() throws Exception {
         fileSystem.close();
     }
 
     @Test
-    public void loadTest() {
+    void loadTest() {
         List<MapDbAppFileSystemConfig> configs = MapDbAppFileSystemConfig.load(platformConfig);
         assertEquals(2, configs.size());
         MapDbAppFileSystemConfig config = configs.get(0);
@@ -74,7 +74,7 @@ public class MapDbAppFileSystemConfigTest {
     }
 
     @Test
-    public void loadEmptyTest() {
+    void loadEmptyTest() {
         List<MapDbAppFileSystemConfig> configs = MapDbAppFileSystemConfig.load(new InMemoryPlatformConfig(fileSystem));
         assertNotNull(configs);
         assertTrue(configs.isEmpty());

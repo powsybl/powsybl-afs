@@ -135,7 +135,7 @@ public class AppStorageServerTest extends AbstractAppStorageTest {
     }
 
     @Test
-    public void handleRegisteredErrorTest() {
+    void handleRegisteredErrorTest() {
         assertThatCode(() -> ClientUtils.checkOk(ClientUtils.createClient().target(getRestUri()).path("/rest/dummy/registeredError").request().get())).isInstanceOf(CancellationException.class);
         assertThatCode(() -> ClientUtils.checkOk(ClientUtils.createClient().target(getRestUri()).path("/rest/dummy/unregisteredError").request().get())).isInstanceOf(AfsStorageException.class);
         assertThatCode(() -> ClientUtils.checkOk(ClientUtils.createClient().target(getRestUri()).path("/rest/dummy/registeredErrorWithMessage").request().get())).isInstanceOf(NotImplementedException.class).hasMessage("hello");

@@ -12,7 +12,7 @@ import java.io.StringReader;
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  */
-public class HelloGroovyScriptTest extends AbstractGroovyScriptTest {
+class HelloGroovyScriptTest extends AbstractGroovyScriptTest {
 
     @Override
     protected Reader getCodeReader() {

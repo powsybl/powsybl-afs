@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @author THIYAGARASA Pratheep Ext
  */
 @RunWith(MockitoJUnitRunner.class)
-public class AppDataWrapperTest {
+class AppDataWrapperTest {
 
     @InjectMocks
     private AppDataWrapper appDataWrapper;
@@ -25,7 +25,7 @@ public class AppDataWrapperTest {
     private AppData appData;
 
     @Test
-    public void failedToGetStorage() {
+    void failedToGetStorage() {
         Mockito.when(appData.getRemotelyAccessibleStorage("fileSystem")).thenReturn(null);
         assertThatThrownBy(() -> appDataWrapper.getStorage("fileSystem"))
                 .isInstanceOf(ResponseStatusException.class)
@@ -33,7 +33,7 @@ public class AppDataWrapperTest {
     }
 
     @Test
-    public void failedToGetFileSystem() {
+    void failedToGetFileSystem() {
         Mockito.when(appData.getFileSystem("fileSystem")).thenReturn(null);
         assertThatThrownBy(() -> appDataWrapper.getFileSystem("fileSystem"))
                 .isInstanceOf(ResponseStatusException.class)

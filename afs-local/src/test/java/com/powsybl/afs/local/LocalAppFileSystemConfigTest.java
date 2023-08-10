@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  */
-public class LocalAppFileSystemConfigTest {
+class LocalAppFileSystemConfigTest {
 
     private FileSystem fileSystem;
 
@@ -45,12 +45,12 @@ public class LocalAppFileSystemConfigTest {
     }
 
     @AfterEach
-    public void tearDown() throws Exception {
+    void tearDown() throws Exception {
         fileSystem.close();
     }
 
     @Test
-    public void loadTest() {
+    void loadTest() {
         List<LocalAppFileSystemConfig> configs = LocalAppFileSystemConfig.load(platformConfig);
         assertEquals(2, configs.size());
         LocalAppFileSystemConfig config = configs.get(0);
