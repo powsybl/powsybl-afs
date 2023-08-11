@@ -20,6 +20,7 @@ import org.cassandraunit.CassandraCQLUnit;
 import org.cassandraunit.dataset.cql.ClassPathCQLDataSet;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.Rule;
+import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -43,6 +44,7 @@ import static org.junit.jupiter.api.Assumptions.assumeFalse;
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  */
+@EnableRuleMigrationSupport
 public class CassandraAppStorageTest extends AbstractAppStorageTest {
 
     @Rule

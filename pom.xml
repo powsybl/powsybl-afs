@@ -73,30 +73,30 @@
             ../../afs-distribution/target/site/jacoco-aggregate/jacoco.xml,
         </sonar.coverage.jacoco.xmlReportPaths>
 
-        <arquillianbom.version>1.2.0.Final</arquillianbom.version>
+        <arquillianbom.version>1.7.0.Final</arquillianbom.version>
         <assertj.version>3.11.0</assertj.version>
         <autoservice.version>1.0-rc2</autoservice.version>
-        <cassandra.version>4.10.0</cassandra.version>
+        <cassandra.version>4.13.0</cassandra.version>
         <cassandraunit.version>4.3.1.0</cassandraunit.version>
         <groovy.version>3.0.15</groovy.version>
         <guava.version>32.0.1-jre</guava.version>
-        <jackson.version>2.10.5</jackson.version>
+        <jackson.version>2.14.1</jackson.version>
         <javaeeapi.version>7.0</javaeeapi.version>
         <jimfs.version>1.1</jimfs.version>
         <jjwt.version>0.9.0</jjwt.version>
         <junit-jupiter.version>5.5.2</junit-jupiter.version>
         <mapdb.version>3.0.6</mapdb.version>
-        <maven.core.version>3.3.9</maven.core.version>
-        <mockito.version>3.8.0</mockito.version>
+        <maven.core.version>3.8.5</maven.core.version>
+        <mockito.version>5.1.1</mockito.version>
         <resteasy.version>3.14.0.Final</resteasy.version>
         <shrinkwrap-resolver.version>2.2.6</shrinkwrap-resolver.version>
         <slf4j.version>1.7.22</slf4j.version>
-        <springboot.version>2.2.13.RELEASE</springboot.version>
+        <springboot.version>2.7.14</springboot.version>
         <swaggerjaxrs.version>1.5.16</swaggerjaxrs.version>
         <swagger.version>1.5.20</swagger.version>
         <tyrus.version>1.13.1</tyrus.version>
         <wildfly.dist.version>11.0.0.Final</wildfly.dist.version>
-        <wildflyarquilliancontainerembedded.version>2.1.0.Final</wildflyarquilliancontainerembedded.version>
+        <wildflyarquilliancontainerembedded.version>2.2.0.Final</wildflyarquilliancontainerembedded.version>
 
         <powsyblcore.version>5.3.2</powsyblcore.version>
     </properties>
@@ -335,6 +335,12 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-migrationsupport</artifactId>
+                <version>${junit-jupiter.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
                 <groupId>org.assertj</groupId>
                 <artifactId>assertj-core</artifactId>
                 <version>${assertj.version}</version>
@@ -360,6 +366,12 @@
             <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-core</artifactId>
+                <version>${mockito.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-junit-jupiter</artifactId>
                 <version>${mockito.version}</version>
                 <scope>test</scope>
             </dependency>

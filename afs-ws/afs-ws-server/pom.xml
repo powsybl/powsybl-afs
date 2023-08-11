@@ -60,8 +60,9 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.jboss.arquillian.junit</groupId>
-            <artifactId>arquillian-junit-container</artifactId>
+            <groupId>org.jboss.arquillian.junit5</groupId>
+            <artifactId>arquillian-junit5-container</artifactId>
+            <version>${arquillianbom.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -72,6 +73,8 @@
         <dependency>
             <groupId>org.jboss.shrinkwrap.resolver</groupId>
             <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
+<!--            <version>3.2.1</version>-->
+<!--            <version>${shrinkwrap-resolver.version}</version>-->
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -84,11 +87,11 @@
             <artifactId>slf4j-simple</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.wildfly.arquillian</groupId>
-            <artifactId>wildfly-arquillian-container-embedded</artifactId>
-            <scope>test</scope>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.wildfly.arquillian</groupId>-->
+<!--            <artifactId>wildfly-arquillian-container-embedded</artifactId>-->
+<!--            <scope>test</scope>-->
+<!--        </dependency>-->
 
         <dependency>
             <groupId>${project.groupId}</groupId>
@@ -157,6 +160,7 @@
                         <jboss.socket.binding.port-offset>1000</jboss.socket.binding.port-offset>
                     </systemPropertyVariables>
                     <redirectTestOutputToFile>false</redirectTestOutputToFile>
+                    <argLine>-verbose:class</argLine>
                 </configuration>
             </plugin>
             <plugin>
