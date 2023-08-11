@@ -30,15 +30,15 @@ import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.test.EurostagTutorialExample1Factory;
 import com.powsybl.loadflow.LoadFlowResult;
 import com.powsybl.security.*;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
@@ -128,7 +128,7 @@ public class SecurityAnalysisRunnerTest extends AbstractProjectFileTest {
                 new LocalNetworkCacheServiceExtension());
     }
 
-    @Before
+    @BeforeEach
     public void setup() throws IOException {
         super.setup();
 

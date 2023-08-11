@@ -14,9 +14,9 @@ import com.powsybl.computation.ComputationManager;
 import com.powsybl.scripting.groovy.GroovyScriptExtension;
 import com.powsybl.scripting.groovy.GroovyScripts;
 import groovy.lang.Binding;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.io.ByteArrayOutputStream;
@@ -28,12 +28,12 @@ import java.util.List;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  */
-public abstract class AbstractGroovyScriptTest {
+abstract class AbstractGroovyScriptTest {
 
     private class AfsGroovyScriptExtensionMock implements GroovyScriptExtension {
 
@@ -79,21 +79,21 @@ public abstract class AbstractGroovyScriptTest {
         return emptyList();
     }
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         ComputationManager computationManager = Mockito.mock(ComputationManager.class);
         data = new AppData(computationManager, computationManager,
                 singletonList(cm -> singletonList(new AppFileSystem("mem", false, createStorage()))),
                 getFileExtensions(), getProjectFileExtensions(), getServiceExtensions());
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         data.close();
     }
 
     @Test
-    public void test() throws IOException {
+    void test() throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try (Reader codeReader = getCodeReader(); PrintStream ps = new PrintStream(out)) {
             GroovyScripts.run(codeReader, getExtensions(), ps);

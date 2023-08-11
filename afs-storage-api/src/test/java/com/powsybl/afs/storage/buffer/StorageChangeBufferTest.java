@@ -10,11 +10,11 @@ import com.powsybl.timeseries.InfiniteTimeSeriesIndex;
 import com.powsybl.timeseries.TimeSeriesDataType;
 import com.powsybl.timeseries.TimeSeriesMetadata;
 import com.powsybl.timeseries.UncompressedDoubleDataChunk;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>

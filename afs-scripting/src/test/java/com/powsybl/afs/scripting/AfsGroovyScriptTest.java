@@ -16,7 +16,7 @@ import java.io.StringReader;
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  */
-public class AfsGroovyScriptTest extends AbstractGroovyScriptTest {
+class AfsGroovyScriptTest extends AbstractGroovyScriptTest {
 
     @Override
     protected AppStorage createStorage() {

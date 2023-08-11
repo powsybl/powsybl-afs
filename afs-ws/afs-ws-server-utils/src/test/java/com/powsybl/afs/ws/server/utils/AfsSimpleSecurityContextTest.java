@@ -6,21 +6,20 @@
  */
 package com.powsybl.afs.ws.server.utils;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Paul Bui-Quang <paul.buiquang at rte-france.com>
  */
-public class AfsSimpleSecurityContextTest {
+class AfsSimpleSecurityContextTest {
 
     @Test
-    public void equalityTest() {
+    void equalityTest() {
         AfsSimpleSecurityContext afsSimpleSecurityContext = new AfsSimpleSecurityContext("foo");
         assertThat(afsSimpleSecurityContext.getUserPrincipal().getName()).isEqualTo("foo");
         assertThat(afsSimpleSecurityContext)
-                .isEqualTo(afsSimpleSecurityContext)
                 .isEqualTo(new AfsSimpleSecurityContext("foo"))
                 .isNotEqualTo(new AfsSimpleSecurityContext("bar"))
                 .isNotEqualTo(null)

@@ -18,7 +18,7 @@ import com.powsybl.contingency.LineContingency;
 import com.powsybl.iidm.network.Line;
 import com.powsybl.iidm.network.Network;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.util.Collections;

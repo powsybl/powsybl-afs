@@ -4,17 +4,17 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.datastax.oss.driver.api.core.cql.BatchStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.BatchType;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.powsybl.afs.cassandra.CassandraAppStorage.BatchStatements;
 
-public class BatchStatementsTest {
+class BatchStatementsTest {
 
     @Test
-    public void statementsAreAddedToBuilder() {
+    void statementsAreAddedToBuilder() {
         // GIVEN
         BatchStatements statements = new BatchStatements(() -> new BatchStatementBuilder(BatchType.LOGGED),
             builder -> { });
@@ -29,7 +29,7 @@ public class BatchStatementsTest {
     }
 
     @Test
-    public void statementsAreExecutedByBatch() {
+    void statementsAreExecutedByBatch() {
         // GIVEN
         Set<BatchStatementBuilder> executions = new HashSet<>();
         BatchStatements statements = new BatchStatements(() -> new BatchStatementBuilder(BatchType.LOGGED),
@@ -47,7 +47,7 @@ public class BatchStatementsTest {
     }
 
     @Test
-    public void statementsAreExecutedManually() {
+    void statementsAreExecutedManually() {
         // GIVEN
         Set<BatchStatementBuilder> executions = new HashSet<>();
         BatchStatements statements = new BatchStatements(() -> new BatchStatementBuilder(BatchType.LOGGED),

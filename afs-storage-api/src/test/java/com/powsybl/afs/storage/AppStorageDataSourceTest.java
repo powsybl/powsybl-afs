@@ -6,18 +6,18 @@
  */
 package com.powsybl.afs.storage;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  */
-public class AppStorageDataSourceTest {
+class AppStorageDataSourceTest {
 
     @Test
-    public void suffixExtTest() {
+    void suffixExtTest() {
         AppStorageDataSource.SuffixAndExtension suffixAndExtension = new AppStorageDataSource.SuffixAndExtension("_EQ", "xml");
         assertEquals("DATA_SOURCE_SUFFIX_EXT___EQ__xml", suffixAndExtension.toString());
         AppStorageDataSource.Name name = AppStorageDataSource.Name.parse("DATA_SOURCE_SUFFIX_EXT___EQ__xml");
@@ -27,7 +27,7 @@ public class AppStorageDataSourceTest {
     }
 
     @Test
-    public void fileNameTest() {
+    void fileNameTest() {
         AppStorageDataSource.FileName fileName = new AppStorageDataSource.FileName("test.xml");
         assertEquals("DATA_SOURCE_FILE_NAME__test.xml", fileName.toString());
         AppStorageDataSource.Name name = AppStorageDataSource.Name.parse("DATA_SOURCE_FILE_NAME__test.xml");

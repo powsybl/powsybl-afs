@@ -9,7 +9,7 @@
 package com.powsybl.afs.ws.server;
 
 import io.swagger.jaxrs.config.BeanConfig;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -19,10 +19,10 @@ import static org.assertj.core.api.Java6Assertions.assertThat;
 /**
  * @author Paul Bui-Quang <paul.buiquang at rte-france.com>
  */
-public class SwaggerExtensionTest {
+class SwaggerExtensionTest {
 
     @Test
-    public void test() {
+    void test() {
         AppStorageApplication appStorageApplication = new AppStorageApplication();
         BeanConfig swaggerConfig = appStorageApplication.initSwaggerConfig(Arrays.asList(
             () -> {

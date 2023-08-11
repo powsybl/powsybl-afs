@@ -11,8 +11,8 @@ import com.powsybl.computation.ComputationManager;
 import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.Substation;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -45,7 +45,7 @@ public abstract class AbstractProjectFileTest {
         return Collections.emptyList();
     }
 
-    @Before
+    @BeforeEach
     public void setup() throws IOException {
         network = Network.create("test", "test");
         Substation s = network.newSubstation()
@@ -63,7 +63,7 @@ public abstract class AbstractProjectFileTest {
         afs.setData(ad);
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws IOException {
         storage.close();
     }
