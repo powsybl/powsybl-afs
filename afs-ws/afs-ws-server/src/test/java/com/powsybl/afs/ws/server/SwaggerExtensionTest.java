@@ -8,7 +8,8 @@
 
 package com.powsybl.afs.ws.server;
 
-import io.swagger.jaxrs.config.BeanConfig;
+//import io.swagger.jaxrs.config.BeanConfig;
+import io.swagger.v3.oas.models.OpenAPI;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -24,14 +25,14 @@ public class SwaggerExtensionTest {
     @Test
     public void test() {
         AppStorageApplication appStorageApplication = new AppStorageApplication();
-        BeanConfig swaggerConfig = appStorageApplication.initSwaggerConfig(Arrays.asList(
+        OpenAPI swaggerConfig = appStorageApplication.initSwaggerConfig(Arrays.asList(
             () -> {
-                BeanConfig beanConfig = new BeanConfig();
+                OpenAPI beanConfig = new OpenAPI();
                 beanConfig.setBasePath("/foo");
                 return beanConfig;
             },
             () -> {
-                BeanConfig beanConfig = new BeanConfig();
+                OpenAPI beanConfig = new OpenAPI();
                 beanConfig.setBasePath("/bar");
                 return beanConfig;
             })
