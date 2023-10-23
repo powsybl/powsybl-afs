@@ -8,7 +8,6 @@
 
 package com.powsybl.afs.ws.server.utils;
 
-//import io.swagger.jaxrs.config.BeanConfig;
 import io.swagger.v3.oas.models.OpenAPI;
 
 import java.util.function.Supplier;

@@ -8,11 +8,9 @@ package com.powsybl.afs.ws.server;
 
 import com.powsybl.afs.ws.server.utils.SwaggerConfigExtension;
 import com.powsybl.afs.ws.utils.AfsRestApi;
-//import io.swagger.jaxrs.config.BeanConfig;
-//import io.swagger.models.Info;
-//import io.swagger.v3.oas.integration.SwaggerConfiguration;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.servers.Server;
 import org.apache.commons.compress.utils.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +18,6 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.core.Application;
 import java.util.ArrayList;
-//import java.util.Collections;
 import java.util.List;
 import java.util.ServiceLoader;
 
@@ -50,14 +47,9 @@ public class AppStorageApplication extends Application {
                 .title("AFS storage API")
                 .version(AfsRestApi.VERSION)
                 .description("This is the documentation of AFS REST API"));
-//            oas
-//
-//            SwaggerConfiguration oasConfig = new SwaggerConfiguration()
-//                .resourcePackages(Collections.singleton(AppStorageServer.class.getPackage().getName()))
-//                .openAPI(oas);
-//            beanConfig.setBasePath("/rest");
-//            beanConfig.setResourcePackage(AppStorageServer.class.getPackage().getName());
-//            beanConfig.setScan();
+            Server server = new Server();
+            server.setUrl("/rest");
+            oas.servers(List.of(server));
             return oas;
         }
 
