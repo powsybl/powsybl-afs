@@ -19,6 +19,7 @@ import io.swagger.v3.oas.annotations.*;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +41,7 @@ import java.util.*;
 @RestController
 @RequestMapping(value = "/rest/afs/" + StorageServer.API_VERSION)
 @ComponentScan(basePackageClasses = {AppDataWrapper.class, StorageServer.class})
+@Tag(name = "afs")
 public class StorageServer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StorageServer.class);
