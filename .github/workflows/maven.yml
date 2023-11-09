@@ -35,6 +35,10 @@ jobs:
         run: mvn --batch-mode install
 
       - name: Run SonarCloud analysis
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
         if: matrix.os == 'ubuntu-latest'
         run: >
           mvn --batch-mode -DskipTests sonar:sonar
