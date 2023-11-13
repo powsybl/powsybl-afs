@@ -8,7 +8,7 @@
 
 package com.powsybl.afs.ws.server.utils;
 
-import io.swagger.jaxrs.config.BeanConfig;
+import io.swagger.v3.oas.models.OpenAPI;
 
 import java.util.function.Supplier;
 
@@ -18,6 +18,6 @@ import java.util.function.Supplier;
  * The first extension found will be used.
  * @author Paul Bui-Quang <paul.buiquang at rte-france.com>
  */
-public interface SwaggerConfigExtension extends Supplier<BeanConfig> {
+public interface SwaggerConfigExtension extends Supplier<OpenAPI> {
 
 }

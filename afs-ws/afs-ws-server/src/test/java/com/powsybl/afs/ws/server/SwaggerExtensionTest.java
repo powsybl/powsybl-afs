@@ -8,11 +8,13 @@
 
 package com.powsybl.afs.ws.server;
 
-import io.swagger.jaxrs.config.BeanConfig;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.servers.Server;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import static org.assertj.core.api.Java6Assertions.assertThat;
 
@@ -24,21 +26,25 @@ public class SwaggerExtensionTest {
     @Test
     public void test() {
         AppStorageApplication appStorageApplication = new AppStorageApplication();
-        BeanConfig swaggerConfig = appStorageApplication.initSwaggerConfig(Arrays.asList(
+        OpenAPI swaggerConfig = appStorageApplication.initSwaggerConfig(Arrays.asList(
             () -> {
-                BeanConfig beanConfig = new BeanConfig();
-                beanConfig.setBasePath("/foo");
-                return beanConfig;
+                OpenAPI oas = new OpenAPI();
+                Server server = new Server();
+                server.setUrl("/foo");
+                oas.servers(List.of(server));
+                return oas;
             },
             () -> {
-                BeanConfig beanConfig = new BeanConfig();
-                beanConfig.setBasePath("/bar");
-                return beanConfig;
+                OpenAPI oas = new OpenAPI();
+                Server server = new Server();
+                server.setUrl("/bar");
+                oas.servers(List.of(server));
+                return oas;
             })
         );
-        assertThat(swaggerConfig.getBasePath()).isEqualTo("/foo");
+        assertThat(swaggerConfig.getServers().get(0).getUrl()).isEqualTo("/foo");
 
         swaggerConfig = appStorageApplication.initSwaggerConfig(Collections.emptyList());
-        assertThat(swaggerConfig.getBasePath()).isEqualTo("/rest");
+        assertThat(swaggerConfig.getServers().get(0).getUrl()).isEqualTo("/rest");
     }
 }

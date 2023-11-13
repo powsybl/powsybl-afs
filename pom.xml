@@ -92,8 +92,7 @@
         <shrinkwrap-resolver.version>2.2.6</shrinkwrap-resolver.version>
         <slf4j.version>1.7.22</slf4j.version>
         <springboot.version>2.2.13.RELEASE</springboot.version>
-        <swaggerjaxrs.version>1.5.16</swaggerjaxrs.version>
-        <swagger.version>1.5.20</swagger.version>
+        <swagger.version>2.2.7</swagger.version>
         <tyrus.version>1.13.1</tyrus.version>
         <wildfly.dist.version>11.0.0.Final</wildfly.dist.version>
         <wildflyarquilliancontainerembedded.version>2.1.0.Final</wildflyarquilliancontainerembedded.version>
@@ -226,9 +225,14 @@
                 <version>${jjwt.version}</version>
             </dependency>
             <dependency>
-                <groupId>io.swagger</groupId>
-                <artifactId>swagger-jaxrs</artifactId>
-                <version>${swaggerjaxrs.version}</version>
+                <groupId>io.swagger.core.v3</groupId>
+                <artifactId>swagger-annotations</artifactId>
+                <version>${swagger.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.swagger.core.v3</groupId>
+                <artifactId>swagger-jaxrs2</artifactId>
+                <version>${swagger.version}</version>
             </dependency>
             <dependency>
                 <groupId>javax</groupId>
@@ -276,11 +280,6 @@
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
                 <version>${slf4j.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.swagger</groupId>
-                <artifactId>swagger-annotations</artifactId>
-                <version>${swagger.version}</version>
             </dependency>
 
 
