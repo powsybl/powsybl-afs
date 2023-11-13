@@ -103,7 +103,7 @@ public class StorageServer {
             Instant exp = Instant.ofEpochSecond(instant);
             builder.setInconsistentNodesExpirationTime(exp);
         }
-        if (Boolean.TRUE.equals(repair)) {
+        if (repair) {
             builder.repair();
         }
         return ok(storage.checkFileSystem(builder.build()));
