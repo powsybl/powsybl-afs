@@ -12,7 +12,7 @@ import com.powsybl.afs.ProjectFileCreationContext;
 import com.powsybl.afs.ProjectFileExtension;
 
 /**
- * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
+ * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 @AutoService(ProjectFileExtension.class)
 public class ModificationScriptExtension implements ProjectFileExtension<ModificationScript, ModificationScriptBuilder> {

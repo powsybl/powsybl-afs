@@ -27,8 +27,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
- * @author Ali Tahanout <ali.tahanout at rte-france.com>
- * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
+ * @author Ali Tahanout {@literal <ali.tahanout at rte-france.com>}
+ * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 @AutoService(AppFileSystemProvider.class)
 public class RemoteAppFileSystemProvider implements AppFileSystemProvider {

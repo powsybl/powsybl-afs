@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * Common interface for project files able to provide a Network.
  *
- * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
+ * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 public interface ProjectCase {
 

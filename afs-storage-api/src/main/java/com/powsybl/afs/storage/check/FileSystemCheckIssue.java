@@ -11,7 +11,7 @@ import java.util.Objects;
 /**
  * An issue identified during a file system check.
  *
- * @author Yichen TANG <yichen.tang at rte-france.com>
+ * @author Yichen TANG {@literal <yichen.tang at rte-france.com>}
  */
 public class FileSystemCheckIssue {
 

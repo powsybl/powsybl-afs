@@ -9,7 +9,7 @@ package com.powsybl.afs.ws.client.utils;
 import javax.websocket.DeploymentException;
 
 /**
- * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
+ * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 public class UncheckedDeploymentException extends RuntimeException {
 

@@ -18,7 +18,7 @@ import org.springframework.web.socket.WebSocketSession;
 /**
  * A listener which forwards events to a websocket client.
  *
- * @author Sylvain Leclerc <sylvain.leclerc at rte-france.com>
+ * @author Sylvain Leclerc {@literal <sylvain.leclerc at rte-france.com>}
  */
 public class NodeEventForwarder implements AppStorageListener {
 

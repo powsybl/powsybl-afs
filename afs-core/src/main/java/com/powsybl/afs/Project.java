@@ -16,7 +16,7 @@ import java.util.Objects;
  * <p>
  * A project will have its own tree of project folders and project files, with possible dependencies between files.
  *
- * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
+ * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 public class Project extends File {
 

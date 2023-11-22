@@ -11,7 +11,7 @@ import com.powsybl.afs.ServiceCreationContext;
 import com.powsybl.afs.ServiceExtension;
 
 /**
- * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
+ * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 @AutoService(ServiceExtension.class)
 public class LocalNetworkCacheServiceExtension implements ServiceExtension<NetworkCacheService> {

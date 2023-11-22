@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
  * <p>
  * Project folders may have children project folders or files, and provides methods to create new children.
  *
- * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
+ * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 public class ProjectFolder extends ProjectNode implements FolderBase<ProjectNode, ProjectFolder> {
 

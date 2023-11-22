@@ -12,7 +12,7 @@ import com.powsybl.afs.storage.NodeInfo;
 import com.powsybl.timeseries.json.TimeSeriesJsonModule;
 
 /**
- * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
+ * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 public class AppStorageJsonModule extends TimeSeriesJsonModule {
 

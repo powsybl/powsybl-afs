@@ -16,7 +16,7 @@ import java.util.Set;
  * Options for a file system check. It defines what types of issues should be looked for,
  * and if they should be repaired or not.
  *
- * @author Yichen TANG <yichen.tang at rte-france.com>
+ * @author Yichen TANG {@literal <yichen.tang at rte-france.com>}
  */
 public class FileSystemCheckOptions {
 

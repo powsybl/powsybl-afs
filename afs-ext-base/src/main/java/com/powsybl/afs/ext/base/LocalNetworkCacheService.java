@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 
 /**
- * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
+ * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 public class LocalNetworkCacheService implements NetworkCacheService {
 

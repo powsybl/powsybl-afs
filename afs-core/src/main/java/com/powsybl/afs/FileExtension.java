@@ -34,7 +34,7 @@ package com.powsybl.afs;
  * }
  * </pre>
  *
- * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
+ * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 public interface FileExtension<T extends File> {
 

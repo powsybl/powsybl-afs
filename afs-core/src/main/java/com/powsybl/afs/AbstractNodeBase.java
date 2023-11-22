@@ -26,7 +26,7 @@ import java.util.stream.Stream;
 /**
  * Base class for all node objects stored in an AFS tree.
  *
- * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
+ * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 public abstract class AbstractNodeBase<F> {
 

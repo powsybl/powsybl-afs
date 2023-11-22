@@ -23,7 +23,7 @@ import static org.junit.Assert.*;
 import java.io.IOException;
 
 /**
- * @author Amira KAHYA <amira.kahya at rte-france.com>
+ * @author Amira KAHYA {@literal <amira.kahya at rte-france.com>}
  */
 public class ProjectTest {
     private static final String FOLDER_PSEUDO_CLASS = "folder";

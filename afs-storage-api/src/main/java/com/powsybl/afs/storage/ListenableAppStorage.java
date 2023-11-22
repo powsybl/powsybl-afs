@@ -16,7 +16,7 @@ import com.powsybl.afs.storage.events.AppStorageListener;
  * WARNING: you will need to keep a reference to your listeners,
  *          otherwise they may be garbage collected.
  *
- * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
+ * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 public interface ListenableAppStorage extends AppStorage {
 

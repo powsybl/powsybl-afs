@@ -26,7 +26,7 @@ import java.util.*;
  * An AppStorage implements low level methods to walk through a filesystem and to write and read data from this filesystem.
  * It relies on nodes uniquely identified by and ID.
  *
- * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
+ * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 public interface AppStorage extends AutoCloseable {
 

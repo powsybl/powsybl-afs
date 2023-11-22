@@ -15,7 +15,7 @@ import java.util.Map;
 /**
  * Utility to get/set session attributes.
  *
- * @author Sylvain Leclerc <sylvain.leclerc at rte-france.com>
+ * @author Sylvain Leclerc {@literal <sylvain.leclerc at rte-france.com>}
  */
 public class SessionAttributes {
 

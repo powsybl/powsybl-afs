@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
  *
  * <p>The actual connection logic is implemented in {@link WebsocketConnectionManager} instances.
  *
- * @author Sylvain Leclerc <sylvain.leclerc@rte-france.com>
+ * @author Sylvain Leclerc {@literal <sylvain.leclerc@rte-france.com>}
  */
 public interface WebsocketConnectionPolicy {
 

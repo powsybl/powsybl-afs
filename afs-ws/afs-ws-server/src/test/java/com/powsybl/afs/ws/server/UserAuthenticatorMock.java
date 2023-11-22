@@ -12,7 +12,7 @@ import com.powsybl.commons.net.UserProfile;
 import javax.inject.Named;
 
 /**
- * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
+ * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 @Named
 public class UserAuthenticatorMock implements UserAuthenticator {

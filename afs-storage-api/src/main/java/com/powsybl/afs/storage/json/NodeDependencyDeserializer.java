@@ -16,7 +16,7 @@ import com.powsybl.afs.storage.NodeInfo;
 import java.io.IOException;
 
 /**
- * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
+ * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 public class NodeDependencyDeserializer extends StdDeserializer<NodeDependency> {
 

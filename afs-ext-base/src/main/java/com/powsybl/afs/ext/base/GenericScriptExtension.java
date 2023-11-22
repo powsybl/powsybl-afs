@@ -14,7 +14,7 @@ import com.powsybl.afs.ProjectFileCreationContext;
 import com.powsybl.afs.ProjectFileExtension;
 
 /**
- * @author Paul Bui-Quang <paul.buiquang at rte-france.com>
+ * @author Paul Bui-Quang {@literal <paul.buiquang at rte-france.com>}
  */
 @AutoService(ProjectFileExtension.class)
 public class GenericScriptExtension implements ProjectFileExtension<GenericScript, GenericScriptBuilder> {

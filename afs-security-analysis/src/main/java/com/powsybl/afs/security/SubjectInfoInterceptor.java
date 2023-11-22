@@ -20,7 +20,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
+ * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 public class SubjectInfoInterceptor extends DefaultSecurityAnalysisInterceptor {
     private void addSubjectInfo(SecurityAnalysisResultContext context, LimitViolationsResult result) {

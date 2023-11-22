@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * A connection manager which will attempt to reconnect at fixed time intervals.
  *
- * @author Sylvain Leclerc <sylvain.leclerc@rte-france.com>
+ * @author Sylvain Leclerc {@literal <sylvain.leclerc@rte-france.com>}
  */
 public class AutoReconnectionConnectionManager extends StandardConnectionManager {
 

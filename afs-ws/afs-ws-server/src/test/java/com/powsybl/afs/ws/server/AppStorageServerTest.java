@@ -44,8 +44,8 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.when;
 
 /**
- * @author Ali Tahanout <ali.tahanout at rte-france.com>
- * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
+ * @author Ali Tahanout {@literal <ali.tahanout at rte-france.com>}
+ * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 @RunWith(Arquillian.class)
 @RunAsClient

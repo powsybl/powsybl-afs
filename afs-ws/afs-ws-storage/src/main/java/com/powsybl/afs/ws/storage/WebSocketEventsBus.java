@@ -18,7 +18,7 @@ import java.net.URI;
 import java.util.Objects;
 
 /**
- * @author Chamseddine Benhamed <chamseddine.benhamed at rte-france.com>
+ * @author Chamseddine Benhamed {@literal <chamseddine.benhamed at rte-france.com>}
  */
 public class WebSocketEventsBus implements EventsBus {
 

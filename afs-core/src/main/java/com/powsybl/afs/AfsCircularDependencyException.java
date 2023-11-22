@@ -11,7 +11,7 @@ package com.powsybl.afs;
 import com.powsybl.commons.PowsyblException;
 
 /**
- * @author Paul Bui-Quang <paul.buiquang at rte-france.com>
+ * @author Paul Bui-Quang {@literal <paul.buiquang at rte-france.com>}
  */
 public class AfsCircularDependencyException extends PowsyblException {
 

@@ -13,7 +13,7 @@ import com.powsybl.afs.ProjectFileExtension
 import com.powsybl.afs.ProjectFolder
 
 /**
- * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
+ * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 class AfsGroovyExtensionModule {
 

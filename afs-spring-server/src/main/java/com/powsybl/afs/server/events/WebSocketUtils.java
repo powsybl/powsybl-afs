@@ -12,7 +12,7 @@ import org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorato
 /**
  * Utilities for web sockets.
  *
- * @author Sylvain Leclerc <sylvain.leclerc at rte-france.com>
+ * @author Sylvain Leclerc {@literal <sylvain.leclerc at rte-france.com>}
  */
 public final class WebSocketUtils {
 

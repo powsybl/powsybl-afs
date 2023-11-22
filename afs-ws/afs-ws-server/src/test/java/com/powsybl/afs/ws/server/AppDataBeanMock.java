@@ -22,7 +22,7 @@ import java.util.Collections;
 import static org.mockito.ArgumentMatchers.any;
 
 /**
- * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
+ * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 @Specializes
 @Singleton

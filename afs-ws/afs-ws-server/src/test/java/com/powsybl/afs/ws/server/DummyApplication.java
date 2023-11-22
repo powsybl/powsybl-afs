@@ -11,7 +11,7 @@ package com.powsybl.afs.ws.server;
 import javax.ws.rs.ApplicationPath;
 
 /**
- * @author Paul Bui-Quang <paul.buiquang at rte-france.com>
+ * @author Paul Bui-Quang {@literal <paul.buiquang at rte-france.com>}
  */
 @ApplicationPath("/rest")
 public class DummyApplication {

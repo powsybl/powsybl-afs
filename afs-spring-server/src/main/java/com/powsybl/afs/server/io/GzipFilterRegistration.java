@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Configuration;
 /**
  * Registers the {@link GzipFilter} only for AFS endpoints.
  *
- * @author Sylvain Leclerc <sylvain.leclerc at rte-france.com>
+ * @author Sylvain Leclerc {@literal <sylvain.leclerc at rte-france.com>}
  */
 @Configuration
 public class GzipFilterRegistration {

@@ -9,7 +9,7 @@ package com.powsybl.afs.cassandra;
 import com.datastax.oss.driver.api.core.CqlSession;
 
 /**
- * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
+ * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 public interface CassandraContext extends AutoCloseable {
 

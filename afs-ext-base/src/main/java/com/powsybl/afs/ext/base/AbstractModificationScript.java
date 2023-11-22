@@ -11,7 +11,7 @@ package com.powsybl.afs.ext.base;
 import com.powsybl.afs.ProjectFileCreationContext;
 
 /**
- * @author Paul Bui-Quang <paul.buiquang at rte-france.com>
+ * @author Paul Bui-Quang {@literal <paul.buiquang at rte-france.com>}
  */
 @Deprecated
 public abstract class AbstractModificationScript extends AbstractScript<AbstractModificationScript> {
