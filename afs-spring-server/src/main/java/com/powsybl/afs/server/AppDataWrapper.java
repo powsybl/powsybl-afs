@@ -19,7 +19,7 @@ import java.util.Objects;
 /**
  * Wrapper around {@link AppData} which provides additional checks around access to storage and filesystems.
  *
- * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
+ * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 @Component
 public class AppDataWrapper {

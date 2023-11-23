@@ -22,7 +22,7 @@ import java.util.Objects;
 /**
  * A simple connection manager which does not try to reconnect on close.
  *
- * @author Sylvain Leclerc <sylvain.leclerc@rte-france.com>
+ * @author Sylvain Leclerc {@literal <sylvain.leclerc@rte-france.com>}
  */
 public class StandardConnectionManager implements WebsocketConnectionManager {
 

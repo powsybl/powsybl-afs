@@ -10,7 +10,7 @@ import com.powsybl.afs.storage.events.NodeEventList;
 import com.powsybl.afs.ws.utils.JacksonEncoder;
 
 /**
- * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
+ * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 public class NodeEventListEncoder extends JacksonEncoder<NodeEventList> {
 }

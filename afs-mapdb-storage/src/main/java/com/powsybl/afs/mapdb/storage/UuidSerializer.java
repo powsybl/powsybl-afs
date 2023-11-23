@@ -15,7 +15,7 @@ import java.io.Serializable;
 import java.util.UUID;
 
 /**
- * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
+ * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 public class UuidSerializer implements Serializer<UUID>, Serializable {
 

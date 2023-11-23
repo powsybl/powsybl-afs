@@ -9,7 +9,7 @@ package com.powsybl.afs.ws.utils.gzip;
 import javax.ws.rs.ext.Provider;
 
 /**
- * @author Ali Tahanout <ali.tahanout at rte-france.com>
+ * @author Ali Tahanout {@literal <ali.tahanout at rte-france.com>}
  */
 @Provider
 @Compress

@@ -18,7 +18,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * <p>
  * The objects are cached when retrieved, and will not be fetched again until invalidation of the cache.
  *
- * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
+ * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 public class DependencyCache<T extends ProjectNode> {
 

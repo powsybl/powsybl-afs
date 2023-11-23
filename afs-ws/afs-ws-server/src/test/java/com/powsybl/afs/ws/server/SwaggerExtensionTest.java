@@ -19,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Java6Assertions.assertThat;
 
 /**
- * @author Paul Bui-Quang <paul.buiquang at rte-france.com>
+ * @author Paul Bui-Quang {@literal <paul.buiquang at rte-france.com>}
  */
 public class SwaggerExtensionTest {
 

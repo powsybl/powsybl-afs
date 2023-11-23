@@ -30,7 +30,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.UNAUTHORIZED;
 
 /**
- * @author Ali Tahanout <ali.tahanout at rte-france.com>
+ * @author Ali Tahanout {@literal <ali.tahanout at rte-france.com>}
  */
 @Path("/users")
 public class UserEndpoint {

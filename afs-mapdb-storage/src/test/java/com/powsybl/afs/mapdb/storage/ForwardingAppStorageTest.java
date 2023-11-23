@@ -12,7 +12,7 @@ import com.powsybl.afs.storage.ForwardingAppStorage;
 import com.powsybl.afs.storage.InMemoryEventsBus;
 
 /**
- * @author Chamseddine Benhamed <chamseddine.benhamed at rte-france.com>
+ * @author Chamseddine Benhamed {@literal <chamseddine.benhamed at rte-france.com>}
  */
 public class ForwardingAppStorageTest extends AbstractAppStorageTest {
 

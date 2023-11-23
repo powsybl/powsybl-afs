@@ -12,7 +12,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 /**
- * @author Benhamed Chamseddine <benhamed.chamseddine at rte-france.com>
+ * @author Benhamed Chamseddine {@literal <benhamed.chamseddine at rte-france.com>}
  */
 public class NodeConsistent extends NodeEvent {
 

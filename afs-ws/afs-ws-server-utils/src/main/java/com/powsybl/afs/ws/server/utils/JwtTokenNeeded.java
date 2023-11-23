@@ -15,7 +15,7 @@ import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * @author Ali Tahanout <ali.tahanout at rte-france.com>
+ * @author Ali Tahanout {@literal <ali.tahanout at rte-france.com>}
  */
 @NameBinding
 @Retention(RUNTIME)

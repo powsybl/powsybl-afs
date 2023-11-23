@@ -40,7 +40,7 @@ import java.util.function.BiConsumer;
 import static org.junit.Assert.*;
 
 /**
- * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
+ * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 public class AfsBaseTest {
 

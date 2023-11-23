@@ -20,7 +20,7 @@ import com.powsybl.computation.DefaultComputationManagerConfig
 import com.powsybl.scripting.groovy.GroovyScriptExtension
 
 /**
- * @author Mathieu BAGUE <mathieu.bague at rte-france.com>
+ * @author Mathieu BAGUE {@literal <mathieu.bague at rte-france.com>}
  */
 @AutoService(GroovyScriptExtension.class)
 class AfsGroovyScriptExtension implements GroovyScriptExtension {

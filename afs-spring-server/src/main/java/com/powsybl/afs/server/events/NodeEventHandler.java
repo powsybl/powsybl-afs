@@ -29,7 +29,7 @@ import java.io.UncheckedIOException;
  *     <li>On receiving events from the client, forwards it to underlying event bus</li>
  * </ul>
  *
- * @author Sylvain Leclerc <sylvain.leclerc at rte-france.com>
+ * @author Sylvain Leclerc {@literal <sylvain.leclerc at rte-france.com>}
  */
 public class NodeEventHandler extends TextWebSocketHandler {
 

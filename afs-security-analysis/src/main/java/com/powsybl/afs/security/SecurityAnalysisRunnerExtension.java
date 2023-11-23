@@ -15,7 +15,7 @@ import com.powsybl.security.SecurityAnalysisParameters;
 import java.util.Objects;
 
 /**
- * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
+ * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 @AutoService(ProjectFileExtension.class)
 public class SecurityAnalysisRunnerExtension implements ProjectFileExtension<SecurityAnalysisRunner, SecurityAnalysisRunnerBuilder> {

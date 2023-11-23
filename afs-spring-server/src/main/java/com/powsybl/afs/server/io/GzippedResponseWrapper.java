@@ -22,7 +22,7 @@ import org.springframework.http.HttpHeaders;
 /**
  * Wraps a response to gzip its content if its content-encoding is set to "gzip".
  *
- * @author Sylvain Leclerc <sylvain.leclerc at rte-france.com>
+ * @author Sylvain Leclerc {@literal <sylvain.leclerc at rte-france.com>}
  */
 public class GzippedResponseWrapper extends HttpServletResponseWrapper {
 

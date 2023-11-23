@@ -9,7 +9,7 @@ package com.powsybl.afs.ws.server.utils;
 import java.security.Key;
 
 /**
- * @author Ali Tahanout <ali.tahanout at rte-france.com>
+ * @author Ali Tahanout {@literal <ali.tahanout at rte-france.com>}
  */
 public interface KeyGenerator {
 

@@ -12,7 +12,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 /**
- * @author Chamseddine Benhamed <Chamseddine.Benhamed at rte-france.com>
+ * @author Chamseddine Benhamed {@literal <Chamseddine.Benhamed at rte-france.com>}
  */
 public class NodeEventContainerTest {
 

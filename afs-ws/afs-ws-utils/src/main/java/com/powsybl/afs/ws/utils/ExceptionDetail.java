@@ -11,7 +11,7 @@ package com.powsybl.afs.ws.utils;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * @author Paul Bui-Quang <paul.buiquang at rte-france.com>
+ * @author Paul Bui-Quang {@literal <paul.buiquang at rte-france.com>}
  */
 public class ExceptionDetail {
 

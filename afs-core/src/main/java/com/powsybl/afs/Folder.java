@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
  * <p>
  * Folders may have children folders or files, and provides methods to create new children.
  *
- * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
+ * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 public class Folder extends Node implements FolderBase<Node, Folder> {
 

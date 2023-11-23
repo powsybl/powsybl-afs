@@ -7,7 +7,7 @@
 package com.powsybl.afs.mapdb.storage;
 
 /**
- * @author Nicolas Noir <nicolas.noir at rte-france.com>
+ * @author Nicolas Noir {@literal <nicolas.noir at rte-france.com>}
  */
 public final class MapDbStorageConstants {
 

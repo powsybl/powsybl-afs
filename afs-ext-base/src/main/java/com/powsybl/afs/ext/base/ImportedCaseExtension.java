@@ -21,7 +21,7 @@ import java.util.Objects;
 /**
  * Defines the new type of project file {@link ImportedCase}.
  *
- * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
+ * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 @AutoService(ProjectFileExtension.class)
 public class ImportedCaseExtension implements ProjectFileExtension<ImportedCase, ImportedCaseBuilder> {

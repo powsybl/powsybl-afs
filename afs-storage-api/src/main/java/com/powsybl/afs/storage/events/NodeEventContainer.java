@@ -12,7 +12,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import java.util.Objects;
 
 /**
- * @author Chamseddine Benhamed <Chamseddine.Benhamed at rte-france.com>
+ * @author Chamseddine Benhamed {@literal <Chamseddine.Benhamed at rte-france.com>}
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.MINIMAL_CLASS, include = JsonTypeInfo.As.PROPERTY)
 public class NodeEventContainer {

@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.ServiceLoader;
 
 /**
- * @author Ali Tahanout <ali.tahanout at rte-france.com>
+ * @author Ali Tahanout {@literal <ali.tahanout at rte-france.com>}
  */
 @ApplicationPath("/rest")
 public class AppStorageApplication extends Application {

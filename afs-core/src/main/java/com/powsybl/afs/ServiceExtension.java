@@ -17,7 +17,7 @@ import java.util.Objects;
  * Therefore you may only have one local and one remote implementation of the same service registered with your AFS.
  *
  *
- * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
+ * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 public interface ServiceExtension<U> {
 

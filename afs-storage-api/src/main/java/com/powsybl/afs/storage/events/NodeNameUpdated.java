@@ -13,7 +13,7 @@ import java.util.Objects;
 
 /**
  *
- * @author Nassirou Nambiena <nassirou.nambiena at rte-france.com>
+ * @author Nassirou Nambiena {@literal <nassirou.nambiena at rte-france.com>}
  */
 public class NodeNameUpdated extends NodeEvent {
 

@@ -14,7 +14,7 @@ import com.powsybl.timeseries.DoublePoint;
 import java.util.List;
 
 /**
- * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
+ * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 public class DoubleTimeSeriesChunksAddition extends AbstractTimeSeriesChunksAddition<DoublePoint, DoubleDataChunk> {
 

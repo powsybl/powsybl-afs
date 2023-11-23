@@ -16,7 +16,7 @@ import java.util.function.Supplier;
  * Swagger BeanConfig supplier.
  * Only one extension can be defined per application.
  * The first extension found will be used.
- * @author Paul Bui-Quang <paul.buiquang at rte-france.com>
+ * @author Paul Bui-Quang {@literal <paul.buiquang at rte-france.com>}
  */
 public interface SwaggerConfigExtension extends Supplier<OpenAPI> {
 

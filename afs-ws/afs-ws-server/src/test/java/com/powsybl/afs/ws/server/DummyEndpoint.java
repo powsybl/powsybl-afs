@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.util.concurrent.CancellationException;
 
 /**
- * @author Paul Bui-Quang <paul.buiquang at rte-france.com>
+ * @author Paul Bui-Quang {@literal <paul.buiquang at rte-france.com>}
  */
 @Named
 @ApplicationScoped

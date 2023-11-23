@@ -52,7 +52,7 @@ import java.util.List;
  *  }
  * </pre>
  *
- * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
+ * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 public interface ProjectFileExtension<T extends ProjectFile, U extends ProjectFileBuilder<T>> {
 

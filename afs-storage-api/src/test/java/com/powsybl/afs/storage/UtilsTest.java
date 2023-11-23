@@ -18,7 +18,7 @@ import java.nio.file.Path;
 import static org.junit.Assert.*;
 
 /**
- * @author Valentin Berthault <valentin.berthault at rte-france.com>
+ * @author Valentin Berthault {@literal <valentin.berthault at rte-france.com>}
  */
 
 public class UtilsTest {

@@ -11,7 +11,7 @@ import javax.websocket.Session;
 /**
  * Responsible for managing the connection to a websocket server endpoint.
  *
- * @author Sylvain Leclerc <sylvain.leclerc@rte-france.com>
+ * @author Sylvain Leclerc {@literal <sylvain.leclerc@rte-france.com>}
  */
 public interface WebsocketConnectionManager extends AutoCloseable {
 

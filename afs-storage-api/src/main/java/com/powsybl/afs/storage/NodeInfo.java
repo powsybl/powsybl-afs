@@ -11,7 +11,7 @@ import java.util.Objects;
 /**
  * Low level information about a node in an AFS tree. Should seldom be used by AFS API users.
  *
- * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
+ * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 public class NodeInfo {
 

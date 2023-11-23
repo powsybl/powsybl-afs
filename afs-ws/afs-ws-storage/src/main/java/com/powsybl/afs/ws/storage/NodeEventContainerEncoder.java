@@ -10,7 +10,7 @@ import com.powsybl.afs.storage.events.NodeEventContainer;
 import com.powsybl.afs.ws.utils.JacksonEncoder;
 
 /**
- * @author Chamseddine Benhamed <Chamseddine.Benhamed at rte-france.com>
+ * @author Chamseddine Benhamed {@literal <Chamseddine.Benhamed at rte-france.com>}
  */
 public class NodeEventContainerEncoder extends JacksonEncoder<NodeEventContainer> {
 }

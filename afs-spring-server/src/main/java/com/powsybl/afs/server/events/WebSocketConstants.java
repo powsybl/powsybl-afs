@@ -9,7 +9,7 @@ package com.powsybl.afs.server.events;
 /**
  * Constants for web sockets.
  *
- * @author Sylvain Leclerc <sylvain.leclerc@rte-france.com>
+ * @author Sylvain Leclerc {@literal <sylvain.leclerc@rte-france.com>}
  */
 public final class WebSocketConstants {
 

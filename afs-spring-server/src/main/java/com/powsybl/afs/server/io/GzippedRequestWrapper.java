@@ -16,7 +16,7 @@ import java.util.zip.GZIPInputStream;
 /**
  * Wraps a request to gunzip its content.
  *
- * @author Sylvain Leclerc <sylvain.leclerc at rte-france.com>
+ * @author Sylvain Leclerc {@literal <sylvain.leclerc at rte-france.com>}
  */
 public class GzippedRequestWrapper extends HttpServletRequestWrapper {
 
