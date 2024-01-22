@@ -64,7 +64,7 @@
         <!-- test dependencies -->
         <dependency>
             <groupId>com.powsybl</groupId>
-            <artifactId>powsybl-afs-ws-client</artifactId>
+            <artifactId>powsybl-afs-mapdb</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
@@ -76,14 +76,19 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
+            <groupId>com.powsybl</groupId>
+            <artifactId>powsybl-afs-ws-client</artifactId>
+            <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.powsybl</groupId>
-            <artifactId>powsybl-afs-mapdb</artifactId>
-            <version>${project.version}</version>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
 
