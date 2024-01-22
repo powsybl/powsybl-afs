@@ -46,7 +46,6 @@ public class FileSystemCheckOptionsBuilder {
 
     /**
      * Add implementation specific check types.
-     * For example, in cassandra, "reference_not_found"
      */
     public FileSystemCheckOptionsBuilder addCheckTypes(Collection<String> types) {
         Objects.requireNonNull(types);
@@ -56,7 +55,6 @@ public class FileSystemCheckOptionsBuilder {
 
     /**
      * Add implementation specific check types.
-     * For example, in cassandra, "reference_not_found"
      */
     public FileSystemCheckOptionsBuilder addCheckTypes(String... types) {
         return addCheckTypes(Arrays.asList(types));

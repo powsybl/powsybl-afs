@@ -19,7 +19,7 @@
         <relativePath/>
     </parent>
     <artifactId>powsybl-afs</artifactId>
-    <version>5.2.0-SNAPSHOT</version>
+    <version>6.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>powsybl-afs</name>
@@ -49,7 +49,6 @@
 
     <modules>
         <module>afs-action-dsl</module>
-        <module>afs-cassandra</module>
         <module>afs-contingency</module>
         <module>afs-core</module>
         <module>afs-distribution</module>
@@ -76,8 +75,6 @@
         <arquillianbom.version>1.2.0.Final</arquillianbom.version>
         <assertj.version>3.11.0</assertj.version>
         <autoservice.version>1.0-rc2</autoservice.version>
-        <cassandra.version>4.10.0</cassandra.version>
-        <cassandraunit.version>4.3.1.0</cassandraunit.version>
         <groovy.version>3.0.15</groovy.version>
         <guava.version>32.0.1-jre</guava.version>
         <jackson.version>2.10.5</jackson.version>
@@ -134,16 +131,6 @@
     <dependencyManagement>
         <dependencies>
           <!-- Compile dependencies -->
-            <dependency>
-                <groupId>com.datastax.oss</groupId>
-                <artifactId>java-driver-core</artifactId>
-                <version>${cassandra.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.datastax.oss</groupId>
-                <artifactId>java-driver-query-builder</artifactId>
-                <version>${cassandra.version}</version>
-            </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.jaxrs</groupId>
                 <artifactId>jackson-jaxrs-json-provider</artifactId>
@@ -337,12 +324,6 @@
                 <groupId>org.assertj</groupId>
                 <artifactId>assertj-core</artifactId>
                 <version>${assertj.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.cassandraunit</groupId>
-                <artifactId>cassandra-unit</artifactId>
-                <version>${cassandraunit.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
