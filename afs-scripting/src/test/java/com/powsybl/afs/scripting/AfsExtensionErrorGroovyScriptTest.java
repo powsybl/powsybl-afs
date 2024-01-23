@@ -10,11 +10,12 @@ import com.powsybl.afs.AfsException;
 import com.powsybl.afs.mapdb.storage.MapDbAppStorage;
 import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.InMemoryEventsBus;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
@@ -40,8 +41,8 @@ public class AfsExtensionErrorGroovyScriptTest extends AbstractGroovyScriptTest 
     }
 
     @Override
-    @Test(expected = AfsException.class)
-    public void test() throws IOException {
-        super.test();
+    @Test
+    public void test() {
+        assertThrows(AfsException.class, super::test);
     }
 }

@@ -7,12 +7,12 @@
 package com.powsybl.afs.ws.storage.websocket;
 
 import com.powsybl.afs.ws.client.utils.RemoteServiceConfig;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  *

@@ -16,17 +16,17 @@ import com.powsybl.afs.storage.InMemoryEventsBus;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.iidm.network.ImportConfig;
 import com.powsybl.iidm.network.ImportersLoaderList;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.nio.file.FileSystem;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
@@ -35,12 +35,12 @@ public class LocalAppFileSystemProviderTest {
 
     private FileSystem fileSystem;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         fileSystem = Jimfs.newFileSystem(Configuration.unix());
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         fileSystem.close();
     }

@@ -14,9 +14,9 @@ import com.google.common.io.ByteStreams;
 import com.powsybl.afs.storage.events.*;
 import com.powsybl.commons.datasource.DataSource;
 import com.powsybl.timeseries.*;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.threeten.extra.Interval;
 
 import java.io.*;
@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
@@ -50,14 +50,14 @@ public abstract class AbstractAppStorageTest {
 
     protected abstract AppStorage createStorage();
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         eventStack = new LinkedBlockingQueue<>();
         this.storage = createStorage();
         this.storage.getEventsBus().addListener(l);
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         if (storage.isClosed()) {
 

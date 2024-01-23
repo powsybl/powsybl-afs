@@ -10,15 +10,15 @@ import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import com.powsybl.commons.config.InMemoryPlatformConfig;
 import com.powsybl.commons.config.MapModuleConfig;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
@@ -29,7 +29,7 @@ public class MapDbAppFileSystemConfigTest {
 
     private InMemoryPlatformConfig platformConfig;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         fileSystem = Jimfs.newFileSystem(Configuration.unix());
         Files.createFile(fileSystem.getPath("/db"));
@@ -45,7 +45,7 @@ public class MapDbAppFileSystemConfigTest {
         moduleConfig.setPathProperty("db-file-0", fileSystem.getPath("/db0"));
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         fileSystem.close();
     }
