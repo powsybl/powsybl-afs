@@ -72,7 +72,7 @@
             ../../afs-distribution/target/site/jacoco-aggregate/jacoco.xml,
         </sonar.coverage.jacoco.xmlReportPaths>
 
-        <arquillianbom.version>1.2.0.Final</arquillianbom.version>
+        <arquillianbom.version>1.5.0.Final</arquillianbom.version>
         <assertj.version>3.24.2</assertj.version>
         <autoservice.version>1.1.1</autoservice.version>
         <groovy.version>4.0.14</groovy.version>
