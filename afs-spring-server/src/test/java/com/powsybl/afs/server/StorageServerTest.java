@@ -31,7 +31,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;

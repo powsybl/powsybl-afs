@@ -18,17 +18,17 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * @author Sylvain Leclerc {@literal <sylvain.leclerc@rte-france.com>}
  */
-public class WebsocketConnectionPolicyTest {
+class WebsocketConnectionPolicyTest {
 
     @Test
-    public void createFromConfig() throws URISyntaxException {
+    void createFromConfig() throws URISyntaxException {
         RemoteServiceConfig config = new RemoteServiceConfig("host", "app", 80, false);
         URI uri = new URI("http://test");
         WebsocketConnectionManager standardManager = WebsocketConnectionPolicy.forConfig(config).newConnectionManager(uri);
-        assertTrue(standardManager instanceof StandardConnectionManager);
+        assertInstanceOf(StandardConnectionManager.class, standardManager);
 
         config.setAutoReconnectionEnabled(true);
         WebsocketConnectionManager autoReconnectionManager = WebsocketConnectionPolicy.forConfig(config).newConnectionManager(uri);
-        assertTrue(autoReconnectionManager instanceof AutoReconnectionConnectionManager);
+        assertInstanceOf(AutoReconnectionConnectionManager.class, autoReconnectionManager);
     }
 }

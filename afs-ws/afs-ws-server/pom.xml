@@ -25,6 +25,11 @@
         <!-- Provided dependencies -->
         <!-- TODO(mathbagu): move this dependency between compilation and test dependencies -->
         <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>javax</groupId>
             <artifactId>javaee-api</artifactId>
             <scope>provided</scope>

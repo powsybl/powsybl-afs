@@ -12,7 +12,7 @@ import com.powsybl.commons.util.WeakListenerList;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import javax.websocket.Session;
+import jakarta.websocket.Session;
 import java.net.URI;
 import java.util.concurrent.*;
 
