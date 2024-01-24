@@ -41,6 +41,13 @@
     </dependencyManagement>
 
     <dependencies>
+        <!-- Provided dependencies -->
+        <dependency>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- Compilation dependencies -->
         <dependency>
             <groupId>com.powsybl</groupId>

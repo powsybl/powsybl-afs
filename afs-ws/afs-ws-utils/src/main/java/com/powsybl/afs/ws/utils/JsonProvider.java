@@ -6,7 +6,7 @@
  */
 package com.powsybl.afs.ws.utils;
 
-import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
+import com.fasterxml.jackson.jakarta.rs.json.JacksonJsonProvider;
 import com.powsybl.afs.storage.json.AppStorageJsonModule;
 import com.powsybl.commons.json.JsonUtil;
 
@@ -21,7 +21,7 @@ import jakarta.ws.rs.ext.Provider;
 @Provider
 @Consumes({MediaType.APPLICATION_JSON})
 @Produces({MediaType.APPLICATION_JSON})
-public class JsonProvider extends JacksonJaxbJsonProvider {
+public class JsonProvider extends JacksonJsonProvider {
 
     public JsonProvider() {
         setMapper(JsonUtil.createObjectMapper().registerModule(new AppStorageJsonModule()));
