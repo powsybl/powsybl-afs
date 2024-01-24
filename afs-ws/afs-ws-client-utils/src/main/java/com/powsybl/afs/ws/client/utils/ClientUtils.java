@@ -11,7 +11,7 @@ import com.powsybl.afs.storage.AfsStorageException;
 import com.powsybl.afs.ws.utils.ExceptionDetail;
 import com.powsybl.afs.ws.utils.JsonProvider;
 import com.powsybl.commons.net.UserProfile;
-import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
+import org.jboss.resteasy.client.jaxrs.internal.ResteasyClientBuilderImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +36,7 @@ public final class ClientUtils {
     }
 
     public static Client createClient() {
-        return new ResteasyClientBuilder()
+        return new ResteasyClientBuilderImpl()
                 .connectionPoolSize(50)
                 .build();
     }

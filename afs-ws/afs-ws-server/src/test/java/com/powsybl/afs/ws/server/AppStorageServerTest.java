@@ -25,6 +25,7 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -87,6 +88,7 @@ public class AppStorageServerTest extends AbstractAppStorageTest {
         }
     }
 
+    @BeforeEach
     @Override
     public void setUp() throws Exception {
         userSession = ClientUtils.authenticate(getRestUri(), "", "");
@@ -136,9 +138,12 @@ public class AppStorageServerTest extends AbstractAppStorageTest {
 
     @Test
     public void handleRegisteredErrorTest() {
-        assertThatCode(() -> ClientUtils.checkOk(ClientUtils.createClient().target(getRestUri()).path("/rest/dummy/registeredError").request().get())).isInstanceOf(CancellationException.class);
-        assertThatCode(() -> ClientUtils.checkOk(ClientUtils.createClient().target(getRestUri()).path("/rest/dummy/unregisteredError").request().get())).isInstanceOf(AfsStorageException.class);
-        assertThatCode(() -> ClientUtils.checkOk(ClientUtils.createClient().target(getRestUri()).path("/rest/dummy/registeredErrorWithMessage").request().get())).isInstanceOf(NotImplementedException.class).hasMessage("hello");
+        assertThatCode(() -> ClientUtils.checkOk(ClientUtils.createClient().target(getRestUri()).path("/rest/dummy/registeredError").request().get()))
+            .isInstanceOf(CancellationException.class);
+        assertThatCode(() -> ClientUtils.checkOk(ClientUtils.createClient().target(getRestUri()).path("/rest/dummy/unregisteredError").request().get()))
+            .isInstanceOf(AfsStorageException.class);
+        assertThatCode(() -> ClientUtils.checkOk(ClientUtils.createClient().target(getRestUri()).path("/rest/dummy/registeredErrorWithMessage").request().get()))
+            .isInstanceOf(NotImplementedException.class).hasMessage("hello");
     }
 
 }

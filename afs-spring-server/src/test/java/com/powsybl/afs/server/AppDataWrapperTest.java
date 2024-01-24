@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @author THIYAGARASA Pratheep Ext
  */
 @ExtendWith(MockitoExtension.class)
-public class AppDataWrapperTest {
+class AppDataWrapperTest {
 
     @InjectMocks
     private AppDataWrapper appDataWrapper;
@@ -25,16 +25,20 @@ public class AppDataWrapperTest {
     private AppData appData;
 
     @Test
-    public void failedToGetStorage() {
+    void failedToGetStorage() {
         Mockito.when(appData.getRemotelyAccessibleStorage("fileSystem")).thenReturn(null);
+//        ResponseStatusException error = assertThrows(ResponseStatusException.class, () -> appDataWrapper.getStorage("fileSystem"));
+//        assertEquals("404 NOT_FOUND \"App file system 'fileSystem' not found\"", error.getMessage());
         assertThatThrownBy(() -> appDataWrapper.getStorage("fileSystem"))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessage("404 NOT_FOUND \"App file system 'fileSystem' not found\"");
     }
 
     @Test
-    public void failedToGetFileSystem() {
+    void failedToGetFileSystem() {
         Mockito.when(appData.getFileSystem("fileSystem")).thenReturn(null);
+//        ResponseStatusException error = assertThrows(ResponseStatusException.class, () -> appDataWrapper.getFileSystem("fileSystem"));
+//        assertEquals("404 NOT_FOUND \"App file system 'fileSystem' not found\"", error.getMessage());
         assertThatThrownBy(() -> appDataWrapper.getFileSystem("fileSystem"))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessage("404 NOT_FOUND \"App file system 'fileSystem' not found\"");
