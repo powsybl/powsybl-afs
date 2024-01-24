@@ -84,7 +84,6 @@
         <jakartaservlet.version>6.0.0</jakartaservlet.version>
         <jakartawebsocket.version>2.1.1</jakartawebsocket.version>
         <jakartawsrs.version>3.1.0</jakartawsrs.version>
-<!--        <javaeeapi.version>7.0</javaeeapi.version>-->
         <jimfs.version>1.3.0</jimfs.version>
         <jjwt.version>0.9.0</jjwt.version>
         <junit-jupiter.version>5.10.0</junit-jupiter.version>
@@ -262,11 +261,6 @@
                 <artifactId>jakarta.ws.rs-api</artifactId>
                 <version>${jakartawsrs.version}</version>
             </dependency>
-<!--            <dependency>-->
-<!--                <groupId>javax</groupId>-->
-<!--                <artifactId>javaee-api</artifactId>-->
-<!--                <version>${javaeeapi.version}</version>-->
-<!--            </dependency>-->
             <dependency>
                 <groupId>org.apache.groovy</groupId>
                 <artifactId>groovy</artifactId>
