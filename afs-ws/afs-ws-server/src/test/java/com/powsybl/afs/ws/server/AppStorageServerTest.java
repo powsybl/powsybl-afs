@@ -31,6 +31,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 
 import jakarta.inject.Inject;
+
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -63,21 +64,23 @@ public class AppStorageServerTest extends AbstractAppStorageTest {
     @Deployment
     public static WebArchive createTestArchive() {
         File[] filesLib = Maven.configureResolver()
-                .useLegacyLocalRepo(true)
-                .withMavenCentralRepo(false)
-                .withClassPathResolution(true)
-                .loadPomFromFile("pom.xml")
-                .importRuntimeDependencies()
-                .resolve("org.mockito:mockito-core",
-                        "com.powsybl:powsybl-config-test",
-                        "com.powsybl:powsybl-afs-mapdb")
-                .withTransitivity()
-                .asFile();
+            .useLegacyLocalRepo(true)
+            .withMavenCentralRepo(false)
+            .withClassPathResolution(true)
+            .loadPomFromFile("pom.xml")
+            .importRuntimeDependencies()
+            .resolve("org.mockito:mockito-core",
+                "com.powsybl:powsybl-config-test",
+                "com.powsybl:powsybl-afs-ws-server-utils",
+                "com.powsybl:powsybl-afs-ws-utils",
+                "com.powsybl:powsybl-afs-mapdb")
+            .withTransitivity()
+            .asFile();
 
         return ShrinkWrap.create(WebArchive.class, "afs-ws-server-test.war")
-                .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml")
-                .addPackage(AppStorageServerTest.class.getPackage())
-                .addAsLibraries(filesLib);
+            .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml")
+            .addPackage(AppStorageServerTest.class.getPackage())
+            .addAsLibraries(filesLib);
     }
 
     private URI getRestUri() {
@@ -99,7 +102,7 @@ public class AppStorageServerTest extends AbstractAppStorageTest {
     protected AppStorage createStorage() {
         URI restUri = getRestUri();
         RemoteAppStorage storage = new RemoteAppStorage(AppDataBeanMock.TEST_FS_NAME, restUri,
-                userSession.getToken());
+            userSession.getToken());
         return storage;
     }
 
