@@ -91,7 +91,7 @@
         <maven.core.version>3.8.5</maven.core.version>
         <mockito.version>3.8.0</mockito.version>
         <resteasy.version>6.2.7.Final</resteasy.version>
-        <shrinkwrap-resolver.version>2.2.6</shrinkwrap-resolver.version>
+        <shrinkwrap-resolver.version>3.2.1</shrinkwrap-resolver.version>
         <slf4j.version>2.0.9</slf4j.version>
         <springboot.version>3.2.2</springboot.version>
         <swagger.version>2.2.7</swagger.version>
@@ -223,7 +223,7 @@
             </dependency>
             <dependency>
                 <groupId>io.swagger.core.v3</groupId>
-                <artifactId>swagger-jaxrs2</artifactId>
+                <artifactId>swagger-jaxrs2-jakarta</artifactId>
                 <version>${swagger.version}</version>
             </dependency>
             <dependency>
@@ -348,6 +348,12 @@
                 <groupId>com.google.jimfs</groupId>
                 <artifactId>jimfs</artifactId>
                 <version>${jimfs.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.shrinkwrap.resolver</groupId>
+                <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
+                <version>${shrinkwrap-resolver.version}</version>
+                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.junit.jupiter</groupId>
