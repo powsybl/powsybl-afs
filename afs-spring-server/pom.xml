@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>powsybl-afs-spring-server</artifactId>
-    <name>powsybl-afs-spring-server</name>
+    <name>AFS Spring Server</name>
 
     <properties/>
     <build>
