@@ -10,9 +10,6 @@ import com.powsybl.commons.config.PlatformConfig;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import jakarta.annotation.Priority;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.NotAuthorizedException;
@@ -22,6 +19,10 @@ import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.Provider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.crypto.SecretKey;
 import java.security.Key;
 
 /**
@@ -67,8 +68,8 @@ public class JwtTokenNeededFilter implements ContainerRequestFilter {
         try {
             // Validate the token
             Key key = keyGenerator.generateKey();
-            Jws<Claims> claimsJws = Jwts.parser().setSigningKey(key).parseClaimsJws(token);
-            requestContext.setSecurityContext(new AfsSimpleSecurityContext(claimsJws.getBody().getSubject()));
+            Jws<Claims> claimsJws = Jwts.parser().decryptWith((SecretKey) key).build().parseSignedClaims(token);
+            requestContext.setSecurityContext(new AfsSimpleSecurityContext(claimsJws.getPayload().getSubject()));
         } catch (Exception eee) {
             requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
         }

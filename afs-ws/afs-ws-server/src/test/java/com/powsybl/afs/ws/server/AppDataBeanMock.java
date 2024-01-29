@@ -34,6 +34,7 @@ public class AppDataBeanMock extends AppDataBean {
     @Override
     public void init() {
         appData = Mockito.mock(AppData.class);
+        System.out.println("=================================== AppDataBeanMock init ===================================");
         AppStorage storage = MapDbAppStorage.createMem(TEST_FS_NAME, new InMemoryEventsBus());
         Mockito.when(appData.getRemotelyAccessibleStorage(TEST_FS_NAME))
                 .thenReturn(storage);

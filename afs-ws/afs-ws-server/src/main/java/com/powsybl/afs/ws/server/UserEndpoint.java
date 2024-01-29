@@ -9,17 +9,15 @@ package com.powsybl.afs.ws.server;
 import com.powsybl.afs.ws.server.utils.KeyGenerator;
 import com.powsybl.afs.ws.server.utils.SecurityConfig;
 import com.powsybl.afs.ws.server.utils.UserAuthenticator;
-import com.powsybl.commons.net.UserProfile;
 import com.powsybl.commons.config.PlatformConfig;
-import io.jsonwebtoken.CompressionCodecs;
+import com.powsybl.commons.net.UserProfile;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
+
 import java.security.Key;
 import java.time.ZonedDateTime;
 import java.util.Date;
@@ -44,7 +42,7 @@ public class UserEndpoint {
     @Inject
     private UserAuthenticator authenticator;
 
-    private long tokenValidity;
+    private final long tokenValidity;
 
     public UserEndpoint() {
         this(PlatformConfig.defaultConfig());
@@ -72,12 +70,12 @@ public class UserEndpoint {
         Key key = keyGenerator.generateKey();
         ZonedDateTime now = ZonedDateTime.now();
         return Jwts.builder()
-                .signWith(SignatureAlgorithm.HS512, key)
-                .compressWith(CompressionCodecs.DEFLATE)
-                .setSubject(login)
-                .setIssuer(uriInfo.getAbsolutePath().toString())
-                .setIssuedAt(Date.from(now.toInstant()))
-                .setExpiration(Date.from(now.plusMinutes(tokenValidity).toInstant()))
-                .compact();
+            .signWith(key)
+            .compressWith(Jwts.ZIP.DEF)
+            .subject(login)
+            .issuer(uriInfo.getAbsolutePath().toString())
+            .issuedAt(Date.from(now.toInstant()))
+            .expiration(Date.from(now.plusMinutes(tokenValidity).toInstant()))
+            .compact();
     }
 }

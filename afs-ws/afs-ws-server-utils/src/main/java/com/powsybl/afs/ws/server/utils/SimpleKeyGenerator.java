@@ -6,7 +6,8 @@
  */
 package com.powsybl.afs.ws.server.utils;
 
-import javax.crypto.spec.SecretKeySpec;
+import io.jsonwebtoken.Jwts;
+
 import java.security.Key;
 
 /**
@@ -18,6 +19,7 @@ public class SimpleKeyGenerator implements KeyGenerator {
 
     @Override
     public Key generateKey() {
-        return new SecretKeySpec(SIMPLE_KEY.getBytes(), 0, SIMPLE_KEY.getBytes().length, "DES");
+        return Jwts.SIG.HS512.key().build();
+//        return new SecretKeySpec(SIMPLE_KEY.getBytes(), 0, SIMPLE_KEY.getBytes().length, "HMAC-SHA-256");
     }
 }
