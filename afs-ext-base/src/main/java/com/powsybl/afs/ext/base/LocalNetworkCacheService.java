@@ -11,6 +11,7 @@ import com.powsybl.afs.ProjectFile;
 import com.powsybl.commons.datasource.ReadOnlyDataSource;
 import com.powsybl.iidm.network.Importer;
 import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.NetworkFactory;
 import com.powsybl.iidm.network.NetworkListener;
 import groovy.json.JsonOutput;
 import org.slf4j.Logger;
@@ -49,7 +50,7 @@ public class LocalNetworkCacheService implements NetworkCacheService {
         Importer importer = importedCase.getImporter();
         ReadOnlyDataSource dataSource = importedCase.getDataSource();
         Properties parameters = importedCase.getParameters();
-        Network network = importer.importData(dataSource, parameters);
+        Network network = importer.importData(dataSource, NetworkFactory.findDefault(), parameters);
         listeners.forEach(network::addListener);
         return ScriptResult.of(network);
     }

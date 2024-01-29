@@ -716,8 +716,8 @@ public class MapDbAppStorage extends AbstractAppStorage {
         for (String timeSeriesName : timeSeriesNames) {
             TimeSeriesMetadata metadata = timeSeriesMetadataMap.get(new NamedLink(nodeUuid, timeSeriesName));
             if (metadata != null &&
-                    ((metadata.getDataType() == TimeSeriesDataType.DOUBLE && map == doubleTimeSeriesChunksMap)
-                        || (metadata.getDataType() == TimeSeriesDataType.STRING && map == stringTimeSeriesChunksMap))) {
+                    (metadata.getDataType() == TimeSeriesDataType.DOUBLE && map == doubleTimeSeriesChunksMap
+                        || metadata.getDataType() == TimeSeriesDataType.STRING && map == stringTimeSeriesChunksMap)) {
                 List<C> chunks = getChunks(nodeUuid, version, timeSeriesName, metadata, map);
                 timeSeriesData.put(timeSeriesName, chunks);
             }

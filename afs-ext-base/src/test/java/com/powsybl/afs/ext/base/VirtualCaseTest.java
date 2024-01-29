@@ -18,15 +18,15 @@ import com.powsybl.iidm.network.ImportersLoader;
 import com.powsybl.iidm.network.ImportersLoaderList;
 import com.powsybl.iidm.network.DefaultNetworkListener;
 import com.powsybl.iidm.network.NetworkListener;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -62,7 +62,7 @@ public class VirtualCaseTest extends AbstractProjectFileTest {
         return ImmutableList.of(new LocalNetworkCacheServiceExtension());
     }
 
-    @Before
+    @BeforeEach
     public void setup() throws IOException {
         super.setup();
         NodeInfo rootFolderInfo = storage.createRootNodeIfNotExists("root", Folder.PSEUDO_CLASS);

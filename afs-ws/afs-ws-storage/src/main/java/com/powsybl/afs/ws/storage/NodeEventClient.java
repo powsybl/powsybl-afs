@@ -15,7 +15,7 @@ import com.powsybl.commons.util.WeakListenerList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.websocket.*;
+import jakarta.websocket.*;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Objects;

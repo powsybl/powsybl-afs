@@ -6,7 +6,7 @@
  */
 package com.powsybl.afs.ws.client.utils;
 
-import javax.websocket.DeploymentException;
+import jakarta.websocket.DeploymentException;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}

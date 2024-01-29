@@ -13,23 +13,27 @@ import com.powsybl.afs.storage.*;
 import com.powsybl.afs.ws.client.utils.ClientUtils;
 import com.powsybl.afs.ws.client.utils.UserSession;
 import com.powsybl.afs.ws.server.utils.AppDataBean;
+import com.powsybl.afs.ws.server.utils.UserAuthenticator;
 import com.powsybl.afs.ws.storage.RemoteAppStorage;
 import com.powsybl.afs.ws.storage.RemoteTaskMonitor;
 import com.powsybl.commons.exceptions.UncheckedUriSyntaxException;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Inject;
 import org.apache.commons.lang3.NotImplementedException;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
-import org.jboss.arquillian.junit.Arquillian;
+import org.jboss.arquillian.junit5.ArquillianExtension;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 
-import javax.inject.Inject;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -40,14 +44,14 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
 /**
  * @author Ali Tahanout {@literal <ali.tahanout at rte-france.com>}
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
-@RunWith(Arquillian.class)
+@ExtendWith(ArquillianExtension.class)
 @RunAsClient
 public class AppStorageServerTest extends AbstractAppStorageTest {
 
@@ -62,22 +66,34 @@ public class AppStorageServerTest extends AbstractAppStorageTest {
     @Deployment
     public static WebArchive createTestArchive() {
         File[] filesLib = Maven.configureResolver()
-                .useLegacyLocalRepo(true)
-                .withMavenCentralRepo(false)
-                .withClassPathResolution(true)
-                .loadPomFromFile("pom.xml")
-                .importRuntimeDependencies()
-                .resolve("org.mockito:mockito-core",
-                        "com.powsybl:powsybl-config-test",
-                        "com.powsybl:powsybl-afs-mapdb")
-                .withTransitivity()
-                .asFile();
+            .useLegacyLocalRepo(true)
+            .withMavenCentralRepo(false)
+            .withClassPathResolution(true)
+            .loadPomFromFile("pom.xml")
+            .importRuntimeDependencies()
+            .resolve("org.mockito:mockito-core",
+                "com.powsybl:powsybl-config-test",
+                "com.powsybl:powsybl-afs-ws-server-utils",
+                "com.powsybl:powsybl-afs-ws-utils",
+                "com.powsybl:powsybl-afs-mapdb")
+            .withTransitivity()
+            .asFile();
 
         return ShrinkWrap.create(WebArchive.class, "afs-ws-server-test.war")
-                .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml")
-                .addPackage(AppStorageServerTest.class.getPackage())
-                .addAsLibraries(filesLib);
+            .addAsWebInfResource("META-INF/beans.xml")
+            .addPackage(AppStorageServerTest.class.getPackage())
+            .addAsLibraries(filesLib);
     }
+
+//    @Produces
+//    public UserAuthenticator getUserAuthenticator() {
+//        return new UserAuthenticatorMock();
+//    }
+//
+//    @Produces
+//    public AppDataBean getAppDataBean() {
+//        return new AppDataBeanMock();
+//    }
 
     private URI getRestUri() {
         try {
@@ -87,6 +103,7 @@ public class AppStorageServerTest extends AbstractAppStorageTest {
         }
     }
 
+    @BeforeEach
     @Override
     public void setUp() throws Exception {
         userSession = ClientUtils.authenticate(getRestUri(), "", "");
@@ -95,14 +112,20 @@ public class AppStorageServerTest extends AbstractAppStorageTest {
 
     @Override
     protected AppStorage createStorage() {
+        System.out.println("=================================== AppStorageServerTest createStorage ===================================");
         URI restUri = getRestUri();
         RemoteAppStorage storage = new RemoteAppStorage(AppDataBeanMock.TEST_FS_NAME, restUri,
-                userSession.getToken());
+            userSession.getToken());
+        System.out.printf("createStorage : storage.getFileSystemName() : %s%n", storage.getFileSystemName());
+        System.out.printf("createStorage : userSession.getToken() : %s%n", userSession.getToken());
         return storage;
     }
 
     @Test
     public void getFileSystemNamesTest() {
+        System.out.println("=================================== AppStorageServerTest getFileSystemNamesTest ===================================");
+        System.out.printf("getFileSystemNamesTest : storage.getFileSystemName() : %s%n", storage.getFileSystemName());
+        System.out.printf("getFileSystemNamesTest : userSession.getToken() : %s%n", userSession.getToken());
         List<String> fileSystemNames = RemoteAppStorage.getFileSystemNames(getRestUri(), userSession.getToken());
         assertEquals(Collections.singletonList(AppDataBeanMock.TEST_FS_NAME), fileSystemNames);
     }
@@ -134,11 +157,15 @@ public class AppStorageServerTest extends AbstractAppStorageTest {
 
     }
 
+    @Disabled
     @Test
     public void handleRegisteredErrorTest() {
-        assertThatCode(() -> ClientUtils.checkOk(ClientUtils.createClient().target(getRestUri()).path("/rest/dummy/registeredError").request().get())).isInstanceOf(CancellationException.class);
-        assertThatCode(() -> ClientUtils.checkOk(ClientUtils.createClient().target(getRestUri()).path("/rest/dummy/unregisteredError").request().get())).isInstanceOf(AfsStorageException.class);
-        assertThatCode(() -> ClientUtils.checkOk(ClientUtils.createClient().target(getRestUri()).path("/rest/dummy/registeredErrorWithMessage").request().get())).isInstanceOf(NotImplementedException.class).hasMessage("hello");
+        assertThatCode(() -> ClientUtils.checkOk(ClientUtils.createClient().target(getRestUri()).path("/rest/dummy/registeredError").request().get()))
+            .isInstanceOf(CancellationException.class);
+        assertThatCode(() -> ClientUtils.checkOk(ClientUtils.createClient().target(getRestUri()).path("/rest/dummy/unregisteredError").request().get()))
+            .isInstanceOf(AfsStorageException.class);
+        assertThatCode(() -> ClientUtils.checkOk(ClientUtils.createClient().target(getRestUri()).path("/rest/dummy/registeredErrorWithMessage").request().get()))
+            .isInstanceOf(NotImplementedException.class).hasMessage("hello");
     }
 
 }

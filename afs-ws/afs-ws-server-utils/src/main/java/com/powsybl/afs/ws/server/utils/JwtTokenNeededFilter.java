@@ -10,18 +10,19 @@ import com.powsybl.commons.config.PlatformConfig;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
+import jakarta.annotation.Priority;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.NotAuthorizedException;
+import jakarta.ws.rs.Priorities;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.container.ContainerRequestFilter;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Priority;
-import javax.inject.Inject;
-import javax.ws.rs.NotAuthorizedException;
-import javax.ws.rs.Priorities;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerRequestFilter;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.Provider;
+import javax.crypto.SecretKey;
 import java.security.Key;
 
 /**
@@ -67,8 +68,8 @@ public class JwtTokenNeededFilter implements ContainerRequestFilter {
         try {
             // Validate the token
             Key key = keyGenerator.generateKey();
-            Jws<Claims> claimsJws = Jwts.parser().setSigningKey(key).parseClaimsJws(token);
-            requestContext.setSecurityContext(new AfsSimpleSecurityContext(claimsJws.getBody().getSubject()));
+            Jws<Claims> claimsJws = Jwts.parser().decryptWith((SecretKey) key).build().parseSignedClaims(token);
+            requestContext.setSecurityContext(new AfsSimpleSecurityContext(claimsJws.getPayload().getSubject()));
         } catch (Exception eee) {
             requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
         }

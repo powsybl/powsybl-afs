@@ -12,6 +12,7 @@ import com.powsybl.afs.ProjectFile;
 import com.powsybl.afs.ProjectFileCreationContext;
 import com.powsybl.contingency.ContingenciesProvider;
 import com.powsybl.contingency.Contingency;
+import com.powsybl.contingency.contingency.list.ContingencyList;
 import com.powsybl.contingency.json.ContingencyJsonModule;
 import com.powsybl.iidm.network.Network;
 
@@ -68,6 +69,6 @@ public class ContingencyStore extends ProjectFile implements ContingenciesProvid
 
     @Override
     public List<Contingency> getContingencies(Network network) {
-        return Contingency.checkValidity(read(), network);
+        return ContingencyList.getValidContingencies(read(), network);
     }
 }

@@ -6,7 +6,7 @@
  */
 package com.powsybl.afs.ws.client;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author Mathieu Bague {@literal <mathieu.bague at rte-france.com>}

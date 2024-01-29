@@ -13,6 +13,7 @@ import com.powsybl.iidm.network.Importer;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.commons.parameters.Parameter;
 import com.powsybl.commons.parameters.ParameterType;
+import com.powsybl.iidm.network.NetworkFactory;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -60,7 +61,7 @@ public class TestImporter implements Importer {
     }
 
     @Override
-    public Network importData(ReadOnlyDataSource dataSource, Properties parameters) {
+    public Network importData(ReadOnlyDataSource dataSource, NetworkFactory networkFactory, Properties parameters) {
         return network;
     }
 

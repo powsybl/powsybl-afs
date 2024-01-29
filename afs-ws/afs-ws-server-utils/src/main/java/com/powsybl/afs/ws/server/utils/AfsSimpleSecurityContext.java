@@ -8,7 +8,7 @@
 
 package com.powsybl.afs.ws.server.utils;
 
-import javax.ws.rs.core.SecurityContext;
+import jakarta.ws.rs.core.SecurityContext;
 import java.nio.file.attribute.UserPrincipal;
 import java.security.Principal;
 import java.util.Objects;

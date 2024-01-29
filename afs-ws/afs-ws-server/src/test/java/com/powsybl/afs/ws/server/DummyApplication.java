@@ -8,7 +8,7 @@
 
 package com.powsybl.afs.ws.server;
 
-import javax.ws.rs.ApplicationPath;
+import jakarta.ws.rs.ApplicationPath;
 
 /**
  * @author Paul Bui-Quang {@literal <paul.buiquang at rte-france.com>}

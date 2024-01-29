@@ -6,7 +6,7 @@
  */
 package com.powsybl.afs.ws.server.utils;
 
-import javax.ws.rs.NameBinding;
+import jakarta.ws.rs.NameBinding;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
