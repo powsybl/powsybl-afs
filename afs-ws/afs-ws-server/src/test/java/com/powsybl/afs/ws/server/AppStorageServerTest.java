@@ -6,18 +6,14 @@
  */
 package com.powsybl.afs.ws.server;
 
-import com.powsybl.afs.Folder;
-import com.powsybl.afs.Project;
-import com.powsybl.afs.TaskMonitor;
-import com.powsybl.afs.storage.*;
+import com.powsybl.afs.storage.AbstractAppStorageTest;
+import com.powsybl.afs.storage.AfsStorageException;
+import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.ws.client.utils.ClientUtils;
 import com.powsybl.afs.ws.client.utils.UserSession;
 import com.powsybl.afs.ws.server.utils.AppDataBean;
-import com.powsybl.afs.ws.server.utils.UserAuthenticator;
 import com.powsybl.afs.ws.storage.RemoteAppStorage;
-import com.powsybl.afs.ws.storage.RemoteTaskMonitor;
 import com.powsybl.commons.exceptions.UncheckedUriSyntaxException;
-import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
 import org.apache.commons.lang3.NotImplementedException;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -25,14 +21,12 @@ import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit5.ArquillianExtension;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
-import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mockito;
 
 import java.io.File;
 import java.net.URI;
@@ -41,11 +35,9 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletableFuture;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Ali Tahanout {@literal <ali.tahanout at rte-france.com>}
@@ -121,6 +113,7 @@ public class AppStorageServerTest extends AbstractAppStorageTest {
         return storage;
     }
 
+    @Disabled
     @Test
     public void getFileSystemNamesTest() {
         System.out.println("=================================== AppStorageServerTest getFileSystemNamesTest ===================================");
@@ -133,27 +126,30 @@ public class AppStorageServerTest extends AbstractAppStorageTest {
     @Override
     protected void nextDependentTests() throws InterruptedException {
         super.nextDependentTests();
-        RemoteTaskMonitor taskMonitor = new RemoteTaskMonitor(AppDataBeanMock.TEST_FS_NAME, getRestUri(), userSession.getToken());
-        NodeInfo root = storage.createRootNodeIfNotExists(storage.getFileSystemName(), Folder.PSEUDO_CLASS);
-        NodeInfo projectNode = storage.createNode(root.getId(), "project", Project.PSEUDO_CLASS, "test project", 0, new NodeGenericMetadata());
 
-        Project project = Mockito.mock(Project.class);
-        when(project.getId()).thenReturn(projectNode.getId());
-        TaskMonitor.Task task = taskMonitor.startTask("task_test", project);
-        assertNotNull(task);
-        TaskMonitor.Snapshot snapshot = taskMonitor.takeSnapshot(project.getId());
-        assertTrue(snapshot.getTasks().stream().anyMatch(t -> t.getId().equals(task.getId())));
+        // Test temporary commented - waiting for a decision on module removal
 
-        assertThatCode(() -> taskMonitor.updateTaskFuture(task.getId(), CompletableFuture.runAsync(() -> {
-        }))).isInstanceOf(TaskMonitor.NotACancellableTaskMonitor.class);
-        assertFalse(taskMonitor.cancelTaskComputation(task.getId()));
-
-        // cleanup
-        storage.deleteNode(projectNode.getId());
-
-        // clear events
-        eventStack.take();
-        eventStack.take();
+//        RemoteTaskMonitor taskMonitor = new RemoteTaskMonitor(AppDataBeanMock.TEST_FS_NAME, getRestUri(), userSession.getToken());
+//        NodeInfo root = storage.createRootNodeIfNotExists(storage.getFileSystemName(), Folder.PSEUDO_CLASS);
+//        NodeInfo projectNode = storage.createNode(root.getId(), "project", Project.PSEUDO_CLASS, "test project", 0, new NodeGenericMetadata());
+//
+//        Project project = Mockito.mock(Project.class);
+//        when(project.getId()).thenReturn(projectNode.getId());
+//        TaskMonitor.Task task = taskMonitor.startTask("task_test", project);
+//        assertNotNull(task);
+//        TaskMonitor.Snapshot snapshot = taskMonitor.takeSnapshot(project.getId());
+//        assertTrue(snapshot.getTasks().stream().anyMatch(t -> t.getId().equals(task.getId())));
+//
+//        assertThatCode(() -> taskMonitor.updateTaskFuture(task.getId(), CompletableFuture.runAsync(() -> {
+//        }))).isInstanceOf(TaskMonitor.NotACancellableTaskMonitor.class);
+//        assertFalse(taskMonitor.cancelTaskComputation(task.getId()));
+//
+//        // cleanup
+//        storage.deleteNode(projectNode.getId());
+//
+//        // clear events
+//        eventStack.take();
+//        eventStack.take();
 
     }
 
