@@ -20,17 +20,11 @@ public final class SocketsUtils {
 
     public static URI getWebSocketUri(URI restUri) {
         try {
-            String wsScheme;
-            switch (restUri.getScheme()) {
-                case "http":
-                    wsScheme = "ws";
-                    break;
-                case "https":
-                    wsScheme = "wss";
-                    break;
-                default:
-                    throw new AssertionError("Unexpected scheme " + restUri.getScheme());
-            }
+            String wsScheme = switch (restUri.getScheme()) {
+                case "http" -> "ws";
+                case "https" -> "wss";
+                default -> throw new AssertionError("Unexpected scheme " + restUri.getScheme());
+            };
             return new URI(wsScheme, restUri.getUserInfo(), restUri.getHost(), restUri.getPort(), restUri.getPath(), restUri.getQuery(), null);
         } catch (URISyntaxException e) {
             throw new UncheckedUriSyntaxException(e);

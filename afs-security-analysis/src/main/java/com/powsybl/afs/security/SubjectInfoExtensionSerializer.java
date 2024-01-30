@@ -70,18 +70,17 @@ public class SubjectInfoExtensionSerializer implements ExtensionJsonSerializer<L
 
         while (parser.nextToken() != JsonToken.END_OBJECT) {
             switch (parser.getCurrentName()) {
-                case "countries":
+                case "countries" -> {
                     parser.nextToken();
-                    countries = parser.readValueAs(new TypeReference<TreeSet<Country>>() { });
-                    break;
-
-                case "nominalVoltages":
+                    countries = parser.readValueAs(new TypeReference<TreeSet<Country>>() {
+                    });
+                }
+                case "nominalVoltages" -> {
                     parser.nextToken();
-                    nominalVoltages = parser.readValueAs(new TypeReference<TreeSet<Double>>() { });
-                    break;
-
-                default:
-                    throw new AssertionError("Unexpected field: " + parser.getCurrentName());
+                    nominalVoltages = parser.readValueAs(new TypeReference<TreeSet<Double>>() {
+                    });
+                }
+                default -> throw new AssertionError("Unexpected field: " + parser.getCurrentName());
             }
         }
 

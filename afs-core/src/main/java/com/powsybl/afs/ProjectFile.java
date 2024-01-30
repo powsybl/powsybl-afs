@@ -27,18 +27,11 @@ public class ProjectFile extends ProjectNode {
         for (NodeEvent event : eventList.getEvents()) {
             if (event.getId().equals(getId())) {
                 switch (event.getType()) {
-                    case DependencyAdded.TYPENAME:
-                    case DependencyRemoved.TYPENAME:
-                        listeners.notify(listener -> listener.dependencyChanged(((DependencyEvent) event).getDependencyName()));
-                        break;
-
-                    case BackwardDependencyAdded.TYPENAME:
-                    case BackwardDependencyRemoved.TYPENAME:
-                        listeners.notify(listener -> listener.backwardDependencyChanged(((DependencyEvent) event).getDependencyName()));
-                        break;
-
-                    default:
-                        break;
+                    case DependencyAdded.TYPENAME, DependencyRemoved.TYPENAME -> listeners.notify(listener -> listener.dependencyChanged(((DependencyEvent) event).getDependencyName()));
+                    case BackwardDependencyAdded.TYPENAME, BackwardDependencyRemoved.TYPENAME -> listeners.notify(listener -> listener.backwardDependencyChanged(((DependencyEvent) event).getDependencyName()));
+                    default -> {
+                        // Do nothing
+                    }
                 }
             }
         }

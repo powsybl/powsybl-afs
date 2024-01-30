@@ -38,49 +38,39 @@ public class NodeInfoJsonDeserializer extends StdDeserializer<NodeInfo> {
     private static void parseFieldName(JsonParser jsonParser, DeserializationContext deserializationContext,
                                        JsonParsingContext parsingContext) throws IOException {
         switch (jsonParser.getCurrentName()) {
-            case NodeInfoJsonSerializer.ID:
+            case NodeInfoJsonSerializer.ID -> {
                 jsonParser.nextToken();
                 parsingContext.id = jsonParser.getValueAsString();
-                break;
-
-            case NodeInfoJsonSerializer.NAME:
+            }
+            case NodeInfoJsonSerializer.NAME -> {
                 jsonParser.nextToken();
                 parsingContext.name = jsonParser.getValueAsString();
-                break;
-
-            case NodeInfoJsonSerializer.PSEUDO_CLASS:
+            }
+            case NodeInfoJsonSerializer.PSEUDO_CLASS -> {
                 jsonParser.nextToken();
                 parsingContext.pseudoClass = jsonParser.getValueAsString();
-                break;
-
-            case NodeInfoJsonSerializer.DESCRIPTION:
+            }
+            case NodeInfoJsonSerializer.DESCRIPTION -> {
                 jsonParser.nextToken();
                 parsingContext.description = jsonParser.getValueAsString();
-                break;
-
-            case NodeInfoJsonSerializer.CREATION_TIME:
+            }
+            case NodeInfoJsonSerializer.CREATION_TIME -> {
                 jsonParser.nextToken();
                 parsingContext.creationTime = jsonParser.getValueAsLong();
-                break;
-
-            case NodeInfoJsonSerializer.MODIFICATION_TIME:
+            }
+            case NodeInfoJsonSerializer.MODIFICATION_TIME -> {
                 jsonParser.nextToken();
                 parsingContext.modificationTime = jsonParser.getValueAsLong();
-                break;
-
-            case NodeInfoJsonSerializer.VERSION:
+            }
+            case NodeInfoJsonSerializer.VERSION -> {
                 jsonParser.nextToken();
                 parsingContext.version = jsonParser.getValueAsInt();
-                break;
-
-            case NodeInfoJsonSerializer.METADATA:
+            }
+            case NodeInfoJsonSerializer.METADATA -> {
                 jsonParser.nextToken();
                 parsingContext.metadata = new NodeGenericMetadataJsonDeserializer().deserialize(jsonParser, deserializationContext);
-                break;
-
-            default:
-                throw new AssertionError("Unexpected field: " + jsonParser.getCurrentName());
-
+            }
+            default -> throw new AssertionError("Unexpected field: " + jsonParser.getCurrentName());
         }
     }
 
