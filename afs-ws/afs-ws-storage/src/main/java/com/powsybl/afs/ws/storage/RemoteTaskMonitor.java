@@ -47,6 +47,8 @@ public class RemoteTaskMonitor implements TaskMonitor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RemoteTaskMonitor.class);
     public static final String FILE_SYSTEM_NAME = "fileSystemName";
+    private static final String TASK_ID = "taskId";
+    private static final String TASK_PATH = "fileSystems/{fileSystemName}/tasks";
 
     private final String fileSystemName;
 
@@ -77,16 +79,13 @@ public class RemoteTaskMonitor implements TaskMonitor {
 
         LOGGER.debug("startTask(fileSystemName={}, projectFile={})", fileSystemName, projectFile.getId());
 
-        Response response = webTarget.path("fileSystems/{fileSystemName}/tasks")
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .queryParam("projectFileId", projectFile.getId())
-                .request(MediaType.APPLICATION_JSON)
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .put(Entity.text(""));
-        try {
-            return readEntityIfOk(response, TaskMonitor.Task.class);
-        } finally {
-            response.close();
+        try (Response response = webTarget.path(TASK_PATH)
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .queryParam("projectFileId", projectFile.getId())
+            .request(MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .put(Entity.text(""))) {
+            return readEntityIfOk(response, Task.class);
         }
     }
 
@@ -97,17 +96,14 @@ public class RemoteTaskMonitor implements TaskMonitor {
 
         LOGGER.debug("startTask(fileSystemName={}, name={}, project={})", fileSystemName, name, project.getId());
 
-        Response response = webTarget.path("fileSystems/{fileSystemName}/tasks")
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .queryParam("name", name)
-                .queryParam("projectId", project.getId())
-                .request(MediaType.APPLICATION_JSON)
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .put(Entity.text(""));
-        try {
-            return readEntityIfOk(response, TaskMonitor.Task.class);
-        } finally {
-            response.close();
+        try (Response response = webTarget.path(TASK_PATH)
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .queryParam("name", name)
+            .queryParam("projectId", project.getId())
+            .request(MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .put(Entity.text(""))) {
+            return readEntityIfOk(response, Task.class);
         }
     }
 
@@ -115,16 +111,13 @@ public class RemoteTaskMonitor implements TaskMonitor {
     public void stopTask(UUID id) {
         LOGGER.debug("stopTask(fileSystemName={}, id={})", fileSystemName, id);
 
-        Response response = webTarget.path("fileSystems/{fileSystemName}/tasks/{taskId}")
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .resolveTemplate("taskId", id)
-                .request()
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .delete();
-        try {
+        try (Response response = webTarget.path("fileSystems/{fileSystemName}/tasks/{taskId}")
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .resolveTemplate(TASK_ID, id)
+            .request()
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .delete()) {
             checkOk(response);
-        } finally {
-            response.close();
         }
     }
 
@@ -132,16 +125,13 @@ public class RemoteTaskMonitor implements TaskMonitor {
     public void updateTaskMessage(UUID id, String message) {
         LOGGER.debug("updateTaskMessage(fileSystemName={}, id={})", fileSystemName, id);
 
-        Response response = webTarget.path("fileSystems/{fileSystemName}/tasks/{taskId}")
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .resolveTemplate("taskId", id)
-                .request()
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .post(Entity.text(message));
-        try {
+        try (Response response = webTarget.path("fileSystems/{fileSystemName}/tasks/{taskId}")
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .resolveTemplate(TASK_ID, id)
+            .request()
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .post(Entity.text(message))) {
             checkOk(response);
-        } finally {
-            response.close();
         }
     }
 
@@ -149,16 +139,13 @@ public class RemoteTaskMonitor implements TaskMonitor {
     public Snapshot takeSnapshot(String projectId) {
         LOGGER.debug("takeSnapshot(fileSystemName={}, projectId={})", fileSystemName, projectId);
 
-        Response response = webTarget.path("fileSystems/{fileSystemName}/tasks")
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .queryParam("projectId", projectId)
-                .request(MediaType.APPLICATION_JSON)
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .get();
-        try {
+        try (Response response = webTarget.path(TASK_PATH)
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .queryParam("projectId", projectId)
+            .request(MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .get()) {
             return readEntityIfOk(response, Snapshot.class);
-        } finally {
-            response.close();
         }
     }
 
@@ -166,16 +153,13 @@ public class RemoteTaskMonitor implements TaskMonitor {
     public boolean cancelTaskComputation(UUID id) {
         LOGGER.debug("cancel(fileSystemName={}, id={})", fileSystemName, id);
 
-        Response response = webTarget.path("fileSystems/{fileSystemName}/tasks/{taskId}/_cancel")
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .resolveTemplate("taskId", id)
-                .request()
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .put(null);
-        try {
+        try (Response response = webTarget.path("fileSystems/{fileSystemName}/tasks/{taskId}/_cancel")
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .resolveTemplate(TASK_ID, id)
+            .request()
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .put(null)) {
             return readEntityIfOk(response, Boolean.class);
-        } finally {
-            response.close();
         }
     }
 
