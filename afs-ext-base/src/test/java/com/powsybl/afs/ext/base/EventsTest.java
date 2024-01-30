@@ -19,10 +19,10 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
-public class EventsTest {
+class EventsTest {
 
     @Test
-    public void caseImportedTest() throws IOException {
+    void caseImportedTest() throws IOException {
         CaseImported caseImported = new CaseImported("a", "b", Paths.get("/tmp/foo").toString());
         assertEquals("a", caseImported.getId());
         assertEquals(CaseImported.TYPENAME, caseImported.getType());
@@ -37,7 +37,7 @@ public class EventsTest {
     }
 
     @Test
-    public void scriptModifiedTest() throws IOException {
+    void scriptModifiedTest() throws IOException {
         ScriptModified scriptModified = new ScriptModified("a", "b", Paths.get("/tmp/foo").toString());
         assertEquals("a", scriptModified.getId());
         assertEquals(ScriptModified.TYPENAME, scriptModified.getType());
@@ -52,7 +52,7 @@ public class EventsTest {
     }
 
     @Test
-    public void virtualCaseCreatedTest() throws IOException {
+    void virtualCaseCreatedTest() throws IOException {
         VirtualCaseCreated virtualCaseCreated = new VirtualCaseCreated("a", "b", Paths.get("/tmp/foo").toString());
         assertEquals("a", virtualCaseCreated.getId());
         assertEquals(VirtualCaseCreated.TYPENAME, virtualCaseCreated.getType());

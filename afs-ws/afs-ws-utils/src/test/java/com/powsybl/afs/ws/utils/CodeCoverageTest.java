@@ -11,10 +11,10 @@ import org.junit.jupiter.api.Test;
 /**
  * @author Mathieu Bague {@literal <mathieu.bague at rte-france.com>}
  */
-public class CodeCoverageTest {
+class CodeCoverageTest {
 
     @Test
-    public void testNothing() {
+    void testNothing() {
         // TODO: remove this class once a real test has been added
     }
 }

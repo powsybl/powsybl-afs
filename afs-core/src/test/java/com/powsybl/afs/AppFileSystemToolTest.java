@@ -29,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
-public class AppFileSystemToolTest extends AbstractToolTest {
+class AppFileSystemToolTest extends AbstractToolTest {
 
     private AppFileSystemTool tool;
 
@@ -77,7 +77,7 @@ public class AppFileSystemToolTest extends AbstractToolTest {
     }
 
     @Test
-    public void testArchive() throws IOException {
+    void testArchive() throws IOException {
         Path archivePath = fileSystem.getPath("/tmp", UUID.randomUUID().toString());
         Files.createDirectories(archivePath);
         assertEquals(0, Files.list(archivePath).count());
@@ -86,13 +86,13 @@ public class AppFileSystemToolTest extends AbstractToolTest {
     }
 
     @Test
-    public void testLs() throws IOException {
+    void testLs() throws IOException {
         assertCommand(new String[] {"afs", "--ls"}, 0, "mem" + System.lineSeparator(), "");
         assertCommand(new String[] {"afs", "--ls", "mem:/"}, 0, String.join(System.lineSeparator(), "test_project1", "test_project2"), "");
     }
 
     @Test
-    public void testLsInconsistentNodes() throws IOException {
+    void testLsInconsistentNodes() throws IOException {
         assertCommand(new String[] {"afs", "--ls-inconsistent-nodes", "mem"}, 0, "mem:"
                 + System.lineSeparator() + "[a-z0-9-]+" + System.lineSeparator(), "");
         assertCommand(new String[] {"afs", "--ls-inconsistent-nodes"}, 0, "mem:"
@@ -100,7 +100,7 @@ public class AppFileSystemToolTest extends AbstractToolTest {
     }
 
     @Test
-    public void testFixInconsistentNodes() throws IOException {
+    void testFixInconsistentNodes() throws IOException {
         assertCommand(new String[] {"afs", "--fix-inconsistent-nodes", "mem"}, 0, "mem:"
                 + System.lineSeparator() + "[a-z0-9-]+ fixed", "");
         assertCommand(new String[] {"afs", "--fix-inconsistent-nodes"}, 3, "", "IllegalArgumentException");
@@ -109,7 +109,7 @@ public class AppFileSystemToolTest extends AbstractToolTest {
     }
 
     @Test
-    public void testRemoveInconsistentNodes() throws IOException {
+    void testRemoveInconsistentNodes() throws IOException {
         assertCommand(new String[] {"afs", "--rm-inconsistent-nodes", "mem"}, 0, "mem:"
                 + System.lineSeparator() + "[a-z0-9-]+ cleaned", "");
         assertCommand(new String[] {"afs", "--rm-inconsistent-nodes"}, 3, "", "IllegalArgumentException");

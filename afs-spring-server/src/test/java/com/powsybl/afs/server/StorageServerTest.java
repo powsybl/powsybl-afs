@@ -141,7 +141,7 @@ public class StorageServerTest extends AbstractAppStorageTest {
     }
 
     @Test
-    public void testFileSystemCheck() {
+    void testFileSystemCheck() {
         AppStorage backendStorage = appDataWrapper.getStorage(FS_TEST_NAME);
 
         doReturn(Collections.singletonList("TEST"))

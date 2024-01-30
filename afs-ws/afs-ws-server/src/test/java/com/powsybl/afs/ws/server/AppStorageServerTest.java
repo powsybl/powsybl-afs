@@ -115,7 +115,7 @@ public class AppStorageServerTest extends AbstractAppStorageTest {
 
     @Disabled
     @Test
-    public void getFileSystemNamesTest() {
+    void getFileSystemNamesTest() {
         System.out.println("=================================== AppStorageServerTest getFileSystemNamesTest ===================================");
         System.out.printf("getFileSystemNamesTest : storage.getFileSystemName() : %s%n", storage.getFileSystemName());
         System.out.printf("getFileSystemNamesTest : userSession.getToken() : %s%n", userSession.getToken());
@@ -161,7 +161,7 @@ public class AppStorageServerTest extends AbstractAppStorageTest {
 
     @Disabled
     @Test
-    public void handleRegisteredErrorTest() {
+    void handleRegisteredErrorTest() {
         assertThatCode(() -> ClientUtils.checkOk(ClientUtils.createClient().target(getRestUri()).path("/rest/dummy/registeredError").request().get()))
             .isInstanceOf(CancellationException.class);
         assertThatCode(() -> ClientUtils.checkOk(ClientUtils.createClient().target(getRestUri()).path("/rest/dummy/unregisteredError").request().get()))

@@ -100,7 +100,7 @@ public class ImportedCaseTest extends AbstractProjectFileTest {
     }
 
     @Test
-    public void test() {
+    void test() {
         Folder root = afs.getRootFolder();
 
         // check case exist
@@ -168,7 +168,7 @@ public class ImportedCaseTest extends AbstractProjectFileTest {
     }
 
     @Test
-    public void testFile() {
+    void testFile() {
         Folder root = afs.getRootFolder();
 
         // create project
@@ -194,7 +194,7 @@ public class ImportedCaseTest extends AbstractProjectFileTest {
     }
 
     @Test
-    public void testNetwork() {
+    void testNetwork() {
         Folder root = afs.getRootFolder();
 
         // create project

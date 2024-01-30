@@ -72,7 +72,7 @@ public class VirtualCaseTest extends AbstractProjectFileTest {
     }
 
     @Test
-    public void test() {
+    void test() {
         // get case
         Case aCase = (Case) afs.getRootFolder().getChildren().get(0);
 

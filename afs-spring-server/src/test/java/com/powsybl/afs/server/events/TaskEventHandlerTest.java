@@ -32,7 +32,7 @@ import static org.assertj.core.api.Java6Assertions.assertThat;
  * @author THIYAGARASA Pratheep Ext
  */
 @ExtendWith(MockitoExtension.class)
-public class TaskEventHandlerTest {
+class TaskEventHandlerTest {
 
     @Mock
     private AppDataWrapper appDataWrapper;
@@ -53,7 +53,7 @@ public class TaskEventHandlerTest {
     private ArgumentCaptor<TaskListener> taskListenerArgumentCaptor;
 
     @Test
-    public void afterConnection() throws Exception {
+    void afterConnection() throws Exception {
         Map<String, Object> attributes = new HashMap<>();
         attributes.put("fileSystemName", "fs");
         attributes.put("projectId", "id");
@@ -69,7 +69,7 @@ public class TaskEventHandlerTest {
     }
 
     @Test
-    public void afterConnectionClose() throws Exception {
+    void afterConnectionClose() throws Exception {
         TaskListener listener = new TaskListener() {
             @Override
             public String getProjectId() {

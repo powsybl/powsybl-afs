@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
-public class ActionScriptTest extends AbstractProjectFileTest {
+class ActionScriptTest extends AbstractProjectFileTest {
 
     @Override
     protected AppStorage createStorage() {
@@ -40,7 +40,7 @@ public class ActionScriptTest extends AbstractProjectFileTest {
     }
 
     @Test
-    public void test() {
+    void test() {
         // create project in the root folder
         Project project = afs.getRootFolder().createProject("project");
 

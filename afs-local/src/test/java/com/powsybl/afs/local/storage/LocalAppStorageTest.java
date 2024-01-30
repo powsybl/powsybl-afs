@@ -70,14 +70,14 @@ public class LocalAppStorageTest {
     }
 
     @Test
-    public void testConsistent() {
+    void testConsistent() {
         NodeInfo rootNodeInfo = storage.createRootNodeIfNotExists("mem", Folder.PSEUDO_CLASS);
         String id = rootNodeInfo.getId();
         assertThrows(AssertionError.class, () -> storage.setConsistent(id));
     }
 
     @Test
-    public void test() {
+    void test() {
         NodeInfo rootNodeInfo = storage.createRootNodeIfNotExists("mem", Folder.PSEUDO_CLASS);
         assertEquals("mem", rootNodeInfo.getName());
         assertFalse(storage.isWritable(rootNodeInfo.getId()));

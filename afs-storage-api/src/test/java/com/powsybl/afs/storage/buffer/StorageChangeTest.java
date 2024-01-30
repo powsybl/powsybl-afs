@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
-public class StorageChangeTest {
+class StorageChangeTest {
 
     private ObjectMapper objectMapper;
 
@@ -32,7 +32,7 @@ public class StorageChangeTest {
     }
 
     @Test
-    public void test() throws IOException {
+    void test() throws IOException {
         StorageChangeSet changeSet = new StorageChangeSet();
         changeSet.getChanges().add(new TimeSeriesCreation("id1", new TimeSeriesMetadata("ts1", TimeSeriesDataType.DOUBLE, InfiniteTimeSeriesIndex.INSTANCE)));
         changeSet.getChanges().add(new DoubleTimeSeriesChunksAddition("id1", 1, "ts1", Collections.singletonList(new UncompressedDoubleDataChunk(0, new double[] {1d, 2d}))));

@@ -141,7 +141,7 @@ public class SecurityAnalysisRunnerTest extends AbstractProjectFileTest {
     }
 
     @Test
-    public void test() {
+    void test() {
         Case aCase = afs.getRootFolder().getChild(Case.class, "network")
                 .orElseThrow(AssertionError::new);
 

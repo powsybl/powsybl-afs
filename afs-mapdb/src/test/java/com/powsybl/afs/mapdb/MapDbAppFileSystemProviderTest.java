@@ -29,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
-public class MapDbAppFileSystemProviderTest {
+class MapDbAppFileSystemProviderTest {
 
     private FileSystem fileSystem;
 
@@ -48,7 +48,7 @@ public class MapDbAppFileSystemProviderTest {
     }
 
     @Test
-    public void test() {
+    void test() {
         ComputationManager computationManager = Mockito.mock(ComputationManager.class);
         MapDbAppFileSystemConfig config = new MapDbAppFileSystemConfig("drive", true, dbFile);
         List<AppFileSystem> fileSystems = new MapDbAppFileSystemProvider(Collections.singletonList(config),

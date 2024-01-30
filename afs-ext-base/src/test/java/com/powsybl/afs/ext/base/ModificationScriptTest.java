@@ -40,7 +40,7 @@ public class ModificationScriptTest extends AbstractProjectFileTest {
     }
 
     @Test
-    public void test() {
+    void test() {
         Project project = afs.getRootFolder().createProject("project");
         ProjectFolder rootFolder = project.getRootFolder();
 

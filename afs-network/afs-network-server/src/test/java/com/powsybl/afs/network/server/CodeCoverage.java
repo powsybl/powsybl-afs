@@ -11,9 +11,9 @@ import org.junit.jupiter.api.Test;
 /**
  * @author Mathieu Bague {@literal <mathieu.bague at rte-france.com>}
  */
-public class CodeCoverage {
+class CodeCoverage {
 
     @Test
-    public void testNothing() {
+    void testNothing() {
     }
 }

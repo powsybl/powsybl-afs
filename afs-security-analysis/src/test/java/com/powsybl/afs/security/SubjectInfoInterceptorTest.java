@@ -26,10 +26,10 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
-public class SubjectInfoInterceptorTest {
+class SubjectInfoInterceptorTest {
 
     @Test
-    public void test() {
+    void test() {
         Network network = EurostagTutorialExample1Factory.create();
         SubjectInfoInterceptorExtension interceptorExtension = new SubjectInfoInterceptorExtension();
         assertEquals("SubjectInfoInterceptor", interceptorExtension.getName());

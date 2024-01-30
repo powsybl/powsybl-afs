@@ -17,10 +17,10 @@ import static org.junit.jupiter.api.Assertions.fail;
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
-public class NodeGenericMetadataTest {
+class NodeGenericMetadataTest {
 
     @Test
-    public void test() {
+    void test() {
         // check getters
         NodeGenericMetadata metadata = new NodeGenericMetadata()
                 .setString("s1", "a")

@@ -24,7 +24,7 @@ import static org.mockito.Mockito.when;
 /**
  * @author Sylvain Leclerc {@literal <sylvain.leclerc@rte-france.com>}
  */
-public class NodeEventClientReconnectionTest {
+class NodeEventClientReconnectionTest {
 
     private Session session;
 
@@ -35,7 +35,7 @@ public class NodeEventClientReconnectionTest {
     }
 
     @Test
-    public void shouldTryToReconnectUntilSuccess() throws InterruptedException {
+    void shouldTryToReconnectUntilSuccess() throws InterruptedException {
 
         CountDownLatch reconnectionAttempts = new CountDownLatch(5);
 
@@ -54,7 +54,7 @@ public class NodeEventClientReconnectionTest {
     }
 
     @Test
-    public void shouldStopReconnectingOnClose() throws InterruptedException, ExecutionException {
+    void shouldStopReconnectingOnClose() throws InterruptedException, ExecutionException {
 
         CountDownLatch attemptsBeforeClosing = new CountDownLatch(2);
 
@@ -80,7 +80,7 @@ public class NodeEventClientReconnectionTest {
     }
 
     @Test
-    public void shouldNotTryToReconnectOnClose() throws ExecutionException, InterruptedException {
+    void shouldNotTryToReconnectOnClose() throws ExecutionException, InterruptedException {
 
         CompletableFuture<Void> reconnectionAfterClosing = new CompletableFuture<>();
         //Completes the above future if any attempt of reconnection is made

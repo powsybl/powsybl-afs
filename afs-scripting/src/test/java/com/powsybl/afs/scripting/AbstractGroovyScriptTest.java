@@ -35,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 public abstract class AbstractGroovyScriptTest {
 
-    private class AfsGroovyScriptExtensionMock implements GroovyScriptExtension {
+    private final class AfsGroovyScriptExtensionMock implements GroovyScriptExtension {
 
         @Override
         public void load(Binding binding, ComputationManager computationManager) {
@@ -93,7 +93,7 @@ public abstract class AbstractGroovyScriptTest {
     }
 
     @Test
-    public void test() throws IOException {
+    void test() throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try (Reader codeReader = getCodeReader(); PrintStream ps = new PrintStream(out)) {
             GroovyScripts.run(codeReader, getExtensions(), ps);

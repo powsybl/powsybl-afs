@@ -42,7 +42,7 @@ public class AfsExtensionErrorGroovyScriptTest extends AbstractGroovyScriptTest 
 
     @Override
     @Test
-    public void test() {
+    void test() {
         assertThrows(AfsException.class, super::test);
     }
 }

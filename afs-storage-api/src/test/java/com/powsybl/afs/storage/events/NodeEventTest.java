@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
-public class NodeEventTest {
+class NodeEventTest {
 
     private ObjectMapper objectMapper;
 
@@ -29,7 +29,7 @@ public class NodeEventTest {
     }
 
     @Test
-    public void dependencyAddedTest() throws IOException {
+    void dependencyAddedTest() throws IOException {
         DependencyAdded added = new DependencyAdded("a", "b");
         assertEquals("a", added.getId());
         assertEquals(DependencyAdded.TYPENAME, added.getType());
@@ -45,7 +45,7 @@ public class NodeEventTest {
     }
 
     @Test
-    public void backwardDependencyAddedTest() throws IOException {
+    void backwardDependencyAddedTest() throws IOException {
         BackwardDependencyAdded added = new BackwardDependencyAdded("a", "b");
         assertEquals("a", added.getId());
         assertEquals(BackwardDependencyAdded.TYPENAME, added.getType());
@@ -61,7 +61,7 @@ public class NodeEventTest {
     }
 
     @Test
-    public void dependencyRemovedTest() throws IOException {
+    void dependencyRemovedTest() throws IOException {
         DependencyRemoved removed = new DependencyRemoved("a", "b");
         assertEquals("a", removed.getId());
         assertEquals(DependencyRemoved.TYPENAME, removed.getType());
@@ -77,7 +77,7 @@ public class NodeEventTest {
     }
 
     @Test
-    public void backwardDependencyRemovedTest() throws IOException {
+    void backwardDependencyRemovedTest() throws IOException {
         BackwardDependencyRemoved removed = new BackwardDependencyRemoved("a", "b");
         assertEquals("a", removed.getId());
         assertEquals(BackwardDependencyRemoved.TYPENAME, removed.getType());
@@ -93,7 +93,7 @@ public class NodeEventTest {
     }
 
     @Test
-    public void nodeCreatedTest() throws IOException {
+    void nodeCreatedTest() throws IOException {
         NodeCreated created = new NodeCreated("a", "b");
         assertEquals("a", created.getId());
         assertEquals("b", created.getParentId());
@@ -109,7 +109,7 @@ public class NodeEventTest {
     }
 
     @Test
-    public void nodeConsistent() throws IOException {
+    void nodeConsistent() throws IOException {
         NodeConsistent nodeConsistent = new NodeConsistent("a");
         assertEquals("a", nodeConsistent.getId());
         assertEquals("NodeConsistent(id=a)", nodeConsistent.toString());
@@ -120,7 +120,7 @@ public class NodeEventTest {
     }
 
     @Test
-    public void nodeDataUpdatedTest() throws IOException {
+    void nodeDataUpdatedTest() throws IOException {
         NodeDataUpdated updated = new NodeDataUpdated("a", "b");
         assertEquals("a", updated.getId());
         assertEquals(NodeDataUpdated.TYPENAME, updated.getType());
@@ -136,7 +136,7 @@ public class NodeEventTest {
     }
 
     @Test
-    public void nodeDescriptionUpdatedTest() throws IOException {
+    void nodeDescriptionUpdatedTest() throws IOException {
         NodeDescriptionUpdated updated = new NodeDescriptionUpdated("a", "b");
         assertEquals("a", updated.getId());
         assertEquals(NodeDescriptionUpdated.TYPENAME, updated.getType());
@@ -152,7 +152,7 @@ public class NodeEventTest {
     }
 
     @Test
-    public void nodeNameUpdatedTest() throws IOException {
+    void nodeNameUpdatedTest() throws IOException {
         NodeNameUpdated updated = new NodeNameUpdated("a", "b");
         assertEquals("a", updated.getId());
         assertEquals(NodeNameUpdated.TYPENAME, updated.getType());
@@ -168,7 +168,7 @@ public class NodeEventTest {
     }
 
     @Test
-    public void nodeRemovedTest() throws IOException {
+    void nodeRemovedTest() throws IOException {
         NodeRemoved removed = new NodeRemoved("a", "b");
         assertEquals("a", removed.getId());
         assertEquals("b", removed.getParentId());
@@ -184,7 +184,7 @@ public class NodeEventTest {
     }
 
     @Test
-    public void parentChangedTest() throws IOException {
+    void parentChangedTest() throws IOException {
         ParentChanged changed = new ParentChanged("a", "b", "c");
         assertEquals("a", changed.getId());
         assertEquals(ParentChanged.TYPENAME, changed.getType());
@@ -199,7 +199,7 @@ public class NodeEventTest {
     }
 
     @Test
-    public void timeSeriesClearedTest() throws IOException {
+    void timeSeriesClearedTest() throws IOException {
         TimeSeriesCleared cleared = new TimeSeriesCleared("a");
         assertEquals("a", cleared.getId());
         assertEquals(TimeSeriesCleared.TYPENAME, cleared.getType());
@@ -214,7 +214,7 @@ public class NodeEventTest {
     }
 
     @Test
-    public void timeSeriesCreatedTest() throws IOException {
+    void timeSeriesCreatedTest() throws IOException {
         TimeSeriesCreated created = new TimeSeriesCreated("a", "b");
         assertEquals("a", created.getId());
         assertEquals(TimeSeriesCreated.TYPENAME, created.getType());
@@ -230,7 +230,7 @@ public class NodeEventTest {
     }
 
     @Test
-    public void timeSeriesDataUpdatedTest() throws IOException {
+    void timeSeriesDataUpdatedTest() throws IOException {
         TimeSeriesDataUpdated updated = new TimeSeriesDataUpdated("a", "b");
         assertEquals("a", updated.getId());
         assertEquals(TimeSeriesDataUpdated.TYPENAME, updated.getType());
@@ -246,7 +246,7 @@ public class NodeEventTest {
     }
 
     @Test
-    public void eventListTest() throws IOException {
+    void eventListTest() throws IOException {
         NodeEventList eventList = new NodeEventList(new NodeCreated("a", "c"), new NodeRemoved("b", "d"));
         assertEquals("[NodeCreated(id=a, parentId=c), NodeRemoved(id=b, parentId=d)]", eventList.toString());
 

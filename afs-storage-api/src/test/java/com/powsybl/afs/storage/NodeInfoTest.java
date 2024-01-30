@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
-public class NodeInfoTest {
+class NodeInfoTest {
 
     private ObjectMapper objectMapper;
 
@@ -30,7 +30,7 @@ public class NodeInfoTest {
     }
 
     @Test
-    public void nodeInfoTest() throws IOException {
+    void nodeInfoTest() throws IOException {
         NodeInfo info = new NodeInfo("a", "b", "c", "d", 1000000, 1000001, 0,
                 new NodeGenericMetadata().setString("s1", "s1")
                                          .setDouble("d1", 1d)

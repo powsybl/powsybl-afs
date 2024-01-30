@@ -25,7 +25,7 @@ import java.io.IOException;
 /**
  * @author Amira KAHYA {@literal <amira.kahya at rte-france.com>}
  */
-public class ProjectTest {
+class ProjectTest {
     private static final String FOLDER_PSEUDO_CLASS = "folder";
 
     private AppStorage storage;
@@ -40,7 +40,7 @@ public class ProjectTest {
     }
 
     @Test
-    public void createProjectFolderTest() throws IOException {
+    void createProjectFolderTest() throws IOException {
         Project project = afs.getRootFolder().createProject("test");
         NodeInfo info = storage.createNode(project.getId(), "test", FOLDER_PSEUDO_CLASS, "d", 0,
                 new NodeGenericMetadata().setString("k", "v"));

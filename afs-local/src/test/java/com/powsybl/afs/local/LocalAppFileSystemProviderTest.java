@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
-public class LocalAppFileSystemProviderTest {
+class LocalAppFileSystemProviderTest {
 
     private FileSystem fileSystem;
 
@@ -45,7 +45,7 @@ public class LocalAppFileSystemProviderTest {
     }
 
     @Test
-    public void test() {
+    void test() {
         ComputationManager computationManager = Mockito.mock(ComputationManager.class);
         LocalAppFileSystemConfig config = new LocalAppFileSystemConfig("drive", true, fileSystem.getPath("/work"));
         LocalFileScanner extension = new LocalCaseScanner(new ImportConfig(), new ImportersLoaderList());
