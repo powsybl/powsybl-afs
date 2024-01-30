@@ -17,6 +17,7 @@ import com.powsybl.contingency.BranchContingency;
 import com.powsybl.contingency.Contingency;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -50,5 +51,6 @@ class ContingencyStoreTest extends AbstractProjectFileTest {
         List<Contingency> contingencies = Collections.singletonList(new Contingency("c1", new BranchContingency("l1")));
         contingencyStore.write(contingencies);
         assertEquals(contingencies, contingencyStore.read());
+        assertEquals(new ArrayList<>(), contingencyStore.getContingencies(network));
     }
 }

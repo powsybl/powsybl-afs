@@ -77,16 +77,6 @@ public class AppStorageServerTest extends AbstractAppStorageTest {
             .addAsLibraries(filesLib);
     }
 
-//    @Produces
-//    public UserAuthenticator getUserAuthenticator() {
-//        return new UserAuthenticatorMock();
-//    }
-//
-//    @Produces
-//    public AppDataBean getAppDataBean() {
-//        return new AppDataBeanMock();
-//    }
-
     private URI getRestUri() {
         try {
             return baseUrl.toURI();
@@ -104,26 +94,21 @@ public class AppStorageServerTest extends AbstractAppStorageTest {
 
     @Override
     protected AppStorage createStorage() {
-        System.out.println("=================================== AppStorageServerTest createStorage ===================================");
         URI restUri = getRestUri();
         RemoteAppStorage storage = new RemoteAppStorage(AppDataBeanMock.TEST_FS_NAME, restUri,
             userSession.getToken());
-        System.out.printf("createStorage : storage.getFileSystemName() : %s%n", storage.getFileSystemName());
-        System.out.printf("createStorage : userSession.getToken() : %s%n", userSession.getToken());
         return storage;
     }
 
-    @Disabled
+    @Disabled("waiting for a decision on module removal")
     @Test
     void getFileSystemNamesTest() {
-        System.out.println("=================================== AppStorageServerTest getFileSystemNamesTest ===================================");
-        System.out.printf("getFileSystemNamesTest : storage.getFileSystemName() : %s%n", storage.getFileSystemName());
-        System.out.printf("getFileSystemNamesTest : userSession.getToken() : %s%n", userSession.getToken());
         List<String> fileSystemNames = RemoteAppStorage.getFileSystemNames(getRestUri(), userSession.getToken());
         assertEquals(Collections.singletonList(AppDataBeanMock.TEST_FS_NAME), fileSystemNames);
     }
 
-    @Disabled
+    @Disabled("waiting for a decision on module removal")
+    @Test
     @Override
     public void test() {
         // Test temporary commented - waiting for a decision on module removal
@@ -159,7 +144,7 @@ public class AppStorageServerTest extends AbstractAppStorageTest {
 
     }
 
-    @Disabled
+    @Disabled("waiting for a decision on module removal")
     @Test
     void handleRegisteredErrorTest() {
         assertThatCode(() -> ClientUtils.checkOk(ClientUtils.createClient().target(getRestUri()).path("/rest/dummy/registeredError").request().get()))

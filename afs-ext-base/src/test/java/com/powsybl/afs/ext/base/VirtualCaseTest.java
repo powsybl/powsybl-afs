@@ -168,6 +168,27 @@ public class VirtualCaseTest extends AbstractProjectFileTest {
             assertTrue(e.getError().getMessage().contains("No signature of method: test.prin() is applicable"));
         }
 
+        // test script error with MultipleCompilationErrorsException
+        scriptWithError = folder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("scriptWithError_MultipleCompilationErrorsException")
+            .withType(ScriptType.GROOVY)
+            .withContent("print('hello'")
+            .build();
+
+        virtualCaseWithError = folder.fileBuilder(VirtualCaseBuilder.class)
+            .withName("network2_MultipleCompilationErrorsException")
+            .withCase(importedCase)
+            .withScript(scriptWithError)
+            .build();
+
+        try {
+            virtualCaseWithError.getNetwork();
+            fail();
+        } catch (ScriptException e) {
+            assertNotNull(e.getError());
+            assertEquals("Unexpected input: '(' @ line 1, column 6.", e.getError().getMessage());
+        }
+
         //test missing dependencies
         VirtualCase virtualCase3 = folder.fileBuilder(VirtualCaseBuilder.class)
                 .withName("network3")
