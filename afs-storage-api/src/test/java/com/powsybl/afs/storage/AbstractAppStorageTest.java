@@ -235,8 +235,13 @@ public abstract class AbstractAppStorageTest {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-        try (Writer writer = new OutputStreamWriter(storage.writeBinaryData(testFolderInfo.getId(), "dataTest3"), StandardCharsets.UTF_8)) {
-            writer.write("Content for dataTest3");
+        try (Writer writer = new OutputStreamWriter(storage.writeBinaryData(testFolderInfo.getId(), "DATA_SOURCE_SUFFIX_EXT__Test3__ext"), StandardCharsets.UTF_8)) {
+            writer.write("Content for DATA_SOURCE_SUFFIX_EXT__Test3__ext");
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        try (Writer writer = new OutputStreamWriter(storage.writeBinaryData(testFolderInfo.getId(), "DATA_SOURCE_FILE_NAME__Test4"), StandardCharsets.UTF_8)) {
+            writer.write("Content for DATA_SOURCE_FILE_NAME__Test4");
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -245,18 +250,24 @@ public abstract class AbstractAppStorageTest {
         // check events
         assertEventStack(new NodeDataUpdated(testFolderInfo.getId(), "testData1"),
                 new NodeDataUpdated(testFolderInfo.getId(), "testData2"),
-                new NodeDataUpdated(testFolderInfo.getId(), "dataTest3"));
+                new NodeDataUpdated(testFolderInfo.getId(), "DATA_SOURCE_SUFFIX_EXT__Test3__ext"),
+                new NodeDataUpdated(testFolderInfo.getId(), "DATA_SOURCE_FILE_NAME__Test4"));
 
         // check data names
-        assertEquals(ImmutableSet.of("testData2", "testData1", "dataTest3"), storage.getDataNames(testFolderInfo.getId()));
+        assertEquals(ImmutableSet.of("testData2", "testData1", "DATA_SOURCE_SUFFIX_EXT__Test3__ext", "DATA_SOURCE_FILE_NAME__Test4"),
+            storage.getDataNames(testFolderInfo.getId()));
 
         // check data names seen from data source
         assertEquals(ImmutableSet.of("testData2", "testData1"), ds1.listNames("^testD.*"));
+        AssertionError error = assertThrows(AssertionError.class, () -> ds1.listNames("^DATA_SOURCE_SUFFIX.*"));
+        assertEquals("Don't know how to unmap suffix-and-extension to a data source name DATA_SOURCE_SUFFIX_EXT__Test3__ext",
+            error.getMessage());
+        assertEquals(ImmutableSet.of("Test4"), ds1.listNames("^DATA_SOURCE_FILE.*"));
 
         // check children names (not data names)
         List<String> expectedChildrenNames = ImmutableList.of("data", "data2", "data3");
         List<String> actualChildrenNames = storage.getChildNodes(testFolderInfo.getId()).stream()
-                .map(n -> n.getName()).collect(Collectors.toList());
+                .map(NodeInfo::getName).collect(Collectors.toList());
         assertEquals(expectedChildrenNames, actualChildrenNames);
 
         // 6) create a dependency between data node and data node 2
