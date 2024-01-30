@@ -37,8 +37,7 @@ public class TaskCancellableStatusChangeEvent extends TaskEvent {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof TaskCancellableStatusChangeEvent) {
-            TaskCancellableStatusChangeEvent other = (TaskCancellableStatusChangeEvent) obj;
+        if (obj instanceof TaskCancellableStatusChangeEvent other) {
             return taskId.equals(other.taskId) &&
                     revision == other.revision &&
                     cancellable == other.cancellable;

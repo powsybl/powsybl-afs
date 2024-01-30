@@ -90,7 +90,7 @@ public class ModificationScriptTest extends AbstractProjectFileTest {
         // check script file is correctly scanned
         assertEquals(1, rootFolder.getChildren().size());
         ProjectNode firstNode = rootFolder.getChildren().get(0);
-        assertTrue(firstNode instanceof ModificationScript);
+        assertInstanceOf(ModificationScript.class, firstNode);
         assertEquals("script", firstNode.getName());
 
         ModificationScript include1 = rootFolder.fileBuilder(ModificationScriptBuilder.class)

@@ -39,8 +39,7 @@ public class TimeSeriesDataUpdated extends NodeEvent {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof TimeSeriesDataUpdated) {
-            TimeSeriesDataUpdated other = (TimeSeriesDataUpdated) obj;
+        if (obj instanceof TimeSeriesDataUpdated other) {
             return id.equals(other.id) && timeSeriesName.equals(other.timeSeriesName);
         }
         return false;

@@ -28,8 +28,7 @@ public final class TimeSeriesIndexSerializer implements Serializer<TimeSeriesInd
     @Override
     public void serialize(DataOutput2 out, TimeSeriesIndex index) throws IOException {
         out.writeInt(MapDbStorageConstants.STORAGE_VERSION);
-        if (index instanceof RegularTimeSeriesIndex) {
-            RegularTimeSeriesIndex regularIndex = (RegularTimeSeriesIndex) index;
+        if (index instanceof RegularTimeSeriesIndex regularIndex) {
             out.writeUTF("regularIndex");
             out.writeLong(regularIndex.getStartTime());
             out.writeLong(regularIndex.getEndTime());

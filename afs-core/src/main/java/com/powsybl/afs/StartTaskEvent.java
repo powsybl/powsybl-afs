@@ -52,8 +52,7 @@ public class StartTaskEvent extends TaskEvent {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof StartTaskEvent) {
-            StartTaskEvent other = (StartTaskEvent) obj;
+        if (obj instanceof StartTaskEvent other) {
             if (nodeId != null && !nodeId.equals(other.nodeId)) {
                 return false;
             }

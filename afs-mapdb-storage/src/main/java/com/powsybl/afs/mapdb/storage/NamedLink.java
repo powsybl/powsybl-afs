@@ -38,8 +38,7 @@ public class NamedLink {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof NamedLink) {
-            NamedLink other = (NamedLink) obj;
+        if (obj instanceof NamedLink other) {
             return nodeUuid.equals(other.nodeUuid) && name.equals(other.name);
         }
         return false;

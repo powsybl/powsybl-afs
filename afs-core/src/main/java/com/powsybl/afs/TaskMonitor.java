@@ -141,8 +141,7 @@ public interface TaskMonitor extends AutoCloseable {
 
         @Override
         public boolean equals(Object obj) {
-            if (obj instanceof Task) {
-                Task other = (Task) obj;
+            if (obj instanceof Task other) {
                 return id.equals(other.id)
                         && name.equals(other.name)
                         && Objects.equals(message, other.message)
@@ -183,8 +182,7 @@ public interface TaskMonitor extends AutoCloseable {
 
         @Override
         public boolean equals(Object obj) {
-            if (obj instanceof Snapshot) {
-                Snapshot snapshot = (Snapshot) obj;
+            if (obj instanceof Snapshot snapshot) {
                 return tasks.equals(snapshot.tasks) && revision == snapshot.revision;
             }
             return false;

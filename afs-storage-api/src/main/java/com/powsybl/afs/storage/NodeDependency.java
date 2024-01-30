@@ -39,8 +39,7 @@ public class NodeDependency {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof NodeDependency) {
-            NodeDependency other = (NodeDependency) obj;
+        if (obj instanceof NodeDependency other) {
             return name.equals(other.name) && nodeInfo.equals(other.nodeInfo);
         }
         return false;

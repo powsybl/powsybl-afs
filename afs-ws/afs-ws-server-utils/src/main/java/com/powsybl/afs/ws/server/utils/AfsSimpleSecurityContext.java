@@ -35,8 +35,8 @@ public class AfsSimpleSecurityContext implements SecurityContext {
 
             @Override
             public boolean equals(Object obj) {
-                if (obj instanceof UserPrincipal) {
-                    return getName().equals(((UserPrincipal) obj).getName());
+                if (obj instanceof UserPrincipal userPrincipal) {
+                    return getName().equals(userPrincipal.getName());
                 }
                 return false;
             }

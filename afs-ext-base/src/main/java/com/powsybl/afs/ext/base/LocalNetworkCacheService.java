@@ -88,10 +88,10 @@ public class LocalNetworkCacheService implements NetworkCacheService {
     }
 
     private static ScriptResult<Network> loadNetworkFromProjectCase(ProjectCase projectCase, List<NetworkListener> listeners) {
-        if (projectCase instanceof ImportedCase) {
-            return loadNetworkFromImportedCase((ImportedCase) projectCase, listeners);
-        } else if (projectCase instanceof VirtualCase) {
-            return loadNetworkFromVirtualCase((VirtualCase) projectCase, listeners);
+        if (projectCase instanceof ImportedCase importedCase) {
+            return loadNetworkFromImportedCase(importedCase, listeners);
+        } else if (projectCase instanceof VirtualCase virtualCase) {
+            return loadNetworkFromVirtualCase(virtualCase, listeners);
         } else {
             throw new AssertionError("ProjectCase implementation " + projectCase.getClass().getName() + " not supported");
         }

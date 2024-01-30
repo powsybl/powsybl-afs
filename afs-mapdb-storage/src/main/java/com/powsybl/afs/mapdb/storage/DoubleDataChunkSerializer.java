@@ -29,16 +29,14 @@ public final class DoubleDataChunkSerializer implements Serializer<DoubleDataChu
     @Override
     public void serialize(DataOutput2 out, DoubleDataChunk chunk) throws IOException {
         out.writeInt(MapDbStorageConstants.STORAGE_VERSION);
-        if (chunk instanceof UncompressedDoubleDataChunk) {
-            UncompressedDoubleDataChunk uncompressedChunk = (UncompressedDoubleDataChunk) chunk;
+        if (chunk instanceof UncompressedDoubleDataChunk uncompressedChunk) {
             out.writeUTF("uncompressed");
             out.writeInt(uncompressedChunk.getOffset());
             out.writeInt(uncompressedChunk.getLength());
             for (double value : uncompressedChunk.getValues()) {
                 out.writeDouble(value);
             }
-        } else if (chunk instanceof CompressedDoubleDataChunk) {
-            CompressedDoubleDataChunk compressedChunk = (CompressedDoubleDataChunk) chunk;
+        } else if (chunk instanceof CompressedDoubleDataChunk compressedChunk) {
             out.writeUTF("compressed");
             out.writeInt(compressedChunk.getOffset());
             out.writeInt(compressedChunk.getUncompressedLength());

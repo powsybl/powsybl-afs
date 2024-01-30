@@ -37,8 +37,7 @@ public final class TimeSeriesChunkKey {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof TimeSeriesChunkKey) {
-            TimeSeriesChunkKey other = (TimeSeriesChunkKey) obj;
+        if (obj instanceof TimeSeriesChunkKey other) {
             return timeSeriesKey.equals(other.timeSeriesKey) &&
                     chunk == other.chunk;
         }

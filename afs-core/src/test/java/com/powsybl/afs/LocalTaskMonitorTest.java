@@ -133,7 +133,7 @@ public class LocalTaskMonitorTest extends AbstractProjectFileTest {
             assertThat(dummyTaskProcess.isCancelled()).isTrue();
             assertThatCode(dummyTaskProcess::get).isInstanceOf(CancellationException.class);
             waitForInterruption.await();
-            assertThat(waitForInterruption.getCount()).isEqualTo(0);
+            assertThat(waitForInterruption.getCount()).isZero();
             assertThat(interrupted.get()).isTrue();
             assertThat(waitIndefinitely.getCount()).isEqualTo(1);
 

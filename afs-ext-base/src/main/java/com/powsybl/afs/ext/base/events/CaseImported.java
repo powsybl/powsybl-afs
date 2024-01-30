@@ -26,8 +26,7 @@ public class CaseImported extends BusinessEvent {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof CaseImported) {
-            CaseImported other = (CaseImported) obj;
+        if (obj instanceof CaseImported other) {
             return id.equals(other.id) && Objects.equals(parentId, other.parentId) && path.equals(other.path);
         }
         return false;

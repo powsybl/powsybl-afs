@@ -40,8 +40,7 @@ public class DependencyAdded extends NodeEvent implements DependencyEvent {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof DependencyAdded) {
-            DependencyAdded other = (DependencyAdded) obj;
+        if (obj instanceof DependencyAdded other) {
             return id.equals(other.id) && dependencyName.equals(other.dependencyName);
         }
         return false;

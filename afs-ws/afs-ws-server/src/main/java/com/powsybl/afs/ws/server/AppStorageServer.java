@@ -811,8 +811,8 @@ public class AppStorageServer {
     }
 
     private static Object encode(Object input) {
-        if (input instanceof String) {
-            return ((String) input).replaceAll("[\n\r\t]", "_");
+        if (input instanceof String s) {
+            return s.replaceAll("[\n\r\t]", "_");
         }
         return input;
     }

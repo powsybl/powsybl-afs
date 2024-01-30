@@ -25,8 +25,7 @@ import java.nio.file.FileSystem;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
@@ -55,7 +54,7 @@ public class LocalAppFileSystemProviderTest {
                                                                          Collections.emptyList())
                 .getFileSystems(new AppFileSystemProviderContext(computationManager, null, new InMemoryEventsBus()));
         assertEquals(1, fileSystems.size());
-        assertTrue(fileSystems.get(0) instanceof LocalAppFileSystem);
+        assertInstanceOf(LocalAppFileSystem.class, fileSystems.get(0));
         assertEquals("drive", fileSystems.get(0).getName());
         assertTrue(fileSystems.get(0).isRemotelyAccessible());
     }

@@ -29,8 +29,8 @@ public class ThrowableExceptionMapper implements ExceptionMapper<Throwable> {
         if (LOGGER.isErrorEnabled()) {
             LOGGER.error(t.toString(), t);
         }
-        if (t instanceof WebApplicationException) {
-            return ((WebApplicationException) t).getResponse();
+        if (t instanceof WebApplicationException webApplicationException) {
+            return webApplicationException.getResponse();
         } else {
             return Response
                     .serverError()

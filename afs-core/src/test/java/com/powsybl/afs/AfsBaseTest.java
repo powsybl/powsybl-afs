@@ -531,9 +531,9 @@ public class AfsBaseTest {
             assertEquals(source.getModificationDate(), result.getModificationDate());
             assertEquals(source.getCodeVersion(), result.getCodeVersion());
 
-            if (source instanceof ProjectNode) {
-                assertEquals(((ProjectNode) source).getProject().getId(), ((ProjectNode) result).getProject().getId());
-                assertEquals(((ProjectNode) source).getFileSystem(), ((ProjectNode) result).getFileSystem());
+            if (source instanceof ProjectNode projectNode) {
+                assertEquals(projectNode.getProject().getId(), ((ProjectNode) result).getProject().getId());
+                assertEquals(projectNode.getFileSystem(), ((ProjectNode) result).getFileSystem());
             }
         };
 

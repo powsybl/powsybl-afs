@@ -105,7 +105,7 @@ public class ImportedCaseTest extends AbstractProjectFileTest {
 
         // check case exist
         assertEquals(1, root.getChildren().size());
-        assertTrue(root.getChildren().get(0) instanceof Case);
+        assertInstanceOf(Case.class, root.getChildren().get(0));
         Case aCase = (Case) root.getChildren().get(0);
         assertEquals("network", aCase.getName());
         assertEquals("Test format", aCase.getDescription());

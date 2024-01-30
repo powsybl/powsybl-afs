@@ -29,8 +29,7 @@ public class StopTaskEvent extends TaskEvent {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof StopTaskEvent) {
-            StopTaskEvent other = (StopTaskEvent) obj;
+        if (obj instanceof StopTaskEvent other) {
             return taskId.equals(other.taskId) &&
                     revision == other.revision;
         }
