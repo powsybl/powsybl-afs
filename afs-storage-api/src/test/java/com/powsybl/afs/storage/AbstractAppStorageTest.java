@@ -650,7 +650,7 @@ public abstract class AbstractAppStorageTest {
         assertEventStack(new NodeMetadataUpdated(node.getId(), metadata));
 
         metadata.setString("test", "test");
-        assertThat(node.getGenericMetadata().getStrings().keySet().size()).isZero();
+        assertThat(node.getGenericMetadata().getStrings().keySet()).isEmpty();
 
         storage.setMetadata(node.getId(), cloneMetadata(metadata));
         storage.flush();

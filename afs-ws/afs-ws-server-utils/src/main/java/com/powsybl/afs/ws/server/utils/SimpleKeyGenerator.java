@@ -15,11 +15,8 @@ import java.security.Key;
  */
 public class SimpleKeyGenerator implements KeyGenerator {
 
-    private static final String SIMPLE_KEY = "simplekey";
-
     @Override
     public Key generateKey() {
         return Jwts.SIG.HS512.key().build();
-//        return new SecretKeySpec(SIMPLE_KEY.getBytes(), 0, SIMPLE_KEY.getBytes().length, "HMAC-SHA-256");
     }
 }
