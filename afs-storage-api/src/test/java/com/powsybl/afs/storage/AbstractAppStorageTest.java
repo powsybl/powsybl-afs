@@ -16,7 +16,6 @@ import com.powsybl.commons.datasource.DataSource;
 import com.powsybl.timeseries.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.threeten.extra.Interval;
 
@@ -97,7 +96,6 @@ public abstract class AbstractAppStorageTest {
         }
     }
 
-    @Disabled
     @Test
     public void test() throws IOException, InterruptedException {
         // 1) create root folder

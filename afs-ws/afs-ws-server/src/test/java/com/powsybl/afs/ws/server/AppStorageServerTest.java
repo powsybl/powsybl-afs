@@ -123,6 +123,12 @@ public class AppStorageServerTest extends AbstractAppStorageTest {
         assertEquals(Collections.singletonList(AppDataBeanMock.TEST_FS_NAME), fileSystemNames);
     }
 
+    @Disabled
+    @Override
+    public void test() {
+        // Test temporary commented - waiting for a decision on module removal
+    }
+
     @Override
     protected void nextDependentTests() throws InterruptedException {
         super.nextDependentTests();
