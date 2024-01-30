@@ -53,7 +53,7 @@ import static org.mockito.Mockito.when;
 @SpringBootTest(classes = StorageServer.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @EnableAutoConfiguration
 @ActiveProfiles("test")
-public class StorageServerTest extends AbstractAppStorageTest {
+class StorageServerTest extends AbstractAppStorageTest {
 
     private static final String FS_TEST_NAME = "test";
     @LocalServerPort

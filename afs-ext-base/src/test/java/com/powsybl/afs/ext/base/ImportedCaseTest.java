@@ -45,7 +45,7 @@ import static org.mockito.Mockito.verify;
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
-public class ImportedCaseTest extends AbstractProjectFileTest {
+class ImportedCaseTest extends AbstractProjectFileTest {
 
     private FileSystem fileSystem;
 

@@ -34,7 +34,7 @@ import static org.mockito.Mockito.verify;
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
-public class VirtualCaseTest extends AbstractProjectFileTest {
+class VirtualCaseTest extends AbstractProjectFileTest {
 
     private ImportersLoader createImportersLoader() {
         return new ImportersLoaderList(new TestImporter(network));

@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
-public class ModificationScriptTest extends AbstractProjectFileTest {
+class ModificationScriptTest extends AbstractProjectFileTest {
 
     @Override
     protected AppStorage createStorage() {

@@ -37,13 +37,9 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
-public class LocalAppStorageTest {
+class LocalAppStorageTest {
 
     private FileSystem fileSystem;
-
-    private Path path1;
-
-    private Path path2;
 
     private LocalAppStorage storage;
 
@@ -52,8 +48,8 @@ public class LocalAppStorageTest {
         fileSystem = Jimfs.newFileSystem(Configuration.unix());
         Path rootDir = fileSystem.getPath("/cases");
         Files.createDirectories(rootDir);
-        path1 = rootDir.resolve("n.tst");
-        path2 = rootDir.resolve("n2.tst");
+        Path path1 = rootDir.resolve("n.tst");
+        Path path2 = rootDir.resolve("n2.tst");
         Files.createFile(path1);
         Files.createFile(path2);
         ComputationManager computationManager = Mockito.mock(ComputationManager.class);

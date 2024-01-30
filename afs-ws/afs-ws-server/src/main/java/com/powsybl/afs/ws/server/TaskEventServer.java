@@ -36,8 +36,9 @@ public class TaskEventServer {
 
     @OnOpen
     public void onOpen(@PathParam("fileSystemName") String fileSystemName, @PathParam("projectId") String projectId, Session session) {
+        String fileSystemNameLocal = fileSystemName.replaceAll("[\n\r]", "_");
         LOGGER.debug("Task events webSocket session '{}' opened for file system {} filtering on project {}",
-                session.getId(), fileSystemName, projectId);
+                session.getId(), fileSystemNameLocal, projectId);
 
         AppFileSystem fileSystem = appDataBean.getFileSystem(fileSystemName);
 
@@ -80,8 +81,9 @@ public class TaskEventServer {
 
     @OnClose
     public void onClose(@PathParam("fileSystemName") String fileSystemName, Session session, CloseReason closeReason) {
+        String fileSystemNameLocal = fileSystemName.replaceAll("[\n\r]", "_");
         LOGGER.debug("Task events webSocket session '{}' closed ({}) for file system '{}'",
-                session.getId(), closeReason, fileSystemName);
+                session.getId(), closeReason, fileSystemNameLocal);
 
         removeSession(fileSystemName, session);
     }

@@ -20,7 +20,7 @@ import java.util.List;
 /**
  * @author Sylvain Leclerc {@literal <sylvain.leclerc at rte-france.com>}
  */
-public class LocalSecurityAnalysisRunningServiceTest extends SecurityAnalysisRunnerTest {
+class LocalSecurityAnalysisRunningServiceTest extends SecurityAnalysisRunnerTest {
 
     @Override
     protected List<ServiceExtension> getServiceExtensions() {
