@@ -199,7 +199,7 @@ public class RemoteTaskMonitor implements TaskMonitor {
     }
 
     @Override
-    public void updateTaskFuture(UUID taskId, Future future) throws NotACancellableTaskMonitor {
+    public void updateTaskFuture(UUID taskId, Future<?> future) throws NotACancellableTaskMonitor {
         throw new NotACancellableTaskMonitor("Cannot update task future from remote");
     }
 

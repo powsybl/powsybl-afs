@@ -154,7 +154,7 @@ public class LocalTaskMonitor implements TaskMonitor {
     }
 
     @Override
-    public void updateTaskFuture(UUID taskId, Future future) {
+    public void updateTaskFuture(UUID taskId, Future<?> future) {
         Objects.requireNonNull(taskId);
         lock.lock();
         try {
