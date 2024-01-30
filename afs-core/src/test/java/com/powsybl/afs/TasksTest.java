@@ -16,11 +16,12 @@ import java.io.PrintStream;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 /**
  * @author Nicolas Rol {@literal <nicolas.rol at rte-france.com>}
  */
-class SoutTaskListenerTest {
+class TasksTest {
 
     private final PrintStream standardOut = System.out;
     private final ByteArrayOutputStream outputStreamCaptor = new ByteArrayOutputStream();
@@ -49,5 +50,16 @@ class SoutTaskListenerTest {
         TaskEvent otherEvent = new StartTaskEvent(new UUID(0L, 0L), 0L, "event message");
         listener.onEvent(otherEvent);
         assertEquals("", outputStreamCaptor.toString().trim());
+    }
+
+    @Test
+    void testTasks() {
+        TaskEvent task = new StartTaskEvent(new UUID(0L, 0L), 0L, "event message");
+        assertEquals(new StartTaskEvent(new UUID(0L, 0L), 0L, "event message"), task);
+        assertNotEquals(new StartTaskEvent(new UUID(1L, 0L), 0L, "event message"), task);
+        assertNotEquals(new StartTaskEvent(new UUID(0L, 0L), 0L, "other event message"), task);
+        assertNotEquals(new StartTaskEvent(new UUID(0L, 0L), 1L, "event message"), task);
+        assertNotEquals(new StopTaskEvent(new UUID(0L, 0L), 0L), task);
+        assertNotEquals(0, task);
     }
 }
