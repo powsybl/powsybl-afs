@@ -9,6 +9,7 @@ package com.powsybl.afs.mapdb.storage;
 import com.powsybl.timeseries.CompressedDoubleDataChunk;
 import com.powsybl.timeseries.DoubleDataChunk;
 import com.powsybl.timeseries.UncompressedDoubleDataChunk;
+import org.jetbrains.annotations.NotNull;
 import org.mapdb.DataInput2;
 import org.mapdb.DataOutput2;
 import org.mapdb.Serializer;
@@ -27,7 +28,7 @@ public final class DoubleDataChunkSerializer implements Serializer<DoubleDataChu
     }
 
     @Override
-    public void serialize(DataOutput2 out, DoubleDataChunk chunk) throws IOException {
+    public void serialize(DataOutput2 out, @NotNull DoubleDataChunk chunk) throws IOException {
         out.writeInt(MapDbStorageConstants.STORAGE_VERSION);
         if (chunk instanceof UncompressedDoubleDataChunk uncompressedChunk) {
             out.writeUTF("uncompressed");
