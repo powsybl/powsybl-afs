@@ -132,7 +132,7 @@ public class RemoteAppStorage extends AbstractAppStorage {
                 .request(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, token)
                 .get()) {
-                List<String> fileSystemNames = response.readEntity(new GenericType<List<String>>() {
+                List<String> fileSystemNames = response.readEntity(new GenericType<>() {
                 });
                 LOGGER.info("File systems {} found at {}", fileSystemNames, baseUri);
                 return fileSystemNames;
@@ -341,7 +341,7 @@ public class RemoteAppStorage extends AbstractAppStorage {
             .request(MediaType.APPLICATION_JSON)
             .header(HttpHeaders.AUTHORIZATION, token)
             .get()) {
-            return readEntityIfOk(response, new GenericType<List<NodeInfo>>() {
+            return readEntityIfOk(response, new GenericType<>() {
             });
         }
     }
@@ -355,7 +355,7 @@ public class RemoteAppStorage extends AbstractAppStorage {
             .request(MediaType.APPLICATION_JSON)
             .header(HttpHeaders.AUTHORIZATION, token)
             .get()) {
-            return readEntityIfOk(response, new GenericType<List<NodeInfo>>() {
+            return readEntityIfOk(response, new GenericType<>() {
             });
         }
     }
@@ -486,7 +486,7 @@ public class RemoteAppStorage extends AbstractAppStorage {
                 .header(HttpHeaders.AUTHORIZATION, token)
                 .get();
         return readOptionalEntityIfOk(response, InputStream.class)
-                .map(is -> new ForwardingInputStream<InputStream>(is) {
+                .map(is -> new ForwardingInputStream<>(is) {
                     @Override
                     public void close() throws IOException {
                         super.close();
@@ -549,7 +549,7 @@ public class RemoteAppStorage extends AbstractAppStorage {
             .request(MediaType.APPLICATION_JSON)
             .header(HttpHeaders.AUTHORIZATION, token)
             .get()) {
-            return readEntityIfOk(response, new GenericType<Set<String>>() {
+            return readEntityIfOk(response, new GenericType<>() {
             });
         }
     }
@@ -611,7 +611,7 @@ public class RemoteAppStorage extends AbstractAppStorage {
             .request(MediaType.APPLICATION_JSON)
             .header(HttpHeaders.AUTHORIZATION, token)
             .get()) {
-            return readEntityIfOk(response, new GenericType<Set<NodeInfo>>() {
+            return readEntityIfOk(response, new GenericType<>() {
             });
         }
     }
@@ -628,7 +628,7 @@ public class RemoteAppStorage extends AbstractAppStorage {
             .request(MediaType.APPLICATION_JSON)
             .header(HttpHeaders.AUTHORIZATION, token)
             .get()) {
-            return readEntityIfOk(response, new GenericType<Set<NodeDependency>>() {
+            return readEntityIfOk(response, new GenericType<>() {
             });
         }
     }
@@ -645,7 +645,7 @@ public class RemoteAppStorage extends AbstractAppStorage {
             .request(MediaType.APPLICATION_JSON)
             .header(HttpHeaders.AUTHORIZATION, token)
             .get()) {
-            return readEntityIfOk(response, new GenericType<Set<NodeInfo>>() {
+            return readEntityIfOk(response, new GenericType<>() {
             });
         }
     }
@@ -700,7 +700,7 @@ public class RemoteAppStorage extends AbstractAppStorage {
             .request()
             .header(HttpHeaders.AUTHORIZATION, token)
             .get()) {
-            return readEntityIfOk(response, new GenericType<Set<String>>() {
+            return readEntityIfOk(response, new GenericType<>() {
             });
         }
     }
@@ -738,7 +738,7 @@ public class RemoteAppStorage extends AbstractAppStorage {
             .request()
             .header(HttpHeaders.AUTHORIZATION, token)
             .post(Entity.json(timeSeriesNames))) {
-            return readEntityIfOk(response, new GenericType<List<TimeSeriesMetadata>>() {
+            return readEntityIfOk(response, new GenericType<>() {
             });
         }
     }
@@ -755,7 +755,7 @@ public class RemoteAppStorage extends AbstractAppStorage {
             .request()
             .header(HttpHeaders.AUTHORIZATION, token)
             .get()) {
-            return readEntityIfOk(response, new GenericType<Set<Integer>>() {
+            return readEntityIfOk(response, new GenericType<>() {
             });
         }
     }
@@ -774,7 +774,7 @@ public class RemoteAppStorage extends AbstractAppStorage {
             .request()
             .header(HttpHeaders.AUTHORIZATION, token)
             .get()) {
-            return readEntityIfOk(response, new GenericType<Set<Integer>>() {
+            return readEntityIfOk(response, new GenericType<>() {
             });
         }
     }
@@ -812,7 +812,7 @@ public class RemoteAppStorage extends AbstractAppStorage {
             .request()
             .header(HttpHeaders.AUTHORIZATION, token)
             .post(Entity.json(timeSeriesNames))) {
-            return readEntityIfOk(response, new GenericType<Map<String, List<DoubleDataChunk>>>() {
+            return readEntityIfOk(response, new GenericType<>() {
             });
         }
     }
@@ -850,7 +850,7 @@ public class RemoteAppStorage extends AbstractAppStorage {
             .request()
             .header(HttpHeaders.AUTHORIZATION, token)
             .post(Entity.json(timeSeriesNames))) {
-            return readEntityIfOk(response, new GenericType<Map<String, List<StringDataChunk>>>() {
+            return readEntityIfOk(response, new GenericType<>() {
             });
         }
     }
@@ -897,7 +897,7 @@ public class RemoteAppStorage extends AbstractAppStorage {
         try (Response response = target.request(MediaType.APPLICATION_JSON)
             .header(HttpHeaders.AUTHORIZATION, token)
             .get()) {
-            return readEntityIfOk(response, new GenericType<List<String>>() {
+            return readEntityIfOk(response, new GenericType<>() {
             });
         }
     }
@@ -916,7 +916,7 @@ public class RemoteAppStorage extends AbstractAppStorage {
         try (Response response = target.request(MediaType.APPLICATION_JSON)
             .header(HttpHeaders.AUTHORIZATION, token)
             .post(Entity.json(""))) {
-            return readEntityIfOk(response, new GenericType<List<FileSystemCheckIssue>>() {
+            return readEntityIfOk(response, new GenericType<>() {
             });
         }
     }
