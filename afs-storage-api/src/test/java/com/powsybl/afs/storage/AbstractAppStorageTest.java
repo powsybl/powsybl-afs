@@ -639,7 +639,7 @@ public abstract class AbstractAppStorageTest {
         assertEventStack(new NodeMetadataUpdated(node.getId(), metadata));
 
         metadata.setString("test", "test");
-        assertThat(node.getGenericMetadata().getStrings().keySet().size()).isEqualTo(0);
+        assertThat(node.getGenericMetadata().getStrings().keySet().size()).isZero();
 
         storage.setMetadata(node.getId(), cloneMetadata(metadata));
         storage.flush();
@@ -685,19 +685,19 @@ public abstract class AbstractAppStorageTest {
 
     private void checkMetadataEquality(NodeGenericMetadata source, NodeGenericMetadata target) {
         assertThat(target).isNotNull();
-        assertThat(source.getBooleans().keySet().size()).isEqualTo(target.getBooleans().keySet().size());
+        assertEquals(target.getBooleans().keySet().size(), source.getBooleans().keySet().size());
         source.getBooleans().forEach((key, val) -> {
             assertThat(target.getBooleans()).contains(new HashMap.SimpleEntry<>(key, val));
         });
-        assertThat(source.getStrings().keySet().size()).isEqualTo(target.getStrings().keySet().size());
+        assertEquals(target.getStrings().keySet().size(), source.getStrings().keySet().size());
         source.getStrings().forEach((key, val) -> {
             assertThat(target.getStrings()).contains(new HashMap.SimpleEntry<>(key, val));
         });
-        assertThat(source.getInts().keySet().size()).isEqualTo(target.getInts().keySet().size());
+        assertEquals(target.getInts().keySet().size(), source.getInts().keySet().size());
         source.getInts().forEach((key, val) -> {
             assertThat(target.getInts()).contains(new HashMap.SimpleEntry<>(key, val));
         });
-        assertThat(source.getDoubles().keySet().size()).isEqualTo(target.getDoubles().keySet().size());
+        assertEquals(target.getDoubles().keySet().size(), source.getDoubles().keySet().size());
         source.getDoubles().forEach((key, val) -> {
             assertThat(target.getDoubles()).contains(new HashMap.SimpleEntry<>(key, val));
         });
