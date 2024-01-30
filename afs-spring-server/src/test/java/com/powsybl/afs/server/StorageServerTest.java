@@ -18,6 +18,7 @@ import com.powsybl.afs.ws.storage.RemoteAppStorage;
 import com.powsybl.afs.ws.storage.RemoteTaskMonitor;
 import com.powsybl.commons.exceptions.UncheckedUriSyntaxException;
 import com.powsybl.computation.ComputationManager;
+import jakarta.servlet.ServletContext;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,15 +32,16 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import jakarta.servlet.ServletContext;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
@@ -105,6 +107,11 @@ public class StorageServerTest extends AbstractAppStorageTest {
         assertThat(task).isNotNull();
         TaskMonitor.Snapshot snapshot = taskMonitor.takeSnapshot(project.getId());
         assertThat(snapshot.getTasks().stream().anyMatch(t -> t.getId().equals(task.getId()))).isTrue();
+
+        ProjectFile projectFile = Mockito.mock(ProjectFile.class);
+        AfsStorageException error = assertThrows(AfsStorageException.class, () -> taskMonitor.startTask(projectFile));
+        assertTrue(Pattern.compile("\\{\"timestamp\":\"(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}[+-]\\d{2}:\\d{2})\",\"status\":\\d+,\"error\":\"[^\"]*\",\"path\":\"[^\"]*\"}")
+            .matcher(error.getMessage()).find());
 
         taskMonitor.updateTaskMessage(task.getId(), "new Message");
         TaskMonitor.Snapshot snapshotAfterUpdate = taskMonitor.takeSnapshot(project.getId());

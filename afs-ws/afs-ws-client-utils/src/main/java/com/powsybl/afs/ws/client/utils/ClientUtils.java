@@ -47,12 +47,12 @@ public final class ClientUtils {
             ExceptionDetail exceptionDetail = new ObjectMapper().readValue(body, ExceptionDetail.class);
             String javaException = exceptionDetail.getJavaException();
             if (javaException != null) {
-                Class exceptionClass = Class.forName(javaException);
+                Class<?> exceptionClass = Class.forName(javaException);
                 if (RuntimeException.class.isAssignableFrom(exceptionClass)) {
                     if (exceptionDetail.getMessage() != null) {
                         return (RuntimeException) exceptionClass.getConstructor(String.class).newInstance(exceptionDetail.getMessage());
                     }
-                    return (RuntimeException) exceptionClass.newInstance();
+                    return (RuntimeException) exceptionClass.getDeclaredConstructor().newInstance();
                 }
             }
         } catch (Exception e) {
