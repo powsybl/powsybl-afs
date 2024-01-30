@@ -17,7 +17,7 @@ import com.powsybl.afs.ws.client.utils.ClientUtils;
 import com.powsybl.afs.ws.client.utils.RemoteServiceConfig;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.NetworkListener;
-import com.powsybl.iidm.xml.NetworkXml;
+import com.powsybl.iidm.serde.NetworkSerDe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,7 +93,7 @@ class RemoteNetworkCacheService implements NetworkCacheService {
                     .header(HttpHeaders.AUTHORIZATION, token)
                     .get();
             try (InputStream is = readEntityIfOk(response, InputStream.class)) {
-                return NetworkXml.read(is);
+                return NetworkSerDe.read(is);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             } finally {
