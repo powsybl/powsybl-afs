@@ -242,14 +242,14 @@ public interface TaskMonitor extends AutoCloseable {
     /**
      * Add a listener to task events
      *
-     * @param listener description missing
+     * @param listener Listener that shall listen to task events
      */
     void addListener(TaskListener listener);
 
     /**
      * Remove a listener of task events
      *
-     * @param listener description missing
+     * @param listener Listener that shall not anymore listen to task events
      */
     void removeListener(TaskListener listener);
 
