@@ -257,7 +257,7 @@ public interface TaskMonitor extends AutoCloseable {
      * Update the future of the computation process monitored by this task
      *
      * @param taskId task identifier
-     * @param future description missing
+     * @param future result of an asynchronous computation
      * @throws NotACancellableTaskMonitor in case the task monitor is operating as a remote task monitor
      */
     void updateTaskFuture(UUID taskId, Future<?> future) throws NotACancellableTaskMonitor;
