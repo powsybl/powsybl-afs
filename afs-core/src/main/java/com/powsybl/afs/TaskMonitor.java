@@ -226,7 +226,7 @@ public interface TaskMonitor extends AutoCloseable {
      * Return the complete state of tasks related to a project
      *
      * @param projectId related project
-     * @return description missing
+     * @return state of tasks
      */
     Snapshot takeSnapshot(String projectId);
 
