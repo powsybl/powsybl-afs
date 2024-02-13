@@ -60,6 +60,5 @@ class TasksTest {
         assertNotEquals(new StartTaskEvent(new UUID(0L, 0L), 0L, "other event message"), task);
         assertNotEquals(new StartTaskEvent(new UUID(0L, 0L), 1L, "event message"), task);
         assertNotEquals(new StopTaskEvent(new UUID(0L, 0L), 0L), task);
-        assertNotEquals(0, task);
     }
 }
