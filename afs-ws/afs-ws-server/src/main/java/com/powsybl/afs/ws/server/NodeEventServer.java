@@ -36,7 +36,8 @@ public class NodeEventServer {
 
     @OnOpen
     public void onOpen(@PathParam("fileSystemName") String fileSystemName, Session session) {
-        LOGGER.debug("WebSocket session '{}' opened for file system '{}'", session.getId(), fileSystemName);
+        String fileSystemNameLocal = fileSystemName.replaceAll("[\n\r]", "_");
+        LOGGER.debug("WebSocket session '{}' opened for file system '{}'", session.getId(), fileSystemNameLocal);
 
         AppStorage storage = appDataBean.getStorage(fileSystemName);
 
@@ -79,8 +80,9 @@ public class NodeEventServer {
 
     @OnClose
     public void onClose(@PathParam("fileSystemName") String fileSystemName, Session session, CloseReason closeReason) {
+        String fileSystemNameLocal = fileSystemName.replaceAll("[\n\r]", "_");
         LOGGER.debug("WebSocket session '{}' closed ({}) for file system '{}'",
-                session.getId(), closeReason, fileSystemName);
+                session.getId(), closeReason, fileSystemNameLocal);
 
         removeSession(fileSystemName, session);
     }

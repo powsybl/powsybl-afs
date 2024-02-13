@@ -11,7 +11,7 @@ import com.powsybl.afs.ext.base.ProjectCase;
 import com.powsybl.afs.ext.base.ScriptType;
 import com.powsybl.afs.ws.server.utils.JwtTokenNeeded;
 import com.powsybl.iidm.network.Network;
-import com.powsybl.iidm.xml.NetworkXml;
+import com.powsybl.iidm.serde.NetworkSerDe;
 import com.powsybl.afs.ws.server.utils.AppDataBean;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -41,7 +41,7 @@ public class NetworkCacheServer {
                                @PathParam("nodeId") String nodeId) {
         Network network = appDataBean.getProjectFile(fileSystemName, nodeId, ProjectFile.class, ProjectCase.class)
                 .getNetwork();
-        StreamingOutput streamingOutput = output -> NetworkXml.write(network, output);
+        StreamingOutput streamingOutput = output -> NetworkSerDe.write(network, output);
         return Response.ok(streamingOutput).build();
     }
 

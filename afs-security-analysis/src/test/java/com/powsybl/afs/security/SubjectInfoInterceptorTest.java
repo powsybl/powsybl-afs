@@ -6,9 +6,9 @@
  */
 package com.powsybl.afs.security;
 
-import com.powsybl.iidm.network.Branch;
 import com.powsybl.iidm.network.Country;
 import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.TwoSides;
 import com.powsybl.iidm.network.test.EurostagTutorialExample1Factory;
 import com.powsybl.loadflow.LoadFlowResult;
 import com.powsybl.security.LimitViolation;
@@ -36,7 +36,7 @@ class SubjectInfoInterceptorTest {
         SubjectInfoInterceptor interceptor = interceptorExtension.createInterceptor();
         assertNotNull(interceptor);
 
-        LimitViolation violation1 = new LimitViolation("NHV1_NHV2_1", LimitViolationType.CURRENT, "N/A", 60 * 20, 300, 1, 400, Branch.Side.ONE);
+        LimitViolation violation1 = new LimitViolation("NHV1_NHV2_1", LimitViolationType.CURRENT, "N/A", 60 * 20, 300, 1, 400, TwoSides.ONE);
         LimitViolation violation2 = new LimitViolation("VLGEN", LimitViolationType.HIGH_VOLTAGE, 300, 1, 400);
         assertNull(violation1.getExtension(SubjectInfoExtension.class));
         assertNull(violation2.getExtension(SubjectInfoExtension.class));

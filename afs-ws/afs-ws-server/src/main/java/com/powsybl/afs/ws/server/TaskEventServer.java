@@ -28,6 +28,8 @@ public class TaskEventServer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskEventServer.class);
 
+    private static final String SECURITY_PATTERN = "[\n\r]";
+
     @Inject
     private AppDataBean appDataBean;
 
@@ -36,8 +38,10 @@ public class TaskEventServer {
 
     @OnOpen
     public void onOpen(@PathParam("fileSystemName") String fileSystemName, @PathParam("projectId") String projectId, Session session) {
+        String fileSystemNameLocal = fileSystemName.replaceAll(SECURITY_PATTERN, "_");
+        String projectIdLocal = projectId.replaceAll(SECURITY_PATTERN, "_");
         LOGGER.debug("Task events webSocket session '{}' opened for file system {} filtering on project {}",
-                session.getId(), fileSystemName, projectId);
+                session.getId(), fileSystemNameLocal, projectIdLocal);
 
         AppFileSystem fileSystem = appDataBean.getFileSystem(fileSystemName);
 
@@ -80,8 +84,9 @@ public class TaskEventServer {
 
     @OnClose
     public void onClose(@PathParam("fileSystemName") String fileSystemName, Session session, CloseReason closeReason) {
+        String fileSystemNameLocal = fileSystemName.replaceAll(SECURITY_PATTERN, "_");
         LOGGER.debug("Task events webSocket session '{}' closed ({}) for file system '{}'",
-                session.getId(), closeReason, fileSystemName);
+                session.getId(), closeReason, fileSystemNameLocal);
 
         removeSession(fileSystemName, session);
     }

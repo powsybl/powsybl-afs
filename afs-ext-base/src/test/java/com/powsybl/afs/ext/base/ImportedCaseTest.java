@@ -24,8 +24,8 @@ import com.powsybl.iidm.network.ImportersLoaderList;
 import com.powsybl.iidm.network.DefaultNetworkListener;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.NetworkListener;
-import com.powsybl.iidm.xml.XMLExporter;
-import com.powsybl.iidm.xml.XMLImporter;
+import com.powsybl.iidm.serde.XMLExporter;
+import com.powsybl.iidm.serde.XMLImporter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,7 +45,7 @@ import static org.mockito.Mockito.verify;
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
-public class ImportedCaseTest extends AbstractProjectFileTest {
+class ImportedCaseTest extends AbstractProjectFileTest {
 
     private FileSystem fileSystem;
 
