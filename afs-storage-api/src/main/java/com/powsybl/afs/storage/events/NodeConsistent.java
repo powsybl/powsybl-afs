@@ -30,8 +30,7 @@ public class NodeConsistent extends NodeEvent {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof NodeConsistent) {
-            NodeConsistent other = (NodeConsistent) obj;
+        if (obj instanceof NodeConsistent other) {
             return id.equals(other.id);
         }
         return false;

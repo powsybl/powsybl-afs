@@ -8,19 +8,19 @@ package com.powsybl.afs.storage;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.testing.EqualsTester;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
-public class NodeGenericMetadataTest {
+class NodeGenericMetadataTest {
 
     @Test
-    public void test() {
+    void test() {
         // check getters
         NodeGenericMetadata metadata = new NodeGenericMetadata()
                 .setString("s1", "a")

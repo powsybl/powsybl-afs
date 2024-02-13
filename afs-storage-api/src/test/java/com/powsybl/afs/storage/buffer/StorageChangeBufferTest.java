@@ -10,19 +10,19 @@ import com.powsybl.timeseries.InfiniteTimeSeriesIndex;
 import com.powsybl.timeseries.TimeSeriesDataType;
 import com.powsybl.timeseries.TimeSeriesMetadata;
 import com.powsybl.timeseries.UncompressedDoubleDataChunk;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
-public class StorageChangeBufferTest {
+class StorageChangeBufferTest {
 
     @Test
-    public void testMaximumChange() {
+    void testMaximumChange() {
         boolean[] flushed = new boolean[1];
         flushed[0] = false;
         StorageChangeBuffer buffer = new StorageChangeBuffer(changeSet -> {
@@ -39,7 +39,7 @@ public class StorageChangeBufferTest {
     }
 
     @Test
-    public void testMaximumSize() {
+    void testMaximumSize() {
         boolean[] flushed = new boolean[1];
         flushed[0] = false;
         StorageChangeBuffer buffer = new StorageChangeBuffer(changeSet -> {

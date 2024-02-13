@@ -18,15 +18,15 @@ import com.powsybl.iidm.network.ImportersLoader;
 import com.powsybl.iidm.network.ImportersLoaderList;
 import com.powsybl.iidm.network.DefaultNetworkListener;
 import com.powsybl.iidm.network.NetworkListener;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -34,7 +34,7 @@ import static org.mockito.Mockito.verify;
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
-public class VirtualCaseTest extends AbstractProjectFileTest {
+class VirtualCaseTest extends AbstractProjectFileTest {
 
     private ImportersLoader createImportersLoader() {
         return new ImportersLoaderList(new TestImporter(network));
@@ -62,7 +62,7 @@ public class VirtualCaseTest extends AbstractProjectFileTest {
         return ImmutableList.of(new LocalNetworkCacheServiceExtension());
     }
 
-    @Before
+    @BeforeEach
     public void setup() throws IOException {
         super.setup();
         NodeInfo rootFolderInfo = storage.createRootNodeIfNotExists("root", Folder.PSEUDO_CLASS);
@@ -72,7 +72,7 @@ public class VirtualCaseTest extends AbstractProjectFileTest {
     }
 
     @Test
-    public void test() {
+    void test() {
         // get case
         Case aCase = (Case) afs.getRootFolder().getChildren().get(0);
 
@@ -166,6 +166,27 @@ public class VirtualCaseTest extends AbstractProjectFileTest {
         } catch (ScriptException e) {
             assertNotNull(e.getError());
             assertTrue(e.getError().getMessage().contains("No signature of method: test.prin() is applicable"));
+        }
+
+        // test script error with MultipleCompilationErrorsException
+        scriptWithError = folder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("scriptWithError_MultipleCompilationErrorsException")
+            .withType(ScriptType.GROOVY)
+            .withContent("print('hello'")
+            .build();
+
+        virtualCaseWithError = folder.fileBuilder(VirtualCaseBuilder.class)
+            .withName("network2_MultipleCompilationErrorsException")
+            .withCase(importedCase)
+            .withScript(scriptWithError)
+            .build();
+
+        try {
+            virtualCaseWithError.getNetwork();
+            fail();
+        } catch (ScriptException e) {
+            assertNotNull(e.getError());
+            assertEquals("Unexpected input: '(' @ line 1, column 6.", e.getError().getMessage());
         }
 
         //test missing dependencies

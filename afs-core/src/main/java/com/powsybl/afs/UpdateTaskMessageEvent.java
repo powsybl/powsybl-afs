@@ -37,8 +37,7 @@ public class UpdateTaskMessageEvent extends TaskEvent {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof UpdateTaskMessageEvent) {
-            UpdateTaskMessageEvent other = (UpdateTaskMessageEvent) obj;
+        if (obj instanceof UpdateTaskMessageEvent other) {
             return taskId.equals(other.taskId) &&
                     revision == other.revision &&
                     Objects.equals(message, other.message);

@@ -9,33 +9,33 @@ package com.powsybl.afs.ws.storage;
 import com.powsybl.afs.ws.storage.websocket.AutoReconnectionConnectionManager;
 import com.powsybl.afs.ws.storage.websocket.WebsocketConnectionManager;
 import com.powsybl.commons.util.WeakListenerList;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import javax.websocket.Session;
+import jakarta.websocket.Session;
 import java.net.URI;
 import java.util.concurrent.*;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
  * @author Sylvain Leclerc {@literal <sylvain.leclerc@rte-france.com>}
  */
-public class NodeEventClientReconnectionTest {
+class NodeEventClientReconnectionTest {
 
     private Session session;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         session = mock(Session.class);
         when(session.getId()).thenReturn("session-id");
     }
 
     @Test
-    public void shouldTryToReconnectUntilSuccess() throws InterruptedException {
+    void shouldTryToReconnectUntilSuccess() throws InterruptedException {
 
         CountDownLatch reconnectionAttempts = new CountDownLatch(5);
 
@@ -54,7 +54,7 @@ public class NodeEventClientReconnectionTest {
     }
 
     @Test
-    public void shouldStopReconnectingOnClose() throws InterruptedException, ExecutionException {
+    void shouldStopReconnectingOnClose() throws InterruptedException, ExecutionException {
 
         CountDownLatch attemptsBeforeClosing = new CountDownLatch(2);
 
@@ -80,7 +80,7 @@ public class NodeEventClientReconnectionTest {
     }
 
     @Test
-    public void shouldNotTryToReconnectOnClose() throws ExecutionException, InterruptedException {
+    void shouldNotTryToReconnectOnClose() throws ExecutionException, InterruptedException {
 
         CompletableFuture<Void> reconnectionAfterClosing = new CompletableFuture<>();
         //Completes the above future if any attempt of reconnection is made

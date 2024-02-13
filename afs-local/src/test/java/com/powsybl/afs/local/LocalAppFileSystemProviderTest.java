@@ -16,37 +16,36 @@ import com.powsybl.afs.storage.InMemoryEventsBus;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.iidm.network.ImportConfig;
 import com.powsybl.iidm.network.ImportersLoaderList;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.nio.file.FileSystem;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
-public class LocalAppFileSystemProviderTest {
+class LocalAppFileSystemProviderTest {
 
     private FileSystem fileSystem;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         fileSystem = Jimfs.newFileSystem(Configuration.unix());
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         fileSystem.close();
     }
 
     @Test
-    public void test() {
+    void test() {
         ComputationManager computationManager = Mockito.mock(ComputationManager.class);
         LocalAppFileSystemConfig config = new LocalAppFileSystemConfig("drive", true, fileSystem.getPath("/work"));
         LocalFileScanner extension = new LocalCaseScanner(new ImportConfig(), new ImportersLoaderList());
@@ -55,7 +54,7 @@ public class LocalAppFileSystemProviderTest {
                                                                          Collections.emptyList())
                 .getFileSystems(new AppFileSystemProviderContext(computationManager, null, new InMemoryEventsBus()));
         assertEquals(1, fileSystems.size());
-        assertTrue(fileSystems.get(0) instanceof LocalAppFileSystem);
+        assertInstanceOf(LocalAppFileSystem.class, fileSystems.get(0));
         assertEquals("drive", fileSystems.get(0).getName());
         assertTrue(fileSystems.get(0).isRemotelyAccessible());
     }

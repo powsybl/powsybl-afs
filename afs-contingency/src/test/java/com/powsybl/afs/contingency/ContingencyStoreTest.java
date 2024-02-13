@@ -15,17 +15,18 @@ import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.InMemoryEventsBus;
 import com.powsybl.contingency.BranchContingency;
 import com.powsybl.contingency.Contingency;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
-public class ContingencyStoreTest extends AbstractProjectFileTest {
+class ContingencyStoreTest extends AbstractProjectFileTest {
 
     @Override
     protected AppStorage createStorage() {
@@ -38,7 +39,7 @@ public class ContingencyStoreTest extends AbstractProjectFileTest {
     }
 
     @Test
-    public void test() {
+    void test() {
         // create project in the root folder
         Project project = afs.getRootFolder().createProject("project");
         storage.setConsistent(project.getId());
@@ -50,5 +51,6 @@ public class ContingencyStoreTest extends AbstractProjectFileTest {
         List<Contingency> contingencies = Collections.singletonList(new Contingency("c1", new BranchContingency("l1")));
         contingencyStore.write(contingencies);
         assertEquals(contingencies, contingencyStore.read());
+        assertEquals(new ArrayList<>(), contingencyStore.getContingencies(network));
     }
 }

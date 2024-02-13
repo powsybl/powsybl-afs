@@ -15,7 +15,7 @@
     <parent>
         <artifactId>powsybl-afs</artifactId>
         <groupId>com.powsybl</groupId>
-        <version>5.2.0-SNAPSHOT</version>
+        <version>6.0.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>powsybl-afs-mapdb</artifactId>
@@ -58,8 +58,8 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

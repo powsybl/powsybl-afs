@@ -13,21 +13,21 @@ import com.powsybl.iidm.network.Country;
 import com.powsybl.security.LimitViolation;
 import com.powsybl.security.LimitViolationType;
 import com.powsybl.security.json.SecurityAnalysisJsonModule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.TreeSet;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
-public class SubjectInfoExtensionTest {
+class SubjectInfoExtensionTest {
 
     @Test
-    public void test() throws IOException {
+    void test() throws IOException {
         SubjectInfoExtension extension = new SubjectInfoExtension(new TreeSet<>(Arrays.asList(Country.FR, Country.BE)),
                                                                   new TreeSet<>(Arrays.asList(225d, 400d)));
         assertEquals(Sets.newHashSet(225d, 400d), extension.getNominalVoltages());

@@ -14,10 +14,10 @@ import com.powsybl.afs.ws.utils.AfsRestApi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.websocket.*;
-import javax.websocket.server.PathParam;
-import javax.websocket.server.ServerEndpoint;
+import jakarta.inject.Inject;
+import jakarta.websocket.*;
+import jakarta.websocket.server.PathParam;
+import jakarta.websocket.server.ServerEndpoint;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
@@ -36,7 +36,8 @@ public class NodeEventServer {
 
     @OnOpen
     public void onOpen(@PathParam("fileSystemName") String fileSystemName, Session session) {
-        LOGGER.debug("WebSocket session '{}' opened for file system '{}'", session.getId(), fileSystemName);
+        String fileSystemNameLocal = fileSystemName.replaceAll("[\n\r]", "_");
+        LOGGER.debug("WebSocket session '{}' opened for file system '{}'", session.getId(), fileSystemNameLocal);
 
         AppStorage storage = appDataBean.getStorage(fileSystemName);
 
@@ -79,8 +80,9 @@ public class NodeEventServer {
 
     @OnClose
     public void onClose(@PathParam("fileSystemName") String fileSystemName, Session session, CloseReason closeReason) {
+        String fileSystemNameLocal = fileSystemName.replaceAll("[\n\r]", "_");
         LOGGER.debug("WebSocket session '{}' closed ({}) for file system '{}'",
-                session.getId(), closeReason, fileSystemName);
+                session.getId(), closeReason, fileSystemNameLocal);
 
         removeSession(fileSystemName, session);
     }

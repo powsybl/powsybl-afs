@@ -31,14 +31,14 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.ws.rs.*;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -494,22 +494,21 @@ public class AppStorageServer {
 
         for (StorageChange change : changeSet.getChanges()) {
             switch (change.getType()) {
-                case TIME_SERIES_CREATION:
+                case TIME_SERIES_CREATION -> {
                     TimeSeriesCreation creation = (TimeSeriesCreation) change;
                     storage.createTimeSeries(creation.getNodeId(), creation.getMetadata());
-                    break;
-                case DOUBLE_TIME_SERIES_CHUNKS_ADDITION:
+                }
+                case DOUBLE_TIME_SERIES_CHUNKS_ADDITION -> {
                     DoubleTimeSeriesChunksAddition doubleAddition = (DoubleTimeSeriesChunksAddition) change;
                     storage.addDoubleTimeSeriesData(doubleAddition.getNodeId(), doubleAddition.getVersion(),
                         doubleAddition.getTimeSeriesName(), doubleAddition.getChunks());
-                    break;
-                case STRING_TIME_SERIES_CHUNKS_ADDITION:
+                }
+                case STRING_TIME_SERIES_CHUNKS_ADDITION -> {
                     StringTimeSeriesChunksAddition stringAddition = (StringTimeSeriesChunksAddition) change;
                     storage.addStringTimeSeriesData(stringAddition.getNodeId(), stringAddition.getVersion(),
                         stringAddition.getTimeSeriesName(), stringAddition.getChunks());
-                    break;
-                default:
-                    throw new AssertionError("Unknown change type " + change.getType());
+                }
+                default -> throw new AssertionError("Unknown change type " + change.getType());
             }
         }
 
@@ -811,8 +810,8 @@ public class AppStorageServer {
     }
 
     private static Object encode(Object input) {
-        if (input instanceof String) {
-            return ((String) input).replaceAll("[\n\r\t]", "_");
+        if (input instanceof String s) {
+            return s.replaceAll("[\n\r\t]", "_");
         }
         return input;
     }

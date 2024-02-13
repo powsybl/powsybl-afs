@@ -26,8 +26,7 @@ public class VirtualCaseCreated extends BusinessEvent {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof VirtualCaseCreated) {
-            VirtualCaseCreated other = (VirtualCaseCreated) obj;
+        if (obj instanceof VirtualCaseCreated other) {
             return id.equals(other.id) && Objects.equals(parentId, other.parentId);
         }
         return false;

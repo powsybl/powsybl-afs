@@ -20,9 +20,9 @@ import com.powsybl.iidm.network.NetworkFactoryService;
 import com.powsybl.timeseries.RegularTimeSeriesIndex;
 import com.powsybl.timeseries.TimeSeriesDataType;
 import com.powsybl.timeseries.TimeSeriesMetadata;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.threeten.extra.Interval;
 
@@ -37,12 +37,12 @@ import java.time.Duration;
 import java.util.*;
 import java.util.function.BiConsumer;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
-public class AfsBaseTest {
+class AfsBaseTest {
 
     private FileSystem fileSystem;
 
@@ -52,7 +52,7 @@ public class AfsBaseTest {
 
     private AppData ad;
 
-    @Before
+    @BeforeEach
     public void setup() {
         fileSystem = Jimfs.newFileSystem(Configuration.unix());
         ComputationManager computationManager = Mockito.mock(ComputationManager.class);
@@ -66,14 +66,14 @@ public class AfsBaseTest {
         ad.addFileSystem(afs);
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         storage.close();
         fileSystem.close();
     }
 
     @Test
-    public void baseTest() {
+    void baseTest() {
         assertSame(InMemoryEventsBus.class, ad.getEventsBus().getClass());
         assertSame(afs, ad.getFileSystem("mem"));
         assertNull(ad.getFileSystem("???"));
@@ -238,7 +238,7 @@ public class AfsBaseTest {
     }
 
     @Test
-    public void archiveAndUnarchiveTestWithZip() throws IOException {
+    void archiveAndUnarchiveTestWithZip() throws IOException {
         Project project = afs.getRootFolder().createProject("test");
         ProjectFolder rootFolder = project.getRootFolder();
         ProjectFolder dir1 = rootFolder.createFolder("dir1");
@@ -256,7 +256,7 @@ public class AfsBaseTest {
     }
 
     @Test
-    public void archiveAndUnarchiveTestWithDirAndBlackList() throws IOException {
+    void archiveAndUnarchiveTestWithDirAndBlackList() throws IOException {
         Project project = afs.getRootFolder().createProject("test");
         ProjectFolder rootFolder = project.getRootFolder();
         ProjectFolder dir1 = rootFolder.createFolder("dir1");
@@ -282,7 +282,7 @@ public class AfsBaseTest {
     }
 
     @Test
-    public void archiveAndUnarchiveTestWithDependency() throws IOException {
+    void archiveAndUnarchiveTestWithDependency() throws IOException {
         /* In this test, there are two directories each with a file
            There is a dependency between the first and the second file
            Test archive and unarchive the first directory with these dependencies */
@@ -321,7 +321,7 @@ public class AfsBaseTest {
     }
 
     @Test
-    public void archiveAndUnarchiveTestRemoveTS() throws IOException {
+    void archiveAndUnarchiveTestRemoveTS() throws IOException {
         Project project = afs.getRootFolder().createProject("test");
         ProjectFolder rootFolder = project.getRootFolder();
         ProjectFolder dir1 = rootFolder.createFolder("dir1");
@@ -348,7 +348,7 @@ public class AfsBaseTest {
     }
 
     @Test
-    public void archiveAndUnarchiveTestWithDependencies() throws IOException {
+    void archiveAndUnarchiveTestWithDependencies() throws IOException {
 
         /* In this test, there are two directories, one with a file and the second with two files
            There is a dependency between the first and the second file and between the second an the third
@@ -397,7 +397,7 @@ public class AfsBaseTest {
     }
 
     @Test
-    public void archiveAndUnarchiveTestWithDeepDependencies() throws IOException {
+    void archiveAndUnarchiveTestWithDeepDependencies() throws IOException {
 
         /* In this test, there are two directories, one with two files and the second with one file
            There is a dependency between the first and the second file and between the second an the third
@@ -446,7 +446,7 @@ public class AfsBaseTest {
     }
 
     @Test
-    public void moveToTest() {
+    void moveToTest() {
         Project project = afs.getRootFolder().createProject("test");
         ProjectFolder test1 = project.getRootFolder().createFolder("test1");
         ProjectFolder test2 = project.getRootFolder().createFolder("test2");
@@ -463,7 +463,7 @@ public class AfsBaseTest {
     }
 
     @Test
-    public void findProjectFolderTest() {
+    void findProjectFolderTest() {
 
         Project project = afs.getRootFolder().createProject("test");
         ProjectFolder test1 = project.getRootFolder().createFolder("test1");
@@ -477,7 +477,7 @@ public class AfsBaseTest {
     }
 
     @Test
-    public void findProjectFileTest() {
+    void findProjectFileTest() {
         Project project = afs.getRootFolder().createProject("test");
         FooFile createdFile = project.getRootFolder().fileBuilder(FooFileBuilder.class)
                 .withName("foo")
@@ -495,7 +495,7 @@ public class AfsBaseTest {
     }
 
     @Test
-    public void findProjectTest() {
+    void findProjectTest() {
         Project project = afs.getRootFolder().createProject("test");
         Project foundProject = afs.findProject(project.getId()).orElse(null);
         assertNotNull(foundProject);
@@ -509,7 +509,7 @@ public class AfsBaseTest {
     }
 
     @Test
-    public void fetchNodeTest() {
+    void fetchNodeTest() {
         Folder folder = afs.getRootFolder().createFolder("testFolder");
         Project project = folder.createProject("test");
         FooFile createdFile = project.getRootFolder().fileBuilder(FooFileBuilder.class)
@@ -531,9 +531,9 @@ public class AfsBaseTest {
             assertEquals(source.getModificationDate(), result.getModificationDate());
             assertEquals(source.getCodeVersion(), result.getCodeVersion());
 
-            if (source instanceof ProjectNode) {
-                assertEquals(((ProjectNode) source).getProject().getId(), ((ProjectNode) result).getProject().getId());
-                assertEquals(((ProjectNode) source).getFileSystem(), ((ProjectNode) result).getFileSystem());
+            if (source instanceof ProjectNode projectNode) {
+                assertEquals(projectNode.getProject().getId(), ((ProjectNode) result).getProject().getId());
+                assertEquals(projectNode.getFileSystem(), ((ProjectNode) result).getFileSystem());
             }
         };
 
@@ -552,7 +552,7 @@ public class AfsBaseTest {
     }
 
     @Test
-    public void hasDeepDependencyTest() {
+    void hasDeepDependencyTest() {
         Project project = afs.getRootFolder().createProject("test");
         FooFile createdFile = project.getRootFolder().fileBuilder(FooFileBuilder.class)
                 .withName("foo")

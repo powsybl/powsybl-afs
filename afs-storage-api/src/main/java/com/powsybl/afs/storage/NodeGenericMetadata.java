@@ -113,8 +113,7 @@ public class NodeGenericMetadata {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof NodeGenericMetadata) {
-            NodeGenericMetadata other = (NodeGenericMetadata) obj;
+        if (obj instanceof NodeGenericMetadata other) {
             return stringMetadata.equals(other.stringMetadata) && doubleMetadata.equals(other.doubleMetadata) &&
                     intMetadata.equals(other.intMetadata) && booleanMetadata.equals(other.booleanMetadata);
         }

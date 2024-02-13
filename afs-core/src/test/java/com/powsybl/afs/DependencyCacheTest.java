@@ -12,18 +12,18 @@ import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.InMemoryEventsBus;
 import com.powsybl.afs.storage.NodeGenericMetadata;
 import com.powsybl.afs.storage.NodeInfo;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  *
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
-public class DependencyCacheTest extends AbstractProjectFileTest {
+class DependencyCacheTest extends AbstractProjectFileTest {
 
     class Tic extends ProjectFile {
 
@@ -158,7 +158,7 @@ public class DependencyCacheTest extends AbstractProjectFileTest {
     }
 
     @Test
-    public void test() {
+    void test() {
         Project project = afs.getRootFolder().createProject("project");
         Tic tic = project.getRootFolder().fileBuilder(TicBuilder.class).setName("tic").build();
         Tic tic2 = project.getRootFolder().fileBuilder(TicBuilder.class).setName("tic2").build();

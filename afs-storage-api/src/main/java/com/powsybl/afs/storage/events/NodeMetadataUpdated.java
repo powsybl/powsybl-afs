@@ -40,8 +40,7 @@ public class NodeMetadataUpdated extends NodeEvent {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof NodeMetadataUpdated) {
-            NodeMetadataUpdated other = (NodeMetadataUpdated) obj;
+        if (obj instanceof NodeMetadataUpdated other) {
             return id.equals(other.id) && Objects.equals(metadata, other.metadata);
         }
         return false;

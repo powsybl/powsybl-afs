@@ -40,8 +40,7 @@ public class BackwardDependencyRemoved extends NodeEvent implements DependencyEv
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof BackwardDependencyRemoved) {
-            BackwardDependencyRemoved other = (BackwardDependencyRemoved) obj;
+        if (obj instanceof BackwardDependencyRemoved other) {
             return id.equals(other.id) && dependencyName.equals(other.dependencyName);
         }
         return false;

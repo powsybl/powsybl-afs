@@ -11,16 +11,16 @@ import com.powsybl.afs.ext.base.ProjectCase;
 import com.powsybl.afs.ext.base.ScriptType;
 import com.powsybl.afs.ws.server.utils.JwtTokenNeeded;
 import com.powsybl.iidm.network.Network;
-import com.powsybl.iidm.xml.NetworkXml;
+import com.powsybl.iidm.serde.NetworkSerDe;
 import com.powsybl.afs.ws.server.utils.AppDataBean;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.StreamingOutput;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
@@ -41,7 +41,7 @@ public class NetworkCacheServer {
                                @PathParam("nodeId") String nodeId) {
         Network network = appDataBean.getProjectFile(fileSystemName, nodeId, ProjectFile.class, ProjectCase.class)
                 .getNetwork();
-        StreamingOutput streamingOutput = output -> NetworkXml.write(network, output);
+        StreamingOutput streamingOutput = output -> NetworkSerDe.write(network, output);
         return Response.ok(streamingOutput).build();
     }
 

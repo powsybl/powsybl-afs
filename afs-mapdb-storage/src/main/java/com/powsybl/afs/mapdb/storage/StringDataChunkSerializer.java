@@ -29,16 +29,14 @@ public final class StringDataChunkSerializer implements Serializer<StringDataChu
     @Override
     public void serialize(DataOutput2 out, StringDataChunk chunk) throws IOException {
         out.writeInt(MapDbStorageConstants.STORAGE_VERSION);
-        if (chunk instanceof UncompressedStringDataChunk) {
-            UncompressedStringDataChunk uncompressedChunk = (UncompressedStringDataChunk) chunk;
+        if (chunk instanceof UncompressedStringDataChunk uncompressedChunk) {
             out.writeUTF("uncompressed");
             out.writeInt(uncompressedChunk.getOffset());
             out.writeInt(uncompressedChunk.getLength());
             for (String value : uncompressedChunk.getValues()) {
                 out.writeUTF(value);
             }
-        } else if (chunk instanceof CompressedStringDataChunk) {
-            CompressedStringDataChunk compressedChunk = (CompressedStringDataChunk) chunk;
+        } else if (chunk instanceof CompressedStringDataChunk compressedChunk) {
             out.writeUTF("compressed");
             out.writeInt(compressedChunk.getOffset());
             out.writeInt(compressedChunk.getUncompressedLength());

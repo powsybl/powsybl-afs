@@ -9,9 +9,9 @@ package com.powsybl.afs.ws.utils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.json.JsonUtil;
 
-import javax.websocket.DecodeException;
-import javax.websocket.Decoder;
-import javax.websocket.EndpointConfig;
+import jakarta.websocket.DecodeException;
+import jakarta.websocket.Decoder;
+import jakarta.websocket.EndpointConfig;
 import java.io.IOException;
 import java.util.Objects;
 

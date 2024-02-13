@@ -38,20 +38,19 @@ public class ProjectFolder extends ProjectNode implements FolderBase<ProjectNode
     private final AppStorageListener l = eventList -> {
         for (NodeEvent event : eventList.getEvents()) {
             switch (event.getType()) {
-                case NodeCreated.TYPENAME:
+                case NodeCreated.TYPENAME -> {
                     if (getId().equals(((NodeCreated) event).getParentId())) {
                         listeners.notify(listener -> listener.childAdded(event.getId()));
                     }
-                    break;
-
-                case NodeRemoved.TYPENAME:
+                }
+                case NodeRemoved.TYPENAME -> {
                     if (getId().equals(((NodeRemoved) event).getParentId())) {
                         listeners.notify(listener -> listener.childRemoved(event.getId()));
                     }
-                    break;
-
-                default:
-                    break;
+                }
+                default -> {
+                    // Do nothing
+                }
             }
         }
     };

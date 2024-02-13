@@ -6,7 +6,7 @@
  */
 package com.powsybl.afs.ws.utils.gzip;
 
-import javax.ws.rs.ext.Provider;
+import jakarta.ws.rs.ext.Provider;
 
 /**
  * @author Ali Tahanout {@literal <ali.tahanout at rte-france.com>}

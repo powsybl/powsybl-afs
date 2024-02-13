@@ -11,16 +11,16 @@ import com.powsybl.afs.storage.AfsStorageException;
 import com.powsybl.afs.ws.utils.ExceptionDetail;
 import com.powsybl.afs.ws.utils.JsonProvider;
 import com.powsybl.commons.net.UserProfile;
-import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
+import org.jboss.resteasy.client.jaxrs.internal.ResteasyClientBuilderImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Form;
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Form;
+import jakarta.ws.rs.core.GenericType;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.Response;
 import java.net.URI;
 import java.util.Objects;
 import java.util.Optional;
@@ -36,7 +36,7 @@ public final class ClientUtils {
     }
 
     public static Client createClient() {
-        return new ResteasyClientBuilder()
+        return new ResteasyClientBuilderImpl()
                 .connectionPoolSize(50)
                 .build();
     }
@@ -47,12 +47,12 @@ public final class ClientUtils {
             ExceptionDetail exceptionDetail = new ObjectMapper().readValue(body, ExceptionDetail.class);
             String javaException = exceptionDetail.getJavaException();
             if (javaException != null) {
-                Class exceptionClass = Class.forName(javaException);
+                Class<?> exceptionClass = Class.forName(javaException);
                 if (RuntimeException.class.isAssignableFrom(exceptionClass)) {
                     if (exceptionDetail.getMessage() != null) {
                         return (RuntimeException) exceptionClass.getConstructor(String.class).newInstance(exceptionDetail.getMessage());
                     }
-                    return (RuntimeException) exceptionClass.newInstance();
+                    return (RuntimeException) exceptionClass.getDeclaredConstructor().newInstance();
                 }
             }
         } catch (Exception e) {

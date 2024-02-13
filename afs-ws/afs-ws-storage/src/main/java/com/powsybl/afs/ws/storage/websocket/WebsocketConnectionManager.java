@@ -6,7 +6,7 @@
  */
 package com.powsybl.afs.ws.storage.websocket;
 
-import javax.websocket.Session;
+import jakarta.websocket.Session;
 
 /**
  * Responsible for managing the connection to a websocket server endpoint.

@@ -22,23 +22,19 @@ import com.powsybl.commons.datasource.DataSource;
 import com.powsybl.commons.datasource.ReadOnlyDataSource;
 import com.powsybl.contingency.BranchContingency;
 import com.powsybl.contingency.Contingency;
-import com.powsybl.iidm.network.ImportConfig;
-import com.powsybl.iidm.network.Importer;
-import com.powsybl.iidm.network.ImportersLoader;
-import com.powsybl.iidm.network.ImportersLoaderList;
-import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.*;
 import com.powsybl.iidm.network.test.EurostagTutorialExample1Factory;
 import com.powsybl.loadflow.LoadFlowResult;
 import com.powsybl.security.*;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
@@ -51,7 +47,7 @@ public class SecurityAnalysisRunnerTest extends AbstractProjectFileTest {
         return new SecurityAnalysisResult(preContingencyResult, LoadFlowResult.ComponentResult.Status.CONVERGED, Collections.emptyList());
     }
 
-    private static class SecurityAnalysisServiceMock implements SecurityAnalysisRunningService {
+    private static final class SecurityAnalysisServiceMock implements SecurityAnalysisRunningService {
 
         @Override
         public void run(SecurityAnalysisRunner runner) {
@@ -60,7 +56,7 @@ public class SecurityAnalysisRunnerTest extends AbstractProjectFileTest {
     }
 
     @AutoService(ServiceExtension.class)
-    public class SecurityAnalysisServiceExtensionMock implements ServiceExtension<SecurityAnalysisRunningService> {
+    public static class SecurityAnalysisServiceExtensionMock implements ServiceExtension<SecurityAnalysisRunningService> {
 
         @Override
         public ServiceKey<SecurityAnalysisRunningService> getServiceKey() {
@@ -73,7 +69,7 @@ public class SecurityAnalysisRunnerTest extends AbstractProjectFileTest {
         }
     }
 
-    private static class ImporterMock implements Importer {
+    private static final class ImporterMock implements Importer {
 
         static final String FORMAT = "net";
 
@@ -93,9 +89,8 @@ public class SecurityAnalysisRunnerTest extends AbstractProjectFileTest {
         }
 
         @Override
-        public Network importData(ReadOnlyDataSource dataSource, Properties parameters) {
-            Network network = EurostagTutorialExample1Factory.createWithFixedCurrentLimits();
-            return network;
+        public Network importData(ReadOnlyDataSource dataSource, NetworkFactory networkFactory, Properties parameters) {
+            return EurostagTutorialExample1Factory.createWithFixedCurrentLimits();
         }
 
         @Override
@@ -128,7 +123,7 @@ public class SecurityAnalysisRunnerTest extends AbstractProjectFileTest {
                 new LocalNetworkCacheServiceExtension());
     }
 
-    @Before
+    @BeforeEach
     public void setup() throws IOException {
         super.setup();
 
@@ -146,7 +141,7 @@ public class SecurityAnalysisRunnerTest extends AbstractProjectFileTest {
     }
 
     @Test
-    public void test() {
+    void test() {
         Case aCase = afs.getRootFolder().getChild(Case.class, "network")
                 .orElseThrow(AssertionError::new);
 

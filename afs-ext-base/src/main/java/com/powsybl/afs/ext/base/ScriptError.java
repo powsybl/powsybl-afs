@@ -51,12 +51,12 @@ public class ScriptError implements Serializable {
         ErrorCollector errorCollector = e.getErrorCollector();
         if (errorCollector.getErrorCount() > 0) {
             Message error = errorCollector.getError(0);
-            if (error instanceof SyntaxErrorMessage) {
-                SyntaxException cause = ((SyntaxErrorMessage) error).getCause();
+            if (error instanceof SyntaxErrorMessage syntaxErrorMessage) {
+                SyntaxException cause = syntaxErrorMessage.getCause();
                 return new ScriptError(cause.getMessage(), cause.getStartLine(), cause.getStartColumn(),
                         cause.getEndLine(), cause.getEndColumn());
-            } else if (error instanceof ExceptionMessage) {
-                Exception cause = ((ExceptionMessage) error).getCause();
+            } else if (error instanceof ExceptionMessage exceptionMessage) {
+                Exception cause = exceptionMessage.getCause();
                 return new ScriptError(cause.getMessage());
             } else {
                 throw new AssertionError("SyntaxErrorMessage or ExceptionMessage is expected");
@@ -105,8 +105,7 @@ public class ScriptError implements Serializable {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof ScriptError) {
-            ScriptError other = (ScriptError) obj;
+        if (obj instanceof ScriptError other) {
             return message.equals(other.message) &&
                     startLine == other.startLine &&
                     startColumn == other.startColumn &&

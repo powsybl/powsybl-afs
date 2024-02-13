@@ -25,11 +25,11 @@ import java.util.TreeSet;
 public class SubjectInfoInterceptor extends DefaultSecurityAnalysisInterceptor {
     private void addSubjectInfo(SecurityAnalysisResultContext context, LimitViolationsResult result) {
         for (LimitViolation violation : result.getLimitViolations()) {
-            Identifiable identifiable = context.getNetwork().getIdentifiable(violation.getSubjectId());
-            if (identifiable instanceof Branch) {
-                addBranchExtension(violation, (Branch) identifiable);
-            } else if (identifiable instanceof VoltageLevel) {
-                addVoltageLevelExtension(violation, (VoltageLevel) identifiable);
+            Identifiable<?> identifiable = context.getNetwork().getIdentifiable(violation.getSubjectId());
+            if (identifiable instanceof Branch<?> branch) {
+                addBranchExtension(violation, branch);
+            } else if (identifiable instanceof VoltageLevel voltageLevel) {
+                addVoltageLevelExtension(violation, voltageLevel);
             }
         }
     }

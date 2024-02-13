@@ -28,11 +28,11 @@ import com.powsybl.timeseries.TimeSeriesVersions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.client.AsyncInvoker;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.*;
+import jakarta.ws.rs.client.AsyncInvoker;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.*;
 import java.io.*;
 import java.net.URI;
 import java.time.Instant;
@@ -91,17 +91,14 @@ public class RemoteAppStorage extends AbstractAppStorage {
         changeBuffer = new StorageChangeBuffer(changeSet -> {
             LOGGER.debug("flush(fileSystemName={}, size={})", fileSystemName, changeSet.getChanges().size());
 
-            Response response = webTarget.path("fileSystems/{fileSystemName}/flush")
-                    .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                    .request()
-                    .header(HttpHeaders.AUTHORIZATION, token)
-                    .header(HttpHeaders.CONTENT_ENCODING, "gzip")
-                    .acceptEncoding("gzip")
-                    .post(Entity.json(changeSet));
-            try {
+            try (Response response = webTarget.path("fileSystems/{fileSystemName}/flush")
+                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+                .request()
+                .header(HttpHeaders.AUTHORIZATION, token)
+                .header(HttpHeaders.CONTENT_ENCODING, "gzip")
+                .acceptEncoding("gzip")
+                .post(Entity.json(changeSet))) {
                 checkOk(response);
-            } finally {
-                response.close();
             }
         }, BUFFER_MAXIMUM_CHANGE, BUFFER_MAXIMUM_SIZE);
     }
@@ -129,23 +126,17 @@ public class RemoteAppStorage extends AbstractAppStorage {
     }
 
     public static List<String> getFileSystemNames(URI baseUri, String token) {
-        Client client = createClient();
-        try {
-            Response response = getWebTarget(client, baseUri)
-                    .path("fileSystems")
-                    .request(MediaType.APPLICATION_JSON)
-                    .header(HttpHeaders.AUTHORIZATION, token)
-                    .get();
-            try {
-                List<String> fileSystemNames = response.readEntity(new GenericType<List<String>>() {
+        try (Client client = createClient()) {
+            try (Response response = getWebTarget(client, baseUri)
+                .path("fileSystems")
+                .request(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, token)
+                .get()) {
+                List<String> fileSystemNames = response.readEntity(new GenericType<>() {
                 });
                 LOGGER.info("File systems {} found at {}", fileSystemNames, baseUri);
                 return fileSystemNames;
-            } finally {
-                response.close();
             }
-        } finally {
-            client.close();
         }
     }
 
@@ -156,17 +147,14 @@ public class RemoteAppStorage extends AbstractAppStorage {
         LOGGER.debug("createRootNodeIfNotExists(fileSystemName={}, name={}, nodePseudoClass={})",
                 fileSystemName, name, nodePseudoClass);
 
-        Response response = webTarget.path("fileSystems/{fileSystemName}/rootNode")
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .queryParam("nodeName", name)
-                .queryParam("nodePseudoClass", nodePseudoClass)
-                .request(MediaType.APPLICATION_JSON)
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .put(Entity.text(""));
-        try {
+        try (Response response = webTarget.path("fileSystems/{fileSystemName}/rootNode")
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .queryParam("nodeName", name)
+            .queryParam("nodePseudoClass", nodePseudoClass)
+            .request(MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .put(Entity.text(""))) {
             return readEntityIfOk(response, NodeInfo.class);
-        } finally {
-            response.close();
         }
     }
 
@@ -176,16 +164,13 @@ public class RemoteAppStorage extends AbstractAppStorage {
 
         LOGGER.debug("isWritable(fileSystemName={}, nodeId={})", fileSystemName, nodeId);
 
-        Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/writable")
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .resolveTemplate(NODE_ID, nodeId)
-                .request(MediaType.TEXT_PLAIN)
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .get();
-        try {
+        try (Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/writable")
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .resolveTemplate(NODE_ID, nodeId)
+            .request(MediaType.TEXT_PLAIN)
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .get()) {
             return readEntityIfOk(response, Boolean.class);
-        } finally {
-            response.close();
         }
     }
 
@@ -195,16 +180,13 @@ public class RemoteAppStorage extends AbstractAppStorage {
 
         LOGGER.debug("isConsistent(fileSystemName={}, nodeId={})", fileSystemName, nodeId);
 
-        Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/consistent")
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .resolveTemplate(NODE_ID, nodeId)
-                .request(MediaType.TEXT_PLAIN)
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .get();
-        try {
+        try (Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/consistent")
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .resolveTemplate(NODE_ID, nodeId)
+            .request(MediaType.TEXT_PLAIN)
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .get()) {
             return readEntityIfOk(response, Boolean.class);
-        } finally {
-            response.close();
         }
     }
 
@@ -218,18 +200,15 @@ public class RemoteAppStorage extends AbstractAppStorage {
 
         LOGGER.debug("setDescription(fileSystemName={}, nodeId={}, description={})", fileSystemName, nodeId, description);
 
-        Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/description")
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .resolveTemplate(NODE_ID, nodeId)
-                .request()
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .header(HttpHeaders.CONTENT_ENCODING, "gzip")
-                .acceptEncoding("gzip")
-                .put(Entity.text(description));
-        try {
+        try (Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/description")
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .resolveTemplate(NODE_ID, nodeId)
+            .request()
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .header(HttpHeaders.CONTENT_ENCODING, "gzip")
+            .acceptEncoding("gzip")
+            .put(Entity.text(description))) {
             checkOk(response);
-        } finally {
-            response.close();
         }
     }
 
@@ -242,18 +221,15 @@ public class RemoteAppStorage extends AbstractAppStorage {
 
         LOGGER.debug("setConsistent(fileSystemName={}, nodeId={})", fileSystemName, nodeId);
 
-        Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/consistent")
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .resolveTemplate(NODE_ID, nodeId)
-                .request()
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .header(HttpHeaders.CONTENT_ENCODING, "gzip")
-                .acceptEncoding("gzip")
-                .put(Entity.json(true));
-        try {
+        try (Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/consistent")
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .resolveTemplate(NODE_ID, nodeId)
+            .request()
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .header(HttpHeaders.CONTENT_ENCODING, "gzip")
+            .acceptEncoding("gzip")
+            .put(Entity.json(true))) {
             checkOk(response);
-        } finally {
-            response.close();
         }
     }
 
@@ -267,18 +243,15 @@ public class RemoteAppStorage extends AbstractAppStorage {
 
         LOGGER.debug("renameNode(fileSystemName={}, nodeId={}, name={})", fileSystemName, nodeId, name);
 
-        Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/name")
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .resolveTemplate(NODE_ID, nodeId)
-                .request()
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .header(HttpHeaders.CONTENT_ENCODING, "gzip")
-                .acceptEncoding("gzip")
-                .put(Entity.text(name));
-        try {
+        try (Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/name")
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .resolveTemplate(NODE_ID, nodeId)
+            .request()
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .header(HttpHeaders.CONTENT_ENCODING, "gzip")
+            .acceptEncoding("gzip")
+            .put(Entity.text(name))) {
             checkOk(response);
-        } finally {
-            response.close();
         }
     }
 
@@ -291,18 +264,15 @@ public class RemoteAppStorage extends AbstractAppStorage {
 
         LOGGER.debug("updateModificationTime(fileSystemName={}, nodeId={})", fileSystemName, nodeId);
 
-        Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/modificationTime")
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .resolveTemplate(NODE_ID, nodeId)
-                .request()
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .header(HttpHeaders.CONTENT_ENCODING, "gzip")
-                .acceptEncoding("gzip")
-                .put(Entity.text(""));
-        try {
+        try (Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/modificationTime")
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .resolveTemplate(NODE_ID, nodeId)
+            .request()
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .header(HttpHeaders.CONTENT_ENCODING, "gzip")
+            .acceptEncoding("gzip")
+            .put(Entity.text(""))) {
             checkOk(response);
-        } finally {
-            response.close();
         }
     }
 
@@ -321,22 +291,19 @@ public class RemoteAppStorage extends AbstractAppStorage {
         LOGGER.debug("createNode(fileSystemName={}, parentNodeId={}, name={}, nodePseudoClass={}, description={}, version={}, genericMetadata={})",
                 fileSystemName, parentNodeId, name, nodePseudoClass, description, version, genericMetadata);
 
-        Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/children/{childName}")
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .resolveTemplate(NODE_ID, parentNodeId)
-                .resolveTemplate("childName", name)
-                .queryParam("nodePseudoClass", nodePseudoClass)
-                .queryParam("description", description)
-                .queryParam(VERSION, version)
-                .request(MediaType.APPLICATION_JSON)
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .header(HttpHeaders.CONTENT_ENCODING, "gzip")
-                .acceptEncoding("gzip")
-                .post(Entity.json(genericMetadata));
-        try {
+        try (Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/children/{childName}")
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .resolveTemplate(NODE_ID, parentNodeId)
+            .resolveTemplate("childName", name)
+            .queryParam("nodePseudoClass", nodePseudoClass)
+            .queryParam("description", description)
+            .queryParam(VERSION, version)
+            .request(MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .header(HttpHeaders.CONTENT_ENCODING, "gzip")
+            .acceptEncoding("gzip")
+            .post(Entity.json(genericMetadata))) {
             return readEntityIfOk(response, NodeInfo.class);
-        } finally {
-            response.close();
         }
     }
 
@@ -350,18 +317,15 @@ public class RemoteAppStorage extends AbstractAppStorage {
 
         LOGGER.debug("setMetadata(fileSystemName={}, nodeId={}, genericMetadata={})", fileSystemName, nodeId, genericMetadata);
 
-        Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/metadata")
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .resolveTemplate(NODE_ID, nodeId)
-                .request(MediaType.APPLICATION_JSON)
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .header(HttpHeaders.CONTENT_ENCODING, "gzip")
-                .acceptEncoding("gzip")
-                .put(Entity.json(genericMetadata));
-        try {
+        try (Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/metadata")
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .resolveTemplate(NODE_ID, nodeId)
+            .request(MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .header(HttpHeaders.CONTENT_ENCODING, "gzip")
+            .acceptEncoding("gzip")
+            .put(Entity.json(genericMetadata))) {
             checkOk(response);
-        } finally {
-            response.close();
         }
     }
 
@@ -371,17 +335,14 @@ public class RemoteAppStorage extends AbstractAppStorage {
 
         LOGGER.debug("getChildNodes(fileSystemName={}, nodeId={})", fileSystemName, nodeId);
 
-        Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/children")
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .resolveTemplate(NODE_ID, nodeId)
-                .request(MediaType.APPLICATION_JSON)
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .get();
-        try {
-            return readEntityIfOk(response, new GenericType<List<NodeInfo>>() {
+        try (Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/children")
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .resolveTemplate(NODE_ID, nodeId)
+            .request(MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .get()) {
+            return readEntityIfOk(response, new GenericType<>() {
             });
-        } finally {
-            response.close();
         }
     }
 
@@ -389,16 +350,13 @@ public class RemoteAppStorage extends AbstractAppStorage {
     public List<NodeInfo> getInconsistentNodes() {
         LOGGER.debug("getInconsistentNodes(fileSystemName={})", fileSystemName);
 
-        Response response = webTarget.path("fileSystems/{fileSystemName}/inconsistentChildNodes")
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .request(MediaType.APPLICATION_JSON)
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .get();
-        try {
-            return readEntityIfOk(response, new GenericType<List<NodeInfo>>() {
+        try (Response response = webTarget.path("fileSystems/{fileSystemName}/inconsistentChildNodes")
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .request(MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .get()) {
+            return readEntityIfOk(response, new GenericType<>() {
             });
-        } finally {
-            response.close();
         }
     }
 
@@ -409,17 +367,14 @@ public class RemoteAppStorage extends AbstractAppStorage {
 
         LOGGER.debug("getChildNode(fileSystemName={}, nodeId={}, name={})", fileSystemName, nodeId, name);
 
-        Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/children/{childName}")
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .resolveTemplate(NODE_ID, nodeId)
-                .resolveTemplate("childName", name)
-                .request(MediaType.APPLICATION_JSON)
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .get();
-        try {
+        try (Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/children/{childName}")
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .resolveTemplate(NODE_ID, nodeId)
+            .resolveTemplate("childName", name)
+            .request(MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .get()) {
             return readOptionalEntityIfOk(response, NodeInfo.class);
-        } finally {
-            response.close();
         }
     }
 
@@ -429,16 +384,13 @@ public class RemoteAppStorage extends AbstractAppStorage {
 
         LOGGER.debug("getParentNode(fileSystemName={}, nodeId={})", fileSystemName, nodeId);
 
-        Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/parent")
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .resolveTemplate(NODE_ID, nodeId)
-                .request(MediaType.APPLICATION_JSON)
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .get();
-        try {
+        try (Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/parent")
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .resolveTemplate(NODE_ID, nodeId)
+            .request(MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .get()) {
             return readOptionalEntityIfOk(response, NodeInfo.class);
-        } finally {
-            response.close();
         }
     }
 
@@ -452,18 +404,15 @@ public class RemoteAppStorage extends AbstractAppStorage {
 
         LOGGER.debug("setParentNode(fileSystemName={}, nodeId={}, newParentNodeId={})", fileSystemName, nodeId, newParentNodeId);
 
-        Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/parent")
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .resolveTemplate(NODE_ID, nodeId)
-                .request()
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .header(HttpHeaders.CONTENT_ENCODING, "gzip")
-                .acceptEncoding("gzip")
-                .put(Entity.text(newParentNodeId));
-        try {
+        try (Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/parent")
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .resolveTemplate(NODE_ID, nodeId)
+            .request()
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .header(HttpHeaders.CONTENT_ENCODING, "gzip")
+            .acceptEncoding("gzip")
+            .put(Entity.text(newParentNodeId))) {
             checkOk(response);
-        } finally {
-            response.close();
         }
     }
 
@@ -476,16 +425,13 @@ public class RemoteAppStorage extends AbstractAppStorage {
 
         LOGGER.debug("deleteNode(fileSystemName={}, nodeId={})", fileSystemName, nodeId);
 
-        Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}")
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .resolveTemplate(NODE_ID, nodeId)
-                .request()
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .delete();
-        try {
+        try (Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}")
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .resolveTemplate(NODE_ID, nodeId)
+            .request()
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .delete()) {
             return readEntityIfOk(response, String.class);
-        } finally {
-            response.close();
         }
     }
 
@@ -540,7 +486,7 @@ public class RemoteAppStorage extends AbstractAppStorage {
                 .header(HttpHeaders.AUTHORIZATION, token)
                 .get();
         return readOptionalEntityIfOk(response, InputStream.class)
-                .map(is -> new ForwardingInputStream<InputStream>(is) {
+                .map(is -> new ForwardingInputStream<>(is) {
                     @Override
                     public void close() throws IOException {
                         super.close();
@@ -580,17 +526,14 @@ public class RemoteAppStorage extends AbstractAppStorage {
 
         LOGGER.debug("dataExists(fileSystemName={}, nodeId={}, name={})", fileSystemName, nodeId, name);
 
-        Response response = webTarget.path(NODE_DATA_PATH)
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .resolveTemplate(NODE_ID, nodeId)
-                .resolveTemplate("name", name)
-                .request(MediaType.TEXT_PLAIN)
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .get();
-        try {
+        try (Response response = webTarget.path(NODE_DATA_PATH)
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .resolveTemplate(NODE_ID, nodeId)
+            .resolveTemplate("name", name)
+            .request(MediaType.TEXT_PLAIN)
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .get()) {
             return readEntityIfOk(response, Boolean.class);
-        } finally {
-            response.close();
         }
     }
 
@@ -600,17 +543,14 @@ public class RemoteAppStorage extends AbstractAppStorage {
 
         LOGGER.debug("getDataNames(fileSystemName={}, nodeId={})", fileSystemName, nodeId);
 
-        Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/data")
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .resolveTemplate(NODE_ID, nodeId)
-                .request(MediaType.APPLICATION_JSON)
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .get();
-        try {
-            return readEntityIfOk(response, new GenericType<Set<String>>() {
+        try (Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/data")
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .resolveTemplate(NODE_ID, nodeId)
+            .request(MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .get()) {
+            return readEntityIfOk(response, new GenericType<>() {
             });
-        } finally {
-            response.close();
         }
     }
 
@@ -621,17 +561,14 @@ public class RemoteAppStorage extends AbstractAppStorage {
 
         LOGGER.debug("removeData(fileSystemName={}, nodeId={}, name={})", fileSystemName, nodeId, name);
 
-        Response response = webTarget.path(NODE_DATA_PATH)
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .resolveTemplate(NODE_ID, nodeId)
-                .resolveTemplate("name", name)
-                .request(MediaType.TEXT_PLAIN)
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .delete();
-        try {
+        try (Response response = webTarget.path(NODE_DATA_PATH)
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .resolveTemplate(NODE_ID, nodeId)
+            .resolveTemplate("name", name)
+            .request(MediaType.TEXT_PLAIN)
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .delete()) {
             return readEntityIfOk(response, Boolean.class);
-        } finally {
-            response.close();
         }
     }
 
@@ -646,20 +583,17 @@ public class RemoteAppStorage extends AbstractAppStorage {
 
         LOGGER.debug("addDependency(fileSystemName={}, nodeId={}, name={}, toNodeId={})", fileSystemName, nodeId, name, toNodeId);
 
-        Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/dependencies/{name}/{toNodeId}")
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .resolveTemplate(NODE_ID, nodeId)
-                .resolveTemplate("name", name)
-                .resolveTemplate("toNodeId", toNodeId)
-                .request()
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .header(HttpHeaders.CONTENT_ENCODING, "gzip")
-                .acceptEncoding("gzip")
-                .put(Entity.text(""));
-        try {
+        try (Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/dependencies/{name}/{toNodeId}")
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .resolveTemplate(NODE_ID, nodeId)
+            .resolveTemplate("name", name)
+            .resolveTemplate("toNodeId", toNodeId)
+            .request()
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .header(HttpHeaders.CONTENT_ENCODING, "gzip")
+            .acceptEncoding("gzip")
+            .put(Entity.text(""))) {
             checkOk(response);
-        } finally {
-            response.close();
         }
     }
 
@@ -670,18 +604,15 @@ public class RemoteAppStorage extends AbstractAppStorage {
 
         LOGGER.debug("getDependencies(fileSystemName={}, nodeId={}, name={})", fileSystemName, nodeId, name);
 
-        Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/dependencies/{name}")
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .resolveTemplate(NODE_ID, nodeId)
-                .resolveTemplate("name", name)
-                .request(MediaType.APPLICATION_JSON)
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .get();
-        try {
-            return readEntityIfOk(response, new GenericType<Set<NodeInfo>>() {
+        try (Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/dependencies/{name}")
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .resolveTemplate(NODE_ID, nodeId)
+            .resolveTemplate("name", name)
+            .request(MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .get()) {
+            return readEntityIfOk(response, new GenericType<>() {
             });
-        } finally {
-            response.close();
         }
     }
 
@@ -691,17 +622,14 @@ public class RemoteAppStorage extends AbstractAppStorage {
 
         LOGGER.debug("getDependencies(fileSystemName={}, nodeId={})", fileSystemName, nodeId);
 
-        Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/dependencies")
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .resolveTemplate(NODE_ID, nodeId)
-                .request(MediaType.APPLICATION_JSON)
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .get();
-        try {
-            return readEntityIfOk(response, new GenericType<Set<NodeDependency>>() {
+        try (Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/dependencies")
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .resolveTemplate(NODE_ID, nodeId)
+            .request(MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .get()) {
+            return readEntityIfOk(response, new GenericType<>() {
             });
-        } finally {
-            response.close();
         }
     }
 
@@ -711,17 +639,14 @@ public class RemoteAppStorage extends AbstractAppStorage {
 
         LOGGER.debug("getBackwardDependencies(fileSystemName={}, nodeId={})", fileSystemName, nodeId);
 
-        Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/backwardDependencies")
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .resolveTemplate(NODE_ID, nodeId)
-                .request(MediaType.APPLICATION_JSON)
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .get();
-        try {
-            return readEntityIfOk(response, new GenericType<Set<NodeInfo>>() {
+        try (Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/backwardDependencies")
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .resolveTemplate(NODE_ID, nodeId)
+            .request(MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .get()) {
+            return readEntityIfOk(response, new GenericType<>() {
             });
-        } finally {
-            response.close();
         }
     }
 
@@ -736,18 +661,15 @@ public class RemoteAppStorage extends AbstractAppStorage {
 
         LOGGER.debug("removeDependency(fileSystemName={}, nodeId={}, name={}, toNodeId={})", fileSystemName, nodeId, name, toNodeId);
 
-        Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/dependencies/{name}/{toNodeId}")
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .resolveTemplate(NODE_ID, nodeId)
-                .resolveTemplate("name", name)
-                .resolveTemplate("toNodeId", toNodeId)
-                .request()
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .delete();
-        try {
+        try (Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/dependencies/{name}/{toNodeId}")
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .resolveTemplate(NODE_ID, nodeId)
+            .resolveTemplate("name", name)
+            .resolveTemplate("toNodeId", toNodeId)
+            .request()
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .delete()) {
             checkOk(response);
-        } finally {
-            response.close();
         }
     }
 
@@ -772,17 +694,14 @@ public class RemoteAppStorage extends AbstractAppStorage {
 
         LOGGER.debug("getTimeSeriesNames(fileSystemName={}, nodeId={})", fileSystemName, nodeId);
 
-        Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/timeSeries/name")
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .resolveTemplate(NODE_ID, nodeId)
-                .request()
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .get();
-        try {
-            return readEntityIfOk(response, new GenericType<Set<String>>() {
+        try (Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/timeSeries/name")
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .resolveTemplate(NODE_ID, nodeId)
+            .request()
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .get()) {
+            return readEntityIfOk(response, new GenericType<>() {
             });
-        } finally {
-            response.close();
         }
     }
 
@@ -793,17 +712,14 @@ public class RemoteAppStorage extends AbstractAppStorage {
 
         LOGGER.debug("timeSeriesExists(fileSystemName={}, nodeId={}, timeSeriesName={})", fileSystemName, nodeId, timeSeriesName);
 
-        Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/timeSeries/{timeSeriesName}")
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .resolveTemplate(NODE_ID, nodeId)
-                .resolveTemplate("timeSeriesName", timeSeriesName)
-                .request(MediaType.TEXT_PLAIN_TYPE)
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .get();
-        try {
+        try (Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/timeSeries/{timeSeriesName}")
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .resolveTemplate(NODE_ID, nodeId)
+            .resolveTemplate("timeSeriesName", timeSeriesName)
+            .request(MediaType.TEXT_PLAIN_TYPE)
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .get()) {
             return readEntityIfOk(response, Boolean.class);
-        } finally {
-            response.close();
         }
     }
 
@@ -816,17 +732,14 @@ public class RemoteAppStorage extends AbstractAppStorage {
             LOGGER.debug("getTimeSeriesMetadata(fileSystemName={}, nodeId={}, timeSeriesNames={})", fileSystemName, nodeId, timeSeriesNames);
         }
 
-        Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/timeSeries/metadata")
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .resolveTemplate(NODE_ID, nodeId)
-                .request()
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .post(Entity.json(timeSeriesNames));
-        try {
-            return readEntityIfOk(response, new GenericType<List<TimeSeriesMetadata>>() {
+        try (Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/timeSeries/metadata")
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .resolveTemplate(NODE_ID, nodeId)
+            .request()
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .post(Entity.json(timeSeriesNames))) {
+            return readEntityIfOk(response, new GenericType<>() {
             });
-        } finally {
-            response.close();
         }
     }
 
@@ -836,17 +749,14 @@ public class RemoteAppStorage extends AbstractAppStorage {
 
         LOGGER.debug("getTimeSeriesDataVersions(fileSystemName={}, nodeId={})", fileSystemName, nodeId);
 
-        Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/timeSeries/versions")
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .resolveTemplate(NODE_ID, nodeId)
-                .request()
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .get();
-        try {
-            return readEntityIfOk(response, new GenericType<Set<Integer>>() {
+        try (Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/timeSeries/versions")
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .resolveTemplate(NODE_ID, nodeId)
+            .request()
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .get()) {
+            return readEntityIfOk(response, new GenericType<>() {
             });
-        } finally {
-            response.close();
         }
     }
 
@@ -857,18 +767,15 @@ public class RemoteAppStorage extends AbstractAppStorage {
 
         LOGGER.debug("getTimeSeriesDataVersions(fileSystemName={}, nodeId={}, timeSeriesNames={})", fileSystemName, nodeId, timeSeriesName);
 
-        Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/timeSeries/{timeSeriesName}/versions")
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .resolveTemplate(NODE_ID, nodeId)
-                .resolveTemplate("timeSeriesName", timeSeriesName)
-                .request()
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .get();
-        try {
-            return readEntityIfOk(response, new GenericType<Set<Integer>>() {
+        try (Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/timeSeries/{timeSeriesName}/versions")
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .resolveTemplate(NODE_ID, nodeId)
+            .resolveTemplate("timeSeriesName", timeSeriesName)
+            .request()
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .get()) {
+            return readEntityIfOk(response, new GenericType<>() {
             });
-        } finally {
-            response.close();
         }
     }
 
@@ -898,18 +805,15 @@ public class RemoteAppStorage extends AbstractAppStorage {
                     fileSystemName, nodeId, timeSeriesNames, version);
         }
 
-        Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/timeSeries/double/{version}")
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .resolveTemplate(NODE_ID, nodeId)
-                .resolveTemplate(VERSION, version)
-                .request()
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .post(Entity.json(timeSeriesNames));
-        try {
-            return readEntityIfOk(response, new GenericType<Map<String, List<DoubleDataChunk>>>() {
+        try (Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/timeSeries/double/{version}")
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .resolveTemplate(NODE_ID, nodeId)
+            .resolveTemplate(VERSION, version)
+            .request()
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .post(Entity.json(timeSeriesNames))) {
+            return readEntityIfOk(response, new GenericType<>() {
             });
-        } finally {
-            response.close();
         }
     }
 
@@ -939,18 +843,15 @@ public class RemoteAppStorage extends AbstractAppStorage {
                     fileSystemName, nodeId, timeSeriesNames, version);
         }
 
-        Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/timeSeries/string/{version}")
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .resolveTemplate(NODE_ID, nodeId)
-                .resolveTemplate(VERSION, version)
-                .request()
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .post(Entity.json(timeSeriesNames));
-        try {
-            return readEntityIfOk(response, new GenericType<Map<String, List<StringDataChunk>>>() {
+        try (Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/timeSeries/string/{version}")
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .resolveTemplate(NODE_ID, nodeId)
+            .resolveTemplate(VERSION, version)
+            .request()
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .post(Entity.json(timeSeriesNames))) {
+            return readEntityIfOk(response, new GenericType<>() {
             });
-        } finally {
-            response.close();
         }
     }
 
@@ -963,16 +864,13 @@ public class RemoteAppStorage extends AbstractAppStorage {
 
         LOGGER.debug("clearTimeSeries(fileSystemName={}, nodeId={})", fileSystemName, nodeId);
 
-        Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/timeSeries")
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .resolveTemplate(NODE_ID, nodeId)
-                .request()
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .delete();
-        try {
+        try (Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}/timeSeries")
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .resolveTemplate(NODE_ID, nodeId)
+            .request()
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .delete()) {
             checkOk(response);
-        } finally {
-            response.close();
         }
     }
 
@@ -982,16 +880,13 @@ public class RemoteAppStorage extends AbstractAppStorage {
 
         LOGGER.debug("getNodeInfo(fileSystemName={}, nodeId={})", fileSystemName, nodeId);
 
-        Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}")
-                .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
-                .resolveTemplate(NODE_ID, nodeId)
-                .request(MediaType.APPLICATION_JSON)
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .get();
-        try {
+        try (Response response = webTarget.path("fileSystems/{fileSystemName}/nodes/{nodeId}")
+            .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName)
+            .resolveTemplate(NODE_ID, nodeId)
+            .request(MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .get()) {
             return readEntityIfOk(response, NodeInfo.class);
-        } finally {
-            response.close();
         }
     }
 
@@ -999,13 +894,11 @@ public class RemoteAppStorage extends AbstractAppStorage {
     public List<String> getSupportedFileSystemChecks() {
         WebTarget target = webTarget.path("fileSystems/{fileSystemName}/check/types")
             .resolveTemplate(FILE_SYSTEM_NAME, fileSystemName);
-        Response response = target.request(MediaType.APPLICATION_JSON)
+        try (Response response = target.request(MediaType.APPLICATION_JSON)
             .header(HttpHeaders.AUTHORIZATION, token)
-            .get();
-        try {
-            return readEntityIfOk(response, new GenericType<List<String>>() { });
-        } finally {
-            response.close();
+            .get()) {
+            return readEntityIfOk(response, new GenericType<>() {
+            });
         }
     }
 
@@ -1020,13 +913,11 @@ public class RemoteAppStorage extends AbstractAppStorage {
                 .queryParam("instant", expirationMillis)
                 .queryParam("types", String.join(",", options.getTypes()));
 
-        Response response = target.request(MediaType.APPLICATION_JSON)
-                .header(HttpHeaders.AUTHORIZATION, token)
-                .post(Entity.json(""));
-        try {
-            return readEntityIfOk(response, new GenericType<List<FileSystemCheckIssue>>() { });
-        } finally {
-            response.close();
+        try (Response response = target.request(MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, token)
+            .post(Entity.json(""))) {
+            return readEntityIfOk(response, new GenericType<>() {
+            });
         }
     }
 

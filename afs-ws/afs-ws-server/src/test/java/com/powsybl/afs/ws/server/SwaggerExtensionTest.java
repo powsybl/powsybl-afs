@@ -10,7 +10,7 @@ package com.powsybl.afs.ws.server;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.servers.Server;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -21,10 +21,10 @@ import static org.assertj.core.api.Java6Assertions.assertThat;
 /**
  * @author Paul Bui-Quang {@literal <paul.buiquang at rte-france.com>}
  */
-public class SwaggerExtensionTest {
+class SwaggerExtensionTest {
 
     @Test
-    public void test() {
+    void test() {
         AppStorageApplication appStorageApplication = new AppStorageApplication();
         OpenAPI swaggerConfig = appStorageApplication.initSwaggerConfig(Arrays.asList(
             () -> {

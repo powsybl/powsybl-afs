@@ -45,8 +45,7 @@ public class TimeSeriesKey {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof TimeSeriesKey) {
-            TimeSeriesKey other = (TimeSeriesKey) obj;
+        if (obj instanceof TimeSeriesKey other) {
             return nodeUuid.equals(other.nodeUuid) &&
                     version == other.version &&
                     timeSeriesName.equals(other.timeSeriesName);

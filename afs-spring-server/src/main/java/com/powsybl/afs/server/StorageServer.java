@@ -119,22 +119,21 @@ public class StorageServer {
 
         for (StorageChange change : changeSet.getChanges()) {
             switch (change.getType()) {
-                case TIME_SERIES_CREATION:
+                case TIME_SERIES_CREATION -> {
                     TimeSeriesCreation creation = (TimeSeriesCreation) change;
                     storage.createTimeSeries(creation.getNodeId(), creation.getMetadata());
-                    break;
-                case DOUBLE_TIME_SERIES_CHUNKS_ADDITION:
+                }
+                case DOUBLE_TIME_SERIES_CHUNKS_ADDITION -> {
                     DoubleTimeSeriesChunksAddition doubleAddition = (DoubleTimeSeriesChunksAddition) change;
                     storage.addDoubleTimeSeriesData(doubleAddition.getNodeId(), doubleAddition.getVersion(),
                         doubleAddition.getTimeSeriesName(), doubleAddition.getChunks());
-                    break;
-                case STRING_TIME_SERIES_CHUNKS_ADDITION:
+                }
+                case STRING_TIME_SERIES_CHUNKS_ADDITION -> {
                     StringTimeSeriesChunksAddition stringAddition = (StringTimeSeriesChunksAddition) change;
                     storage.addStringTimeSeriesData(stringAddition.getNodeId(), stringAddition.getVersion(),
                         stringAddition.getTimeSeriesName(), stringAddition.getChunks());
-                    break;
-                default:
-                    throw new AssertionError("Unknown change type " + change.getType());
+                }
+                default -> throw new AssertionError("Unknown change type " + change.getType());
             }
         }
         // propagate flush to underlying storage
@@ -728,8 +727,8 @@ public class StorageServer {
     }
 
     private static Object encode(Object input) {
-        if (input instanceof String) {
-            return ((String) input).replaceAll("[\n\r\t]", "_");
+        if (input instanceof String s) {
+            return s.replaceAll("[\n\r\t]", "_");
         }
         return input;
     }
