@@ -12,9 +12,9 @@ import com.google.common.io.ByteStreams;
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import com.powsybl.timeseries.*;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.threeten.extra.Interval;
 
 import java.io.IOException;
@@ -29,7 +29,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
@@ -42,14 +42,14 @@ public abstract class AbstractAppStorageArchiveTest {
 
     private FileSystem fileSystem;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         storage = createStorage();
         storage2 = createStorage();
         fileSystem = Jimfs.newFileSystem(Configuration.unix());
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws IOException {
         fileSystem.close();
         storage.close();
@@ -59,7 +59,7 @@ public abstract class AbstractAppStorageArchiveTest {
     protected abstract AppStorage createStorage();
 
     @Test
-    public void archive() throws IOException {
+    void archive() throws IOException {
         // create test case
         NodeInfo rootFolderInfo = storage.createRootNodeIfNotExists(storage.getFileSystemName(), AbstractAppStorageTest.FOLDER_PSEUDO_CLASS);
         storage.setConsistent(rootFolderInfo.getId());

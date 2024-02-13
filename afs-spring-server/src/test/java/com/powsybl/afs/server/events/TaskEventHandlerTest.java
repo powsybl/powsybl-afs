@@ -12,13 +12,13 @@ import com.powsybl.afs.TaskEvent;
 import com.powsybl.afs.TaskListener;
 import com.powsybl.afs.TaskMonitor;
 import com.powsybl.afs.server.AppDataWrapper;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -31,8 +31,8 @@ import static org.assertj.core.api.Java6Assertions.assertThat;
  *
  * @author THIYAGARASA Pratheep Ext
  */
-@RunWith(MockitoJUnitRunner.class)
-public class TaskEventHandlerTest {
+@ExtendWith(MockitoExtension.class)
+class TaskEventHandlerTest {
 
     @Mock
     private AppDataWrapper appDataWrapper;
@@ -53,7 +53,7 @@ public class TaskEventHandlerTest {
     private ArgumentCaptor<TaskListener> taskListenerArgumentCaptor;
 
     @Test
-    public void afterConnection() throws Exception {
+    void afterConnection() throws Exception {
         Map<String, Object> attributes = new HashMap<>();
         attributes.put("fileSystemName", "fs");
         attributes.put("projectId", "id");
@@ -69,7 +69,7 @@ public class TaskEventHandlerTest {
     }
 
     @Test
-    public void afterConnectionClose() throws Exception {
+    void afterConnectionClose() throws Exception {
         TaskListener listener = new TaskListener() {
             @Override
             public String getProjectId() {

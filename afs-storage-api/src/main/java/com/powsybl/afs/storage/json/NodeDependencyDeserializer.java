@@ -34,17 +34,12 @@ public class NodeDependencyDeserializer extends StdDeserializer<NodeDependency> 
                 break;
             } else if (token == JsonToken.FIELD_NAME) {
                 switch (jsonParser.getCurrentName()) {
-                    case "name":
+                    case "name" -> {
                         jsonParser.nextToken();
                         name = jsonParser.getValueAsString();
-                        break;
-
-                    case "nodeInfo":
-                        nodeInfo = new NodeInfoJsonDeserializer().deserialize(jsonParser, deserializationContext);
-                        break;
-
-                    default:
-                        throw new AssertionError("Unexpected field: " + jsonParser.getCurrentName());
+                    }
+                    case "nodeInfo" -> nodeInfo = new NodeInfoJsonDeserializer().deserialize(jsonParser, deserializationContext);
+                    default -> throw new AssertionError("Unexpected field: " + jsonParser.getCurrentName());
 
                 }
             }

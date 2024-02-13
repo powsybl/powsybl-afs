@@ -14,9 +14,9 @@ import com.google.common.io.ByteStreams;
 import com.powsybl.afs.storage.events.*;
 import com.powsybl.commons.datasource.DataSource;
 import com.powsybl.timeseries.*;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.threeten.extra.Interval;
 
 import java.io.*;
@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
@@ -50,14 +50,14 @@ public abstract class AbstractAppStorageTest {
 
     protected abstract AppStorage createStorage();
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         eventStack = new LinkedBlockingQueue<>();
         this.storage = createStorage();
         this.storage.getEventsBus().addListener(l);
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         if (storage.isClosed()) {
 
@@ -235,8 +235,13 @@ public abstract class AbstractAppStorageTest {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-        try (Writer writer = new OutputStreamWriter(storage.writeBinaryData(testFolderInfo.getId(), "dataTest3"), StandardCharsets.UTF_8)) {
-            writer.write("Content for dataTest3");
+        try (Writer writer = new OutputStreamWriter(storage.writeBinaryData(testFolderInfo.getId(), "DATA_SOURCE_SUFFIX_EXT__Test3__ext"), StandardCharsets.UTF_8)) {
+            writer.write("Content for DATA_SOURCE_SUFFIX_EXT__Test3__ext");
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        try (Writer writer = new OutputStreamWriter(storage.writeBinaryData(testFolderInfo.getId(), "DATA_SOURCE_FILE_NAME__Test4"), StandardCharsets.UTF_8)) {
+            writer.write("Content for DATA_SOURCE_FILE_NAME__Test4");
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -245,18 +250,24 @@ public abstract class AbstractAppStorageTest {
         // check events
         assertEventStack(new NodeDataUpdated(testFolderInfo.getId(), "testData1"),
                 new NodeDataUpdated(testFolderInfo.getId(), "testData2"),
-                new NodeDataUpdated(testFolderInfo.getId(), "dataTest3"));
+                new NodeDataUpdated(testFolderInfo.getId(), "DATA_SOURCE_SUFFIX_EXT__Test3__ext"),
+                new NodeDataUpdated(testFolderInfo.getId(), "DATA_SOURCE_FILE_NAME__Test4"));
 
         // check data names
-        assertEquals(ImmutableSet.of("testData2", "testData1", "dataTest3"), storage.getDataNames(testFolderInfo.getId()));
+        assertEquals(ImmutableSet.of("testData2", "testData1", "DATA_SOURCE_SUFFIX_EXT__Test3__ext", "DATA_SOURCE_FILE_NAME__Test4"),
+            storage.getDataNames(testFolderInfo.getId()));
 
         // check data names seen from data source
         assertEquals(ImmutableSet.of("testData2", "testData1"), ds1.listNames("^testD.*"));
+        AssertionError error = assertThrows(AssertionError.class, () -> ds1.listNames("^DATA_SOURCE_SUFFIX.*"));
+        assertEquals("Don't know how to unmap suffix-and-extension to a data source name DATA_SOURCE_SUFFIX_EXT__Test3__ext",
+            error.getMessage());
+        assertEquals(ImmutableSet.of("Test4"), ds1.listNames("^DATA_SOURCE_FILE.*"));
 
         // check children names (not data names)
         List<String> expectedChildrenNames = ImmutableList.of("data", "data2", "data3");
         List<String> actualChildrenNames = storage.getChildNodes(testFolderInfo.getId()).stream()
-                .map(n -> n.getName()).collect(Collectors.toList());
+                .map(NodeInfo::getName).collect(Collectors.toList());
         assertEquals(expectedChildrenNames, actualChildrenNames);
 
         // 6) create a dependency between data node and data node 2
@@ -412,7 +423,7 @@ public abstract class AbstractAppStorageTest {
         assertTrue(storage.getTimeSeriesMetadata(testData3Info.getId(), Sets.newHashSet("ts1")).isEmpty());
 
         // 14) add data to double time series
-        storage.addDoubleTimeSeriesData(testData2Info.getId(), 0, "ts1", Arrays.asList(new UncompressedDoubleDataChunk(2, new double[]{1d, 2d}),
+        storage.addDoubleTimeSeriesData(testData2Info.getId(), 0, "ts1", List.of(new CompressedDoubleDataChunk(2, 2, new double[]{1d, 2d}, new int[]{1, 1}),
                 new UncompressedDoubleDataChunk(5, new double[]{3d})));
         storage.flush();
 
@@ -426,7 +437,7 @@ public abstract class AbstractAppStorageTest {
         // check double time series data query
         Map<String, List<DoubleDataChunk>> doubleTimeSeriesData = storage.getDoubleTimeSeriesData(testData2Info.getId(), Sets.newHashSet("ts1"), 0);
         assertEquals(1, doubleTimeSeriesData.size());
-        assertEquals(Arrays.asList(new UncompressedDoubleDataChunk(2, new double[]{1d, 2d}),
+        assertEquals(List.of(new CompressedDoubleDataChunk(2, 2, new double[]{1d, 2d}, new int[]{1, 1}),
                 new UncompressedDoubleDataChunk(5, new double[]{3d})),
                 doubleTimeSeriesData.get("ts1"));
         assertTrue(storage.getDoubleTimeSeriesData(testData3Info.getId(), Sets.newHashSet("ts1"), 0).isEmpty());
@@ -449,7 +460,7 @@ public abstract class AbstractAppStorageTest {
         assertEquals(1, metadataList.size());
 
         // 16) add data to double time series
-        storage.addStringTimeSeriesData(testData2Info.getId(), 0, "ts2", Arrays.asList(new UncompressedStringDataChunk(2, new String[]{"a", "b"}),
+        storage.addStringTimeSeriesData(testData2Info.getId(), 0, "ts2", List.of(new CompressedStringDataChunk(2, 2, new String[]{"a", "b"}, new int[]{1, 1}),
                 new UncompressedStringDataChunk(5, new String[]{"c"})));
         storage.flush();
 
@@ -459,7 +470,7 @@ public abstract class AbstractAppStorageTest {
         // check string time series data query
         Map<String, List<StringDataChunk>> stringTimeSeriesData = storage.getStringTimeSeriesData(testData2Info.getId(), Sets.newHashSet("ts2"), 0);
         assertEquals(1, stringTimeSeriesData.size());
-        assertEquals(Arrays.asList(new UncompressedStringDataChunk(2, new String[]{"a", "b"}),
+        assertEquals(List.of(new CompressedStringDataChunk(2, 2, new String[]{"a", "b"}, new int[]{1, 1}),
                 new UncompressedStringDataChunk(5, new String[]{"c"})),
                 stringTimeSeriesData.get("ts2"));
 
@@ -639,7 +650,7 @@ public abstract class AbstractAppStorageTest {
         assertEventStack(new NodeMetadataUpdated(node.getId(), metadata));
 
         metadata.setString("test", "test");
-        assertThat(node.getGenericMetadata().getStrings().keySet().size()).isEqualTo(0);
+        assertThat(node.getGenericMetadata().getStrings().keySet()).isEmpty();
 
         storage.setMetadata(node.getId(), cloneMetadata(metadata));
         storage.flush();
@@ -685,19 +696,19 @@ public abstract class AbstractAppStorageTest {
 
     private void checkMetadataEquality(NodeGenericMetadata source, NodeGenericMetadata target) {
         assertThat(target).isNotNull();
-        assertThat(source.getBooleans().keySet().size()).isEqualTo(target.getBooleans().keySet().size());
+        assertEquals(target.getBooleans().keySet().size(), source.getBooleans().keySet().size());
         source.getBooleans().forEach((key, val) -> {
             assertThat(target.getBooleans()).contains(new HashMap.SimpleEntry<>(key, val));
         });
-        assertThat(source.getStrings().keySet().size()).isEqualTo(target.getStrings().keySet().size());
+        assertEquals(target.getStrings().keySet().size(), source.getStrings().keySet().size());
         source.getStrings().forEach((key, val) -> {
             assertThat(target.getStrings()).contains(new HashMap.SimpleEntry<>(key, val));
         });
-        assertThat(source.getInts().keySet().size()).isEqualTo(target.getInts().keySet().size());
+        assertEquals(target.getInts().keySet().size(), source.getInts().keySet().size());
         source.getInts().forEach((key, val) -> {
             assertThat(target.getInts()).contains(new HashMap.SimpleEntry<>(key, val));
         });
-        assertThat(source.getDoubles().keySet().size()).isEqualTo(target.getDoubles().keySet().size());
+        assertEquals(target.getDoubles().keySet().size(), source.getDoubles().keySet().size());
         source.getDoubles().forEach((key, val) -> {
             assertThat(target.getDoubles()).contains(new HashMap.SimpleEntry<>(key, val));
         });

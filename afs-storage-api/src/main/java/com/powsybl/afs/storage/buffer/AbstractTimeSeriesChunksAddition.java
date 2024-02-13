@@ -63,8 +63,7 @@ public abstract class AbstractTimeSeriesChunksAddition<P extends AbstractPoint, 
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof AbstractTimeSeriesChunksAddition) {
-            AbstractTimeSeriesChunksAddition other = (AbstractTimeSeriesChunksAddition) obj;
+        if (obj instanceof AbstractTimeSeriesChunksAddition<?, ?> other) {
             return nodeId.equals(other.nodeId)
                     && version == other.version
                     && timeSeriesName.equals(other.timeSeriesName)

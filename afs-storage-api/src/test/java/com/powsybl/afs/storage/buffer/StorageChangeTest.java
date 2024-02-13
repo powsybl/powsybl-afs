@@ -10,29 +10,29 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.afs.storage.json.AppStorageJsonModule;
 import com.powsybl.commons.json.JsonUtil;
 import com.powsybl.timeseries.*;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.Collections;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
-public class StorageChangeTest {
+class StorageChangeTest {
 
     private ObjectMapper objectMapper;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         objectMapper = JsonUtil.createObjectMapper()
                 .registerModule(new AppStorageJsonModule());
     }
 
     @Test
-    public void test() throws IOException {
+    void test() throws IOException {
         StorageChangeSet changeSet = new StorageChangeSet();
         changeSet.getChanges().add(new TimeSeriesCreation("id1", new TimeSeriesMetadata("ts1", TimeSeriesDataType.DOUBLE, InfiniteTimeSeriesIndex.INSTANCE)));
         changeSet.getChanges().add(new DoubleTimeSeriesChunksAddition("id1", 1, "ts1", Collections.singletonList(new UncompressedDoubleDataChunk(0, new double[] {1d, 2d}))));

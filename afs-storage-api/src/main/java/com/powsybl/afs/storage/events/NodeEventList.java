@@ -67,8 +67,7 @@ public class NodeEventList {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof NodeEventList) {
-            NodeEventList other = (NodeEventList) obj;
+        if (obj instanceof NodeEventList other) {
             return events.equals(other.events);
         }
         return false;

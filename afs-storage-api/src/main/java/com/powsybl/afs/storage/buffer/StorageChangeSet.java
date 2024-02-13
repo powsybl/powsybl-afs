@@ -47,8 +47,7 @@ public class StorageChangeSet {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof StorageChangeSet) {
-            StorageChangeSet other = (StorageChangeSet) obj;
+        if (obj instanceof StorageChangeSet other) {
             return changes.equals(other.changes);
         }
         return false;

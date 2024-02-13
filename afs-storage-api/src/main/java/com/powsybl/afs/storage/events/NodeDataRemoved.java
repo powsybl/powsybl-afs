@@ -39,8 +39,7 @@ public class NodeDataRemoved extends NodeEvent {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof NodeDataRemoved) {
-            NodeDataRemoved other = (NodeDataRemoved) obj;
+        if (obj instanceof NodeDataRemoved other) {
             return id.equals(other.id) && dataName.equals(other.dataName);
         }
         return false;

@@ -25,8 +25,7 @@ public class ScriptModified extends BusinessEvent {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof ScriptModified) {
-            ScriptModified other = (ScriptModified) obj;
+        if (obj instanceof ScriptModified other) {
             return id.equals(other.id) && Objects.equals(parentId, other.parentId) && path.equals(other.path);
         }
         return false;

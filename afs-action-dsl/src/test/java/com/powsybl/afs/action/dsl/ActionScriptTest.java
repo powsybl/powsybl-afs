@@ -18,7 +18,7 @@ import com.powsybl.contingency.LineContingency;
 import com.powsybl.iidm.network.Line;
 import com.powsybl.iidm.network.Network;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.util.Collections;
@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
-public class ActionScriptTest extends AbstractProjectFileTest {
+class ActionScriptTest extends AbstractProjectFileTest {
 
     @Override
     protected AppStorage createStorage() {
@@ -40,7 +40,7 @@ public class ActionScriptTest extends AbstractProjectFileTest {
     }
 
     @Test
-    public void test() {
+    void test() {
         // create project in the root folder
         Project project = afs.getRootFolder().createProject("project");
 

@@ -10,34 +10,34 @@ import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import com.powsybl.commons.config.InMemoryPlatformConfig;
 import com.powsybl.commons.config.MapModuleConfig;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
-public class RemoteServiceConfigTest {
+class RemoteServiceConfigTest {
 
     private FileSystem fileSystem;
 
-    @Before
+    @BeforeEach
     public void createFileSystem() {
         fileSystem = Jimfs.newFileSystem(Configuration.unix());
     }
 
-    @After
+    @AfterEach
     public void closeFileSystem() throws IOException {
         fileSystem.close();
     }
 
     @Test
-    public void test() {
+    void test() {
         RemoteServiceConfig config = new RemoteServiceConfig("host", "test", 443, true);
         assertEquals("https://host:443/test", config.getRestUri().toString());
         assertEquals("wss://host:443/test", config.getWsUri().toString());
@@ -48,13 +48,13 @@ public class RemoteServiceConfigTest {
     }
 
     @Test
-    public void string() {
+    void string() {
         RemoteServiceConfig config = new RemoteServiceConfig("host", "test", 443, true);
         assertEquals("RemoteServiceConfig{hostName=host, appName=test, port=443, secure=true, autoReconnectionEnabled=false, reconnectionDelay=60}", config.toString());
     }
 
     @Test
-    public void readFromPlatformConfig() {
+    void readFromPlatformConfig() {
         InMemoryPlatformConfig platformConfig = new InMemoryPlatformConfig(fileSystem);
 
         MapModuleConfig moduleConfig = platformConfig.createModuleConfig("remote-service");

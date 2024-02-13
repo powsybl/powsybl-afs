@@ -24,11 +24,11 @@ import com.powsybl.iidm.network.ImportersLoaderList;
 import com.powsybl.iidm.network.DefaultNetworkListener;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.NetworkListener;
-import com.powsybl.iidm.xml.XMLExporter;
-import com.powsybl.iidm.xml.XMLImporter;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import com.powsybl.iidm.serde.XMLExporter;
+import com.powsybl.iidm.serde.XMLImporter;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
@@ -37,7 +37,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -45,7 +45,7 @@ import static org.mockito.Mockito.verify;
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
-public class ImportedCaseTest extends AbstractProjectFileTest {
+class ImportedCaseTest extends AbstractProjectFileTest {
 
     private FileSystem fileSystem;
 
@@ -78,7 +78,7 @@ public class ImportedCaseTest extends AbstractProjectFileTest {
     }
 
     @Override
-    @Before
+    @BeforeEach
     public void setup() throws IOException {
         super.setup();
         NodeInfo rootFolderInfo = storage.createRootNodeIfNotExists("root", Folder.PSEUDO_CLASS);
@@ -92,7 +92,7 @@ public class ImportedCaseTest extends AbstractProjectFileTest {
     }
 
     @Override
-    @After
+    @AfterEach
     public void tearDown() throws IOException {
         fileSystem.close();
 
@@ -100,12 +100,12 @@ public class ImportedCaseTest extends AbstractProjectFileTest {
     }
 
     @Test
-    public void test() {
+    void test() {
         Folder root = afs.getRootFolder();
 
         // check case exist
         assertEquals(1, root.getChildren().size());
-        assertTrue(root.getChildren().get(0) instanceof Case);
+        assertInstanceOf(Case.class, root.getChildren().get(0));
         Case aCase = (Case) root.getChildren().get(0);
         assertEquals("network", aCase.getName());
         assertEquals("Test format", aCase.getDescription());
@@ -168,7 +168,7 @@ public class ImportedCaseTest extends AbstractProjectFileTest {
     }
 
     @Test
-    public void testFile() {
+    void testFile() {
         Folder root = afs.getRootFolder();
 
         // create project
@@ -194,7 +194,7 @@ public class ImportedCaseTest extends AbstractProjectFileTest {
     }
 
     @Test
-    public void testNetwork() {
+    void testNetwork() {
         Folder root = afs.getRootFolder();
 
         // create project

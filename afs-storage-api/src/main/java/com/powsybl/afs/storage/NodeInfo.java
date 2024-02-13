@@ -112,8 +112,7 @@ public class NodeInfo {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof NodeInfo) {
-            NodeInfo other = (NodeInfo) obj;
+        if (obj instanceof NodeInfo other) {
             return id.equals(other.id) && name.equals(other.name) && pseudoClass.equals(other.pseudoClass) &&
                     description.equals(other.description) && creationTime == other.creationTime &&
                     modificationTime == other.modificationTime && version == other.version &&

@@ -38,8 +38,7 @@ public class NodeCreated extends NodeEvent {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof NodeCreated) {
-            NodeCreated other = (NodeCreated) obj;
+        if (obj instanceof NodeCreated other) {
             return id.equals(other.id) && Objects.equals(parentId, other.parentId);
         }
         return false;

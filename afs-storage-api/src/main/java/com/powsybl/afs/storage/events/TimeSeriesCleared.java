@@ -28,8 +28,7 @@ public class TimeSeriesCleared extends NodeEvent {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof TimeSeriesCleared) {
-            TimeSeriesCleared other = (TimeSeriesCleared) obj;
+        if (obj instanceof TimeSeriesCleared other) {
             return id.equals(other.id);
         }
         return false;

@@ -6,14 +6,14 @@
  */
 package com.powsybl.afs.ws.utils;
 
-import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
+import com.fasterxml.jackson.jakarta.rs.json.JacksonJsonProvider;
 import com.powsybl.afs.storage.json.AppStorageJsonModule;
 import com.powsybl.commons.json.JsonUtil;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.ext.Provider;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.ext.Provider;
 
 /**
  * @author Ali Tahanout {@literal <ali.tahanout at rte-france.com>}
@@ -21,7 +21,7 @@ import javax.ws.rs.ext.Provider;
 @Provider
 @Consumes({MediaType.APPLICATION_JSON})
 @Produces({MediaType.APPLICATION_JSON})
-public class JsonProvider extends JacksonJaxbJsonProvider {
+public class JsonProvider extends JacksonJsonProvider {
 
     public JsonProvider() {
         setMapper(JsonUtil.createObjectMapper().registerModule(new AppStorageJsonModule()));

@@ -48,8 +48,7 @@ public class TimeSeriesCreation extends AbstractStorageChange {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof TimeSeriesCreation) {
-            TimeSeriesCreation other = (TimeSeriesCreation) obj;
+        if (obj instanceof TimeSeriesCreation other) {
             return nodeId.equals(other.nodeId)
                     && metadata.equals(other.metadata);
         }

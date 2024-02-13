@@ -227,22 +227,19 @@ public class AppStorageArchive {
                 // write chunks for each version
                 for (int version : storage.getTimeSeriesDataVersions(nodeInfo.getId(), metadata.getName())) {
                     switch (metadata.getDataType()) {
-                        case DOUBLE:
+                        case DOUBLE -> {
                             List<DoubleDataChunk> doubleChunks = storage.getDoubleTimeSeriesData(nodeInfo.getId(), Collections.singleton(metadata.getName()), version).get(metadata.getName());
                             try (Writer writer = new OutputStreamWriter(new GZIPOutputStream(Files.newOutputStream(timeSeriesNameDir.resolve("chunks-" + version + ".json.gz"))), StandardCharsets.UTF_8)) {
                                 objectWriter.writeValue(writer, doubleChunks);
                             }
-                            break;
-
-                        case STRING:
+                        }
+                        case STRING -> {
                             List<StringDataChunk> stringChunks = storage.getStringTimeSeriesData(nodeInfo.getId(), Collections.singleton(metadata.getName()), version).get(metadata.getName());
                             try (Writer writer = new OutputStreamWriter(new GZIPOutputStream(Files.newOutputStream(timeSeriesNameDir.resolve("chunks-" + version + ".json.gz"))), StandardCharsets.UTF_8)) {
                                 objectWriter.writeValue(writer, stringChunks);
                             }
-                            break;
-
-                        default:
-                            throw new AssertionError("Unsupported data type " + metadata.getDataType());
+                        }
+                        default -> throw new AssertionError("Unsupported data type " + metadata.getDataType());
                     }
                 }
             }
@@ -455,22 +452,19 @@ public class AppStorageArchive {
                                 int version = Integer.parseInt(matcher.group(1));
                                 try (Reader reader = new InputStreamReader(new GZIPInputStream(Files.newInputStream(chunksFile)), StandardCharsets.UTF_8)) {
                                     switch (metadata.getDataType()) {
-                                        case DOUBLE:
+                                        case DOUBLE -> {
                                             List<DoubleDataChunk> doubleChunks = mapper.readerFor(new TypeReference<List<DoubleDataChunk>>() {
                                             }).readValue(reader);
                                             chunkCount[0] += doubleChunks.size();
                                             storage.addDoubleTimeSeriesData(newNodeInfo.getId(), version, timeSeriesName, doubleChunks);
-                                            break;
-
-                                        case STRING:
+                                        }
+                                        case STRING -> {
                                             List<StringDataChunk> stringChunks = mapper.readerFor(new TypeReference<List<StringDataChunk>>() {
                                             }).readValue(reader);
                                             chunkCount[0] += stringChunks.size();
                                             storage.addStringTimeSeriesData(newNodeInfo.getId(), version, timeSeriesName, stringChunks);
-                                            break;
-
-                                        default:
-                                            throw new AssertionError("Unsupported data type " + metadata.getDataType());
+                                        }
+                                        default -> throw new AssertionError("Unsupported data type " + metadata.getDataType());
                                     }
                                 }
                             }

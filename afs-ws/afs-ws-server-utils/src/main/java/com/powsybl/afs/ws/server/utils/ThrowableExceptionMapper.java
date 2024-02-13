@@ -10,11 +10,11 @@ import com.powsybl.afs.ws.utils.ExceptionDetail;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
-import javax.ws.rs.ext.Provider;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.ExceptionMapper;
+import jakarta.ws.rs.ext.Provider;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
@@ -29,8 +29,8 @@ public class ThrowableExceptionMapper implements ExceptionMapper<Throwable> {
         if (LOGGER.isErrorEnabled()) {
             LOGGER.error(t.toString(), t);
         }
-        if (t instanceof WebApplicationException) {
-            return ((WebApplicationException) t).getResponse();
+        if (t instanceof WebApplicationException webApplicationException) {
+            return webApplicationException.getResponse();
         } else {
             return Response
                     .serverError()

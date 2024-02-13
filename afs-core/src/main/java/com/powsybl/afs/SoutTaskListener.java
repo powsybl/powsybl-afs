@@ -27,8 +27,8 @@ public class SoutTaskListener implements TaskListener {
 
     @Override
     public void onEvent(TaskEvent event) {
-        if (event instanceof UpdateTaskMessageEvent) {
-            out.println(((UpdateTaskMessageEvent) event).getMessage());
+        if (event instanceof UpdateTaskMessageEvent updateTaskMessageEvent) {
+            out.println(updateTaskMessageEvent.getMessage());
         }
     }
 }

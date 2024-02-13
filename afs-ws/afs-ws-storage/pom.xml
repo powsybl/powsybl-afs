@@ -38,6 +38,18 @@
     </build>
 
     <dependencies>
+        <!-- Provided dependencies -->
+        <dependency>
+            <groupId>jakarta.websocket</groupId>
+            <artifactId>jakarta.websocket-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.websocket</groupId>
+            <artifactId>jakarta.websocket-client-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- Compilation dependencies -->
         <dependency>
             <groupId>org.glassfish.tyrus</groupId>
@@ -69,8 +81,8 @@
 
         <!-- Test dependencies -->
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

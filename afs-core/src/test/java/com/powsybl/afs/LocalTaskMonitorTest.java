@@ -13,7 +13,7 @@ import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.InMemoryEventsBus;
 import com.powsybl.commons.json.JsonUtil;
 import com.powsybl.computation.CompletableFutureTask;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.*;
@@ -24,12 +24,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
-public class LocalTaskMonitorTest extends AbstractProjectFileTest {
+class LocalTaskMonitorTest extends AbstractProjectFileTest {
 
     @Override
     protected List<ProjectFileExtension> getProjectFileExtensions() {
@@ -42,7 +42,7 @@ public class LocalTaskMonitorTest extends AbstractProjectFileTest {
     }
 
     @Test
-    public void test() throws IOException, TaskMonitor.NotACancellableTaskMonitor, InterruptedException {
+    void test() throws IOException, TaskMonitor.NotACancellableTaskMonitor, InterruptedException {
         Project test = afs.getRootFolder().createProject("test");
         FooFile foo = test.getRootFolder().fileBuilder(FooFileBuilder.class)
                 .withName("foo")
@@ -133,7 +133,7 @@ public class LocalTaskMonitorTest extends AbstractProjectFileTest {
             assertThat(dummyTaskProcess.isCancelled()).isTrue();
             assertThatCode(dummyTaskProcess::get).isInstanceOf(CancellationException.class);
             waitForInterruption.await();
-            assertThat(waitForInterruption.getCount()).isEqualTo(0);
+            assertThat(waitForInterruption.getCount()).isZero();
             assertThat(interrupted.get()).isTrue();
             assertThat(waitIndefinitely.getCount()).isEqualTo(1);
 
@@ -155,7 +155,7 @@ public class LocalTaskMonitorTest extends AbstractProjectFileTest {
     }
 
     @Test
-    public void startTaskEventTest() throws IOException {
+    void startTaskEventTest() throws IOException {
         TaskEvent event = new StartTaskEvent(new UUID(0L, 0L), 0L, "e1");
         assertEquals("StartTaskEvent(taskId=00000000-0000-0000-0000-000000000000, revision=0, nodeId=null, name=e1)", event.toString());
         ObjectMapper objectMapper = JsonUtil.createObjectMapper();
@@ -180,7 +180,7 @@ public class LocalTaskMonitorTest extends AbstractProjectFileTest {
     }
 
     @Test
-    public void stopTaskEventTest() throws IOException {
+    void stopTaskEventTest() throws IOException {
         TaskEvent event = new StopTaskEvent(new UUID(0L, 1L), 1L);
         assertEquals("StopTaskEvent(taskId=00000000-0000-0000-0000-000000000001, revision=1)", event.toString());
         ObjectMapper objectMapper = JsonUtil.createObjectMapper();
@@ -203,7 +203,7 @@ public class LocalTaskMonitorTest extends AbstractProjectFileTest {
     }
 
     @Test
-    public void updateTaskMessageEventTest() throws IOException {
+    void updateTaskMessageEventTest() throws IOException {
         TaskEvent event = new UpdateTaskMessageEvent(new UUID(0L, 2L), 2L, "hello");
         assertEquals("UpdateTaskMessageEvent(taskId=00000000-0000-0000-0000-000000000002, revision=2, message=hello)", event.toString());
         ObjectMapper objectMapper = JsonUtil.createObjectMapper();

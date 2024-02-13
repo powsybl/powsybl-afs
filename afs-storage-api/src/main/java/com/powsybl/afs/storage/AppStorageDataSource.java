@@ -55,10 +55,10 @@ public class AppStorageDataSource implements DataSource {
             T result;
             AppStorageDataSource.Name dataSrcName = parse(text);
             try {
-                if (dataSrcName instanceof AppStorageDataSource.SuffixAndExtension) {
-                    result = handler.onSuffixAndExtension((AppStorageDataSource.SuffixAndExtension) dataSrcName);
-                } else if (dataSrcName instanceof AppStorageDataSource.FileName) {
-                    result = handler.onFileName((AppStorageDataSource.FileName) dataSrcName);
+                if (dataSrcName instanceof AppStorageDataSource.SuffixAndExtension suffixAndExtension) {
+                    result = handler.onSuffixAndExtension(suffixAndExtension);
+                } else if (dataSrcName instanceof AppStorageDataSource.FileName fileName) {
+                    result = handler.onFileName(fileName);
                 } else {
                     result = handler.onOther(dataSrcName);
                 }

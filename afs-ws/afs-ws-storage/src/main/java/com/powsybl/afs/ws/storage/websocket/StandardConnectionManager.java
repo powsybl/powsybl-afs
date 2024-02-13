@@ -10,10 +10,10 @@ import com.powsybl.afs.ws.client.utils.UncheckedDeploymentException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.websocket.ContainerProvider;
-import javax.websocket.DeploymentException;
-import javax.websocket.Session;
-import javax.websocket.WebSocketContainer;
+import jakarta.websocket.ContainerProvider;
+import jakarta.websocket.DeploymentException;
+import jakarta.websocket.Session;
+import jakarta.websocket.WebSocketContainer;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URI;

@@ -9,19 +9,19 @@ package com.powsybl.afs.storage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.afs.storage.json.AppStorageJsonModule;
 import com.powsybl.commons.json.JsonUtil;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
-public class NodeDependencyTest {
+class NodeDependencyTest {
 
     @Test
-    public void test() throws IOException {
+    void test() throws IOException {
         NodeInfo info = new NodeInfo("a", "b", "c", "d", 1000000, 1000001, 0, new NodeGenericMetadata());
         NodeDependency dependency = new NodeDependency("l", info);
         assertEquals("l", dependency.getName());

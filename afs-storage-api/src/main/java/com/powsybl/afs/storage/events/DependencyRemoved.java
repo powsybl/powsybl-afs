@@ -40,8 +40,7 @@ public class DependencyRemoved extends NodeEvent implements DependencyEvent {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof DependencyRemoved) {
-            DependencyRemoved other = (DependencyRemoved) obj;
+        if (obj instanceof DependencyRemoved other) {
             return id.equals(other.id) && dependencyName.equals(other.dependencyName);
         }
         return false;

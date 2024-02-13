@@ -32,40 +32,31 @@ public class NodeGenericMetadataJsonDeserializer extends StdDeserializer<NodeGen
 
     private static void parseFieldName(JsonParser jsonParser, JsonParsingContext parsingContext) throws IOException {
         switch (jsonParser.getCurrentName()) {
-            case NodeGenericMetadataJsonSerializer.TYPE:
+            case NodeGenericMetadataJsonSerializer.TYPE -> {
                 jsonParser.nextToken();
                 parsingContext.type = jsonParser.getValueAsString();
-                break;
-
-            case NodeGenericMetadataJsonSerializer.NAME:
+            }
+            case NodeGenericMetadataJsonSerializer.NAME -> {
                 jsonParser.nextToken();
                 parsingContext.name = jsonParser.getValueAsString();
-                break;
-
-            case NodeGenericMetadataJsonSerializer.VALUE:
+            }
+            case NodeGenericMetadataJsonSerializer.VALUE -> {
                 Objects.requireNonNull(parsingContext.name);
                 Objects.requireNonNull(parsingContext.type);
                 jsonParser.nextToken();
                 switch (parsingContext.type) {
-                    case NodeGenericMetadataJsonSerializer.STRING:
+                    case NodeGenericMetadataJsonSerializer.STRING ->
                         parsingContext.metadata.setString(parsingContext.name, jsonParser.getValueAsString());
-                        break;
-                    case NodeGenericMetadataJsonSerializer.DOUBLE:
+                    case NodeGenericMetadataJsonSerializer.DOUBLE ->
                         parsingContext.metadata.setDouble(parsingContext.name, jsonParser.getValueAsDouble());
-                        break;
-                    case NodeGenericMetadataJsonSerializer.INT:
+                    case NodeGenericMetadataJsonSerializer.INT ->
                         parsingContext.metadata.setInt(parsingContext.name, jsonParser.getValueAsInt());
-                        break;
-                    case NodeGenericMetadataJsonSerializer.BOOLEAN:
+                    case NodeGenericMetadataJsonSerializer.BOOLEAN ->
                         parsingContext.metadata.setBoolean(parsingContext.name, jsonParser.getValueAsBoolean());
-                        break;
-                    default:
-                        throw new AssertionError("Unexpected metadata type " + parsingContext.type);
+                    default -> throw new AssertionError("Unexpected metadata type " + parsingContext.type);
                 }
-                break;
-
-            default:
-                throw new AssertionError("Unexpected field: " + jsonParser.getCurrentName());
+            }
+            default -> throw new AssertionError("Unexpected field: " + jsonParser.getCurrentName());
 
         }
     }

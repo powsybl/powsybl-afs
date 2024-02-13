@@ -141,8 +141,7 @@ public interface TaskMonitor extends AutoCloseable {
 
         @Override
         public boolean equals(Object obj) {
-            if (obj instanceof Task) {
-                Task other = (Task) obj;
+            if (obj instanceof Task other) {
                 return id.equals(other.id)
                         && name.equals(other.name)
                         && Objects.equals(message, other.message)
@@ -183,8 +182,7 @@ public interface TaskMonitor extends AutoCloseable {
 
         @Override
         public boolean equals(Object obj) {
-            if (obj instanceof Snapshot) {
-                Snapshot snapshot = (Snapshot) obj;
+            if (obj instanceof Snapshot snapshot) {
                 return tasks.equals(snapshot.tasks) && revision == snapshot.revision;
             }
             return false;
@@ -228,7 +226,7 @@ public interface TaskMonitor extends AutoCloseable {
      * Return the complete state of tasks related to a project
      *
      * @param projectId related project
-     * @return
+     * @return state of tasks
      */
     Snapshot takeSnapshot(String projectId);
 
@@ -244,25 +242,25 @@ public interface TaskMonitor extends AutoCloseable {
     /**
      * Add a listener to task events
      *
-     * @param listener
+     * @param listener Listener that shall listen to task events
      */
     void addListener(TaskListener listener);
 
     /**
      * Remove a listener of task events
      *
-     * @param listener
+     * @param listener Listener that shall not anymore listen to task events
      */
     void removeListener(TaskListener listener);
 
     /**
      * Update the future of the computation process monitored by this task
      *
-     * @param taskId
-     * @param future
+     * @param taskId task identifier
+     * @param future result of an asynchronous computation
      * @throws NotACancellableTaskMonitor in case the task monitor is operating as a remote task monitor
      */
-    void updateTaskFuture(UUID taskId, Future future) throws NotACancellableTaskMonitor;
+    void updateTaskFuture(UUID taskId, Future<?> future) throws NotACancellableTaskMonitor;
 
     @Override
     void close();
