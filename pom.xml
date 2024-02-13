@@ -116,10 +116,6 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <configuration>
-                            <!-- Workaround javadoc generation issue with JDK 11, on java EE classes (bug in JDK?)-->
-                            <release>8</release>
-                        </configuration>
                         <executions>
                             <execution>
                                 <id>javadoc-aggregate-jar</id>
