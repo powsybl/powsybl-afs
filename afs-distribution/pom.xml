@@ -19,7 +19,7 @@
 
     <packaging>pom</packaging>
     <artifactId>powsybl-distribution-afs</artifactId>
-    <name>Distribution</name>
+    <name>AFS Distribution</name>
     <description>powsybl-afs distribution module</description>
 
     <dependencies>
