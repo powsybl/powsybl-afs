@@ -76,6 +76,7 @@
         <assertj.version>3.25.2</assertj.version>
         <autoservice.version>1.1.1</autoservice.version>
         <bytebuddy.version>1.14.11</bytebuddy.version>
+        <ec.version>11.1.0</ec.version>
         <groovy.version>4.0.14</groovy.version>
         <guava.version>32.1.2-jre</guava.version>
         <jackson.version>2.15.2</jackson.version>
@@ -280,6 +281,21 @@
                 <groupId>org.apache.groovy</groupId>
                 <artifactId>groovy-json</artifactId>
                 <version>${groovy.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.collections</groupId>
+                <artifactId>eclipse-collections</artifactId>
+                <version>${ec.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.collections</groupId>
+                <artifactId>eclipse-collections-api</artifactId>
+                <version>${ec.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.collections</groupId>
+                <artifactId>eclipse-collections-forkjoin</artifactId>
+                <version>${ec.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.glassfish.tyrus</groupId>
