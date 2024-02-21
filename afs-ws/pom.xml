@@ -26,7 +26,6 @@
     <modules>
         <module>afs-ws-client</module>
         <module>afs-ws-client-utils</module>
-        <module>afs-ws-server</module>
         <module>afs-ws-server-utils</module>
         <module>afs-ws-storage</module>
         <module>afs-ws-utils</module>

@@ -19,7 +19,7 @@
     </parent>
 
     <artifactId>powsybl-afs-network-client</artifactId>
-    <name>Network cache AFS client</name>
+    <name>AFS Network cache client</name>
     <description>Network cache AFS client</description>
 
     <build>

@@ -18,7 +18,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>powsybl-afs-action-dsl</artifactId>
-    <name>Action DSL AFS</name>
+    <name>AFS Action DSL</name>
     <description>Action as AFS file</description>
 
     <build>

@@ -18,7 +18,7 @@
     </parent>
 
     <artifactId>powsybl-afs-contingency</artifactId>
-    <name>Contingency AFS</name>
+    <name>AFS Contingency</name>
     <description>Contingency store as AFS file</description>
 
     <build>

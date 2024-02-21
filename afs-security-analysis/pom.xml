@@ -19,7 +19,7 @@
     </parent>
 
     <artifactId>powsybl-afs-security-analysis</artifactId>
-    <name>Security analysis AFS</name>
+    <name>AFS Security analysis</name>
     <description>Security analysis runner AFS file, and security analysis service interface</description>
 
     <build>

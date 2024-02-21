@@ -19,8 +19,8 @@
     </parent>
 
     <artifactId>powsybl-afs-network</artifactId>
-    <name>Network cache AFS</name>
-    <description>Network cache AFS</description>
+    <name>AFS Network cache</name>
+    <description>AFS Network cache</description>
     <packaging>pom</packaging>
 
     <modules>
