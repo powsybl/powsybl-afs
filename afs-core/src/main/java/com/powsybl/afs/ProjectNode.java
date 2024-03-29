@@ -39,7 +39,7 @@ public class ProjectNode extends AbstractNodeBase<ProjectFolder> {
     }
 
     private static boolean pathStop(ProjectNode projectNode) {
-        return !projectNode.getParent().isPresent();
+        return projectNode.getParent().isEmpty();
     }
 
     private static String pathToString(List<String> path) {
@@ -64,15 +64,19 @@ public class ProjectNode extends AbstractNodeBase<ProjectFolder> {
     }
 
     public List<ProjectFile> getBackwardDependencies() {
+        return getBackwardDependencies(true);
+    }
+
+    public List<ProjectFile> getBackwardDependencies(boolean connected) {
         return storage.getBackwardDependencies(info.getId())
                 .stream()
-                .map(project::createProjectFile)
+                .map(nodeInfo -> project.createProjectFile(nodeInfo, connected))
                 .collect(Collectors.toList());
     }
 
     protected void invalidate() {
         // propagate
-        getBackwardDependencies().forEach(ProjectNode::invalidate);
+        getBackwardDependencies(false).forEach(ProjectNode::invalidate);
     }
 
     public AppFileSystem getFileSystem() {
