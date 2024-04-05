@@ -40,11 +40,11 @@
     <dependencies>
         <dependency>
             <groupId>com.powsybl</groupId>
-            <artifactId>powsybl-action-dsl</artifactId>
+            <artifactId>powsybl-action-ial-dsl</artifactId>
         </dependency>
         <dependency>
             <groupId>com.powsybl</groupId>
-            <artifactId>powsybl-action-dsl-spi</artifactId>
+            <artifactId>powsybl-action-ial-dsl-spi</artifactId>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>

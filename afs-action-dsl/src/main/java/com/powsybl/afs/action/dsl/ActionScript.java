@@ -6,8 +6,8 @@
  */
 package com.powsybl.afs.action.dsl;
 
-import com.powsybl.action.dsl.ActionDb;
-import com.powsybl.action.dsl.ActionDslLoader;
+import com.powsybl.action.ial.dsl.ActionDb;
+import com.powsybl.action.ial.dsl.ActionDslLoader;
 import com.powsybl.afs.ProjectFileCreationContext;
 import com.powsybl.afs.ext.base.AbstractScript;
 import com.powsybl.afs.ext.base.ScriptType;

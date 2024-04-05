@@ -103,7 +103,7 @@
         <wildfly.dist.version>27.0.0.Final</wildfly.dist.version>
         <wildflyarquilliancontainerembedded.version>5.0.1.Final</wildflyarquilliancontainerembedded.version>
 
-        <powsyblcore.version>6.2.1</powsyblcore.version>
+        <powsyblcore.version>6.3.0</powsyblcore.version>
     </properties>
 
     <profiles>
@@ -153,12 +153,12 @@
             </dependency>
             <dependency>
                 <groupId>com.powsybl</groupId>
-                <artifactId>powsybl-action-dsl</artifactId>
+                <artifactId>powsybl-action-ial-dsl</artifactId>
                 <version>${powsyblcore.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.powsybl</groupId>
-                <artifactId>powsybl-action-dsl-spi</artifactId>
+                <artifactId>powsybl-action-ial-dsl-spi</artifactId>
                 <version>${powsyblcore.version}</version>
             </dependency>
             <dependency>
