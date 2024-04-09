@@ -7,14 +7,15 @@
 package com.powsybl.afs.security.local;
 
 import com.google.common.collect.ImmutableList;
-import com.powsybl.commons.reporter.Reporter;
+import com.powsybl.commons.report.ReportNode;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.contingency.ContingenciesProvider;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.loadflow.LoadFlowResult;
 import com.powsybl.security.*;
-import com.powsybl.security.action.Action;
+import com.powsybl.action.Action;
 import com.powsybl.security.interceptors.SecurityAnalysisInterceptor;
+import com.powsybl.security.limitreduction.LimitReduction;
 import com.powsybl.security.monitor.StateMonitor;
 import com.powsybl.security.strategy.OperatorStrategy;
 
@@ -50,7 +51,8 @@ public class SecurityAnalysisProviderMock implements SecurityAnalysisProvider {
             List<OperatorStrategy> operatorStrategies,
             List<Action> actions,
             List<StateMonitor> monitors,
-            Reporter reporter) {
+            List<LimitReduction> limitReductions,
+            ReportNode reportNode) {
         LimitViolationsResult preContingencyResult = new LimitViolationsResult(
                 ImmutableList.of(new LimitViolation("s1", LimitViolationType.HIGH_VOLTAGE, 400.0, 1f, 440.0))
         );
