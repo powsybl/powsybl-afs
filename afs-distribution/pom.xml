@@ -19,7 +19,7 @@
 
     <packaging>pom</packaging>
     <artifactId>powsybl-distribution-afs</artifactId>
-    <name>Distribution</name>
+    <name>AFS Distribution</name>
     <description>powsybl-afs distribution module</description>
 
     <dependencies>
@@ -101,11 +101,6 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>powsybl-afs-ws-client-utils</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>powsybl-afs-ws-server</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
