@@ -77,7 +77,7 @@ class AfsBaseTest {
         assertEquals(Collections.singletonList("mem"), ad.getRemotelyAccessibleFileSystemNames());
         assertNotNull(ad.getRemotelyAccessibleStorage("mem"));
         assertEquals("mem", afs.getName());
-        assertEquals(1, ad.getProjectFileClasses().size());
+        assertEquals(2, ad.getProjectFileClasses().size());
         Folder root = afs.getRootFolder();
         assertNotNull(root);
         Folder dir1 = root.createFolder("dir1");
