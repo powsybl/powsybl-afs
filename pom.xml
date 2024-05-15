@@ -94,8 +94,8 @@
         <mockito.version>5.11.0</mockito.version>
         <resteasy.version>6.2.8.Final</resteasy.version>
         <slf4j.version>2.0.12</slf4j.version>
-        <springboot.version>3.2.2</springboot.version>
-        <swagger.version>2.2.7</swagger.version>
+        <springboot.version>3.2.4</springboot.version>
+        <swagger.version>2.2.21</swagger.version>
         <tyrus.version>2.1.5</tyrus.version>
 
         <powsyblcore.version>6.3.0</powsyblcore.version>
