@@ -1,7 +1,7 @@
 ---
 layout: default
 ---
-
+(security)=
 # Security
 The `security` module is used by the [AFS](../data/storage) web-server to define the authentication token validity.
 

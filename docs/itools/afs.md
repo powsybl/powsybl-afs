@@ -1,7 +1,7 @@
 ---
 layout: default
 ---
-
+(afs-itools)=
 # iTools AFS
 
 The `afs` command performs some basic actions on an [AFS](../data/storage.md) drive:

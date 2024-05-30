@@ -3,7 +3,7 @@ layout: default
 todo:
     - add links to missing pages
 ---
-
+(local-filesystem)=
 # Local file system
 The `local-app-file-system` module is used by [AFS](../data/storage) to define one or several drives mapped to a local hard-drive.
 

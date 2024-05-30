@@ -1,7 +1,7 @@
 ---
 layout: default
 ---
-
+(remote)=
 # Remote service
 
 The `remote-service` module is used by [AFS](../data/storage) to define a remote AFS server.

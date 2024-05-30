@@ -50,6 +50,9 @@ with open(file_with_version) as f:
     else:  # AKA no-break
         version = release = "dev"
 
+# Short project name
+short_project = project.split(" ", 1)[1] if project.split(" ", 1)[0] == "PowSyBl" else project
+
 
 # -- General configuration ---------------------------------------------------
 
@@ -92,7 +95,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 html_theme = "furo"
 
 html_title = f"{project} v{release}"
-html_short_title = f'AFS v{release}'
+html_short_title = f'{short_project} v{release}'
 
 html_logo = '_static/logos/logo_lfe_powsybl.svg'
 html_favicon = "_static/favicon.ico"
@@ -100,7 +103,7 @@ html_favicon = "_static/favicon.ico"
 html_context = {
     "copyright_year": copyright_year,
     "github_repository": github_repository,
-    "sidebar_logo_href": "http://powsybl-afs.readthedocs.io/"
+    "sidebar_logo_href": "http://powsybl-core.readthedocs.io/"
 }
 
 html_theme_options = {
@@ -120,8 +123,39 @@ todo_include_todos = True
 
 # Links to external documentations : python 3 and pandas
 intersphinx_mapping = {
+    "powsyblcore": ("https://powsybl.readthedocs.io/projects/powsybl-core/en/latest/", None),
 }
 intersphinx_disabled_reftypes = ["*"]
 
 # Generate one file per method
 autosummary_generate = True
+
+
+# -- Dependencies versions ---------------------------------------------------
+# This part will automatically look in the pom.xml to find versions corresponding to the dependencies whose
+# documentation is used in the present one, except if it's a SNAPSHOT version of if a specific version has been chosen
+# in intersphinx_mapping
+
+# Get the URL without the default version
+def extract_base_url(url):
+    default_version = "latest"
+
+    m = re.match(r'(https\:\/\/.*)' + default_version + r'\/', url)
+    if m:
+        return m.group(1)
+
+# Replace the default version in the URL with the version from the pom.xml
+def replace_versions(intersphinx_mapping, file):
+    with open(file) as f:
+        for line in f:
+            m = re.match(r'^ {8}\<(.*)\.version\>(.*)\<\/(.*)\.version\>', line)
+            if m and m.group(1) == m.group(3):
+                dependency = m.group(1)
+                version = m.group(2)
+                if "SNAPSHOT" not in version and dependency in intersphinx_mapping:
+                    intersphinx_mapping[dependency] = (extract_base_url(intersphinx_mapping[dependency][0]) + version + "/", None)
+            if "</properties>" in line:
+                break
+    return intersphinx_mapping
+
+intersphinx_mapping = replace_versions(intersphinx_mapping, file_with_version)

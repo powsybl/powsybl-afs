@@ -1,3 +1,4 @@
+(afs-api)=
 # API
 
 In order to use AFS in your application, you will first need to add some dependencies to your project:

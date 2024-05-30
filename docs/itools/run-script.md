@@ -6,11 +6,12 @@ todo:
   - Add missing links 
 ---
 
+(afs-run-script)=
 # iTools run-script
 
 The `run-script` command is used to run scripts based on PowSyBl.
 
-See [PowSyBl Core documentation](http://powsybl-core.readthedocs.io/) for more information 
+See [PowSyBl Core documentation](inv:powsyblcore#run-script) for more information 
 about general usage.
  
 ## Usage
@@ -33,17 +34,19 @@ Available arguments are:
 ## Groovy extensions
 The `run-script` command relies on a [plugin mechanism]() to load extensions. Those extensions 
 provide utility functions to make the usage of PowSyBl easier through the scripts. It avoids 
-the user to write boilerplate code hiding the technical complexity of framework into more user 
-friendly functions. PowSyBl provides the following extensions to:
-- [load a network from a file](https://powsybl-core.readthedocs.io/en/latest/itools/run-script.md#load-a-network)
-- [save a network to a file](https://powsybl-core.readthedocs.io/en/latest/itools/run-script.md#save-a-network)
-- [run a power flow simulation](https://powsybl-core.readthedocs.io/en/latest/itools/run-script.md#run-a-power-flow)
+the user to write boilerplate code hiding the technical complexity of framework into more user-friendly functions. 
+PowSyBl provides the following extensions to:
+- [load a network from a file](inv:powsyblcore#load-a-network)
+- [save a network to a file](inv:powsyblcore#save-a-network)
+- [run a power flow simulation](inv:powsyblcore#run-a-power-flow)
 - [access to AFS](#access-to-afs)
 
 ### Access to AFS
-The `Afs` extension adds a `afs` variable to the groovy binding that offers a facade to access data stored in [AFS](../index.md). This facade has two methods:
+The `Afs` extension adds a `afs` variable to the groovy binding that offers a facade to access data stored in [AFS](../index.md). 
+This facade has two methods:
 - `getFileSystemNames`: this method returns the names of the file system declared in the configuration
-- `getRootFolder`: this method returns the root [folder]() of the specified file system. From this root folder, it is possible to navigate in the different folders and open the different projects. 
+- `getRootFolder`: this method returns the root [folder]() of the specified file system. From this root folder, 
+it is possible to navigate in the different folders and open the different projects. 
 
 In order to benefit from this feature, add `com.powsybl:powsybl-afs-scripting` to your classpath.
 
@@ -58,9 +61,10 @@ for (String fs : fileSystems) {
 ## Examples
 
 ### Example 1 - Hello World
-The following example shows how to run a simple HelloWorld script. Note that the parameters pass to the command line can be accessed using the `args` array. 
+The following example shows how to run a simple HelloWorld script. Note that the parameters pass to the command line 
+can be accessed using the `args` array. 
 
-**Content of the hello.groovy file:**
+**Content of the `hello.groovy` file:**
 ```groovy
 print 'Hello ' + args[0]
 ```

@@ -2,6 +2,7 @@
 layout: default
 ---
 
+(storage)=
 # Storage
 AFS provides an API for the data storage that must be implemented to support a new way to store data. PowSyBl provides three implementation of that API.
 
