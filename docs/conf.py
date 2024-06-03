@@ -60,6 +60,7 @@ short_project = project.split(" ", 1)[1] if project.split(" ", 1)[0] == "PowSyBl
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = ['sphinx.ext.autodoc',
+              'sphinx.ext.autosectionlabel',
               'sphinx.ext.autosummary',
               'sphinx.ext.viewcode',
               'sphinx.ext.doctest',
@@ -85,6 +86,10 @@ templates_path = ['_templates']
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+
+# Reference sections generation
+autosectionlabel_prefix_document = True
+autosectionlabel_maxdepth = 2
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -153,7 +158,9 @@ def replace_versions(intersphinx_mapping, file):
                 dependency = m.group(1)
                 version = m.group(2)
                 if "SNAPSHOT" not in version and dependency in intersphinx_mapping:
-                    intersphinx_mapping[dependency] = (extract_base_url(intersphinx_mapping[dependency][0]) + version + "/", None)
+                    urlStart = extract_base_url(intersphinx_mapping[dependency][0])
+                    if urlStart:
+                        intersphinx_mapping[dependency] = (urlStart + version + "/", None)
             if "</properties>" in line:
                 break
     return intersphinx_mapping
