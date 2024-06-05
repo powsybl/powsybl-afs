@@ -35,6 +35,8 @@ public class AppDataBean {
 
     protected ComputationManager longTimeExecutionComputationManager;
 
+    protected DefaultComputationManagerConfig config = DefaultComputationManagerConfig.load();
+
     public AppData getAppData() {
         return appData;
     }
@@ -75,7 +77,6 @@ public class AppDataBean {
 
     @PostConstruct
     public void init() {
-        DefaultComputationManagerConfig config = DefaultComputationManagerConfig.load();
         shortTimeExecutionComputationManager = config.createShortTimeExecutionComputationManager();
         longTimeExecutionComputationManager = config.createLongTimeExecutionComputationManager();
         appData = new AppData(shortTimeExecutionComputationManager, longTimeExecutionComputationManager);
@@ -90,5 +91,28 @@ public class AppDataBean {
                 longTimeExecutionComputationManager.close();
             }
         }
+    }
+
+    /**
+     * This method reinit only the computation manager (no effect on other connexions with other backends)
+     *
+     */
+    public void reinitComputationManager() {
+        try {
+            if (shortTimeExecutionComputationManager != null) {
+                shortTimeExecutionComputationManager.close();
+            }
+        } catch (Exception e) {
+            // Do nothing
+        }
+        try {
+            if (longTimeExecutionComputationManager != null) {
+                longTimeExecutionComputationManager.close();
+            }
+        } catch (Exception e) {
+            // Do nothing
+        }
+        shortTimeExecutionComputationManager = config.createShortTimeExecutionComputationManager();
+        longTimeExecutionComputationManager = config.createLongTimeExecutionComputationManager();
     }
 }
