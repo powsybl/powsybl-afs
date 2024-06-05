@@ -72,11 +72,11 @@
             ../../afs-distribution/target/site/jacoco-aggregate/jacoco.xml,
         </sonar.coverage.jacoco.xmlReportPaths>
 
-        <assertj.version>3.25.3</assertj.version>
+        <assertj.version>3.26.0</assertj.version>
         <autoservice.version>1.1.1</autoservice.version>
         <ec.version>11.1.0</ec.version>
         <groovy.version>4.0.21</groovy.version>
-        <guava.version>33.2.0-jre</guava.version>
+        <guava.version>33.2.1-jre</guava.version>
         <jackson.version>2.17.1</jackson.version>
         <jakartaeeapi.version>10.0.0</jakartaeeapi.version>
         <jakartaenterprise.version>4.0.1</jakartaenterprise.version>
@@ -92,10 +92,10 @@
         <maven.plugin.annotations.version>3.13.0</maven.plugin.annotations.version>
         <maven.resolver.version>1.9.18</maven.resolver.version>
         <mockito.version>5.12.0</mockito.version>
-        <resteasy.version>6.2.8.Final</resteasy.version>
+        <resteasy.version>6.2.9.Final</resteasy.version>
         <slf4j.version>2.0.13</slf4j.version>
-        <springboot.version>3.2.4</springboot.version>
-        <swagger.version>2.2.21</swagger.version>
+        <springboot.version>3.3.0</springboot.version>
+        <swagger.version>2.2.22</swagger.version>
         <tyrus.version>2.1.5</tyrus.version>
 
         <powsyblcore.version>6.3.1</powsyblcore.version>
