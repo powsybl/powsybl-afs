@@ -20,6 +20,9 @@ import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Objects;
 
 /**
@@ -28,6 +31,7 @@ import java.util.Objects;
 @Named
 @Singleton
 public class AppDataBean {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AppDataBean.class);
 
     protected AppData appData;
 
@@ -97,20 +101,28 @@ public class AppDataBean {
      * This method reinit only the computation manager (no effect on other connexions with other backends)
      *
      */
-    public void reinitComputationManager() {
+    public void reinitComputationManager(boolean throwException) {
         try {
             if (shortTimeExecutionComputationManager != null) {
                 shortTimeExecutionComputationManager.close();
             }
         } catch (Exception e) {
-            // Do nothing
+            if (throwException) {
+                throw e;
+            } else {
+                LOGGER.warn("shortTimeExecutionComputationManager is not in a closable state. Had exception '{}' while trying to close it. It will be reinitialized anyway.", e.getMessage());
+            }
         }
         try {
             if (longTimeExecutionComputationManager != null) {
                 longTimeExecutionComputationManager.close();
             }
         } catch (Exception e) {
-            // Do nothing
+            if (throwException) {
+                throw e;
+            } else {
+                LOGGER.warn("longTimeExecutionComputationManager is not in a closable state. Had exception '{}' while trying to close it. It will be reinitialized anyway.", e.getMessage());
+            }
         }
         shortTimeExecutionComputationManager = config.createShortTimeExecutionComputationManager();
         longTimeExecutionComputationManager = config.createLongTimeExecutionComputationManager();
