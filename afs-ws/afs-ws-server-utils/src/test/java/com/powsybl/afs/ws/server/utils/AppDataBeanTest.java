@@ -65,10 +65,8 @@ public class AppDataBeanTest {
         try (
                 com.powsybl.computation.ComputationManager shortComputationManager = verify(config, times(1)).createShortTimeExecutionComputationManager();
                 com.powsybl.computation.ComputationManager longComputationManager = verify(config, times(1)).createLongTimeExecutionComputationManager()
-        ) {
-            // do nothing
-        } finally {
-            // do nothing
+        ){
+            verifyNoMoreInteractions(config);
         }
     }
 
@@ -85,10 +83,8 @@ public class AppDataBeanTest {
         try (
                 com.powsybl.computation.ComputationManager shortComputationManager = verify(config, times(1)).createShortTimeExecutionComputationManager();
                 com.powsybl.computation.ComputationManager longComputationManager = verify(config, times(1)).createLongTimeExecutionComputationManager()
-        ) {
-            // do nothing
-        } finally {
-            // do nothing
+        ){
+            verifyNoMoreInteractions(config);
         }
     }
 }
