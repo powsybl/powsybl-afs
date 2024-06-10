@@ -1,15 +1,17 @@
 package com.powsybl.afs.ws.server.utils;
 
+import com.powsybl.commons.PowsyblException;
 import com.powsybl.computation.*;
 import org.junit.jupiter.api.*;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.openMocks;
 
-public class AppDataBeanTest {
+class AppDataBeanTest {
 
     @Mock
     private ComputationManager shortTimeExecutionComputationManager;
@@ -42,17 +44,15 @@ public class AppDataBeanTest {
         verify(longTimeExecutionComputationManager, times(1)).close();
         verify(shortTimeExecutionComputationManager, times(1)).close();
         try (
-                com.powsybl.computation.ComputationManager shortComputationManager = verify(config, times(1)).createShortTimeExecutionComputationManager();
-                com.powsybl.computation.ComputationManager longComputationManager = verify(config, times(1)).createLongTimeExecutionComputationManager()
+            com.powsybl.computation.ComputationManager ignored = verify(config, times(1)).createShortTimeExecutionComputationManager();
+            com.powsybl.computation.ComputationManager ignored1 = verify(config, times(1)).createLongTimeExecutionComputationManager()
         ) {
-            // do nothing
-        } finally {
-            // do nothing
+            verifyNoMoreInteractions(config);
         }
     }
 
     @Test
-    void reinitComputationManagerManagerThrowsException1() {
+    void reinitComputationManagerManagerExceptionLogged() {
         // GIVEN
         appDataBeanUnderTest.longTimeExecutionComputationManager = longTimeExecutionComputationManager;
         appDataBeanUnderTest.shortTimeExecutionComputationManager = shortTimeExecutionComputationManager;
@@ -64,54 +64,55 @@ public class AppDataBeanTest {
         verify(longTimeExecutionComputationManager, times(1)).close();
         verify(shortTimeExecutionComputationManager, times(1)).close();
         try (
-                com.powsybl.computation.ComputationManager shortComputationManager = verify(config, times(1)).createShortTimeExecutionComputationManager();
-                com.powsybl.computation.ComputationManager longComputationManager = verify(config, times(1)).createLongTimeExecutionComputationManager()
+            com.powsybl.computation.ComputationManager ignored = verify(config, times(1)).createShortTimeExecutionComputationManager();
+            com.powsybl.computation.ComputationManager ignored1 = verify(config, times(1)).createLongTimeExecutionComputationManager()
         ) {
             verifyNoMoreInteractions(config);
         }
     }
 
     @Test
-    void reinitComputationManagerManagerThrowsException2() {
+    void reinitComputationManagerManagerThrowsExceptionShortTime() {
         // GIVEN
         appDataBeanUnderTest.longTimeExecutionComputationManager = longTimeExecutionComputationManager;
         appDataBeanUnderTest.shortTimeExecutionComputationManager = shortTimeExecutionComputationManager;
         doThrow(new Exception("SHORT")).when(shortTimeExecutionComputationManager).close();
-        doThrow(new Exception("LONG")).when(longTimeExecutionComputationManager).close();
         // WHEN
-        Exception exception = assertThrows(Exception.class, () -> {
+        PowsyblException exception = assertThrows(PowsyblException.class, () -> {
             appDataBeanUnderTest.reinitComputationManager(true);
         });
         // THEN
         verify(longTimeExecutionComputationManager, times(0)).close();
         verify(shortTimeExecutionComputationManager, times(1)).close();
         try (
-                com.powsybl.computation.ComputationManager shortComputationManager = verify(config, times(0)).createShortTimeExecutionComputationManager();
-                com.powsybl.computation.ComputationManager longComputationManager = verify(config, times(0)).createLongTimeExecutionComputationManager()
+            com.powsybl.computation.ComputationManager ignored = verify(config, times(0)).createShortTimeExecutionComputationManager();
+            com.powsybl.computation.ComputationManager ignored1 = verify(config, times(0)).createLongTimeExecutionComputationManager()
         ) {
             verifyNoMoreInteractions(config);
         }
+        assertEquals("Error while closing existing connection to the short-time execution computation manager", exception.getMessage());
     }
 
     @Test
-    void reinitComputationManagerManagerThrowsException3() {
+    void reinitComputationManagerManagerThrowsExceptionLongTime() {
         // GIVEN
         appDataBeanUnderTest.longTimeExecutionComputationManager = longTimeExecutionComputationManager;
         appDataBeanUnderTest.shortTimeExecutionComputationManager = shortTimeExecutionComputationManager;
         doThrow(new Exception("LONG")).when(longTimeExecutionComputationManager).close();
         // WHEN
-        Exception exception = assertThrows(Exception.class, () -> {
+        PowsyblException exception = assertThrows(PowsyblException.class, () -> {
             appDataBeanUnderTest.reinitComputationManager(true);
         });
         // THEN
         verify(longTimeExecutionComputationManager, times(1)).close();
         verify(shortTimeExecutionComputationManager, times(1)).close();
         try (
-                com.powsybl.computation.ComputationManager shortComputationManager = verify(config, times(0)).createShortTimeExecutionComputationManager();
-                com.powsybl.computation.ComputationManager longComputationManager = verify(config, times(0)).createLongTimeExecutionComputationManager()
+            com.powsybl.computation.ComputationManager ignored = verify(config, times(0)).createShortTimeExecutionComputationManager();
+            com.powsybl.computation.ComputationManager ignored1 = verify(config, times(0)).createLongTimeExecutionComputationManager()
         ) {
             verifyNoMoreInteractions(config);
         }
+        assertEquals("Error while closing existing connection to the long-time execution computation manager", exception.getMessage());
     }
 
     @Test
@@ -125,8 +126,8 @@ public class AppDataBeanTest {
         verify(longTimeExecutionComputationManager, times(0)).close();
         verify(shortTimeExecutionComputationManager, times(0)).close();
         try (
-                com.powsybl.computation.ComputationManager shortComputationManager = verify(config, times(1)).createShortTimeExecutionComputationManager();
-                com.powsybl.computation.ComputationManager longComputationManager = verify(config, times(1)).createLongTimeExecutionComputationManager()
+            com.powsybl.computation.ComputationManager ignored = verify(config, times(1)).createShortTimeExecutionComputationManager();
+            com.powsybl.computation.ComputationManager ignored1 = verify(config, times(1)).createLongTimeExecutionComputationManager()
         ) {
             verifyNoMoreInteractions(config);
         }
