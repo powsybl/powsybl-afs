@@ -78,9 +78,7 @@ class AppDataBeanTest {
         appDataBeanUnderTest.shortTimeExecutionComputationManager = shortTimeExecutionComputationManager;
         doThrow(new Exception("SHORT")).when(shortTimeExecutionComputationManager).close();
         // WHEN
-        PowsyblException exception = assertThrows(PowsyblException.class, () -> {
-            appDataBeanUnderTest.reinitComputationManager(true);
-        });
+        PowsyblException exception = assertThrows(PowsyblException.class, () -> appDataBeanUnderTest.reinitComputationManager(true));
         // THEN
         verify(longTimeExecutionComputationManager, times(0)).close();
         verify(shortTimeExecutionComputationManager, times(1)).close();
@@ -100,9 +98,7 @@ class AppDataBeanTest {
         appDataBeanUnderTest.shortTimeExecutionComputationManager = shortTimeExecutionComputationManager;
         doThrow(new Exception("LONG")).when(longTimeExecutionComputationManager).close();
         // WHEN
-        PowsyblException exception = assertThrows(PowsyblException.class, () -> {
-            appDataBeanUnderTest.reinitComputationManager(true);
-        });
+        PowsyblException exception = assertThrows(PowsyblException.class, () -> appDataBeanUnderTest.reinitComputationManager(true));
         // THEN
         verify(longTimeExecutionComputationManager, times(1)).close();
         verify(shortTimeExecutionComputationManager, times(1)).close();
