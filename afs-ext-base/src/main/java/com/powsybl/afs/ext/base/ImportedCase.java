@@ -92,10 +92,12 @@ public class ImportedCase extends ProjectFile implements ProjectCase {
     }
 
     @Override
-    protected void invalidate() {
-        super.invalidate();
+    protected List<ProjectFile> invalidate() {
+        List<ProjectFile> dependencies = super.invalidate();
 
         invalidateNetworkCache();
+
+        return dependencies;
     }
 
     @Override

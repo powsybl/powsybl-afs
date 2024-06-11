@@ -100,11 +100,11 @@ public class VirtualCase extends ProjectFile implements ProjectCase {
     }
 
     @Override
-    protected void invalidate() {
+    protected List<ProjectFile> invalidate() {
         // invalidate network cache
         findService(NetworkCacheService.class).invalidateCache(this);
 
-        super.invalidate();
+        return super.invalidate();
     }
 
     @Override

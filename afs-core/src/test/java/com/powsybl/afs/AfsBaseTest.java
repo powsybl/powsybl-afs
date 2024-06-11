@@ -565,7 +565,7 @@ class AfsBaseTest {
     }
 
     @Test
-    public void invalidate() {
+    void invalidate() {
         Folder folder = afs.getRootFolder().createFolder("testFolder");
         Project project = folder.createProject("test");
         FooFile fooFile = project.getRootFolder().fileBuilder(FooFileBuilder.class).withName("Foo").build();
@@ -576,20 +576,26 @@ class AfsBaseTest {
         storage.getEventsBus().flush();
         storage.getEventsBus().removeListeners();
 
-        fooFile.invalidate();
-
-        // WithDependencyFile is not connected => don't store event
+        // We verify invalidate() instantiate the WithDependencyFile
+        // And we test that it is not connected, so it does'nt record events
+        List<ProjectFile> dependenciesInvalidated = fooFile.invalidate();
+        assertEquals(1, dependenciesInvalidated.size());
+        ProjectFile projectFile = dependenciesInvalidated.get(0);
+        assertInstanceOf(WithDependencyFile.class, projectFile);
+        WithDependencyFile withDepFile = (WithDependencyFile) projectFile;
+        assertEquals(1, withDepFile.invalidatedTime.get());
         String nodeEventType = "type";
         storage.getEventsBus().pushEvent(new NodeEvent("id", nodeEventType) {
         }, "Topic");
         storage.getEventsBus().flush();
-        Optional<NodeEvent> updateEvent = fileWithDep.events.stream().filter(nodeEvent -> nodeEventType.equals(nodeEvent.getType())).findFirst();
+        Optional<NodeEvent> updateEvent = withDepFile.events.stream().filter(nodeEvent -> nodeEventType.equals(nodeEvent.getType())).findFirst();
         assertTrue(updateEvent.isEmpty());
 
-        // WithDependencyFile is not connected => store event
+        // Here we test the case where the dependency is connected. The event is well recorded
         List<ProjectFile> connectedBackwardDependencies = fooFile.getBackwardDependencies(true);
-        storage.getEventsBus().pushEvent(new NodeEvent("id", nodeEventType) {
-        }, "Topic");
+        NodeEvent event = new NodeEvent("id", nodeEventType) {
+        };
+        storage.getEventsBus().pushEvent(event, "Topic");
         storage.getEventsBus().flush();
         assertEquals(1, connectedBackwardDependencies.size());
         assertEquals(WithDependencyFile.class, connectedBackwardDependencies.get(0).getClass());
@@ -598,5 +604,6 @@ class AfsBaseTest {
                 .filter(nodeEvent -> nodeEventType.equals(nodeEvent.getType()))
                 .findFirst();
         assertFalse(updateEvent2.isEmpty());
+        assertEquals(event, updateEvent2.get());
     }
 }

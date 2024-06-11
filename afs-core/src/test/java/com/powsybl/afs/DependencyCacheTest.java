@@ -29,7 +29,7 @@ class DependencyCacheTest extends AbstractProjectFileTest {
 
     @Override
     protected List<ProjectFileExtension> getProjectFileExtensions() {
-        return ImmutableList.of(new FooFileExtension(), new WithDependencyFileExtension());
+        return List.of(new FooFileExtension(), new WithDependencyFileExtension());
     }
 
     @Test

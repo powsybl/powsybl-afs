@@ -69,7 +69,7 @@ public class ProjectNode extends AbstractNodeBase<ProjectFolder> {
 
     /**
      * Retrieve backward dependencies <br />
-     * Use connected to false if the node is used immediately in a local scope and if it doesn't need to update itself on events, as in {@link #invalidate()}
+     * {@code connected} should be set to false if the node is used immediately in a local scope and if it doesn't need to update itself on events, as in {@link #invalidate()}
      * @param connected connect the node to eventBus events
      * @return dependencies
      */
@@ -77,12 +77,14 @@ public class ProjectNode extends AbstractNodeBase<ProjectFolder> {
         return storage.getBackwardDependencies(info.getId())
                 .stream()
                 .map(nodeInfo -> project.createProjectFile(nodeInfo, connected))
-                .collect(Collectors.toList());
+                .toList();
     }
 
-    protected void invalidate() {
+    protected List<ProjectFile> invalidate() {
         // propagate
-        getBackwardDependencies(false).forEach(ProjectNode::invalidate);
+        List<ProjectFile> backwardDependencies = getBackwardDependencies(false);
+        backwardDependencies.forEach(ProjectNode::invalidate);
+        return backwardDependencies;
     }
 
     public AppFileSystem getFileSystem() {
