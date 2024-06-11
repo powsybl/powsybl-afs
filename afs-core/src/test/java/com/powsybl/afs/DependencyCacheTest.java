@@ -6,7 +6,6 @@
  */
 package com.powsybl.afs;
 
-import com.google.common.collect.ImmutableList;
 import com.powsybl.afs.mapdb.storage.MapDbAppStorage;
 import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.InMemoryEventsBus;
@@ -37,7 +36,7 @@ class DependencyCacheTest extends AbstractProjectFileTest {
         Project project = afs.getRootFolder().createProject("project");
         FooFile tic = project.getRootFolder().fileBuilder(FooFileBuilder.class).withName("tic").build();
         FooFile tic2 = project.getRootFolder().fileBuilder(FooFileBuilder.class).withName("tic2").build();
-        WithDependencyFile tac = project.getRootFolder().fileBuilder(WithDependencyFileBuilder.class).build();
+        WithDependencyFile tac = project.getRootFolder().fileBuilder(WithDependencyFileBuilder.class).withName("WithDependencyFile").build();
         assertNull(tac.getTicDependency());
         tac.setFooDependency(tic);
         assertNotNull(tac.getTicDependency());
