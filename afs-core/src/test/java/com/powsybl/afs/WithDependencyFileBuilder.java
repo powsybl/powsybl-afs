@@ -7,13 +7,24 @@ public class WithDependencyFileBuilder implements ProjectFileBuilder<WithDepende
 
     private final ProjectFileBuildContext context;
 
+    private String name;
+
     WithDependencyFileBuilder(ProjectFileBuildContext context) {
         this.context = context;
     }
 
+    public WithDependencyFileBuilder withName(String name) {
+        this.name = name;
+        return this;
+    }
+
     @Override
     public WithDependencyFile build() {
-        NodeInfo info = context.getStorage().createNode(context.getFolderInfo().getId(), "WithDependencyFile", "WITH_DEPENDENCY_FILE", "", 0, new NodeGenericMetadata());
+        // check parameters
+        if (name == null) {
+            throw new AfsException("Name is not set");
+        }
+        NodeInfo info = context.getStorage().createNode(context.getFolderInfo().getId(), name, "WITH_DEPENDENCY_FILE", "", 0, new NodeGenericMetadata());
         context.getStorage().setConsistent(info.getId());
         return new WithDependencyFile(new ProjectFileCreationContext(info, context.getStorage(), context.getProject()));
     }

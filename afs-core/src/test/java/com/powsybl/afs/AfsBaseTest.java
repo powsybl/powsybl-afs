@@ -569,27 +569,30 @@ class AfsBaseTest {
         Folder folder = afs.getRootFolder().createFolder("testFolder");
         Project project = folder.createProject("test");
         FooFile fooFile = project.getRootFolder().fileBuilder(FooFileBuilder.class).withName("Foo").build();
-        WithDependencyFile fileWithDep = project.getRootFolder().fileBuilder(WithDependencyFileBuilder.class).build();
+        WithDependencyFile fileWithDep = project.getRootFolder().fileBuilder(WithDependencyFileBuilder.class).withName("WithDependencyFile1").build();
         fileWithDep.setFooDependency(fooFile);
+        WithDependencyFile fileWithDep2 = project.getRootFolder().fileBuilder(WithDependencyFileBuilder.class).withName("WithDependencyFile2").build();
+        fileWithDep2.setFooDependency(fileWithDep);
+        String nodeEventType = "type";
 
         // Previous code add connected WithDependencyFile with listeners
         storage.getEventsBus().flush();
         storage.getEventsBus().removeListeners();
 
-        // We verify invalidate() instantiate the WithDependencyFile
-        // And we test that it is not connected, so it does'nt record events
+        // We verify invalidate() instantiate all the WithDependencyFile backward dependencies
+        // And we test that there are not connected, so they does'nt record events
         List<ProjectFile> dependenciesInvalidated = fooFile.invalidate();
-        assertEquals(1, dependenciesInvalidated.size());
-        ProjectFile projectFile = dependenciesInvalidated.get(0);
-        assertInstanceOf(WithDependencyFile.class, projectFile);
-        WithDependencyFile withDepFile = (WithDependencyFile) projectFile;
-        assertEquals(1, withDepFile.invalidatedTime.get());
-        String nodeEventType = "type";
-        storage.getEventsBus().pushEvent(new NodeEvent("id", nodeEventType) {
-        }, "Topic");
-        storage.getEventsBus().flush();
-        Optional<NodeEvent> updateEvent = withDepFile.events.stream().filter(nodeEvent -> nodeEventType.equals(nodeEvent.getType())).findFirst();
-        assertTrue(updateEvent.isEmpty());
+        assertEquals(2, dependenciesInvalidated.size());
+        for (ProjectFile projectFile : dependenciesInvalidated) {
+            assertInstanceOf(WithDependencyFile.class, projectFile);
+            WithDependencyFile withDepFile = (WithDependencyFile) projectFile;
+            assertEquals(1, withDepFile.invalidatedTime.get());
+            storage.getEventsBus().pushEvent(new NodeEvent("id", nodeEventType) {
+            }, "Topic");
+            storage.getEventsBus().flush();
+            Optional<NodeEvent> updateEvent = withDepFile.events.stream().filter(nodeEvent -> nodeEventType.equals(nodeEvent.getType())).findFirst();
+            assertTrue(updateEvent.isEmpty());
+        }
 
         // Here we test the case where the dependency is connected. The event is well recorded
         List<ProjectFile> connectedBackwardDependencies = fooFile.getBackwardDependencies(true);

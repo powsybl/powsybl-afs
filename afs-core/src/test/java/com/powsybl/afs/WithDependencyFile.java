@@ -26,7 +26,7 @@ public class WithDependencyFile extends ProjectFile {
         return cache.getFirst().orElse(null);
     }
 
-    void setFooDependency(FooFile foo) {
+    void setFooDependency(ProjectFile foo) {
         setDependencies(DEP_NAME, Collections.singletonList(foo));
         cache.invalidate();
     }
@@ -34,7 +34,6 @@ public class WithDependencyFile extends ProjectFile {
     @Override
     protected List<ProjectFile> invalidate() {
         invalidatedTime.getAndIncrement();
-        super.invalidate();
-        return null;
+        return super.invalidate();
     }
 }

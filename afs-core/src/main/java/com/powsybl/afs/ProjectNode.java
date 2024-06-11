@@ -6,6 +6,7 @@
  */
 package com.powsybl.afs;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -83,8 +84,9 @@ public class ProjectNode extends AbstractNodeBase<ProjectFolder> {
     protected List<ProjectFile> invalidate() {
         // propagate
         List<ProjectFile> backwardDependencies = getBackwardDependencies(false);
-        backwardDependencies.forEach(ProjectNode::invalidate);
-        return backwardDependencies;
+        ArrayList<ProjectFile> allBackwardDependencies = new ArrayList<>(backwardDependencies);
+        backwardDependencies.forEach(projectFile -> allBackwardDependencies.addAll(projectFile.invalidate()));
+        return allBackwardDependencies;
     }
 
     public AppFileSystem getFileSystem() {
