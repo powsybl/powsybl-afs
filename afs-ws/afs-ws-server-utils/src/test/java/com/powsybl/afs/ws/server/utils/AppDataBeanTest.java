@@ -4,7 +4,6 @@ import com.powsybl.afs.AppData;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.computation.*;
 import org.junit.jupiter.api.*;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
 import static org.junit.jupiter.api.Assertions.*;
