@@ -32,7 +32,7 @@ import java.util.Objects;
 public class AppDataBean {
     private static final Logger LOGGER = LoggerFactory.getLogger(AppDataBean.class);
 
-    protected AppData appData;
+    AppData appData;
 
     DefaultComputationManagerConfig config;
 
@@ -120,7 +120,7 @@ public class AppDataBean {
             }
         }
 
-        // Ne devrait pas être null, mais par sécurité
+        // Should never be null !
         if (config == null) {
             config = DefaultComputationManagerConfig.load();
         }
