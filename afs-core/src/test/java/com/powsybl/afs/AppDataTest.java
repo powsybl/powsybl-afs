@@ -9,7 +9,7 @@ import org.mockito.Mock;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 
-public class AppDataTest {
+class AppDataTest {
     @Mock
     private ComputationManager shortTimeExecutionComputationManager;
     @Mock
