@@ -12,9 +12,7 @@ import com.powsybl.afs.AppFileSystem;
 import com.powsybl.afs.ProjectFile;
 import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.commons.PowsyblException;
-import com.powsybl.computation.ComputationManager;
 import com.powsybl.computation.DefaultComputationManagerConfig;
-
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Named;
@@ -36,11 +34,7 @@ public class AppDataBean {
 
     protected AppData appData;
 
-    protected ComputationManager shortTimeExecutionComputationManager;
-
-    protected ComputationManager longTimeExecutionComputationManager;
-
-    protected DefaultComputationManagerConfig config = DefaultComputationManagerConfig.load();
+    DefaultComputationManagerConfig config;
 
     public AppData getAppData() {
         return appData;
@@ -82,18 +76,17 @@ public class AppDataBean {
 
     @PostConstruct
     public void init() {
-        shortTimeExecutionComputationManager = config.createShortTimeExecutionComputationManager();
-        longTimeExecutionComputationManager = config.createLongTimeExecutionComputationManager();
-        appData = new AppData(shortTimeExecutionComputationManager, longTimeExecutionComputationManager);
+        config = DefaultComputationManagerConfig.load();
+        appData = new AppData(config.createShortTimeExecutionComputationManager(), config.createLongTimeExecutionComputationManager());
     }
 
     @PreDestroy
     public void clean() {
         if (appData != null) {
             appData.close();
-            shortTimeExecutionComputationManager.close();
-            if (longTimeExecutionComputationManager != null) {
-                longTimeExecutionComputationManager.close();
+            appData.getShortTimeExecutionComputationManager().close();
+            if (appData.getLongTimeExecutionComputationManager() != null) {
+                appData.getLongTimeExecutionComputationManager().close();
             }
         }
     }
@@ -105,8 +98,8 @@ public class AppDataBean {
     public void reinitComputationManager(boolean throwException) {
         // If possible, close the existing connections
         try {
-            if (shortTimeExecutionComputationManager != null) {
-                shortTimeExecutionComputationManager.close();
+            if (appData.getShortTimeExecutionComputationManager() != null) {
+                appData.getShortTimeExecutionComputationManager().close();
             }
         } catch (Exception e) {
             if (throwException) {
@@ -116,8 +109,8 @@ public class AppDataBean {
             }
         }
         try {
-            if (longTimeExecutionComputationManager != null) {
-                longTimeExecutionComputationManager.close();
+            if (appData.getLongTimeExecutionComputationManager() != null) {
+                appData.getLongTimeExecutionComputationManager().close();
             }
         } catch (Exception e) {
             if (throwException) {
@@ -127,8 +120,13 @@ public class AppDataBean {
             }
         }
 
+        // Ne devrait pas être null, mais par sécurité
+        if (config == null) {
+            config = DefaultComputationManagerConfig.load();
+        }
+
         // Open new connections
-        shortTimeExecutionComputationManager = config.createShortTimeExecutionComputationManager();
-        longTimeExecutionComputationManager = config.createLongTimeExecutionComputationManager();
+        appData.setShortTimeExecutionComputationManager(config.createShortTimeExecutionComputationManager());
+        appData.setLongTimeExecutionComputationManager(config.createLongTimeExecutionComputationManager());
     }
 }
