@@ -34,7 +34,7 @@ public class AppDataBean {
 
     AppData appData;
 
-    DefaultComputationManagerConfig config;
+    protected DefaultComputationManagerConfig config;
 
     public AppData getAppData() {
         return appData;
