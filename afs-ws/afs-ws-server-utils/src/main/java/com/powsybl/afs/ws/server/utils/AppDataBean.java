@@ -11,6 +11,7 @@ import com.powsybl.afs.AppData;
 import com.powsybl.afs.AppFileSystem;
 import com.powsybl.afs.ProjectFile;
 import com.powsybl.afs.storage.AppStorage;
+import com.powsybl.commons.PowsyblException;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.computation.DefaultComputationManagerConfig;
 
@@ -20,6 +21,9 @@ import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Objects;
 
 /**
@@ -28,12 +32,15 @@ import java.util.Objects;
 @Named
 @Singleton
 public class AppDataBean {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AppDataBean.class);
 
     protected AppData appData;
 
     protected ComputationManager shortTimeExecutionComputationManager;
 
     protected ComputationManager longTimeExecutionComputationManager;
+
+    protected DefaultComputationManagerConfig config = DefaultComputationManagerConfig.load();
 
     public AppData getAppData() {
         return appData;
@@ -75,7 +82,6 @@ public class AppDataBean {
 
     @PostConstruct
     public void init() {
-        DefaultComputationManagerConfig config = DefaultComputationManagerConfig.load();
         shortTimeExecutionComputationManager = config.createShortTimeExecutionComputationManager();
         longTimeExecutionComputationManager = config.createLongTimeExecutionComputationManager();
         appData = new AppData(shortTimeExecutionComputationManager, longTimeExecutionComputationManager);
@@ -90,5 +96,39 @@ public class AppDataBean {
                 longTimeExecutionComputationManager.close();
             }
         }
+    }
+
+    /**
+     * This method reinit only the computation manager (no effect on other connexions with other backends)
+     * @param throwException if {@code true}, throw the exception caught, else only log it
+     */
+    public void reinitComputationManager(boolean throwException) {
+        // If possible, close the existing connections
+        try {
+            if (shortTimeExecutionComputationManager != null) {
+                shortTimeExecutionComputationManager.close();
+            }
+        } catch (Exception e) {
+            if (throwException) {
+                throw new PowsyblException("Error while closing existing connection to the short-time execution computation manager", e);
+            } else {
+                LOGGER.warn("shortTimeExecutionComputationManager is not in a closable state. Had exception '{}' while trying to close it. It will be reinitialized anyway.", e.getMessage());
+            }
+        }
+        try {
+            if (longTimeExecutionComputationManager != null) {
+                longTimeExecutionComputationManager.close();
+            }
+        } catch (Exception e) {
+            if (throwException) {
+                throw new PowsyblException("Error while closing existing connection to the long-time execution computation manager", e);
+            } else {
+                LOGGER.warn("longTimeExecutionComputationManager is not in a closable state. Had exception '{}' while trying to close it. It will be reinitialized anyway.", e.getMessage());
+            }
+        }
+
+        // Open new connections
+        shortTimeExecutionComputationManager = config.createShortTimeExecutionComputationManager();
+        longTimeExecutionComputationManager = config.createLongTimeExecutionComputationManager();
     }
 }
