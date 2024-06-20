@@ -579,8 +579,8 @@ class AfsBaseTest {
         storage.getEventsBus().flush();
         storage.getEventsBus().removeListeners();
 
-        // We verify invalidate() instantiate all the WithDependencyFile backward dependencies
-        // And we test that there are not connected, so they does'nt record events
+        // We verify that invalidate() instantiate all the WithDependencyFile backward dependencies
+        // And we test that they are not connected, so that they don't record events
         List<ProjectFile> dependenciesInvalidated = fooFile.invalidate();
         assertEquals(2, dependenciesInvalidated.size());
         for (ProjectFile projectFile : dependenciesInvalidated) {
