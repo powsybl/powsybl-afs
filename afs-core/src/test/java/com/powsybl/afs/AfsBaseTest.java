@@ -10,11 +10,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import com.powsybl.afs.mapdb.storage.MapDbAppStorage;
-import com.powsybl.afs.storage.AfsStorageException;
-import com.powsybl.afs.storage.AppStorage;
-import com.powsybl.afs.storage.InMemoryEventsBus;
-import com.powsybl.afs.storage.NodeGenericMetadata;
-import com.powsybl.afs.storage.NodeInfo;
+import com.powsybl.afs.storage.*;
+import com.powsybl.afs.storage.events.NodeEvent;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.iidm.network.NetworkFactoryService;
 import com.powsybl.timeseries.RegularTimeSeriesIndex;
@@ -57,7 +54,7 @@ class AfsBaseTest {
         fileSystem = Jimfs.newFileSystem(Configuration.unix());
         ComputationManager computationManager = Mockito.mock(ComputationManager.class);
         ad = new AppData(computationManager, computationManager, Collections.emptyList(),
-                Collections.emptyList(), Collections.singletonList(new FooFileExtension()), Collections.emptyList());
+                Collections.emptyList(), List.of(new FooFileExtension(), new WithDependencyFileExtension()), Collections.emptyList());
 
         storage = MapDbAppStorage.createMem("mem", ad.getEventsBus());
 
@@ -80,7 +77,7 @@ class AfsBaseTest {
         assertEquals(Collections.singletonList("mem"), ad.getRemotelyAccessibleFileSystemNames());
         assertNotNull(ad.getRemotelyAccessibleStorage("mem"));
         assertEquals("mem", afs.getName());
-        assertEquals(1, ad.getProjectFileClasses().size());
+        assertEquals(2, ad.getProjectFileClasses().size());
         Folder root = afs.getRootFolder();
         assertNotNull(root);
         Folder dir1 = root.createFolder("dir1");
@@ -565,5 +562,51 @@ class AfsBaseTest {
         assertFalse(createdFile.hasDeepDependency(createdFile));
         otherFile.setDependencies("dep", Collections.singletonList(createdFile));
         assertTrue(createdFile.hasDeepDependency(createdFile, "dep"));
+    }
+
+    @Test
+    void invalidate() {
+        Folder folder = afs.getRootFolder().createFolder("testFolder");
+        Project project = folder.createProject("test");
+        FooFile fooFile = project.getRootFolder().fileBuilder(FooFileBuilder.class).withName("Foo").build();
+        WithDependencyFile fileWithDep = project.getRootFolder().fileBuilder(WithDependencyFileBuilder.class).withName("WithDependencyFile1").build();
+        fileWithDep.setFooDependency(fooFile);
+        WithDependencyFile fileWithDep2 = project.getRootFolder().fileBuilder(WithDependencyFileBuilder.class).withName("WithDependencyFile2").build();
+        fileWithDep2.setFooDependency(fileWithDep);
+        String nodeEventType = "type";
+
+        // Previous code add connected WithDependencyFile with listeners
+        storage.getEventsBus().flush();
+        storage.getEventsBus().removeListeners();
+
+        // We verify that invalidate() instantiate all the WithDependencyFile backward dependencies
+        // And we test that they are not connected, so that they don't record events
+        List<ProjectFile> dependenciesInvalidated = fooFile.invalidate();
+        assertEquals(2, dependenciesInvalidated.size());
+        for (ProjectFile projectFile : dependenciesInvalidated) {
+            assertInstanceOf(WithDependencyFile.class, projectFile);
+            WithDependencyFile withDepFile = (WithDependencyFile) projectFile;
+            assertEquals(1, withDepFile.invalidatedTime.get());
+            storage.getEventsBus().pushEvent(new NodeEvent("id", nodeEventType) {
+            }, "Topic");
+            storage.getEventsBus().flush();
+            Optional<NodeEvent> updateEvent = withDepFile.events.stream().filter(nodeEvent -> nodeEventType.equals(nodeEvent.getType())).findFirst();
+            assertTrue(updateEvent.isEmpty());
+        }
+
+        // Here we test the case where the dependency is connected. The event is well recorded
+        List<ProjectFile> connectedBackwardDependencies = fooFile.getBackwardDependencies(true);
+        NodeEvent event = new NodeEvent("id", nodeEventType) {
+        };
+        storage.getEventsBus().pushEvent(event, "Topic");
+        storage.getEventsBus().flush();
+        assertEquals(1, connectedBackwardDependencies.size());
+        assertEquals(WithDependencyFile.class, connectedBackwardDependencies.get(0).getClass());
+        WithDependencyFile withDependencyFile = (WithDependencyFile) connectedBackwardDependencies.get(0);
+        Optional<NodeEvent> updateEvent2 = withDependencyFile.events.stream()
+                .filter(nodeEvent -> nodeEventType.equals(nodeEvent.getType()))
+                .findFirst();
+        assertFalse(updateEvent2.isEmpty());
+        assertEquals(event, updateEvent2.get());
     }
 }
