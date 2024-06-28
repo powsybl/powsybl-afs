@@ -99,7 +99,7 @@
         <swagger.version>2.2.22</swagger.version>
         <tyrus.version>2.1.5</tyrus.version>
 
-        <powsyblcore.version>6.3.1</powsyblcore.version>
+        <powsyblcore.version>6.4.0-RC2</powsyblcore.version>
     </properties>
 
     <profiles>
