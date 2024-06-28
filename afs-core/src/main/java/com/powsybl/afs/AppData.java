@@ -45,9 +45,9 @@ import java.util.stream.Collectors;
  */
 public class AppData implements AutoCloseable {
 
-    private final ComputationManager shortTimeExecutionComputationManager;
+    private ComputationManager shortTimeExecutionComputationManager;
 
-    private final ComputationManager longTimeExecutionComputationManager;
+    private ComputationManager longTimeExecutionComputationManager;
 
     private Map<String, AppFileSystem> fileSystems;
 
@@ -324,5 +324,13 @@ public class AppData implements AutoCloseable {
     @Override
     public void close() {
         closeFileSystems();
+    }
+
+    public void setShortTimeExecutionComputationManager(ComputationManager shortTimeExecutionComputationManager) {
+        this.shortTimeExecutionComputationManager = shortTimeExecutionComputationManager;
+    }
+
+    public void setLongTimeExecutionComputationManager(ComputationManager longTimeExecutionComputationManager) {
+        this.longTimeExecutionComputationManager = longTimeExecutionComputationManager;
     }
 }

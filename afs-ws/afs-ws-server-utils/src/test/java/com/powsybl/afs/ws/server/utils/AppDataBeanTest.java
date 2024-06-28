@@ -1,13 +1,12 @@
 package com.powsybl.afs.ws.server.utils;
 
+import com.powsybl.afs.AppData;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.computation.*;
 import org.junit.jupiter.api.*;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.openMocks;
 
@@ -19,7 +18,9 @@ class AppDataBeanTest {
     private ComputationManager longTimeExecutionComputationManager;
     @Mock
     private DefaultComputationManagerConfig config;
-    @InjectMocks
+    @Mock
+    private AppData appData;
+
     private AppDataBean appDataBeanUnderTest;
 
     @BeforeEach
@@ -27,8 +28,10 @@ class AppDataBeanTest {
         appDataBeanUnderTest = new AppDataBean();
         shortTimeExecutionComputationManager = mock(ComputationManager.class);
         longTimeExecutionComputationManager = mock(ComputationManager.class);
+        appData = mock(AppData.class);
         config = mock(DefaultComputationManagerConfig.class);
         appDataBeanUnderTest.config = config;
+        appDataBeanUnderTest.appData = appData;
         openMocks(shortTimeExecutionComputationManager);
         openMocks(longTimeExecutionComputationManager);
     }
@@ -36,8 +39,10 @@ class AppDataBeanTest {
     @Test
     void reinitComputationManagerNominal() {
         // GIVEN
-        appDataBeanUnderTest.longTimeExecutionComputationManager = longTimeExecutionComputationManager;
-        appDataBeanUnderTest.shortTimeExecutionComputationManager = shortTimeExecutionComputationManager;
+        when(appData.getShortTimeExecutionComputationManager()).thenReturn(shortTimeExecutionComputationManager);
+        when(appData.getLongTimeExecutionComputationManager()).thenReturn(longTimeExecutionComputationManager);
+        when(config.createLongTimeExecutionComputationManager()).thenReturn(longTimeExecutionComputationManager);
+        when(config.createShortTimeExecutionComputationManager()).thenReturn(shortTimeExecutionComputationManager);
         // WHEN
         appDataBeanUnderTest.reinitComputationManager(false);
         // THEN
@@ -47,6 +52,8 @@ class AppDataBeanTest {
             com.powsybl.computation.ComputationManager ignored = verify(config, times(1)).createShortTimeExecutionComputationManager();
             com.powsybl.computation.ComputationManager ignored1 = verify(config, times(1)).createLongTimeExecutionComputationManager()
         ) {
+            verify(appData, times(1)).setLongTimeExecutionComputationManager(longTimeExecutionComputationManager);
+            verify(appData, times(1)).setShortTimeExecutionComputationManager(shortTimeExecutionComputationManager);
             verifyNoMoreInteractions(config);
         }
     }
@@ -54,8 +61,10 @@ class AppDataBeanTest {
     @Test
     void reinitComputationManagerManagerExceptionLogged() {
         // GIVEN
-        appDataBeanUnderTest.longTimeExecutionComputationManager = longTimeExecutionComputationManager;
-        appDataBeanUnderTest.shortTimeExecutionComputationManager = shortTimeExecutionComputationManager;
+        when(appData.getShortTimeExecutionComputationManager()).thenReturn(shortTimeExecutionComputationManager);
+        when(appData.getLongTimeExecutionComputationManager()).thenReturn(longTimeExecutionComputationManager);
+        when(config.createLongTimeExecutionComputationManager()).thenReturn(longTimeExecutionComputationManager);
+        when(config.createShortTimeExecutionComputationManager()).thenReturn(shortTimeExecutionComputationManager);
         doThrow(new Exception("SHORT")).when(shortTimeExecutionComputationManager).close();
         doThrow(new Exception("LONG")).when(longTimeExecutionComputationManager).close();
         // WHEN
@@ -74,8 +83,8 @@ class AppDataBeanTest {
     @Test
     void reinitComputationManagerManagerThrowsExceptionShortTime() {
         // GIVEN
-        appDataBeanUnderTest.longTimeExecutionComputationManager = longTimeExecutionComputationManager;
-        appDataBeanUnderTest.shortTimeExecutionComputationManager = shortTimeExecutionComputationManager;
+        when(appData.getShortTimeExecutionComputationManager()).thenReturn(shortTimeExecutionComputationManager);
+        when(appData.getLongTimeExecutionComputationManager()).thenReturn(longTimeExecutionComputationManager);
         doThrow(new Exception("SHORT")).when(shortTimeExecutionComputationManager).close();
         // WHEN
         PowsyblException exception = assertThrows(PowsyblException.class, () -> appDataBeanUnderTest.reinitComputationManager(true));
@@ -94,8 +103,8 @@ class AppDataBeanTest {
     @Test
     void reinitComputationManagerManagerThrowsExceptionLongTime() {
         // GIVEN
-        appDataBeanUnderTest.longTimeExecutionComputationManager = longTimeExecutionComputationManager;
-        appDataBeanUnderTest.shortTimeExecutionComputationManager = shortTimeExecutionComputationManager;
+        when(appData.getShortTimeExecutionComputationManager()).thenReturn(shortTimeExecutionComputationManager);
+        when(appData.getLongTimeExecutionComputationManager()).thenReturn(longTimeExecutionComputationManager);
         doThrow(new Exception("LONG")).when(longTimeExecutionComputationManager).close();
         // WHEN
         PowsyblException exception = assertThrows(PowsyblException.class, () -> appDataBeanUnderTest.reinitComputationManager(true));
@@ -114,8 +123,8 @@ class AppDataBeanTest {
     @Test
     void reinitComputationManagerManagerNull() {
         // GIVEN
-        appDataBeanUnderTest.longTimeExecutionComputationManager = null;
-        appDataBeanUnderTest.shortTimeExecutionComputationManager = null;
+        when(appData.getShortTimeExecutionComputationManager()).thenReturn(null);
+        when(appData.getLongTimeExecutionComputationManager()).thenReturn(null);
         // WHEN
         appDataBeanUnderTest.reinitComputationManager(false);
         // THEN
@@ -127,5 +136,60 @@ class AppDataBeanTest {
         ) {
             verifyNoMoreInteractions(config);
         }
+    }
+
+    @Test
+    void reinitComputationWithConfigNull() {
+        // GIVEN
+        when(appData.getShortTimeExecutionComputationManager()).thenReturn(null);
+        when(appData.getLongTimeExecutionComputationManager()).thenReturn(null);
+        appDataBeanUnderTest.config = null;
+        // WHEN
+        appDataBeanUnderTest.reinitComputationManager(false);
+        // THEN
+        verify(longTimeExecutionComputationManager, times(0)).close();
+        verify(shortTimeExecutionComputationManager, times(0)).close();
+        assertNotNull(appDataBeanUnderTest.config);
+        verifyNoMoreInteractions(config);
+    }
+
+    @Test
+    void reInit() {
+        // GIVEN
+        appDataBeanUnderTest.config = null;
+        appDataBeanUnderTest.appData = null;
+        // WHEN
+        appDataBeanUnderTest.init();
+        // THEN
+        assertNotNull(appDataBeanUnderTest.config);
+        assertNotNull(appDataBeanUnderTest.appData);
+    }
+
+    @Test
+    void cleanCase1() {
+        // GIVEN
+        when(appData.getShortTimeExecutionComputationManager()).thenReturn(shortTimeExecutionComputationManager);
+        when(appData.getLongTimeExecutionComputationManager()).thenReturn(longTimeExecutionComputationManager);
+        // WHEN
+        appDataBeanUnderTest.clean();
+        // THEN
+        verify(appData, times(1)).close();
+        verify(longTimeExecutionComputationManager, times(1)).close();
+        verify(shortTimeExecutionComputationManager, times(1)).close();
+        verifyNoMoreInteractions(config);
+    }
+
+    @Test
+    void cleanCase2() {
+        // GIVEN
+        when(appData.getShortTimeExecutionComputationManager()).thenReturn(shortTimeExecutionComputationManager);
+        when(appData.getLongTimeExecutionComputationManager()).thenReturn(null);
+        // WHEN
+        appDataBeanUnderTest.clean();
+        // THEN
+        verify(appData, times(1)).close();
+        verify(longTimeExecutionComputationManager, times(0)).close();
+        verify(shortTimeExecutionComputationManager, times(1)).close();
+        verifyNoMoreInteractions(config);
     }
 }
