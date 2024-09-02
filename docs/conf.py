@@ -108,7 +108,7 @@ html_favicon = "_static/favicon.ico"
 html_context = {
     "copyright_year": copyright_year,
     "github_repository": github_repository,
-    "sidebar_logo_href": "http://powsybl-core.readthedocs.io/"
+    "sidebar_logo_href": "https://powsybl.readthedocs.io/"
 }
 
 html_theme_options = {
