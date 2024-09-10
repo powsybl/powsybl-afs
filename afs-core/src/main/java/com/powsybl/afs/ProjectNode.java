@@ -6,6 +6,7 @@
  */
 package com.powsybl.afs;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -39,7 +40,7 @@ public class ProjectNode extends AbstractNodeBase<ProjectFolder> {
     }
 
     private static boolean pathStop(ProjectNode projectNode) {
-        return !projectNode.getParent().isPresent();
+        return projectNode.getParent().isEmpty();
     }
 
     private static String pathToString(List<String> path) {
@@ -64,15 +65,28 @@ public class ProjectNode extends AbstractNodeBase<ProjectFolder> {
     }
 
     public List<ProjectFile> getBackwardDependencies() {
-        return storage.getBackwardDependencies(info.getId())
-                .stream()
-                .map(project::createProjectFile)
-                .collect(Collectors.toList());
+        return getBackwardDependencies(true);
     }
 
-    protected void invalidate() {
+    /**
+     * Retrieve backward dependencies <br />
+     * {@code connected} should be set to false if the node is used immediately in a local scope and if it doesn't need to update itself on events, as in {@link #invalidate()}
+     * @param connected connect the node to eventBus events
+     * @return dependencies
+     */
+    public List<ProjectFile> getBackwardDependencies(boolean connected) {
+        return storage.getBackwardDependencies(info.getId())
+                .stream()
+                .map(nodeInfo -> project.createProjectFile(nodeInfo, connected))
+                .toList();
+    }
+
+    protected List<ProjectFile> invalidate() {
         // propagate
-        getBackwardDependencies().forEach(ProjectNode::invalidate);
+        List<ProjectFile> backwardDependencies = getBackwardDependencies(false);
+        ArrayList<ProjectFile> allBackwardDependencies = new ArrayList<>(backwardDependencies);
+        backwardDependencies.forEach(projectFile -> allBackwardDependencies.addAll(projectFile.invalidate()));
+        return allBackwardDependencies;
     }
 
     public AppFileSystem getFileSystem() {
