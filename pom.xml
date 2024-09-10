@@ -74,7 +74,7 @@
 
         <assertj.version>3.26.0</assertj.version>
         <autoservice.version>1.1.1</autoservice.version>
-        <commonsio.version>2.16.1</commonsio.version>
+        <commonscodec.version>1.17.0</commonscodec.version>
         <ec.version>11.1.0</ec.version>
         <groovy.version>4.0.21</groovy.version>
         <guava.version>33.2.1-jre</guava.version>
@@ -93,9 +93,9 @@
         <maven.plugin.annotations.version>3.13.0</maven.plugin.annotations.version>
         <maven.resolver.version>1.9.18</maven.resolver.version>
         <mockito.version>5.12.0</mockito.version>
-        <resteasy.version>6.2.9.Final</resteasy.version>
+        <resteasy.version>6.2.10.Final</resteasy.version>
         <slf4j.version>2.0.13</slf4j.version>
-        <springboot.version>3.3.0</springboot.version>
+        <springboot.version>3.3.3</springboot.version>
         <swagger.version>2.2.22</swagger.version>
         <tyrus.version>2.1.5</tyrus.version>
 
@@ -203,9 +203,9 @@
                 <version>${powsyblcore.version}</version>
             </dependency>
             <dependency>
-                <groupId>commons-io</groupId>
-                <artifactId>commons-io</artifactId>
-                <version>${commonsio.version}</version>
+                <groupId>commons-codec</groupId>
+                <artifactId>commons-codec</artifactId>
+                <version>${commonscodec.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.jsonwebtoken</groupId>
