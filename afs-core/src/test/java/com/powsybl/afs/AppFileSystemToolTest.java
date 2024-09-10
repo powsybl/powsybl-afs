@@ -86,13 +86,13 @@ class AppFileSystemToolTest extends AbstractToolTest {
     }
 
     @Test
-    void testLs() throws IOException {
+    void testLs() {
         assertCommandSuccessful(new String[] {"afs", "--ls"}, "mem" + System.lineSeparator());
         assertCommandSuccessfulMatch(new String[] {"afs", "--ls", "mem:/"}, String.join(System.lineSeparator(), "test_project1", "test_project2"));
     }
 
     @Test
-    void testLsInconsistentNodes() throws IOException {
+    void testLsInconsistentNodes() {
         assertCommandMatchTextOrRegex(new String[] {"afs", "--ls-inconsistent-nodes", "mem"}, 0, "mem:"
                 + System.lineSeparator() + "[a-z0-9-]+" + System.lineSeparator(), "");
         assertCommandMatchTextOrRegex(new String[] {"afs", "--ls-inconsistent-nodes"}, 0, "mem:"
@@ -100,7 +100,7 @@ class AppFileSystemToolTest extends AbstractToolTest {
     }
 
     @Test
-    void testFixInconsistentNodes() throws IOException {
+    void testFixInconsistentNodes() {
         assertCommandMatchTextOrRegex(new String[] {"afs", "--fix-inconsistent-nodes", "mem"}, 0, "mem:"
                 + System.lineSeparator() + "[a-z0-9-]+ fixed", "");
         assertCommandErrorMatch(new String[] {"afs", "--fix-inconsistent-nodes"}, 3, "IllegalArgumentException");
@@ -109,7 +109,7 @@ class AppFileSystemToolTest extends AbstractToolTest {
     }
 
     @Test
-    void testRemoveInconsistentNodes() throws IOException {
+    void testRemoveInconsistentNodes() {
         assertCommandMatchTextOrRegex(new String[] {"afs", "--rm-inconsistent-nodes", "mem"}, 0, "mem:"
                 + System.lineSeparator() + "[a-z0-9-]+ cleaned", "");
         assertCommandErrorMatch(new String[] {"afs", "--rm-inconsistent-nodes"}, 3, "IllegalArgumentException");
