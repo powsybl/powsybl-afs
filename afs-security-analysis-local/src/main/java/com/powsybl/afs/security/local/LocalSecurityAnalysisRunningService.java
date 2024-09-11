@@ -15,15 +15,14 @@ import com.powsybl.computation.ComputationManager;
 import com.powsybl.contingency.ContingenciesProvider;
 import com.powsybl.contingency.EmptyContingencyListProvider;
 import com.powsybl.iidm.network.Network;
-import com.powsybl.security.LimitViolationFilter;
-import com.powsybl.security.SecurityAnalysis;
-import com.powsybl.security.SecurityAnalysisParameters;
-import com.powsybl.security.SecurityAnalysisReport;
-import com.powsybl.security.detectors.DefaultLimitViolationDetector;
+import com.powsybl.security.*;
 import com.powsybl.security.interceptors.SecurityAnalysisInterceptor;
 import com.powsybl.security.interceptors.SecurityAnalysisInterceptors;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
@@ -59,18 +58,16 @@ public class LocalSecurityAnalysisRunningService implements SecurityAnalysisRunn
                 interceptors.add(SecurityAnalysisInterceptors.createInterceptor(interceptorName));
             }
 
+            SecurityAnalysisRunParameters runParameters = new SecurityAnalysisRunParameters()
+                .setSecurityAnalysisParameters(parameters)
+                .setComputationManager(computationManager)
+                .setFilter(new LimitViolationFilter())
+                .setInterceptors(interceptors);
             logger.log("Running security analysis...");
             SecurityAnalysisReport securityAnalysisReport = securityAnalysis.run(network,
-                    network.getVariantManager().getWorkingVariantId(),
-                    contingencyListProvider,
-                    parameters,
-                    computationManager,
-                    new LimitViolationFilter(),
-                    new DefaultLimitViolationDetector(),
-                    interceptors,
-                    Collections.emptyList(),
-                    Collections.emptyList()
-                    );
+                network.getVariantManager().getWorkingVariantId(),
+                contingencyListProvider,
+                runParameters);
 
             runner.writeResult(securityAnalysisReport.getResult());
         } finally {

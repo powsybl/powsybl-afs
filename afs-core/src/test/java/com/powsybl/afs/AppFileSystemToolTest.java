@@ -81,37 +81,37 @@ class AppFileSystemToolTest extends AbstractToolTest {
         Path archivePath = fileSystem.getPath("/tmp", UUID.randomUUID().toString());
         Files.createDirectories(archivePath);
         assertEquals(0, Files.list(archivePath).count());
-        assertCommand(new String[] {"afs", "--archive", "mem", "--dir", archivePath.toString(), "--deleteResults"}, 0, "", "");
+        assertCommandSuccessful(new String[] {"afs", "--archive", "mem", "--dir", archivePath.toString(), "--deleteResults"});
         assertEquals(1, Files.list(archivePath).count());
     }
 
     @Test
-    void testLs() throws IOException {
-        assertCommand(new String[] {"afs", "--ls"}, 0, "mem" + System.lineSeparator(), "");
-        assertCommand(new String[] {"afs", "--ls", "mem:/"}, 0, String.join(System.lineSeparator(), "test_project1", "test_project2"), "");
+    void testLs() {
+        assertCommandSuccessful(new String[] {"afs", "--ls"}, "mem" + System.lineSeparator());
+        assertCommandSuccessfulMatch(new String[] {"afs", "--ls", "mem:/"}, String.join(System.lineSeparator(), "test_project1", "test_project2"));
     }
 
     @Test
-    void testLsInconsistentNodes() throws IOException {
-        assertCommand(new String[] {"afs", "--ls-inconsistent-nodes", "mem"}, 0, "mem:"
+    void testLsInconsistentNodes() {
+        assertCommandMatchTextOrRegex(new String[] {"afs", "--ls-inconsistent-nodes", "mem"}, 0, "mem:"
                 + System.lineSeparator() + "[a-z0-9-]+" + System.lineSeparator(), "");
-        assertCommand(new String[] {"afs", "--ls-inconsistent-nodes"}, 0, "mem:"
+        assertCommandMatchTextOrRegex(new String[] {"afs", "--ls-inconsistent-nodes"}, 0, "mem:"
                 + System.lineSeparator() + "[a-z0-9-]+" + System.lineSeparator(), "");
     }
 
     @Test
-    void testFixInconsistentNodes() throws IOException {
-        assertCommand(new String[] {"afs", "--fix-inconsistent-nodes", "mem"}, 0, "mem:"
+    void testFixInconsistentNodes() {
+        assertCommandMatchTextOrRegex(new String[] {"afs", "--fix-inconsistent-nodes", "mem"}, 0, "mem:"
                 + System.lineSeparator() + "[a-z0-9-]+ fixed", "");
-        assertCommand(new String[] {"afs", "--fix-inconsistent-nodes"}, 3, "", "IllegalArgumentException");
-        assertCommand(new String[] {"afs", "--ls-inconsistent-nodes", "mem", "nodeId"}, 0, "mem:"
+        assertCommandErrorMatch(new String[] {"afs", "--fix-inconsistent-nodes"}, 3, "IllegalArgumentException");
+        assertCommandMatchTextOrRegex(new String[] {"afs", "--ls-inconsistent-nodes", "mem", "nodeId"}, 0, "mem:"
                 + System.lineSeparator() + "[a-z0-9-]+" + System.lineSeparator(), "");
     }
 
     @Test
-    void testRemoveInconsistentNodes() throws IOException {
-        assertCommand(new String[] {"afs", "--rm-inconsistent-nodes", "mem"}, 0, "mem:"
+    void testRemoveInconsistentNodes() {
+        assertCommandMatchTextOrRegex(new String[] {"afs", "--rm-inconsistent-nodes", "mem"}, 0, "mem:"
                 + System.lineSeparator() + "[a-z0-9-]+ cleaned", "");
-        assertCommand(new String[] {"afs", "--rm-inconsistent-nodes"}, 3, "", "IllegalArgumentException");
+        assertCommandErrorMatch(new String[] {"afs", "--rm-inconsistent-nodes"}, 3, "IllegalArgumentException");
     }
 }
