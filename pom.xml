@@ -49,6 +49,7 @@
 
     <modules>
         <module>afs-action-dsl</module>
+        <module>afs-cassandra</module>
         <module>afs-contingency</module>
         <module>afs-core</module>
         <module>afs-distribution</module>
@@ -74,6 +75,8 @@
 
         <assertj.version>3.26.0</assertj.version>
         <autoservice.version>1.1.1</autoservice.version>
+        <cassandra.version>4.18.1</cassandra.version>
+        <cassandraunit.version>4.3.1.0</cassandraunit.version>
         <commonscodec.version>1.17.0</commonscodec.version>
         <ec.version>11.1.0</ec.version>
         <groovy.version>4.0.21</groovy.version>
@@ -268,6 +271,16 @@
                 <version>${jakartawsrs.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.apache.cassandra</groupId>
+                <artifactId>java-driver-core</artifactId>
+                <version>${cassandra.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.cassandra</groupId>
+                <artifactId>java-driver-query-builder</artifactId>
+                <version>${cassandra.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.apache.groovy</groupId>
                 <artifactId>groovy</artifactId>
                 <version>${groovy.version}</version>
@@ -348,6 +361,12 @@
                 <groupId>com.google.jimfs</groupId>
                 <artifactId>jimfs</artifactId>
                 <version>${jimfs.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.cassandraunit</groupId>
+                <artifactId>cassandra-unit</artifactId>
+                <version>${cassandraunit.version}</version>
+                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.junit.jupiter</groupId>

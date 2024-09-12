@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright (c) 2024, RTE (https://www.rte-france.com)
+  ~ This Source Code Form is subject to the terms of the Mozilla Public
+  ~ License, v. 2.0. If a copy of the MPL was not distributed with this
+  ~ file, You can obtain one at http://mozilla.org/MPL/2.0/.
+  ~ SPDX-License-Identifier: MPL-2.0
+  -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.powsybl</groupId>
+        <artifactId>powsybl-afs</artifactId>
+        <version>6.2.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>powsybl-afs-cassandra</artifactId>
+    <name>AFS Cassandra impl</name>
+    <description>AFS Cassandra implementation</description>
+
+    <properties>
+        <cassandra.maven.plugin.version>3.7</cassandra.maven.plugin.version>
+        <cassandra-all.version>3.11.5</cassandra-all.version>
+    </properties>
+
+    <build>
+        <plugins>
+<!--            <plugin>-->
+<!--                <groupId>org.codehaus.mojo</groupId>-->
+<!--                <artifactId>build-helper-maven-plugin</artifactId>-->
+<!--                <executions>-->
+<!--                    <execution>-->
+<!--                        <id>reserve-network-port</id>-->
+<!--                        <goals>-->
+<!--                            <goal>reserve-network-port</goal>-->
+<!--                        </goals>-->
+<!--                        <phase>process-test-resources</phase>-->
+<!--                        <configuration>-->
+<!--                            <portNames>-->
+<!--                                <portName>cassandra.nativeTransportPort</portName>-->
+<!--                                <portName>cassandra.jmxPort</portName>-->
+<!--                                <portName>cassandra.storagePort</portName>-->
+<!--                            </portNames>-->
+<!--                        </configuration>-->
+<!--                    </execution>-->
+<!--                </executions>-->
+<!--            </plugin>-->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>cassandra-maven-plugin</artifactId>
+                <version>${cassandra.maven.plugin.version}</version>
+<!--                <configuration>-->
+<!--                    <addJdk11Options>true</addJdk11Options>-->
+<!--                    <cassandraDir>target/cassandra</cassandraDir>-->
+<!--                    <cqlVersion>${cassandra-all.version}</cqlVersion>-->
+<!--                    <logLevel>INFO</logLevel>-->
+<!--                    <nativeTransportPort>9044</nativeTransportPort>-->
+<!--                    <startWaitSeconds>90</startWaitSeconds>-->
+<!--                    <maxMemory>1024</maxMemory>-->
+<!--&lt;!&ndash;                    <configFile>src/test/resources/cassandra.yaml</configFile> &lt;!&ndash; Fichier de configuration Cassandra &ndash;&gt;&ndash;&gt;-->
+<!--                </configuration>-->
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>start</goal>
+                            <goal>stop</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.cassandra</groupId>
+                        <artifactId>cassandra-all</artifactId>
+                        <version>${cassandra-all.version}</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+        <!-- compile dependencies -->
+        <dependency>
+            <groupId>org.apache.cassandra</groupId>
+            <artifactId>java-driver-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.cassandra</groupId>
+            <artifactId>java-driver-query-builder</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>powsybl-afs-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- test dependencies -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.cassandraunit</groupId>
+            <artifactId>cassandra-unit</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>powsybl-afs-storage-api</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>
