@@ -13,14 +13,14 @@ CREATE TABLE IF NOT EXISTS afs.children_by_name_and_class (
     child_creation_date timestamp,
     child_description text,
     child_consistent boolean,
-    child_group text, // TODO
+    child_group text,
     child_id timeuuid,
     child_modification_date timestamp,
-    child_owner text, // TODO
+    child_owner text,
     child_version int,
-    child_users_rights frozen<map<text,smallint>>, // TODO
-    child_groups_rights frozen<map<text,smallint>>, // TODO
-    child_others_rights smallint, // TODO
+    child_users_rights frozen<map<text,smallint>>,
+    child_groups_rights frozen<map<text,smallint>>,
+    child_others_rights smallint,
     cmt map<text, text>,
     cmi map<text, int>,
     cmd map<text, double>,
@@ -28,10 +28,10 @@ CREATE TABLE IF NOT EXISTS afs.children_by_name_and_class (
     creation_date timestamp static,
     consistent boolean static,
     description text static,
-    group text static, // TODO
+    group text static,
     modification_date timestamp static,
     name text static,
-    owner text static, // TODO
+    owner text static,
     parent_id timeuuid static,
     pseudo_class text static,
     version int static,
@@ -39,16 +39,16 @@ CREATE TABLE IF NOT EXISTS afs.children_by_name_and_class (
     mi map<text, int> static,
     md map<text, double> static,
     mb map<text, boolean> static,
-    users_rights frozen<map<text,smallint>> static, // TODO
-    groups_rights frozen<map<text,smallint>> static, // TODO
-    others_rights smallint static, // TODO
+    users_rights frozen<map<text,smallint>> static,
+    groups_rights frozen<map<text,smallint>> static,
+    others_rights smallint static,
     PRIMARY KEY (id, child_name, child_pseudo_class)
 );
 
 CREATE MATERIALIZED VIEW afs.children_by_class_and_name AS
     SELECT id, child_pseudo_class, child_name, child_creation_date, child_description, child_group, child_id, child_modification_date, child_owner,
     child_version, child_users_rights, child_groups_rights, child_others_rights, cmt, cmi, cmd, cmb
-    FROM children_by_name_and_class
+    FROM afs.children_by_name_and_class
     WHERE id IS NOT NULL AND child_name IS NOT NULL AND child_pseudo_class IS NOT NULL
     PRIMARY KEY (id, child_pseudo_class, child_name);
 

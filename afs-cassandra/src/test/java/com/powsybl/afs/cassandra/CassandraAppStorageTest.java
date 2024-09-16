@@ -18,15 +18,13 @@ import com.powsybl.afs.storage.check.FileSystemCheckIssue;
 import com.powsybl.afs.storage.check.FileSystemCheckOptions;
 import com.powsybl.afs.storage.check.FileSystemCheckOptionsBuilder;
 import org.apache.commons.lang3.SystemUtils;
-import org.cassandraunit.CQLDataLoader;
-import org.cassandraunit.dataset.cql.ClassPathCQLDataSet;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.testcontainers.containers.CassandraContainer;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -48,6 +46,7 @@ import static org.junit.jupiter.api.Assumptions.assumeFalse;
  */
 class CassandraAppStorageTest extends AbstractAppStorageTest {
 
+    private static CassandraContainer<?> cassandra;
     private static CqlSession cassandraSession;
 
     @BeforeAll
@@ -57,17 +56,25 @@ class CassandraAppStorageTest extends AbstractAppStorageTest {
 
     @BeforeAll
     public static void setUpCassandra() {
+        // Create container
+        cassandra = new CassandraContainer<>("cassandra:3.11.5")
+            .withInitScript("afs.cql");
+
+        // Start the container
+        cassandra.start();
+
         // Connect to cassandra
         cassandraSession = CqlSession.builder()
-            .addContactPoint(new InetSocketAddress("127.0.0.1", 9044))
-            .withKeyspace("your_keyspace")
+            .addContactPoint(cassandra.getContactPoint())
+            .withLocalDatacenter(cassandra.getLocalDatacenter())
+            .withKeyspace("afs")
             .build();
 
-        // Data set
-        ClassPathCQLDataSet classPathCQLDataSet = new ClassPathCQLDataSet("afs.cql", AFS_KEYSPACE);
-
-        // Run CQL scripts
-        new CQLDataLoader(cassandraSession).load(classPathCQLDataSet);
+//        // Data set
+//        ClassPathCQLDataSet classPathCQLDataSet = new ClassPathCQLDataSet("afs.cql", AFS_KEYSPACE);
+//
+//        // Run CQL scripts
+//        new CQLDataLoader(cassandraSession).load(classPathCQLDataSet);
     }
 
     @BeforeEach
@@ -82,6 +89,9 @@ class CassandraAppStorageTest extends AbstractAppStorageTest {
     public static void tearDownCassandra() {
         if (cassandraSession != null) {
             cassandraSession.close();
+            if (cassandra != null) {
+                cassandra.stop();
+            }
         }
     }
 
