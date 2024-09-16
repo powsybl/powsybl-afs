@@ -1410,6 +1410,9 @@ public class CassandraAppStorage extends AbstractAppStorage {
                                 stepValues.stream().mapToDouble(Double::valueOf).toArray(),
                                 stepLengths.stream().mapToInt(Integer::valueOf).toArray()));
             }
+
+            // Reorder the elements of the lists by offset
+            timeSeriesData.forEach((name, list) -> list.sort(Comparator.comparing(DoubleDataChunk::getOffset)));
         }
         return timeSeriesData;
     }
@@ -1454,6 +1457,9 @@ public class CassandraAppStorage extends AbstractAppStorage {
                                 stepValues.toArray(new String[stepValues.size()]),
                                 stepLengths.stream().mapToInt(Integer::valueOf).toArray()));
             }
+
+            // Reorder the elements of the lists by offset
+            timeSeriesData.forEach((name, list) -> list.sort(Comparator.comparing(StringDataChunk::getOffset)));
         }
 
         return timeSeriesData;
