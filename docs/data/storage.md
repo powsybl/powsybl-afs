@@ -38,7 +38,8 @@ tested on Cassandra v3.11.5 and is expected to be tested against more recent ver
 
 ### Configuration
 In order to access to a Cassandra database, you have to configure the 
-[cassandra-app-file-system](../configuration/cassandra-app-file-system.md) and the cassandra-app-storage
+[cassandra-app-file-system](../configuration/cassandra-app-file-system.md) and the
+[cassandra-app-storage](../configuration/cassandra-app-storage.md)
 modules in the configuration file.
 
 **YAML configuration**
