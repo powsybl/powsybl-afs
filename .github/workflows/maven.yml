@@ -14,7 +14,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, windows-latest, macos-13, macos-14]
 
     steps:
       - name: Checkout sources
@@ -27,10 +27,10 @@ jobs:
           java-version: '17'
 
       - name: Install Docker on macOS
-        if: matrix.os == 'macos-latest'
+        if: matrix.os == 'macos-13' || matrix.os == 'macos-14'
         run: |
-          brew install docker colima
-          /opt/homebrew/opt/colima/bin/colima start -f
+          brew install docker
+          colima start
 
       - name: Build with Maven (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
