@@ -14,7 +14,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-13]
+        os: [ubuntu-latest, windows-latest]
 
     steps:
       - name: Checkout sources
@@ -26,13 +26,6 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Install Docker on macOS
-        if: matrix.os == 'macos-13'
-        run: |
-          brew install colima docker
-          colima start
-          docker ps
-
       - name: Build with Maven (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
         run: ./mvnw --batch-mode -Pjacoco install
@@ -41,10 +34,6 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: mvnw.cmd --batch-mode install
         shell: cmd
-
-      - name: Build with Maven (MacOS)
-        if: matrix.os == 'macos-latest'
-        run: ./mvnw --batch-mode install
 
       - name: Run SonarCloud analysis
         if: matrix.os == 'ubuntu-latest'
