@@ -26,6 +26,13 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Install Docker on macOS
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install --cask docker
+          open /Applications/Docker.app
+          while ! docker system info > /dev/null 2>&1; do sleep 1; done
+
       - name: Build with Maven (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
         run: ./mvnw --batch-mode -Pjacoco install
