@@ -29,8 +29,9 @@ jobs:
       - name: Install Docker on macOS
         if: matrix.os == 'macos-13'
         run: |
-          brew install docker
+          brew install colima docker
           colima start
+          docker ps
 
       - name: Build with Maven (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
