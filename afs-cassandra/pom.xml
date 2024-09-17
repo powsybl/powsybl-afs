@@ -26,79 +26,6 @@
         <cassandra-all.version>3.11.5</cassandra-all.version>
     </properties>
 
-<!--    <build>-->
-<!--        <plugins>-->
-<!--&lt;!&ndash;            <plugin>&ndash;&gt;-->
-<!--&lt;!&ndash;                <groupId>org.codehaus.mojo</groupId>&ndash;&gt;-->
-<!--&lt;!&ndash;                <artifactId>build-helper-maven-plugin</artifactId>&ndash;&gt;-->
-<!--&lt;!&ndash;                <executions>&ndash;&gt;-->
-<!--&lt;!&ndash;                    <execution>&ndash;&gt;-->
-<!--&lt;!&ndash;                        <id>reserve-network-port</id>&ndash;&gt;-->
-<!--&lt;!&ndash;                        <goals>&ndash;&gt;-->
-<!--&lt;!&ndash;                            <goal>reserve-network-port</goal>&ndash;&gt;-->
-<!--&lt;!&ndash;                        </goals>&ndash;&gt;-->
-<!--&lt;!&ndash;                        <phase>process-test-resources</phase>&ndash;&gt;-->
-<!--&lt;!&ndash;                        <configuration>&ndash;&gt;-->
-<!--&lt;!&ndash;                            <portNames>&ndash;&gt;-->
-<!--&lt;!&ndash;                                <portName>cassandra.nativeTransportPort</portName>&ndash;&gt;-->
-<!--&lt;!&ndash;                                <portName>cassandra.jmxPort</portName>&ndash;&gt;-->
-<!--&lt;!&ndash;                                <portName>cassandra.storagePort</portName>&ndash;&gt;-->
-<!--&lt;!&ndash;                            </portNames>&ndash;&gt;-->
-<!--&lt;!&ndash;                        </configuration>&ndash;&gt;-->
-<!--&lt;!&ndash;                    </execution>&ndash;&gt;-->
-<!--&lt;!&ndash;                </executions>&ndash;&gt;-->
-<!--&lt;!&ndash;            </plugin>&ndash;&gt;-->
-<!--            <plugin>-->
-<!--                <artifactId>maven-failsafe-plugin</artifactId>-->
-<!--                <executions>-->
-<!--                    <execution>-->
-<!--                        <goals>-->
-<!--                            <goal>integration-test</goal>-->
-<!--                            <goal>verify</goal>-->
-<!--                        </goals>-->
-<!--                    </execution>-->
-<!--                </executions>-->
-<!--            </plugin>-->
-<!--            <plugin>-->
-<!--                <groupId>org.codehaus.mojo</groupId>-->
-<!--                <artifactId>cassandra-maven-plugin</artifactId>-->
-<!--                <version>4.0.0</version>-->
-<!--                <configuration>-->
-<!--                    <nativeTransportPort>19042</nativeTransportPort>-->
-<!--                    <jmxPort>17199</jmxPort>-->
-<!--                    <storagePort>17000</storagePort>-->
-<!--                    <stopPort>18081</stopPort>-->
-<!--                    <addJdk11Options>true</addJdk11Options>-->
-<!--                    <script>src/test/resources/afs.cql</script>-->
-<!--                    <loadAfterFirstStart>false</loadAfterFirstStart>-->
-<!--&lt;!&ndash;                    <cassandraDir>target/cassandra</cassandraDir>&ndash;&gt;-->
-<!--&lt;!&ndash;                    <cqlVersion>${cassandra-all.version}</cqlVersion>&ndash;&gt;-->
-<!--&lt;!&ndash;                    <logLevel>INFO</logLevel>&ndash;&gt;-->
-<!--&lt;!&ndash;                    <nativeTransportPort>9044</nativeTransportPort>&ndash;&gt;-->
-<!--&lt;!&ndash;                    <startWaitSeconds>90</startWaitSeconds>&ndash;&gt;-->
-<!--&lt;!&ndash;                    <maxMemory>1024</maxMemory>&ndash;&gt;-->
-<!--&lt;!&ndash;&lt;!&ndash;                    <configFile>src/test/resources/cassandra.yaml</configFile> &lt;!&ndash; Fichier de configuration Cassandra &ndash;&gt;&ndash;&gt;&ndash;&gt;-->
-<!--                </configuration>-->
-<!--                <executions>-->
-<!--                    <execution>-->
-<!--                        <id>start-cassandra</id>-->
-<!--                        <phase>pre-integration-test</phase>-->
-<!--                        <goals>-->
-<!--                            <goal>start</goal>-->
-<!--                        </goals>-->
-<!--                    </execution>-->
-<!--                    <execution>-->
-<!--                        <id>stop-cassandra</id>-->
-<!--                        <phase>post-integration-test</phase>-->
-<!--                        <goals>-->
-<!--                            <goal>stop</goal>-->
-<!--                        </goals>-->
-<!--                    </execution>-->
-<!--                </executions>-->
-<!--            </plugin>-->
-<!--        </plugins>-->
-<!--    </build>-->
-
     <dependencies>
         <!-- compile dependencies -->
         <dependency>
@@ -131,11 +58,6 @@
             <artifactId>slf4j-simple</artifactId>
             <scope>test</scope>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>org.cassandraunit</groupId>-->
-<!--            <artifactId>cassandra-unit</artifactId>-->
-<!--            <scope>test</scope>-->
-<!--        </dependency>-->
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>cassandra</artifactId>
