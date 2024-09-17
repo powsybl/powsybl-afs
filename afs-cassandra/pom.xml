@@ -28,40 +28,50 @@
 
     <build>
         <plugins>
-<!--            <plugin>-->
-<!--                <groupId>org.codehaus.mojo</groupId>-->
-<!--                <artifactId>build-helper-maven-plugin</artifactId>-->
-<!--                <executions>-->
-<!--                    <execution>-->
-<!--                        <id>reserve-network-port</id>-->
-<!--                        <goals>-->
-<!--                            <goal>reserve-network-port</goal>-->
-<!--                        </goals>-->
-<!--                        <phase>process-test-resources</phase>-->
-<!--                        <configuration>-->
-<!--                            <portNames>-->
-<!--                                <portName>cassandra.nativeTransportPort</portName>-->
-<!--                                <portName>cassandra.jmxPort</portName>-->
-<!--                                <portName>cassandra.storagePort</portName>-->
-<!--                            </portNames>-->
-<!--                        </configuration>-->
-<!--                    </execution>-->
-<!--                </executions>-->
-<!--            </plugin>-->
+            <!--            <plugin>-->
+            <!--                <groupId>org.codehaus.mojo</groupId>-->
+            <!--                <artifactId>build-helper-maven-plugin</artifactId>-->
+            <!--                <executions>-->
+            <!--                    <execution>-->
+            <!--                        <id>reserve-network-port</id>-->
+            <!--                        <goals>-->
+            <!--                            <goal>reserve-network-port</goal>-->
+            <!--                        </goals>-->
+            <!--                        <phase>process-test-resources</phase>-->
+            <!--                        <configuration>-->
+            <!--                            <portNames>-->
+            <!--                                <portName>cassandra.nativeTransportPort</portName>-->
+            <!--                                <portName>cassandra.jmxPort</portName>-->
+            <!--                                <portName>cassandra.storagePort</portName>-->
+            <!--                            </portNames>-->
+            <!--                        </configuration>-->
+            <!--                    </execution>-->
+            <!--                </executions>-->
+            <!--            </plugin>-->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>cassandra-maven-plugin</artifactId>
-                <version>${cassandra.maven.plugin.version}</version>
-<!--                <configuration>-->
-<!--                    <addJdk11Options>true</addJdk11Options>-->
-<!--                    <cassandraDir>target/cassandra</cassandraDir>-->
-<!--                    <cqlVersion>${cassandra-all.version}</cqlVersion>-->
-<!--                    <logLevel>INFO</logLevel>-->
-<!--                    <nativeTransportPort>9044</nativeTransportPort>-->
-<!--                    <startWaitSeconds>90</startWaitSeconds>-->
-<!--                    <maxMemory>1024</maxMemory>-->
-<!--&lt;!&ndash;                    <configFile>src/test/resources/cassandra.yaml</configFile> &lt;!&ndash; Fichier de configuration Cassandra &ndash;&gt;&ndash;&gt;-->
-<!--                </configuration>-->
+                <version>4.0.0</version>
+                <configuration>
+                    <nativeTransportPort>19042</nativeTransportPort>
+                    <jmxPort>17199</jmxPort>
+                    <storagePort>17000</storagePort>
+                    <stopPort>18081</stopPort>
+                    <addJdk11Options>true</addJdk11Options>
+                    <script>src/test/resources/afs.cql</script>
+                    <jvmArgs>
+                        <jvmArg>--add-opens java.base/sun.nio.ch=ALL-UNNAMED</jvmArg>
+                        <jvmArg>--add-opens java.base/java.io=ALL-UNNAMED</jvmArg>
+                    </jvmArgs>
+                    <loadAfterFirstStart>false</loadAfterFirstStart>
+                    <!--                    <cassandraDir>target/cassandra</cassandraDir>-->
+                    <!--                    <cqlVersion>${cassandra-all.version}</cqlVersion>-->
+                    <!--                    <logLevel>INFO</logLevel>-->
+                    <!--                    <nativeTransportPort>9044</nativeTransportPort>-->
+                    <!--                    <startWaitSeconds>90</startWaitSeconds>-->
+                    <!--                    <maxMemory>1024</maxMemory>-->
+                    <!--&lt;!&ndash;                    <configFile>src/test/resources/cassandra.yaml</configFile> &lt;!&ndash; Fichier de configuration Cassandra &ndash;&gt;&ndash;&gt;-->
+                </configuration>
                 <executions>
                     <execution>
                         <goals>
@@ -70,13 +80,6 @@
                         </goals>
                     </execution>
                 </executions>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.apache.cassandra</groupId>
-                        <artifactId>cassandra-all</artifactId>
-                        <version>${cassandra-all.version}</version>
-                    </dependency>
-                </dependencies>
             </plugin>
         </plugins>
     </build>
