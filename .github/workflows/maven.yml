@@ -29,8 +29,11 @@ jobs:
       - name: Install Docker on macOS
         if: matrix.os == 'macos-latest'
         run: |
-          brew install docker
+          brew install docker colima
           colima start
+          ls -la $HOME/.colima/default/docker.sock
+          sudo ln -sf $HOME/.colima/default/docker.sock /var/run/docker.sock
+          ls -la /var/run/docker.sock
 
       - name: Build with Maven (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
