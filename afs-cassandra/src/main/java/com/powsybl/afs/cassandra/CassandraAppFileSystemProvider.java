@@ -11,8 +11,6 @@ import com.powsybl.afs.AppFileSystem;
 import com.powsybl.afs.AppFileSystemProvider;
 import com.powsybl.afs.AppFileSystemProviderContext;
 import com.powsybl.afs.storage.EventsBus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Objects;
@@ -23,8 +21,6 @@ import java.util.stream.Collectors;
  */
 @AutoService(AppFileSystemProvider.class)
 public class CassandraAppFileSystemProvider implements AppFileSystemProvider {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(CassandraAppFileSystemProvider.class);
 
     private final List<CassandraAppFileSystemConfig> fileSystemConfigs;
 

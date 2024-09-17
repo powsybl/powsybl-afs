@@ -12,7 +12,6 @@ import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.google.common.base.Stopwatch;
-import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
 import com.powsybl.afs.storage.*;
@@ -33,6 +32,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.IntSupplier;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -58,7 +58,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
     private final Supplier<PreparedStatements> preparedStatementsSupplier;
     private final StorageChangeFlusher changeFlusher = new StorageChangeFlusher() {
 
-        private void flush(TimeSeriesCreation creation, List<Statement> statements, TimeSeriesWritingContext writingContext) {
+        private void flush(TimeSeriesCreation creation, List<Statement<?>> statements, TimeSeriesWritingContext writingContext) {
             if (creation.getMetadata().getIndex() instanceof RegularTimeSeriesIndex index) {
                 statements.add(preparedStatementsSupplier.get().createTimeSeriesPreparedStmt
                     .bind()
@@ -76,7 +76,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
             writingContext.createdTimeSeriesCount++;
         }
 
-        private void flush(DoubleTimeSeriesChunksAddition addition, List<Statement> statements, TimeSeriesWritingContext writingContext) {
+        private void flush(DoubleTimeSeriesChunksAddition addition, List<Statement<?>> statements, TimeSeriesWritingContext writingContext) {
             UUID nodeUuid = checkNodeId(addition.getNodeId());
             int version = addition.getVersion();
             String timeSeriesName = addition.getTimeSeriesName();
@@ -87,7 +87,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
                 // skip empty chunks
                 if (chunk.getLength() == 0) {
-                    LOGGER.warn("Empty chunk for time series {} version {} of node {}", timeSeriesName, version, nodeUuid);
+                    logEmptyChunk(timeSeriesName, version, nodeUuid);
                     continue;
                 }
 
@@ -128,23 +128,23 @@ public class CassandraAppStorage extends AbstractAppStorage {
         }
 
         /**
-         * Cassandra does not support null values in collection, so in order to avoid the following error, we replace
-         * null strings by empty strings.
+         * <p>Cassandra does not support null values in collection, so in order to avoid the following error, we replace
+         * null strings by empty strings.</p>
          *
-         * java.lang.NullPointerException: Collection elements cannot be null
+         * <pre> java.lang.NullPointerException: Collection elements cannot be null
          *
          *     at com.datastax.driver.core.TypeCodec$AbstractCollectionCodec.serialize(TypeCodec.java:1767)
          *     at com.datastax.driver.core.TypeCodec$AbstractCollectionCodec.serialize(TypeCodec.java:1749)
          *     at com.datastax.driver.core.AbstractData.setList(AbstractData.java:358)
          *     at com.datastax.driver.core.BoundStatement.setList(BoundStatement.java:654)
-         *     at com.rte_france.powsybl.afs.cassandra.CassandraAppStorage$1.flush(CassandraAppStorage.java:179)
+         *     at com.rte_france.powsybl.afs.cassandra.CassandraAppStorage$1.flush(CassandraAppStorage.java:179)}</pre>
          */
         private List<String> fixNullValues(String[] values) {
             Objects.requireNonNull(values);
             return Arrays.stream(values).map(v -> v != null ? v : "").collect(Collectors.toList());
         }
 
-        private void flush(StringTimeSeriesChunksAddition addition, List<Statement> statements, TimeSeriesWritingContext writingContext) {
+        private void flush(StringTimeSeriesChunksAddition addition, List<Statement<?>> statements, TimeSeriesWritingContext writingContext) {
             UUID nodeUuid = checkNodeId(addition.getNodeId());
             int version = addition.getVersion();
             String timeSeriesName = addition.getTimeSeriesName();
@@ -155,7 +155,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
                 // skip empty chunks
                 if (chunk.getLength() == 0) {
-                    LOGGER.warn("Empty chunk for time series {} version {} of node {}", timeSeriesName, version, nodeUuid);
+                    logEmptyChunk(timeSeriesName, version, nodeUuid);
                     continue;
                 }
 
@@ -202,7 +202,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
         public void flush(StorageChangeSet changeSet) {
             Stopwatch watch = Stopwatch.createStarted();
 
-            List<Statement> statements = new ArrayList<>();
+            List<Statement<?>> statements = new ArrayList<>();
 
             TimeSeriesWritingContext writingContext = new TimeSeriesWritingContext();
 
@@ -240,6 +240,10 @@ public class CassandraAppStorage extends AbstractAppStorage {
                     writingContext.createdTimeSeriesCount, writingContext.insertedChunkCount, watch.elapsed(TimeUnit.MILLISECONDS));
             }
         }
+
+        private void logEmptyChunk(String timeSeriesName, int version, UUID nodeUuid) {
+            LOGGER.warn("Empty chunk for time series {} version {} of node {}", timeSeriesName, version, nodeUuid);
+        }
     };
     private final StorageChangeBuffer changeBuffer;
 
@@ -247,7 +251,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
                                CassandraAppStorageConfig config, EventsBus eventsBus) {
         this.eventsBus = eventsBus;
         this.fileSystemName = Objects.requireNonNull(fileSystemName);
-        this.contextSupplier = Suppliers.memoize(Objects.requireNonNull(contextSupplier));
+        this.contextSupplier = Suppliers.memoize(Objects.requireNonNull(contextSupplier::get));
         this.config = Objects.requireNonNull(config);
 
         // WARNING: Cassandra cannot mutate more that 16Mo per query!
@@ -263,10 +267,6 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
     private static boolean isConsistentBackwardCompatible(Row row, int i) {
         return row.isNull(i) || row.getBoolean(i);
-    }
-
-    private static Map<String, Term> addAllMetadata(NodeInfo nodeInfo) {
-        return addAllMetadata(nodeInfo.getGenericMetadata());
     }
 
     private static Map<String, Term> addAllChildMetadata(NodeInfo nodeInfo) {
@@ -293,18 +293,25 @@ public class CassandraAppStorage extends AbstractAppStorage {
     }
 
     private static FileSystemCheckIssue buildExpirationInconsistent(Row row, Instant instant) {
-        if (row.getInstant(MODIFICATION_DATE).isBefore(instant) && !row.getBoolean(CONSISTENT)) {
+        Instant rowInstant = row.getInstant(MODIFICATION_DATE);
+        if (rowInstant != null && rowInstant.isBefore(instant) && !row.getBoolean(CONSISTENT)) {
             final FileSystemCheckIssue fileSystemCheckIssue = buildIssue(row);
-            fileSystemCheckIssue.setType("inconsistent");
-            fileSystemCheckIssue.setDescription("inconsistent and older than " + instant);
-            return fileSystemCheckIssue;
+            if (fileSystemCheckIssue != null) {
+                fileSystemCheckIssue.setType("inconsistent");
+                fileSystemCheckIssue.setDescription("inconsistent and older than " + instant);
+                return fileSystemCheckIssue;
+            }
         }
         return null;
     }
 
     private static FileSystemCheckIssue buildIssue(Row row) {
+        UUID uuid = row.getUuid(ID);
+        if (uuid == null) {
+            return null;
+        }
         final FileSystemCheckIssue issue = new FileSystemCheckIssue();
-        issue.setNodeId(row.getUuid(ID).toString()).setNodeName(row.getString(NAME));
+        issue.setNodeId(uuid.toString()).setNodeName(row.getString(NAME));
         return issue;
     }
 
@@ -348,7 +355,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
         NodeInfo rootNodeInfo;
         if (rootCreated) {
             BatchStatementBuilder batchStatements = new BatchStatementBuilder(BatchType.UNLOGGED);
-            rootNodeInfo = createNode(rootNodeUuid, null, name, nodePseudoClass, "", 0, new NodeGenericMetadata(), batchStatements);
+            rootNodeInfo = createNode(new NodeParameters(rootNodeUuid, null, name, nodePseudoClass, "", 0, new NodeGenericMetadata()), batchStatements);
             getSession().execute(batchStatements.build());
             setConsistent(rootNodeInfo.getId());
         } else {
@@ -358,11 +365,11 @@ public class CassandraAppStorage extends AbstractAppStorage {
         return rootNodeInfo;
     }
 
-    private String getNodeName(UUID nodeUuid) {
+    private Row getRowByUuid(UUID nodeUuid, String column) {
         Objects.requireNonNull(nodeUuid);
         SimpleStatement selectQuery = selectFrom(CHILDREN_BY_NAME_AND_CLASS)
             .distinct()
-            .column(NAME)
+            .column(column)
             .whereColumn(ID).isEqualTo(literal(nodeUuid))
             .build();
         ResultSet resultSet = getSession().execute(selectQuery);
@@ -370,6 +377,11 @@ public class CassandraAppStorage extends AbstractAppStorage {
         if (row == null) {
             throw createNodeNotFoundException(nodeUuid);
         }
+        return row;
+    }
+
+    private String getNodeName(UUID nodeUuid) {
+        Row row = getRowByUuid(nodeUuid, NAME);
         return row.getString(0);
     }
 
@@ -381,58 +393,52 @@ public class CassandraAppStorage extends AbstractAppStorage {
     @Override
     public boolean isConsistent(String nodeId) {
         UUID nodeUuid = checkNodeId(nodeId);
-        Objects.requireNonNull(nodeUuid);
-        SimpleStatement selectQuery = selectFrom(CHILDREN_BY_NAME_AND_CLASS)
-            .distinct()
-            .column(CONSISTENT)
-            .whereColumn(ID).isEqualTo(literal(nodeUuid))
-            .build();
-        ResultSet resultSet = getSession().execute(selectQuery);
-        Row row = resultSet.one();
-        if (row == null) {
-            throw createNodeNotFoundException(nodeUuid);
-        }
+        Row row = getRowByUuid(nodeUuid, CONSISTENT);
         return isConsistentBackwardCompatible(row, 0);
     }
 
     private NodeInfo createNode(UUID parentNodeUuid, String name, String nodePseudoClass, String description,
                                 int version, NodeGenericMetadata genericMetadata, BatchStatementBuilder batchStatements) {
-        return createNode(Uuids.timeBased(), parentNodeUuid, name, nodePseudoClass, description, version, genericMetadata, batchStatements);
+        return createNode(new NodeParameters(Uuids.timeBased(), parentNodeUuid, name, nodePseudoClass, description, version, genericMetadata), batchStatements);
     }
 
-    private NodeInfo createNode(UUID nodeUuid, UUID parentNodeUuid, String name, String nodePseudoClass,
-                                String description, int version, NodeGenericMetadata genericMetadata,
+    private record NodeParameters(UUID nodeUuid, UUID parentNodeUuid, String name, String nodePseudoClass,
+                                  String description, int version, NodeGenericMetadata genericMetadata) {}
+
+    private NodeInfo createNode(NodeParameters nodeParameters,
                                 BatchStatementBuilder batchStatements) {
         long creationTime = ZonedDateTime.now().toInstant().toEpochMilli();
         batchStatements.addStatement(insertInto(CHILDREN_BY_NAME_AND_CLASS)
-            .value(ID, literal(nodeUuid))
-            .value(NAME, literal(name))
-            .value(PARENT_ID, literal(parentNodeUuid))
-            .value(PSEUDO_CLASS, literal(nodePseudoClass))
-            .value(DESCRIPTION, literal(description))
+            .value(ID, literal(nodeParameters.nodeUuid))
+            .value(NAME, literal(nodeParameters.name))
+            .value(PARENT_ID, literal(nodeParameters.parentNodeUuid))
+            .value(PSEUDO_CLASS, literal(nodeParameters.nodePseudoClass))
+            .value(DESCRIPTION, literal(nodeParameters.description))
             .value(CONSISTENT, literal(false))
             .value(CREATION_DATE, literal(Instant.ofEpochMilli(creationTime)))
             .value(MODIFICATION_DATE, literal(Instant.ofEpochMilli(creationTime)))
-            .value(VERSION, literal(version))
-            .values(addAllMetadata(genericMetadata))
+            .value(VERSION, literal(nodeParameters.version))
+            .values(addAllMetadata(nodeParameters.genericMetadata))
             .build());
 
-        if (parentNodeUuid != null) {
+        if (nodeParameters.parentNodeUuid != null) {
             batchStatements.addStatement(insertInto(CHILDREN_BY_NAME_AND_CLASS)
-                .value(ID, literal(parentNodeUuid))
-                .value(CHILD_NAME, literal(name))
-                .value(CHILD_ID, literal(nodeUuid))
-                .value(CHILD_PSEUDO_CLASS, literal(nodePseudoClass))
-                .value(CHILD_DESCRIPTION, literal(description))
+                .value(ID, literal(nodeParameters.parentNodeUuid))
+                .value(CHILD_NAME, literal(nodeParameters.name))
+                .value(CHILD_ID, literal(nodeParameters.nodeUuid))
+                .value(CHILD_PSEUDO_CLASS, literal(nodeParameters.nodePseudoClass))
+                .value(CHILD_DESCRIPTION, literal(nodeParameters.description))
                 .value(CHILD_CONSISTENT, literal(false))
                 .value(CHILD_CREATION_DATE, literal(Instant.ofEpochMilli(creationTime)))
                 .value(CHILD_MODIFICATION_DATE, literal(Instant.ofEpochMilli(creationTime)))
-                .value(CHILD_VERSION, literal(version))
-                .values(addAllChildMetadata(genericMetadata))
+                .value(CHILD_VERSION, literal(nodeParameters.version))
+                .values(addAllChildMetadata(nodeParameters.genericMetadata))
                 .build());
         }
-        pushEvent(new NodeCreated(nodeUuid.toString(), parentNodeUuid != null ? parentNodeUuid.toString() : null), APPSTORAGE_NODE_TOPIC);
-        return new NodeInfo(nodeUuid.toString(), name, nodePseudoClass, description, creationTime, creationTime, version, genericMetadata);
+        pushEvent(new NodeCreated(nodeParameters.nodeUuid.toString(),
+            nodeParameters.parentNodeUuid != null ? nodeParameters.parentNodeUuid.toString() : null), APPSTORAGE_NODE_TOPIC);
+        return new NodeInfo(nodeParameters.nodeUuid.toString(), nodeParameters.name, nodeParameters.nodePseudoClass,
+            nodeParameters.description, creationTime, creationTime, nodeParameters.version, nodeParameters.genericMetadata);
     }
 
     @Override
@@ -916,17 +922,21 @@ public class CassandraAppStorage extends AbstractAppStorage {
         return new BinaryDataOutputStream(nodeUuid, name);
     }
 
-    @Override
-    public boolean dataExists(String nodeId, String name) {
+    private boolean dataExists(String nodeId, String name, String tableName, String nameColumn) {
         UUID nodeUuid = checkNodeId(nodeId);
         Objects.requireNonNull(name);
-        ResultSet resultSet = getSession().execute(selectFrom(NODE_DATA_NAMES)
+        ResultSet resultSet = getSession().execute(selectFrom(tableName)
             .countAll()
             .whereColumn(ID).isEqualTo(literal(nodeUuid))
-            .whereColumn(NAME).isEqualTo(literal(name))
+            .whereColumn(nameColumn).isEqualTo(literal(name))
             .build());
         Row row = resultSet.one();
         return row != null && row.getLong(0) > 0;
+    }
+
+    @Override
+    public boolean dataExists(String nodeId, String name) {
+        return dataExists(nodeId, name, NODE_DATA_NAMES, NAME);
     }
 
     private Set<String> getDataNames(UUID nodeUuid) {
@@ -1002,6 +1012,11 @@ public class CassandraAppStorage extends AbstractAppStorage {
     }
 
     @Override
+    public boolean timeSeriesExists(String nodeId, String timeSeriesName) {
+        return dataExists(nodeId, timeSeriesName, REGULAR_TIME_SERIES, TIME_SERIES_NAME);
+    }
+
+    @Override
     public Set<String> getTimeSeriesNames(String nodeId) {
         UUID nodeUuid = checkNodeId(nodeId);
         Set<String> timeSeriesNames = new TreeSet<>();
@@ -1013,19 +1028,6 @@ public class CassandraAppStorage extends AbstractAppStorage {
             timeSeriesNames.add(row.getString(0));
         }
         return timeSeriesNames;
-    }
-
-    @Override
-    public boolean timeSeriesExists(String nodeId, String timeSeriesName) {
-        UUID nodeUuid = checkNodeId(nodeId);
-        Objects.requireNonNull(timeSeriesName);
-        ResultSet resultSet = getSession().execute(selectFrom(REGULAR_TIME_SERIES)
-            .countAll()
-            .whereColumn(ID).isEqualTo(literal(nodeUuid))
-            .whereColumn(TIME_SERIES_NAME).isEqualTo(literal(timeSeriesName))
-            .build());
-        Row row = resultSet.one();
-        return row != null && row.getLong(0) > 0;
     }
 
     @Override

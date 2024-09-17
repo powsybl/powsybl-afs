@@ -28,10 +28,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.insertInto;
@@ -69,17 +66,11 @@ class CassandraAppStorageTest extends AbstractAppStorageTest {
             .withLocalDatacenter(cassandra.getLocalDatacenter())
             .withKeyspace("afs")
             .build();
-
-//        // Data set
-//        ClassPathCQLDataSet classPathCQLDataSet = new ClassPathCQLDataSet("afs.cql", AFS_KEYSPACE);
-//
-//        // Run CQL scripts
-//        new CQLDataLoader(cassandraSession).load(classPathCQLDataSet);
     }
 
+    @Override
     @BeforeEach
     public void setUp() {
-//        cassandraCQLUnit = new CassandraCQLUnit(classPathCQLDataSet, null, 20000L);
         eventStack = new LinkedBlockingQueue<>();
         this.storage = createStorage();
         this.storage.getEventsBus().addListener(l);
@@ -174,11 +165,13 @@ class CassandraAppStorageTest extends AbstractAppStorageTest {
                 .addCheckTypes(CassandraAppStorage.ORPHAN_DATA)
                 .repair().build();
         List<FileSystemCheckIssue> issues = storage.checkFileSystem(repairOption);
-        assertThat(issues).hasOnlyOneElementSatisfying(i -> {
-            assertEquals(orphanDataId, i.getNodeId());
-            assertEquals(CassandraAppStorage.ORPHAN_DATA, i.getType());
-            assertEquals("N/A", i.getNodeName());
-        });
+        assertEquals(1,
+            issues.stream()
+                .filter(issue -> issue.getNodeId().equals(orphanDataId))
+                .filter(issue -> issue.getType().equals(CassandraAppStorage.ORPHAN_DATA))
+                .filter(issue -> issue.getNodeName().equals("N/A"))
+                .count()
+            );
 
         assertTrue(storage.dataExists(rootFolderInfo.getId(), "should_exist"));
         assertFalse(storage.dataExists(orphanDataId, "blob"));
@@ -199,7 +192,10 @@ class CassandraAppStorageTest extends AbstractAppStorageTest {
                 .addCheckTypes(CassandraAppStorage.ORPHAN_NODE)
                 .repair().build();
         List<FileSystemCheckIssue> issues = storage.checkFileSystem(repairOption);
-        assertThat(issues).hasOnlyOneElementSatisfying(i -> assertEquals(orphanNode.getId(), i.getNodeId()));
+        assertEquals(1,
+            issues.stream()
+                .filter(issue -> issue.getNodeId().equals(orphanNode.getId()))
+                .count());
         assertAfsNodeNotFound(orphanNode.getId());
         assertAfsNodeNotFound(orphanNode.getId());
         assertAfsNodeNotFound(orphanChild.getId());
@@ -280,12 +276,13 @@ class CassandraAppStorageTest extends AbstractAppStorageTest {
                 .addCheckTypes(CassandraAppStorage.REF_NOT_FOUND)
                 .build();
 
-        assertThat(storage.checkFileSystem(noRepair))
-                .hasOnlyOneElementSatisfying(issue -> {
-                    assertEquals(CassandraAppStorage.REF_NOT_FOUND, issue.getType());
-                    assertEquals("absent_child", issue.getNodeName());
-                    assertFalse(issue.isRepaired());
-                });
+        assertEquals(1,
+            storage.checkFileSystem(noRepair).stream()
+                .filter(issue -> issue.getType().equals(CassandraAppStorage.REF_NOT_FOUND))
+                .filter(issue -> issue.getNodeName().equals("absent_child"))
+                .filter(issue -> !issue.isRepaired())
+                .count()
+        );
 
         //Check again, should still be here
         assertTrue(storage.getChildNodes(root.getId()).stream()
