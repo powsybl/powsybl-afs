@@ -68,14 +68,6 @@ class CassandraAppStorageTest extends AbstractAppStorageTest {
             .build();
     }
 
-    @Override
-    @BeforeEach
-    public void setUp() {
-        eventStack = new LinkedBlockingQueue<>();
-        this.storage = createStorage();
-        this.storage.getEventsBus().addListener(l);
-    }
-
     @AfterAll
     public static void tearDownCassandra() {
         if (cassandraSession != null) {
@@ -87,9 +79,17 @@ class CassandraAppStorageTest extends AbstractAppStorageTest {
     }
 
     @Override
+    @BeforeEach
+    public void setUp() {
+        eventStack = new LinkedBlockingQueue<>();
+        this.storage = createStorage();
+        this.storage.getEventsBus().addListener(l);
+    }
+
+    @Override
     protected AppStorage createStorage() {
         return new CassandraAppStorage("test", () -> new CassandraTestContext(cassandraSession),
-                new CassandraAppStorageConfig(), new InMemoryEventsBus());
+            new CassandraAppStorageConfig(), new InMemoryEventsBus());
     }
 
     /**
@@ -162,8 +162,8 @@ class CassandraAppStorageTest extends AbstractAppStorageTest {
         assertAfsNodeNotFound(orphanDataId);
 
         FileSystemCheckOptions repairOption = new FileSystemCheckOptionsBuilder()
-                .addCheckTypes(CassandraAppStorage.ORPHAN_DATA)
-                .repair().build();
+            .addCheckTypes(CassandraAppStorage.ORPHAN_DATA)
+            .repair().build();
         List<FileSystemCheckIssue> issues = storage.checkFileSystem(repairOption);
         assertEquals(1,
             issues.stream()
@@ -171,7 +171,7 @@ class CassandraAppStorageTest extends AbstractAppStorageTest {
                 .filter(issue -> issue.getType().equals(CassandraAppStorage.ORPHAN_DATA))
                 .filter(issue -> issue.getNodeName().equals("N/A"))
                 .count()
-            );
+        );
 
         assertTrue(storage.dataExists(rootFolderInfo.getId(), "should_exist"));
         assertFalse(storage.dataExists(orphanDataId, "blob"));
@@ -189,8 +189,8 @@ class CassandraAppStorageTest extends AbstractAppStorageTest {
         NodeInfo orphanChild = storage.createNode(orphanNode.getId(), "orphanChild", FOLDER_PSEUDO_CLASS, "", 0, new NodeGenericMetadata());
         storage.setConsistent(orphanChild.getId());
         FileSystemCheckOptions repairOption = new FileSystemCheckOptionsBuilder()
-                .addCheckTypes(CassandraAppStorage.ORPHAN_NODE)
-                .repair().build();
+            .addCheckTypes(CassandraAppStorage.ORPHAN_NODE)
+            .repair().build();
         List<FileSystemCheckIssue> issues = storage.checkFileSystem(repairOption);
         assertEquals(1,
             issues.stream()
@@ -209,7 +209,7 @@ class CassandraAppStorageTest extends AbstractAppStorageTest {
     void testInconsistendNodeRepair() {
         NodeInfo rootFolderInfo = storage.createRootNodeIfNotExists(storage.getFileSystemName(), FOLDER_PSEUDO_CLASS);
         NodeInfo inconsistentNode = storage.createNode(rootFolderInfo.getId(), "inconsistentNode", FOLDER_PSEUDO_CLASS, "", 0,
-                new NodeGenericMetadata().setString("k", "v"));
+            new NodeGenericMetadata().setString("k", "v"));
         inconsistentNode.setModificationTime(Instant.now().minus(3, ChronoUnit.DAYS).toEpochMilli());
         storage.flush();
 
@@ -218,10 +218,10 @@ class CassandraAppStorageTest extends AbstractAppStorageTest {
         assertEquals(inconsistentNode.getId(), storage.getInconsistentNodes().get(0).getId());
         storage.flush();
         final FileSystemCheckOptions dryRunOptions = new FileSystemCheckOptionsBuilder()
-                .addCheckTypes(FileSystemCheckOptions.EXPIRED_INCONSISTENT_NODES)
-                // normal should use minus to check filesystem, but here we could not set modification time to an earlier time
-                .setInconsistentNodesExpirationTime(Instant.now().plus(2, ChronoUnit.DAYS))
-                .dryRun().build();
+            .addCheckTypes(FileSystemCheckOptions.EXPIRED_INCONSISTENT_NODES)
+            // normal should use minus to check filesystem, but here we could not set modification time to an earlier time
+            .setInconsistentNodesExpirationTime(Instant.now().plus(2, ChronoUnit.DAYS))
+            .dryRun().build();
         final List<FileSystemCheckIssue> fileSystemCheckIssues = storage.checkFileSystem(dryRunOptions);
         assertEquals(1, fileSystemCheckIssues.size());
         final FileSystemCheckIssue issue = fileSystemCheckIssues.get(0);
@@ -232,9 +232,9 @@ class CassandraAppStorageTest extends AbstractAppStorageTest {
         assertNotNull(storage.getNodeInfo(inconsistentNode.getId()));
 
         final FileSystemCheckOptions repairOption = new FileSystemCheckOptionsBuilder()
-                .addCheckTypes(FileSystemCheckOptions.EXPIRED_INCONSISTENT_NODES)
-                .setInconsistentNodesExpirationTime(Instant.now().plus(2, ChronoUnit.DAYS))
-                .repair().build();
+            .addCheckTypes(FileSystemCheckOptions.EXPIRED_INCONSISTENT_NODES)
+            .setInconsistentNodesExpirationTime(Instant.now().plus(2, ChronoUnit.DAYS))
+            .repair().build();
         final List<FileSystemCheckIssue> repairIssue = storage.checkFileSystem(repairOption);
         assertTrue(repairIssue.get(0).isRepaired());
         String inconsistentNodeId = inconsistentNode.getId();
@@ -246,35 +246,35 @@ class CassandraAppStorageTest extends AbstractAppStorageTest {
 
         // add a child which does not exist to root folder
         SimpleStatement statement = insertInto(CHILDREN_BY_NAME_AND_CLASS)
-                .value(ID, literal(UUID.fromString(root.getId())))
-                .value(CHILD_NAME, literal("absent_child"))
-                .value(CHILD_ID, literal(Uuids.timeBased()))
-                .value(CHILD_PSEUDO_CLASS, literal(FOLDER_PSEUDO_CLASS))
-                .value(CHILD_DESCRIPTION, literal(""))
-                .value(CHILD_CONSISTENT, literal(true))
-                .value(CHILD_CREATION_DATE, literal(Instant.now()))
-                .value(CHILD_MODIFICATION_DATE, literal(Instant.now()))
-                .value(CHILD_VERSION, literal(1))
-                .value(CMT, literal(Collections.emptyMap()))
-                .value(CMD, literal(Collections.emptyMap()))
-                .value(CMI, literal(Collections.emptyMap()))
-                .value(CMB, literal(Collections.emptyMap()))
-                .build();
+            .value(ID, literal(UUID.fromString(root.getId())))
+            .value(CHILD_NAME, literal("absent_child"))
+            .value(CHILD_ID, literal(Uuids.timeBased()))
+            .value(CHILD_PSEUDO_CLASS, literal(FOLDER_PSEUDO_CLASS))
+            .value(CHILD_DESCRIPTION, literal(""))
+            .value(CHILD_CONSISTENT, literal(true))
+            .value(CHILD_CREATION_DATE, literal(Instant.now()))
+            .value(CHILD_MODIFICATION_DATE, literal(Instant.now()))
+            .value(CHILD_VERSION, literal(1))
+            .value(CMT, literal(Collections.emptyMap()))
+            .value(CMD, literal(Collections.emptyMap()))
+            .value(CMI, literal(Collections.emptyMap()))
+            .value(CMB, literal(Collections.emptyMap()))
+            .build();
         if (cassandraSession != null) {
             cassandraSession.execute(statement);
         }
 
         //Now root has one child, but that child does not exist
         NodeInfo absentChild = storage.getChildNodes(root.getId()).stream()
-                .filter(nodeInfo -> nodeInfo.getName().equals("absent_child"))
-                .findFirst().orElseThrow(AssertionError::new);
+            .filter(nodeInfo -> nodeInfo.getName().equals("absent_child"))
+            .findFirst().orElseThrow(AssertionError::new);
 
         String absentChildId = absentChild.getId();
         assertThrows(CassandraAfsException.class, () -> storage.getNodeInfo(absentChildId));
 
         FileSystemCheckOptions noRepair = new FileSystemCheckOptionsBuilder()
-                .addCheckTypes(CassandraAppStorage.REF_NOT_FOUND)
-                .build();
+            .addCheckTypes(CassandraAppStorage.REF_NOT_FOUND)
+            .build();
 
         assertEquals(1,
             storage.checkFileSystem(noRepair).stream()
@@ -286,31 +286,31 @@ class CassandraAppStorageTest extends AbstractAppStorageTest {
 
         //Check again, should still be here
         assertTrue(storage.getChildNodes(root.getId()).stream()
-                .anyMatch(nodeInfo -> nodeInfo.getName().equals("absent_child")));
+            .anyMatch(nodeInfo -> nodeInfo.getName().equals("absent_child")));
 
         FileSystemCheckOptions repair = new FileSystemCheckOptionsBuilder()
-                .addCheckTypes(CassandraAppStorage.REF_NOT_FOUND)
-                .repair()
-                .build();
+            .addCheckTypes(CassandraAppStorage.REF_NOT_FOUND)
+            .repair()
+            .build();
 
         storage.checkFileSystem(repair);
 
         //Check again, the wrong child should not be here anymore
         assertFalse(storage.getChildNodes(root.getId()).stream()
-                .anyMatch(nodeInfo -> nodeInfo.getName().equals("absent_child")));
+            .anyMatch(nodeInfo -> nodeInfo.getName().equals("absent_child")));
     }
 
     void testSupportedChecks() {
         assertThat(storage.getSupportedFileSystemChecks())
-                .containsExactlyInAnyOrder(CassandraAppStorage.REF_NOT_FOUND,
-                        FileSystemCheckOptions.EXPIRED_INCONSISTENT_NODES,
-                        CassandraAppStorage.ORPHAN_NODE,
-                        CassandraAppStorage.ORPHAN_DATA);
+            .containsExactlyInAnyOrder(CassandraAppStorage.REF_NOT_FOUND,
+                FileSystemCheckOptions.EXPIRED_INCONSISTENT_NODES,
+                CassandraAppStorage.ORPHAN_NODE,
+                CassandraAppStorage.ORPHAN_DATA);
     }
 
     private NodeInfo createFolder(NodeInfo parent, String name) {
         return storage.createNode(parent.getId(), name, FOLDER_PSEUDO_CLASS, "", 0,
-                new NodeGenericMetadata());
+            new NodeGenericMetadata());
     }
 
     //Test for bugfix where an inconsistent child was "hiding" the parent of the node
@@ -320,8 +320,8 @@ class CassandraAppStorageTest extends AbstractAppStorageTest {
         storage.setConsistent(rootChild.getId());
         createFolder(rootChild, "childChild");
         assertThat(storage.getParentNode(rootChild.getId()))
-                .hasValueSatisfying(parent -> {
-                    assertEquals(root.getId(), parent.getId());
-                });
+            .hasValueSatisfying(parent -> {
+                assertEquals(root.getId(), parent.getId());
+            });
     }
 }

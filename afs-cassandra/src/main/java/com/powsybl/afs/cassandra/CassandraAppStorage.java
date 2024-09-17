@@ -403,7 +403,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
     }
 
     private record NodeParameters(UUID nodeUuid, UUID parentNodeUuid, String name, String nodePseudoClass,
-                                  String description, int version, NodeGenericMetadata genericMetadata) {}
+                                  String description, int version, NodeGenericMetadata genericMetadata) { }
 
     private NodeInfo createNode(NodeParameters nodeParameters,
                                 BatchStatementBuilder batchStatements) {
