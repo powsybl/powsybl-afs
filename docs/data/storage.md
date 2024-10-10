@@ -32,6 +32,32 @@ mapdb-app-file-system:
     db-file: /home/user/drive1.db
 ```
 
+## Cassandra storage
+This implementation relies on [Cassandra](https://cassandra.apache.org/) database. It has been
+tested on Cassandra v3.11.5 and is expected to be tested against more recent versions soon.
+
+### Configuration
+In order to access to a Cassandra database, you have to configure the 
+[cassandra-app-file-system](../configuration/cassandra-app-file-system.md) and the
+[cassandra-app-storage](../configuration/cassandra-app-storage.md)
+modules in the configuration file.
+
+**YAML configuration**
+```yaml
+cassandra-app-file-system:
+  drive-name: drive1
+  ip-addresses:
+    - 127.0.0.1
+    - <other IP>
+  local-dc: dc1
+  remotely-accessible: true
+
+cassandra-app-storage:
+  flush-maximum-change: 100
+  double-query-partition-size: 100
+  string-query-partition-size: 100
+```
+
 ## Remote storage
 This is a special implementation of the storage API that allows to create a relay to another AFS storage instance, exposing the API through a web-service.
 

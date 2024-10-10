@@ -40,6 +40,10 @@ public class AppDataBean {
         return appData;
     }
 
+    public void setAppData(AppData appData) {
+        this.appData = appData;
+    }
+
     public AppStorage getStorage(String fileSystemName) {
         AppStorage storage = appData.getRemotelyAccessibleStorage(fileSystemName);
         if (storage == null) {
