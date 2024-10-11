@@ -176,6 +176,14 @@ public class AppData implements AutoCloseable {
     }
 
     /**
+     * The map of available file systems
+     */
+    public Map<String, AppFileSystem> getFileSystemsMap() {
+        loadFileSystems();
+        return fileSystems;
+    }
+
+    /**
      * The list of available file systems.
      */
     public Collection<AppFileSystem> getFileSystems() {
