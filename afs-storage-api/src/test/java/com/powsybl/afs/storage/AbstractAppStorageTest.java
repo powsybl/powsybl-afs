@@ -6,9 +6,6 @@
  */
 package com.powsybl.afs.storage;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import com.powsybl.afs.storage.events.*;
@@ -84,7 +81,7 @@ public abstract class AbstractAppStorageTest {
             collectedEvents.add(event);
         }
         assertThat(collectedEvents)
-                .containsExactlyInAnyOrder(expectedEvents);
+            .containsExactlyInAnyOrder(expectedEvents);
 
         // assert all events have been checked
         assertTrue(eventStack.isEmpty());
@@ -96,12 +93,12 @@ public abstract class AbstractAppStorageTest {
         }
     }
 
-    @Test
-    public void test() throws IOException, InterruptedException {
-        // 1) create root folder
+    private NodeInfo assertRootFolderCreation() throws InterruptedException {
+        // create root folder
         NodeInfo rootFolderInfo = storage.createRootNodeIfNotExists(storage.getFileSystemName(), FOLDER_PSEUDO_CLASS);
         storage.flush();
 
+        // Assert node consistency
         assertTrue(storage.isConsistent(rootFolderInfo.getId()));
 
         // check event
@@ -122,9 +119,13 @@ public abstract class AbstractAppStorageTest {
         // assert root folder is empty
         assertTrue(storage.getChildNodes(rootFolderInfo.getId()).isEmpty());
 
-        // 2) create a test folder
+        return rootFolderInfo;
+    }
+
+    private NodeInfo assertTestFolderCreation(NodeInfo rootFolderInfo) throws InterruptedException {
+        // create a test folder
         NodeInfo testFolderInfo = storage.createNode(rootFolderInfo.getId(), "test", FOLDER_PSEUDO_CLASS, "", 12,
-                new NodeGenericMetadata().setString("k", "v"));
+            new NodeGenericMetadata().setString("k", "v"));
         storage.flush();
 
         assertFalse(storage.isConsistent(testFolderInfo.getId()));
@@ -169,6 +170,10 @@ public abstract class AbstractAppStorageTest {
         // check getChildNode return null if child does not exist
         assertFalse(storage.getChildNode(rootFolderInfo.getId(), "???").isPresent());
 
+        return testFolderInfo;
+    }
+
+    private void assertDescription(NodeInfo testFolderInfo) throws InterruptedException {
         // 3) check description initial value and update
         assertEquals("", testFolderInfo.getDescription());
         storage.setDescription(testFolderInfo.getId(), "hello");
@@ -178,34 +183,25 @@ public abstract class AbstractAppStorageTest {
         assertEventStack(new NodeDescriptionUpdated(testFolderInfo.getId(), "hello"));
 
         assertEquals("hello", storage.getNodeInfo(testFolderInfo.getId()).getDescription());
+    }
 
-        // 4) check modifiation time update
+    private void assertModificationTimeUpdate(NodeInfo testFolderInfo) {
+        // check modification time update
         long oldModificationTime = testFolderInfo.getModificationTime();
         storage.updateModificationTime(testFolderInfo.getId());
         storage.flush();
         assertTrue(storage.getNodeInfo(testFolderInfo.getId()).getModificationTime() >= oldModificationTime);
+    }
 
-        // 5) create 2 data nodes in test folder
-        NodeInfo testDataInfo = storage.createNode(testFolderInfo.getId(), "data", DATA_FILE_CLASS, "", 0, new NodeGenericMetadata());
-        NodeInfo testData2Info = storage.createNode(testFolderInfo.getId(), "data2", DATA_FILE_CLASS, "", 0,
-                new NodeGenericMetadata().setString("s1", "v1")
-                        .setDouble("d1", 1d)
-                        .setInt("i1", 2)
-                        .setBoolean("b1", false));
-        NodeInfo testData3Info = storage.createNode(testFolderInfo.getId(), "data3", DATA_FILE_CLASS, "", 0, new NodeGenericMetadata());
-
-        storage.setConsistent(testDataInfo.getId());
-        storage.setConsistent(testData2Info.getId());
-        storage.setConsistent(testData3Info.getId());
-        storage.flush();
-
+    private void assertDataNodesCreation(NodeInfo testFolderInfo,
+                                         NodeInfo testDataInfo, NodeInfo testData2Info, NodeInfo testData3Info) throws InterruptedException {
         // check events
         assertEventStack(new NodeCreated(testDataInfo.getId(), testFolderInfo.getId()),
-                new NodeCreated(testData2Info.getId(), testFolderInfo.getId()),
-                new NodeCreated(testData3Info.getId(), testFolderInfo.getId()),
-                new NodeConsistent(testDataInfo.getId()),
-                new NodeConsistent(testData2Info.getId()),
-                new NodeConsistent(testData3Info.getId()));
+            new NodeCreated(testData2Info.getId(), testFolderInfo.getId()),
+            new NodeCreated(testData3Info.getId(), testFolderInfo.getId()),
+            new NodeConsistent(testDataInfo.getId()),
+            new NodeConsistent(testData2Info.getId()),
+            new NodeConsistent(testData3Info.getId()));
 
         // check info are correctly stored even with metadata
         assertEquals(testData2Info, storage.getNodeInfo(testData2Info.getId()));
@@ -218,8 +214,9 @@ public abstract class AbstractAppStorageTest {
         assertTrue(storage.getDependencies(testData2Info.getId()).isEmpty());
         assertTrue(storage.getBackwardDependencies(testDataInfo.getId()).isEmpty());
         assertTrue(storage.getBackwardDependencies(testData2Info.getId()).isEmpty());
+    }
 
-        // 5b) create named data items in test folder
+    private void assertNamedDataItemsCreation(NodeInfo testFolderInfo) throws IOException, InterruptedException {
         DataSource ds1 = new AppStorageDataSource(storage, testFolderInfo.getId(), testFolderInfo.getName());
         try (Writer writer = new OutputStreamWriter(storage.writeBinaryData(testFolderInfo.getId(), "testData1"), StandardCharsets.UTF_8)) {
             writer.write("Content for testData1");
@@ -249,89 +246,94 @@ public abstract class AbstractAppStorageTest {
 
         // check events
         assertEventStack(new NodeDataUpdated(testFolderInfo.getId(), "testData1"),
-                new NodeDataUpdated(testFolderInfo.getId(), "testData2"),
-                new NodeDataUpdated(testFolderInfo.getId(), "DATA_SOURCE_SUFFIX_EXT__Test3__ext"),
-                new NodeDataUpdated(testFolderInfo.getId(), "DATA_SOURCE_FILE_NAME__Test4"));
+            new NodeDataUpdated(testFolderInfo.getId(), "testData2"),
+            new NodeDataUpdated(testFolderInfo.getId(), "DATA_SOURCE_SUFFIX_EXT__Test3__ext"),
+            new NodeDataUpdated(testFolderInfo.getId(), "DATA_SOURCE_FILE_NAME__Test4"));
 
         // check data names
-        assertEquals(ImmutableSet.of("testData2", "testData1", "DATA_SOURCE_SUFFIX_EXT__Test3__ext", "DATA_SOURCE_FILE_NAME__Test4"),
+        assertEquals(Set.of("testData2", "testData1", "DATA_SOURCE_SUFFIX_EXT__Test3__ext", "DATA_SOURCE_FILE_NAME__Test4"),
             storage.getDataNames(testFolderInfo.getId()));
 
         // check data names seen from data source
-        assertEquals(ImmutableSet.of("testData2", "testData1"), ds1.listNames("^testD.*"));
+        assertEquals(Set.of("testData2", "testData1"), ds1.listNames("^testD.*"));
         AssertionError error = assertThrows(AssertionError.class, () -> ds1.listNames("^DATA_SOURCE_SUFFIX.*"));
         assertEquals("Don't know how to unmap suffix-and-extension to a data source name DATA_SOURCE_SUFFIX_EXT__Test3__ext",
             error.getMessage());
-        assertEquals(ImmutableSet.of("Test4"), ds1.listNames("^DATA_SOURCE_FILE.*"));
+        assertEquals(Set.of("Test4"), ds1.listNames("^DATA_SOURCE_FILE.*"));
 
         // check children names (not data names)
-        List<String> expectedChildrenNames = ImmutableList.of("data", "data2", "data3");
+        List<String> expectedChildrenNames = List.of("data", "data2", "data3");
         List<String> actualChildrenNames = storage.getChildNodes(testFolderInfo.getId()).stream()
-                .map(NodeInfo::getName).collect(Collectors.toList());
+            .map(NodeInfo::getName).collect(Collectors.toList());
         assertEquals(expectedChildrenNames, actualChildrenNames);
+    }
 
-        // 6) create a dependency between data node and data node 2
+    private void assertFirstDependencyCreation(NodeInfo testDataInfo, NodeInfo testData2Info) throws InterruptedException {
         storage.addDependency(testDataInfo.getId(), "mylink", testData2Info.getId());
         storage.flush();
 
         // check event
         assertEventStack(new DependencyAdded(testDataInfo.getId(), "mylink"),
-                new BackwardDependencyAdded(testData2Info.getId(), "mylink"));
+            new BackwardDependencyAdded(testData2Info.getId(), "mylink"));
 
         // check dependency state
-        assertEquals(ImmutableSet.of(new NodeDependency("mylink", testData2Info)), storage.getDependencies(testDataInfo.getId()));
-        assertEquals(ImmutableSet.of(testDataInfo), storage.getBackwardDependencies(testData2Info.getId()));
-        assertEquals(ImmutableSet.of(testData2Info), storage.getDependencies(testDataInfo.getId(), "mylink"));
+        assertEquals(Set.of(new NodeDependency("mylink", testData2Info)), storage.getDependencies(testDataInfo.getId()));
+        assertEquals(Set.of(testDataInfo), storage.getBackwardDependencies(testData2Info.getId()));
+        assertEquals(Set.of(testData2Info), storage.getDependencies(testDataInfo.getId(), "mylink"));
         assertTrue(storage.getDependencies(testDataInfo.getId(), "mylink2").isEmpty());
+    }
 
-        // 7) add then add a second dependency
+    private void assertAddRemoveSecondDependency(NodeInfo testDataInfo, NodeInfo testData2Info) throws InterruptedException {
         storage.addDependency(testDataInfo.getId(), "mylink2", testData2Info.getId());
         storage.flush();
 
         // check event
         assertEventStack(new DependencyAdded(testDataInfo.getId(), "mylink2"),
-                new BackwardDependencyAdded(testData2Info.getId(), "mylink2"));
+            new BackwardDependencyAdded(testData2Info.getId(), "mylink2"));
 
-        assertEquals(ImmutableSet.of(new NodeDependency("mylink", testData2Info), new NodeDependency("mylink2", testData2Info)), storage.getDependencies(testDataInfo.getId()));
-        assertEquals(ImmutableSet.of(testDataInfo), storage.getBackwardDependencies(testData2Info.getId()));
-        assertEquals(ImmutableSet.of(testData2Info), storage.getDependencies(testDataInfo.getId(), "mylink"));
+        assertEquals(Set.of(new NodeDependency("mylink", testData2Info), new NodeDependency("mylink2", testData2Info)), storage.getDependencies(testDataInfo.getId()));
+        assertEquals(Set.of(testDataInfo), storage.getBackwardDependencies(testData2Info.getId()));
+        assertEquals(Set.of(testData2Info), storage.getDependencies(testDataInfo.getId(), "mylink"));
 
         storage.removeDependency(testDataInfo.getId(), "mylink2", testData2Info.getId());
         storage.flush();
 
         // check event
         assertEventStack(new DependencyRemoved(testDataInfo.getId(), "mylink2"),
-                new BackwardDependencyRemoved(testData2Info.getId(), "mylink2"));
+            new BackwardDependencyRemoved(testData2Info.getId(), "mylink2"));
 
-        assertEquals(ImmutableSet.of(new NodeDependency("mylink", testData2Info)), storage.getDependencies(testDataInfo.getId()));
-        assertEquals(ImmutableSet.of(testDataInfo), storage.getBackwardDependencies(testData2Info.getId()));
-        assertEquals(ImmutableSet.of(testData2Info), storage.getDependencies(testDataInfo.getId(), "mylink"));
+        assertEquals(Set.of(new NodeDependency("mylink", testData2Info)), storage.getDependencies(testDataInfo.getId()));
+        assertEquals(Set.of(testDataInfo), storage.getBackwardDependencies(testData2Info.getId()));
+        assertEquals(Set.of(testData2Info), storage.getDependencies(testDataInfo.getId(), "mylink"));
+    }
 
-        // 8) delete data node
+    private void assertDataNodeDeletion(NodeInfo testFolderInfo, NodeInfo testDataInfo, NodeInfo testData2Info) throws InterruptedException {
         assertEquals(testFolderInfo.getId(), storage.deleteNode(testDataInfo.getId()));
         storage.flush();
 
         // check event
         assertEventStack(
-                new DependencyRemoved(testDataInfo.getId(), "mylink"),
-                new BackwardDependencyRemoved(testData2Info.getId(), "mylink"),
-                new NodeRemoved(testDataInfo.getId(), testFolderInfo.getId()));
+            new DependencyRemoved(testDataInfo.getId(), "mylink"),
+            new BackwardDependencyRemoved(testData2Info.getId(), "mylink"),
+            new NodeRemoved(testDataInfo.getId(), testFolderInfo.getId()));
 
         // check test folder children have been correctly updated
         assertEquals(2, storage.getChildNodes(testFolderInfo.getId()).size());
 
         // check data node 2 backward dependency has been correctly updated
         assertTrue(storage.getBackwardDependencies(testData2Info.getId()).isEmpty());
+    }
 
-        // 9) check data node 2 metadata value
-        assertEquals(ImmutableMap.of("s1", "v1"), testData2Info.getGenericMetadata().getStrings());
-        assertEquals(ImmutableMap.of("d1", 1d), testData2Info.getGenericMetadata().getDoubles());
-        assertEquals(ImmutableMap.of("i1", 2), testData2Info.getGenericMetadata().getInts());
-        assertEquals(ImmutableMap.of("b1", false), testData2Info.getGenericMetadata().getBooleans());
+    private void checkDataNodeMetadataValues(NodeInfo testData2Info) {
+        assertEquals(Map.of("s1", "v1"), testData2Info.getGenericMetadata().getStrings());
+        assertEquals(Map.of("d1", 1d), testData2Info.getGenericMetadata().getDoubles());
+        assertEquals(Map.of("i1", 2), testData2Info.getGenericMetadata().getInts());
+        assertEquals(Map.of("b1", false), testData2Info.getGenericMetadata().getBooleans());
 
         assertEqualsFromParent(testData2Info);
+    }
 
-        // 10) check data node 2 binary data write
+    private void assertBinaryDataWrite(NodeInfo testData2Info) throws IOException, InterruptedException {
         try (OutputStream os = storage.writeBinaryData(testData2Info.getId(), "blob")) {
             os.write("word2".getBytes(StandardCharsets.UTF_8));
         }
@@ -346,9 +348,10 @@ public abstract class AbstractAppStorageTest {
         }
         assertTrue(storage.dataExists(testData2Info.getId(), "blob"));
         assertFalse(storage.dataExists(testData2Info.getId(), "blob2"));
-        assertEquals(ImmutableSet.of("blob"), storage.getDataNames(testData2Info.getId()));
+        assertEquals(Set.of("blob"), storage.getDataNames(testData2Info.getId()));
+    }
 
-        // 10 bis) check data remove
+    private void assertDataRemove(NodeInfo testData2Info) throws InterruptedException {
         assertFalse(storage.removeData(testData2Info.getId(), "blob2"));
         assertTrue(storage.removeData(testData2Info.getId(), "blob"));
         storage.flush();
@@ -358,9 +361,9 @@ public abstract class AbstractAppStorageTest {
 
         assertTrue(storage.getDataNames(testData2Info.getId()).isEmpty());
         assertFalse(storage.readBinaryData(testData2Info.getId(), "blob").isPresent());
+    }
 
-        // 11) check data source using pattern api
-        DataSource ds = new AppStorageDataSource(storage, testData2Info.getId(), testData2Info.getName());
+    private void checkDataSourceViaPattern(NodeInfo testData2Info, DataSource ds) throws IOException, InterruptedException {
         assertEquals(testData2Info.getName(), ds.getBaseName());
         assertFalse(ds.exists(null, "ext"));
         try (OutputStream os = ds.newOutputStream(null, "ext", false)) {
@@ -375,14 +378,16 @@ public abstract class AbstractAppStorageTest {
         try (InputStream ignored = ds.newInputStream(null, "ext2")) {
             fail();
         } catch (Exception ignored) {
+            // Nothing to do here
         }
         try (InputStream is = ds.newInputStream(null, "ext")) {
             assertEquals("word1", new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8));
         }
 
         assertFalse(ds.exists("file1"));
+    }
 
-        // 12) check data source using file name api
+    private void checkDataSourceViaFileName(NodeInfo testData2Info, DataSource ds) throws IOException, InterruptedException {
         try (OutputStream os = ds.newOutputStream("file1", false)) {
             os.write("word1".getBytes(StandardCharsets.UTF_8));
         }
@@ -395,17 +400,19 @@ public abstract class AbstractAppStorageTest {
         try (InputStream ignored = ds.newInputStream("file2")) {
             fail();
         } catch (Exception ignored) {
+            // Nothing to do here
         }
         try (InputStream is = ds.newInputStream("file1")) {
             assertEquals("word1", new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8));
         }
+    }
 
-        // 13) create double time series
+    private void assertDoubleTimeSeriesCreation(NodeInfo testData2Info, NodeInfo testData3Info) throws InterruptedException {
         TimeSeriesMetadata metadata1 = new TimeSeriesMetadata("ts1",
-                TimeSeriesDataType.DOUBLE,
-                ImmutableMap.of("var1", "value1"),
-                RegularTimeSeriesIndex.create(Interval.parse("2015-01-01T00:00:00Z/2015-01-01T01:15:00Z"),
-                        Duration.ofMinutes(15)));
+            TimeSeriesDataType.DOUBLE,
+            Map.of("var1", "value1"),
+            RegularTimeSeriesIndex.create(Interval.parse("2015-01-01T00:00:00Z/2015-01-01T01:15:00Z"),
+                Duration.ofMinutes(15)));
         storage.createTimeSeries(testData2Info.getId(), metadata1);
         storage.flush();
 
@@ -421,33 +428,36 @@ public abstract class AbstractAppStorageTest {
         assertEquals(1, metadataList.size());
         assertEquals(metadata1, metadataList.get(0));
         assertTrue(storage.getTimeSeriesMetadata(testData3Info.getId(), Sets.newHashSet("ts1")).isEmpty());
+    }
 
-        // 14) add data to double time series
-        storage.addDoubleTimeSeriesData(testData2Info.getId(), 0, "ts1", List.of(new CompressedDoubleDataChunk(2, 2, new double[]{1d, 2d}, new int[]{1, 1}),
-                new UncompressedDoubleDataChunk(5, new double[]{3d})));
+    private void assertAddDataToDoubleTimeSeries(NodeInfo testData2Info, NodeInfo testData3Info) throws InterruptedException {
+        storage.addDoubleTimeSeriesData(testData2Info.getId(), 0, "ts1",
+            List.of(new CompressedDoubleDataChunk(2, 2, new double[] {1d, 2d}, new int[] {1, 1}),
+                new UncompressedDoubleDataChunk(5, new double[] {3d})));
         storage.flush();
 
         // check event
         assertEventStack(new TimeSeriesDataUpdated(testData2Info.getId(), "ts1"));
 
         // check versions
-        assertEquals(ImmutableSet.of(0), storage.getTimeSeriesDataVersions(testData2Info.getId()));
-        assertEquals(ImmutableSet.of(0), storage.getTimeSeriesDataVersions(testData2Info.getId(), "ts1"));
+        assertEquals(Set.of(0), storage.getTimeSeriesDataVersions(testData2Info.getId()));
+        assertEquals(Set.of(0), storage.getTimeSeriesDataVersions(testData2Info.getId(), "ts1"));
 
         // check double time series data query
         Map<String, List<DoubleDataChunk>> doubleTimeSeriesData = storage.getDoubleTimeSeriesData(testData2Info.getId(), Sets.newHashSet("ts1"), 0);
         assertEquals(1, doubleTimeSeriesData.size());
-        assertEquals(List.of(new CompressedDoubleDataChunk(2, 2, new double[]{1d, 2d}, new int[]{1, 1}),
-                new UncompressedDoubleDataChunk(5, new double[]{3d})),
-                doubleTimeSeriesData.get("ts1"));
+        assertEquals(List.of(new CompressedDoubleDataChunk(2, 2, new double[] {1d, 2d}, new int[] {1, 1}),
+                new UncompressedDoubleDataChunk(5, new double[] {3d})),
+            doubleTimeSeriesData.get("ts1"));
         assertTrue(storage.getDoubleTimeSeriesData(testData3Info.getId(), Sets.newHashSet("ts1"), 0).isEmpty());
+    }
 
-        // 15) create a second string time series
+    private void assertStringTimeSeriesCreation(NodeInfo testData2Info) throws InterruptedException {
         TimeSeriesMetadata metadata2 = new TimeSeriesMetadata("ts2",
-                TimeSeriesDataType.STRING,
-                ImmutableMap.of(),
-                RegularTimeSeriesIndex.create(Interval.parse("2015-01-01T00:00:00Z/2015-01-01T01:15:00Z"),
-                        Duration.ofMinutes(15)));
+            TimeSeriesDataType.STRING,
+            Map.of(),
+            RegularTimeSeriesIndex.create(Interval.parse("2015-01-01T00:00:00Z/2015-01-01T01:15:00Z"),
+                Duration.ofMinutes(15)));
         storage.createTimeSeries(testData2Info.getId(), metadata2);
         storage.flush();
 
@@ -456,12 +466,13 @@ public abstract class AbstractAppStorageTest {
 
         // check string time series query
         assertEquals(Sets.newHashSet("ts1", "ts2"), storage.getTimeSeriesNames(testData2Info.getId()));
-        metadataList = storage.getTimeSeriesMetadata(testData2Info.getId(), Sets.newHashSet("ts1"));
+        List<TimeSeriesMetadata> metadataList = storage.getTimeSeriesMetadata(testData2Info.getId(), Sets.newHashSet("ts1"));
         assertEquals(1, metadataList.size());
+    }
 
-        // 16) add data to double time series
-        storage.addStringTimeSeriesData(testData2Info.getId(), 0, "ts2", List.of(new CompressedStringDataChunk(2, 2, new String[]{"a", "b"}, new int[]{1, 1}),
-                new UncompressedStringDataChunk(5, new String[]{"c"})));
+    private void assertAddDataToStringTimeSeries(NodeInfo testData2Info) throws InterruptedException {
+        storage.addStringTimeSeriesData(testData2Info.getId(), 0, "ts2", List.of(new CompressedStringDataChunk(2, 2, new String[] {"a", "b"}, new int[] {1, 1}),
+            new UncompressedStringDataChunk(5, new String[] {"c"})));
         storage.flush();
 
         // check event
@@ -470,11 +481,12 @@ public abstract class AbstractAppStorageTest {
         // check string time series data query
         Map<String, List<StringDataChunk>> stringTimeSeriesData = storage.getStringTimeSeriesData(testData2Info.getId(), Sets.newHashSet("ts2"), 0);
         assertEquals(1, stringTimeSeriesData.size());
-        assertEquals(List.of(new CompressedStringDataChunk(2, 2, new String[]{"a", "b"}, new int[]{1, 1}),
-                new UncompressedStringDataChunk(5, new String[]{"c"})),
-                stringTimeSeriesData.get("ts2"));
+        assertEquals(List.of(new CompressedStringDataChunk(2, 2, new String[] {"a", "b"}, new int[] {1, 1}),
+                new UncompressedStringDataChunk(5, new String[] {"c"})),
+            stringTimeSeriesData.get("ts2"));
+    }
 
-        // 17) clear time series
+    private void assertClearTimeSeries(NodeInfo testData2Info) throws InterruptedException {
         storage.clearTimeSeries(testData2Info.getId());
         storage.flush();
 
@@ -483,8 +495,9 @@ public abstract class AbstractAppStorageTest {
 
         // check there is no more time series
         assertTrue(storage.getTimeSeriesNames(testData2Info.getId()).isEmpty());
+    }
 
-        // 18) change parent test
+    private void assertChangeParent(NodeInfo rootFolderInfo) throws InterruptedException {
         NodeInfo folder1Info = storage.createNode(rootFolderInfo.getId(), "test1", FOLDER_PSEUDO_CLASS, "", 0, new NodeGenericMetadata());
         NodeInfo folder2Info = storage.createNode(rootFolderInfo.getId(), "test2", FOLDER_PSEUDO_CLASS, "", 0, new NodeGenericMetadata());
         storage.setConsistent(folder1Info.getId());
@@ -512,9 +525,9 @@ public abstract class AbstractAppStorageTest {
 
         // check parent folder change
         assertEquals(folder2Info, storage.getParentNode(fileInfo.getId()).orElseThrow(AssertionError::new));
+    }
 
-        // 18) delete node test
-
+    private void assertDeleteNode(NodeInfo rootFolderInfo) throws InterruptedException {
         // create root node and 2 folders
         NodeInfo folder3Info = storage.createNode(rootFolderInfo.getId(), "test3", FOLDER_PSEUDO_CLASS, "", 0, new NodeGenericMetadata());
         NodeInfo folder4Info = storage.createNode(rootFolderInfo.getId(), "test4", FOLDER_PSEUDO_CLASS, "", 0, new NodeGenericMetadata());
@@ -537,8 +550,9 @@ public abstract class AbstractAppStorageTest {
 
         assertTrue(storage.getDependencies(folder3Info.getId(), "dep").isEmpty());
         assertTrue(storage.getDependencies(folder3Info.getId(), "dep2").isEmpty());
+    }
 
-        // 19) rename node test
+    private void assertRenameNode(NodeInfo rootFolderInfo) {
         NodeGenericMetadata folder5Metadata = new NodeGenericMetadata().setString("k", "v");
         NodeInfo folder5Info = storage.createNode(rootFolderInfo.getId(), "test5", FOLDER_PSEUDO_CLASS, "", 0, folder5Metadata);
         storage.setConsistent(folder5Info.getId());
@@ -566,6 +580,7 @@ public abstract class AbstractAppStorageTest {
             storage.renameNode(folder6Info.getId(), null);
             fail();
         } catch (Exception ignored) {
+            // Nothing to do here
         }
 
         NodeInfo folder7Info = storage.createNode(rootFolderInfo.getId(), "test7", FOLDER_PSEUDO_CLASS, "", 0, new NodeGenericMetadata());
@@ -574,11 +589,11 @@ public abstract class AbstractAppStorageTest {
             storage.renameNode(folder7Info.getId(), "");
             fail();
         } catch (Exception ignored) {
+            // Nothing to do here
         }
+    }
 
-        testUpdateNodeMetadata(rootFolderInfo, storage);
-
-        // 19 check that eventsBus is not null
+    private void checkEventBus() throws InterruptedException {
         assertNotNull(storage.getEventsBus());
 
         storage.flush();
@@ -612,6 +627,93 @@ public abstract class AbstractAppStorageTest {
         assertThat(eventsCatched.get().getEvents()).hasSize(1);
         assertThat(eventsCatched.get().getEvents().get(0)).isEqualTo(eventToCatch);
         assertEventStack(eventNotToCatch, eventToCatch);
+    }
+
+    @Test
+    public void test() throws IOException, InterruptedException {
+        // 1) create root folder
+        NodeInfo rootFolderInfo = assertRootFolderCreation();
+
+        // 2) create a test folder
+        NodeInfo testFolderInfo = assertTestFolderCreation(rootFolderInfo);
+
+        // 3) check description initial value and update
+        assertDescription(testFolderInfo);
+
+        // 4) check modifiation time update
+        assertModificationTimeUpdate(testFolderInfo);
+
+        // 5) create 2 data nodes in test folder
+        NodeInfo testDataInfo = storage.createNode(testFolderInfo.getId(), "data", DATA_FILE_CLASS, "", 0, new NodeGenericMetadata());
+        NodeInfo testData2Info = storage.createNode(testFolderInfo.getId(), "data2", DATA_FILE_CLASS, "", 0,
+            new NodeGenericMetadata().setString("s1", "v1")
+                .setDouble("d1", 1d)
+                .setInt("i1", 2)
+                .setBoolean("b1", false));
+        NodeInfo testData3Info = storage.createNode(testFolderInfo.getId(), "data3", DATA_FILE_CLASS, "", 0, new NodeGenericMetadata());
+        storage.setConsistent(testDataInfo.getId());
+        storage.setConsistent(testData2Info.getId());
+        storage.setConsistent(testData3Info.getId());
+        storage.flush();
+        assertDataNodesCreation(testFolderInfo, testDataInfo, testData2Info, testData3Info);
+
+        // 5b) create named data items in test folder
+        assertNamedDataItemsCreation(testFolderInfo);
+
+        // 6) create a dependency between data node and data node 2
+        assertFirstDependencyCreation(testDataInfo, testData2Info);
+
+        // 7) add then add a second dependency
+        assertAddRemoveSecondDependency(testDataInfo, testData2Info);
+
+        // 8) delete data node
+        assertDataNodeDeletion(testFolderInfo, testDataInfo, testData2Info);
+
+        // 9) check data node 2 metadata value
+        checkDataNodeMetadataValues(testData2Info);
+
+        // 10) check data node 2 binary data write
+        assertBinaryDataWrite(testData2Info);
+
+        // 10 bis) check data remove
+        assertDataRemove(testData2Info);
+
+        // 11) check data source using pattern api
+        DataSource ds = new AppStorageDataSource(storage, testData2Info.getId(), testData2Info.getName());
+        checkDataSourceViaPattern(testData2Info, ds);
+
+        // 12) check data source using file name api
+        checkDataSourceViaFileName(testData2Info, ds);
+
+        // 13) create double time series
+        assertDoubleTimeSeriesCreation(testData2Info, testData3Info);
+
+        // 14) add data to double time series
+        assertAddDataToDoubleTimeSeries(testData2Info, testData3Info);
+
+        // 15) create a second string time series
+        assertStringTimeSeriesCreation(testData2Info);
+
+        // 16) add data to double time series
+        assertAddDataToStringTimeSeries(testData2Info);
+
+        // 17) clear time series
+        assertClearTimeSeries(testData2Info);
+
+        // 18) change parent test
+        assertChangeParent(rootFolderInfo);
+
+        // 18) delete node test
+        assertDeleteNode(rootFolderInfo);
+
+        // 19) rename node test
+        assertRenameNode(rootFolderInfo);
+
+        // 20) Test update node metadata
+        testUpdateNodeMetadata(rootFolderInfo, storage);
+
+        // 21) check that eventsBus is not null
+        checkEventBus();
 
         testCascadingDelete(rootFolderInfo);
 
@@ -623,9 +725,9 @@ public abstract class AbstractAppStorageTest {
      */
     private void assertEqualsFromParent(NodeInfo node) {
         NodeInfo parent = storage.getParentNode(node.getId())
-                .orElseThrow(AssertionError::new);
+            .orElseThrow(AssertionError::new);
         NodeInfo nodeFromParent = storage.getChildNode(parent.getId(), node.getName())
-                .orElseThrow(AssertionError::new);
+            .orElseThrow(AssertionError::new);
         assertEquals(node, nodeFromParent);
     }
 
@@ -747,21 +849,21 @@ public abstract class AbstractAppStorageTest {
         discardEvents(10);
 
         assertThatExceptionOfType(RuntimeException.class)
-                .isThrownBy(() -> storage.getNodeInfo(subFolder.getId()));
+            .isThrownBy(() -> storage.getNodeInfo(subFolder.getId()));
         assertThatExceptionOfType(RuntimeException.class)
-                .isThrownBy(() -> storage.getNodeInfo(subSubFolder.getId()));
+            .isThrownBy(() -> storage.getNodeInfo(subSubFolder.getId()));
         assertThatExceptionOfType(RuntimeException.class)
-                .isThrownBy(() -> storage.getNodeInfo(data1.getId()));
+            .isThrownBy(() -> storage.getNodeInfo(data1.getId()));
         assertThatExceptionOfType(RuntimeException.class)
-                .isThrownBy(() -> storage.getNodeInfo(data2.getId()));
+            .isThrownBy(() -> storage.getNodeInfo(data2.getId()));
 
         assertEventStackInAnyOrder(
-                new NodeRemoved(subFolder.getId(), rootFolderInfo.getId()),
-                new NodeRemoved(subSubFolder.getId(), subFolder.getId()),
-                new NodeRemoved(data1.getId(), subFolder.getId()),
-                new NodeRemoved(data2.getId(), subSubFolder.getId()),
-                new NodeDataRemoved(data1.getId(), "data1"),
-                new NodeDataRemoved(data2.getId(), "data2")
+            new NodeRemoved(subFolder.getId(), rootFolderInfo.getId()),
+            new NodeRemoved(subSubFolder.getId(), subFolder.getId()),
+            new NodeRemoved(data1.getId(), subFolder.getId()),
+            new NodeRemoved(data2.getId(), subSubFolder.getId()),
+            new NodeDataRemoved(data1.getId(), "data1"),
+            new NodeDataRemoved(data2.getId(), "data2")
         );
     }
 }
