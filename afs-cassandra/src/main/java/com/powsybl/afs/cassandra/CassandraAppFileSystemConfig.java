@@ -23,6 +23,10 @@ public class CassandraAppFileSystemConfig extends AbstractAppFileSystemConfig<Ca
     private List<String> ipAddresses;
 
     private String localDc;
+    private static final String DRIVE_NAME = "drive-name";
+    private static final String IP_ADRESSES = "ip-addresses";
+    private static final String REMOTELY_ACCESSIBLE = "remotely-accessible";
+    private static final String LOCAL_DC = "local-dc";
 
     public static List<CassandraAppFileSystemConfig> load() {
         return load(PlatformConfig.defaultConfig());
@@ -32,22 +36,22 @@ public class CassandraAppFileSystemConfig extends AbstractAppFileSystemConfig<Ca
         List<CassandraAppFileSystemConfig> configs = new ArrayList<>();
         ModuleConfig moduleConfig = platformConfig.getOptionalModuleConfig("cassandra-app-file-system").orElse(null);
         if (moduleConfig != null) {
-            if (moduleConfig.hasProperty("drive-name")
-                    && moduleConfig.hasProperty("ip-addresses")) {
-                String driveName = moduleConfig.getStringProperty("drive-name");
-                boolean remotelyAccessible = moduleConfig.getBooleanProperty("remotely-accessible", DEFAULT_REMOTELY_ACCESSIBLE);
-                List<String> ipAddresses = moduleConfig.getStringListProperty("ip-addresses");
-                String localDc = moduleConfig.getStringProperty("local-dc", null);
+            if (moduleConfig.hasProperty(DRIVE_NAME)
+                    && moduleConfig.hasProperty(IP_ADRESSES)) {
+                String driveName = moduleConfig.getStringProperty(DRIVE_NAME);
+                boolean remotelyAccessible = moduleConfig.getBooleanProperty(REMOTELY_ACCESSIBLE, DEFAULT_REMOTELY_ACCESSIBLE);
+                List<String> ipAddresses = moduleConfig.getStringListProperty(IP_ADRESSES);
+                String localDc = moduleConfig.getStringProperty(LOCAL_DC, null);
                 configs.add(new CassandraAppFileSystemConfig(driveName, remotelyAccessible, ipAddresses, localDc));
             }
             int maxAdditionalDriveCount = moduleConfig.getIntProperty("max-additional-drive-count", 0);
             for (int i = 0; i < maxAdditionalDriveCount; i++) {
-                if (moduleConfig.hasProperty("drive-name-" + i)
-                        && moduleConfig.hasProperty("ip-addresses-" + i)) {
-                    String driveName = moduleConfig.getStringProperty("drive-name-" + i);
-                    boolean remotelyAccessible = moduleConfig.getBooleanProperty("remotely-accessible-" + i, DEFAULT_REMOTELY_ACCESSIBLE);
-                    List<String> ipAddresses = moduleConfig.getStringListProperty("ip-addresses-" + i);
-                    String localDc = moduleConfig.getStringProperty("local-dc-" + i, null);
+                if (moduleConfig.hasProperty(DRIVE_NAME + "-" + i)
+                        && moduleConfig.hasProperty(IP_ADRESSES + "-" + i)) {
+                    String driveName = moduleConfig.getStringProperty(DRIVE_NAME + "-" + i);
+                    boolean remotelyAccessible = moduleConfig.getBooleanProperty(REMOTELY_ACCESSIBLE + "-" + i, DEFAULT_REMOTELY_ACCESSIBLE);
+                    List<String> ipAddresses = moduleConfig.getStringListProperty(IP_ADRESSES + "-" + i);
+                    String localDc = moduleConfig.getStringProperty(LOCAL_DC + "-" + i, null);
                     configs.add(new CassandraAppFileSystemConfig(driveName, remotelyAccessible, ipAddresses, localDc));
                 }
             }
