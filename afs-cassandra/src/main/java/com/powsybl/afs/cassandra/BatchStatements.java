@@ -11,6 +11,8 @@ import com.datastax.oss.driver.api.core.cql.BatchStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import io.netty.util.internal.shaded.org.jctools.queues.MessagePassingQueue;
 
+import java.util.function.Supplier;
+
 /**
  * @author Nicolas Rol {@literal <nicolas.rol at rte-france.com>}
  */
@@ -18,18 +20,18 @@ public class BatchStatements {
     private static final int DEFAULT_COUNT_TRESHOLD = 50_000;
 
     private final int countTreshold;
-    private final java.util.function.Supplier<BatchStatementBuilder> supplier;
+    private final Supplier<BatchStatementBuilder> supplier;
     private final MessagePassingQueue.Consumer<BatchStatementBuilder> consumer;
     BatchStatementBuilder batchStatementBuilder;
 
-    public BatchStatements(java.util.function.Supplier<BatchStatementBuilder> supplier, MessagePassingQueue.Consumer<BatchStatementBuilder> consumer, int threshold) {
+    public BatchStatements(Supplier<BatchStatementBuilder> supplier, MessagePassingQueue.Consumer<BatchStatementBuilder> consumer, int threshold) {
         this.countTreshold = threshold;
         this.supplier = supplier;
         this.consumer = consumer;
         this.batchStatementBuilder = supplier.get();
     }
 
-    public BatchStatements(java.util.function.Supplier<BatchStatementBuilder> supplier, MessagePassingQueue.Consumer<BatchStatementBuilder> consumer) {
+    public BatchStatements(Supplier<BatchStatementBuilder> supplier, MessagePassingQueue.Consumer<BatchStatementBuilder> consumer) {
         this(supplier, consumer, DEFAULT_COUNT_TRESHOLD);
     }
 
