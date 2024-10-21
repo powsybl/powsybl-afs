@@ -10,7 +10,6 @@ package com.powsybl.afs.cassandra;
 import com.datastax.oss.driver.api.core.cql.BatchStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.BatchType;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
-import com.powsybl.afs.cassandra.CassandraAppStorage.BatchStatements;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 

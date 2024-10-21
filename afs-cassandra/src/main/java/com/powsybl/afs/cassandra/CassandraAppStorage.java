@@ -20,22 +20,18 @@ import com.powsybl.afs.storage.check.FileSystemCheckIssue;
 import com.powsybl.afs.storage.check.FileSystemCheckOptions;
 import com.powsybl.afs.storage.events.*;
 import com.powsybl.timeseries.*;
-import io.netty.util.internal.shaded.org.jctools.queues.MessagePassingQueue.Consumer;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
-import java.nio.ByteBuffer;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.*;
 import static com.powsybl.afs.cassandra.CassandraConstants.*;
@@ -60,7 +56,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
 
         private void flush(TimeSeriesCreation creation, List<Statement<?>> statements, TimeSeriesWritingContext writingContext) {
             if (creation.getMetadata().getIndex() instanceof RegularTimeSeriesIndex index) {
-                statements.add(preparedStatementsSupplier.get().createTimeSeriesPreparedStmt
+                statements.add(preparedStatementsSupplier.get().getCreateTimeSeriesPreparedStmt()
                     .bind()
                     .setUuid(ID, checkNodeId(creation.getNodeId()))
                     .setString(TIME_SERIES_NAME, creation.getMetadata().getName())
@@ -91,7 +87,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
                     continue;
                 }
 
-                statements.add(preparedStatementsSupplier.get().insertTimeSeriesDataChunksPreparedStmt
+                statements.add(preparedStatementsSupplier.get().getInsertTimeSeriesDataChunksPreparedStmt()
                     .bind()
                     .setUuid(ID, nodeUuid)
                     .setString(TIME_SERIES_NAME, timeSeriesName)
@@ -101,7 +97,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
                         : TimeSeriesChunkType.DOUBLE_UNCOMPRESSED.ordinal()));
 
                 if (chunk.isCompressed()) {
-                    statements.add(preparedStatementsSupplier.get().insertDoubleTimeSeriesDataCompressedChunksPreparedStmt
+                    statements.add(preparedStatementsSupplier.get().getInsertDoubleTimeSeriesDataCompressedChunksPreparedStmt()
                         .bind()
                         .setUuid(ID, nodeUuid)
                         .setString(TIME_SERIES_NAME, timeSeriesName)
@@ -113,7 +109,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
                         .setList(STEP_LENGTHS, Arrays.stream(((CompressedDoubleDataChunk) chunk).getStepLengths()).boxed().collect(Collectors.toList()), Integer.class));
 
                 } else {
-                    statements.add(preparedStatementsSupplier.get().insertDoubleTimeSeriesDataUncompressedChunksPreparedStmt
+                    statements.add(preparedStatementsSupplier.get().getInsertDoubleTimeSeriesDataUncompressedChunksPreparedStmt()
                         .bind()
                         .setUuid(ID, nodeUuid)
                         .setString(TIME_SERIES_NAME, timeSeriesName)
@@ -159,7 +155,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
                     continue;
                 }
 
-                statements.add(preparedStatementsSupplier.get().insertTimeSeriesDataChunksPreparedStmt
+                statements.add(preparedStatementsSupplier.get().getInsertTimeSeriesDataChunksPreparedStmt()
                     .bind()
                     .setUuid(ID, nodeUuid)
                     .setString(TIME_SERIES_NAME, timeSeriesName)
@@ -169,7 +165,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
                         : TimeSeriesChunkType.STRING_UNCOMPRESSED.ordinal()));
 
                 if (chunk.isCompressed()) {
-                    statements.add(preparedStatementsSupplier.get().insertStringTimeSeriesDataCompressedChunksPreparedStmt
+                    statements.add(preparedStatementsSupplier.get().getInsertStringTimeSeriesDataCompressedChunksPreparedStmt()
                         .bind()
                         .setUuid(ID, nodeUuid)
                         .setString(TIME_SERIES_NAME, timeSeriesName)
@@ -183,7 +179,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
                             .collect(Collectors.toList()), Integer.class));
 
                 } else {
-                    statements.add(preparedStatementsSupplier.get().insertStringTimeSeriesDataUncompressedChunksPreparedStmt
+                    statements.add(preparedStatementsSupplier.get().getInsertStringTimeSeriesDataUncompressedChunksPreparedStmt()
                         .bind()
                         .setUuid(ID, nodeUuid)
                         .setString(TIME_SERIES_NAME, timeSeriesName)
@@ -223,13 +219,14 @@ public class CassandraAppStorage extends AbstractAppStorage {
             }
 
             // write statements
-            int i = 0;
+            Statement<?> statement = null;
             try {
-                for (; i < statements.size(); i++) {
-                    getSession().execute(statements.get(i));
+                for (Statement<?> s : statements) {
+                    statement = s;
+                    getSession().execute(s);
                 }
             } catch (Exception e) {
-                LOGGER.error("Failed to execute statement {}. The subsequent buffered changes in {} will be ignored.", statements.get(i), changeSet);
+                LOGGER.error("Failed to execute statement {}. The subsequent buffered changes in {} will be ignored.", statement, changeSet);
                 throw e;
             }
 
@@ -258,7 +255,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
         changeBuffer = new StorageChangeBuffer(changeFlusher, config.getFlushMaximumChange(), config.getFlushMaximumSize());
 
         // prepared statement
-        preparedStatementsSupplier = Suppliers.memoize(PreparedStatements::new);
+        preparedStatementsSupplier = Suppliers.memoize(() -> new PreparedStatements(this));
     }
 
     private static CassandraAfsException createNodeNotFoundException(UUID nodeId) {
@@ -325,7 +322,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
         return false;
     }
 
-    private CqlSession getSession() {
+    CqlSession getSession() {
         return Objects.requireNonNull(contextSupplier.get()).getSession();
     }
 
@@ -910,7 +907,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
             return Optional.empty();
         }
 
-        return Optional.of(new BinaryDataInputStream(nodeUuid, name, firstRow));
+        return Optional.of(new BinaryDataInputStream(this, nodeUuid, name, firstRow));
     }
 
     @Override
@@ -919,7 +916,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
         Objects.requireNonNull(name);
         // flush buffer to keep change order
         changeBuffer.flush();
-        return new BinaryDataOutputStream(nodeUuid, name);
+        return new BinaryDataOutputStream(this, config, nodeUuid, name);
     }
 
     private boolean dataExists(String nodeId, String name, String tableName, String nameColumn) {
@@ -1626,332 +1623,12 @@ public class CassandraAppStorage extends AbstractAppStorage {
         int insertedChunkCount = 0;
     }
 
-    public static class BatchStatements {
-
-        private static final int DEFAULT_COUNT_TRESHOLD = 50_000;
-
-        private final int countTreshold;
-        private final java.util.function.Supplier<BatchStatementBuilder> supplier;
-        private final Consumer<BatchStatementBuilder> consumer;
-        BatchStatementBuilder batchStatementBuilder;
-
-        public BatchStatements(java.util.function.Supplier<BatchStatementBuilder> supplier, Consumer<BatchStatementBuilder> consumer, int threshold) {
-            this.countTreshold = threshold;
-            this.supplier = supplier;
-            this.consumer = consumer;
-            this.batchStatementBuilder = supplier.get();
+    @Override
+    protected void pushEvent(NodeEvent event, String topic) {
+        if (getEventsBus() == null) {
+            LOGGER.warn("Event can't be pushed : No EventStore instance is available.");
+            return;
         }
-
-        public BatchStatements(java.util.function.Supplier<BatchStatementBuilder> supplier, Consumer<BatchStatementBuilder> consumer) {
-            this(supplier, consumer, DEFAULT_COUNT_TRESHOLD);
-        }
-
-        public void addStatement(SimpleStatement statement) {
-            if (batchStatementBuilder.getStatementsCount() >= countTreshold) {
-                execute();
-            }
-            batchStatementBuilder.addStatement(statement);
-        }
-
-        public void execute() {
-            consumer.accept(batchStatementBuilder);
-            batchStatementBuilder = supplier.get();
-        }
-
-        public BatchStatementBuilder getBatchStatementBuilder() {
-            return batchStatementBuilder;
-        }
-    }
-
-    static class ChildNodeInfo {
-
-        final UUID id;
-        final String name;
-        final UUID parentId;
-
-        ChildNodeInfo(UUID id, String name, UUID parentId) {
-            this.id = id;
-            this.name = name;
-            this.parentId = parentId;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hashCode(id);
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (!(o instanceof ChildNodeInfo)) {
-                return false;
-            }
-
-            ChildNodeInfo that = (ChildNodeInfo) o;
-
-            return id.equals(that.id);
-        }
-    }
-
-    private final class PreparedStatements {
-
-        private final PreparedStatement createTimeSeriesPreparedStmt;
-
-        private final PreparedStatement insertTimeSeriesDataChunksPreparedStmt;
-
-        private final PreparedStatement insertDoubleTimeSeriesDataCompressedChunksPreparedStmt;
-
-        private final PreparedStatement insertDoubleTimeSeriesDataUncompressedChunksPreparedStmt;
-
-        private final PreparedStatement insertStringTimeSeriesDataCompressedChunksPreparedStmt;
-
-        private final PreparedStatement insertStringTimeSeriesDataUncompressedChunksPreparedStmt;
-
-        private PreparedStatements() {
-            createTimeSeriesPreparedStmt = getSession().prepare(
-                insertInto(REGULAR_TIME_SERIES)
-                    .value(ID, bindMarker())
-                    .value(TIME_SERIES_NAME, bindMarker())
-                    .value(DATA_TYPE, bindMarker())
-                    .value(TIME_SERIES_TAGS, bindMarker())
-                    .value(START, bindMarker())
-                    .value(END, bindMarker())
-                    .value(SPACING, bindMarker()).build());
-
-            insertTimeSeriesDataChunksPreparedStmt = getSession().prepare(
-                insertInto(TIME_SERIES_DATA_CHUNK_TYPES)
-                    .value(ID, bindMarker())
-                    .value(TIME_SERIES_NAME, bindMarker())
-                    .value(VERSION, bindMarker())
-                    .value(CHUNK_ID, bindMarker())
-                    .value(CHUNK_TYPE, bindMarker())
-                    .build());
-
-            insertDoubleTimeSeriesDataCompressedChunksPreparedStmt = getSession().prepare(
-                insertInto(DOUBLE_TIME_SERIES_DATA_COMPRESSED_CHUNKS)
-                    .value(ID, bindMarker())
-                    .value(TIME_SERIES_NAME, bindMarker())
-                    .value(VERSION, bindMarker())
-                    .value(CHUNK_ID, bindMarker())
-                    .value(OFFSET, bindMarker())
-                    .value(UNCOMPRESSED_LENGTH, bindMarker())
-                    .value(STEP_VALUES, bindMarker())
-                    .value(STEP_LENGTHS, bindMarker())
-                    .build());
-
-            insertDoubleTimeSeriesDataUncompressedChunksPreparedStmt = getSession().prepare(
-                insertInto(DOUBLE_TIME_SERIES_DATA_UNCOMPRESSED_CHUNKS)
-                    .value(ID, bindMarker())
-                    .value(TIME_SERIES_NAME, bindMarker())
-                    .value(VERSION, bindMarker())
-                    .value(CHUNK_ID, bindMarker())
-                    .value(OFFSET, bindMarker())
-                    .value(VALUES, bindMarker())
-                    .build());
-
-            insertStringTimeSeriesDataCompressedChunksPreparedStmt = getSession().prepare(
-                insertInto(STRING_TIME_SERIES_DATA_COMPRESSED_CHUNKS)
-                    .value(ID, bindMarker())
-                    .value(TIME_SERIES_NAME, bindMarker())
-                    .value(VERSION, bindMarker())
-                    .value(CHUNK_ID, bindMarker())
-                    .value(OFFSET, bindMarker())
-                    .value(UNCOMPRESSED_LENGTH, bindMarker())
-                    .value(STEP_VALUES, bindMarker())
-                    .value(STEP_LENGTHS, bindMarker())
-                    .build());
-
-            insertStringTimeSeriesDataUncompressedChunksPreparedStmt = getSession().prepare(
-                insertInto(STRING_TIME_SERIES_DATA_UNCOMPRESSED_CHUNKS)
-                    .value(ID, bindMarker())
-                    .value(TIME_SERIES_NAME, bindMarker())
-                    .value(VERSION, bindMarker())
-                    .value(CHUNK_ID, bindMarker())
-                    .value(OFFSET, bindMarker())
-                    .value(VALUES, bindMarker())
-                    .build());
-        }
-    }
-
-    private final class BinaryDataInputStream extends InputStream {
-
-        private final UUID nodeUuid;
-
-        private final String name;
-
-        private ByteArrayInputStream buffer;
-
-        private GZIPInputStream gzis;
-
-        private int chunkNum = 1;
-
-        private BinaryDataInputStream(UUID nodeUuid, String name, Row firstRow) {
-            this.nodeUuid = Objects.requireNonNull(nodeUuid);
-            this.name = Objects.requireNonNull(name);
-            buffer = new ByteArrayInputStream(firstRow.getByteBuffer(0).array());
-            try {
-                gzis = new GZIPInputStream(buffer);
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
-        }
-
-        @Override
-        public int read() {
-            return read(() -> {
-                try {
-                    return gzis.read();
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            });
-        }
-
-        @Override
-        public int read(byte[] b, int off, int len) throws IOException {
-            return read(() -> {
-                try {
-                    return gzis.read(b, off, len);
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            });
-        }
-
-        private int read(IntSupplier supplier) {
-            int c;
-            c = supplier.getAsInt();
-            if (c == -1) {
-                // try to get next chunk
-                ResultSet resultSet = getSession().execute(selectFrom(NODE_DATA)
-                    .column(CHUNK)
-                    .whereColumn(ID).isEqualTo(literal(nodeUuid))
-                    .whereColumn(NAME).isEqualTo(literal(name))
-                    .whereColumn(CHUNK_NUM).isEqualTo(literal(chunkNum))
-                    .build());
-                Row row = resultSet.one();
-                if (row != null) {
-                    try {
-                        gzis.close();
-                    } catch (IOException e) {
-                        throw new UncheckedIOException(e);
-                    }
-                    byte[] array = row.getByteBuffer(0).array();
-                    buffer = new ByteArrayInputStream(array);
-                    try {
-                        gzis = new GZIPInputStream(buffer);
-                    } catch (IOException e) {
-                        throw new UncheckedIOException(e);
-                    }
-                    c = supplier.getAsInt();
-                    chunkNum++;
-                }
-            }
-            return c;
-        }
-
-    }
-
-    private final class BinaryDataOutputStream extends OutputStream {
-
-        private final UUID nodeUuid;
-
-        private final String name;
-
-        private ByteArrayOutputStream buffer = new ByteArrayOutputStream(config.getBinaryDataChunkSize());
-
-        private long count = 0;
-
-        private int chunkNum = 0;
-
-        private GZIPOutputStream gzos;
-
-        private BinaryDataOutputStream(UUID nodeUuid, String name) {
-            this.nodeUuid = Objects.requireNonNull(nodeUuid);
-            this.name = Objects.requireNonNull(name);
-            try {
-                gzos = new GZIPOutputStream(buffer);
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
-        }
-
-        private void execute() {
-            try {
-                gzos.close();
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
-
-            // at first write clear previous data to prevent just overlapping on a potential previous data of greater length
-            if (chunkNum == 0) {
-                removeData(nodeUuid.toString(), name);
-            }
-
-            getSession().execute(insertInto(NODE_DATA)
-                .value(ID, literal(nodeUuid))
-                .value(NAME, literal(name))
-                .value(CHUNK_NUM, literal(chunkNum++))
-                .value(CHUNKS_COUNT, literal(chunkNum))
-                .value(CHUNK, literal(ByteBuffer.wrap(buffer.toByteArray())))
-                .build());
-            buffer = new ByteArrayOutputStream(config.getBinaryDataChunkSize());
-            try {
-                gzos = new GZIPOutputStream(buffer);
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
-        }
-
-        private void executeIfNecessary() {
-            if (count >= config.getBinaryDataChunkSize()) {
-                execute();
-                count = 0;
-            }
-        }
-
-        @Override
-        public void write(int b) throws IOException {
-            gzos.write(b);
-            count++;
-            executeIfNecessary();
-        }
-
-        @Override
-        public void write(byte[] b, int off, int len) throws IOException {
-            if (len + count > config.getBinaryDataChunkSize()) {
-                int chunkOffset = off;
-                long writtenLen = 0;
-                while (writtenLen < len) {
-                    long chunkLen = Math.min(config.getBinaryDataChunkSize() - count, len - writtenLen);
-                    gzos.write(b, chunkOffset, (int) chunkLen);
-                    count += chunkLen;
-                    writtenLen += chunkLen;
-                    chunkOffset += (int) chunkLen;
-                    executeIfNecessary();
-                }
-            } else {
-                gzos.write(b, off, len);
-                count += len;
-                executeIfNecessary();
-            }
-        }
-
-        @Override
-        public void close() {
-            if (chunkNum == 0 || count > 0) { // create  at least on chunk even empty
-                execute();
-            }
-
-            // update data names
-            getSession().execute(insertInto(NODE_DATA_NAMES)
-                .value(ID, literal(nodeUuid))
-                .value(NAME, literal(name))
-                .build());
-
-            pushEvent(new NodeDataUpdated(nodeUuid.toString(), name), APPSTORAGE_NODE_TOPIC);
-        }
+        getEventsBus().pushEvent(event, topic);
     }
 }
