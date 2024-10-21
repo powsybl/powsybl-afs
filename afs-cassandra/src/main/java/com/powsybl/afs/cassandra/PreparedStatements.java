@@ -18,7 +18,6 @@ import static com.powsybl.afs.cassandra.CassandraConstants.VALUES;
  * @author Nicolas Rol {@literal <nicolas.rol at rte-france.com>}
  */
 class PreparedStatements {
-    private final CassandraAppStorage storage;
     private final PreparedStatement createTimeSeriesPreparedStmt;
     private final PreparedStatement insertTimeSeriesDataChunksPreparedStmt;
     private final PreparedStatement insertDoubleTimeSeriesDataCompressedChunksPreparedStmt;
@@ -27,7 +26,6 @@ class PreparedStatements {
     private final PreparedStatement insertStringTimeSeriesDataUncompressedChunksPreparedStmt;
 
     PreparedStatements(CassandraAppStorage storage) {
-        this.storage = storage;
         createTimeSeriesPreparedStmt = storage.getSession().prepare(
             insertInto(REGULAR_TIME_SERIES)
                 .value(ID, bindMarker())
