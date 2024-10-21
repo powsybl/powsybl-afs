@@ -103,6 +103,13 @@
         <tyrus.version>2.1.5</tyrus.version>
 
         <powsyblcore.version>6.4.1</powsyblcore.version>
+
+        <!-- Parameters used to generate the javadoc for groovy and java classes.
+             See the pom file in powsybl-parent for more explanations. -->
+        <groovydoc.attach>true</groovydoc.attach>
+        <groovydoc.classifier>javadoc</groovydoc.classifier>
+        <groovydoc.groovyDocJavaSources>true</groovydoc.groovyDocJavaSources>
+        <maven.javadoc.skip>true</maven.javadoc.skip>
     </properties>
 
     <profiles>
