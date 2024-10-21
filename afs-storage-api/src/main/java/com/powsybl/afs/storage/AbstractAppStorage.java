@@ -15,9 +15,9 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class AbstractAppStorage implements AppStorage {
 
-    protected static final String APPSTORAGE_NODE_TOPIC = "APPSTORAGE_NODE_TOPIC";
-    protected static final String APPSTORAGE_DEPENDENCY_TOPIC = "APPSTORAGE_DEPENDENCY_TOPIC";
-    protected static final String APPSTORAGE_TIMESERIES_TOPIC = "APPSTORAGE_TIMESERIES_TOPIC";
+    public static final String APPSTORAGE_NODE_TOPIC = "APPSTORAGE_NODE_TOPIC";
+    public static final String APPSTORAGE_DEPENDENCY_TOPIC = "APPSTORAGE_DEPENDENCY_TOPIC";
+    public static final String APPSTORAGE_TIMESERIES_TOPIC = "APPSTORAGE_TIMESERIES_TOPIC";
 
     protected EventsBus eventsBus;
 

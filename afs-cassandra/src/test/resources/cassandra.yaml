@@ -1,0 +1,9 @@
+storage_port: 7000
+native_transport_port: 9043
+rpc_port: 9160
+listen_address: localhost
+start_native_transport: true
+data_file_directories:
+  - target/cassandra/data
+commitlog_directory: target/cassandra/commitlog
+saved_caches_directory: target/cassandra/saved_caches

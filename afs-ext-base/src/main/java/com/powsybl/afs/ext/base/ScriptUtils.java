@@ -52,7 +52,7 @@ public final class ScriptUtils {
         return new ScriptResult<>(value, output, error);
     }
 
-    static ScriptResult<Object> runScript(Network network, ScriptType scriptType, String scriptContent) {
+    public static ScriptResult<Object> runScript(Network network, ScriptType scriptType, String scriptContent) {
         try (Reader reader = new StringReader(scriptContent)) {
             if (scriptType == ScriptType.GROOVY) {
                 return runGroovyScript(network, reader);
