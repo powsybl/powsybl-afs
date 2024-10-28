@@ -142,6 +142,15 @@ public class AppStorageDataSource implements DataSource {
         return nodeName;
     }
 
+    /**
+     * {@inheritDoc}
+     * @return true
+     */
+    @Override
+    public boolean isDataExtension(String ext) {
+        return true;
+    }
+
     @Override
     public OutputStream newOutputStream(final String suffix, final String ext, boolean append) {
         if (append) {

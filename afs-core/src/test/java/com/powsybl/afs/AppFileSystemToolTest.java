@@ -22,6 +22,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -31,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
  */
 class AppFileSystemToolTest extends AbstractToolTest {
 
-    private AppFileSystemTool tool;
+    private final AppFileSystemTool tool;
 
     private static final String FOLDER_PSEUDO_CLASS = "folder";
 
@@ -41,14 +42,14 @@ class AppFileSystemToolTest extends AbstractToolTest {
             @Override
             protected AppData createAppData(ToolRunningContext context) {
                 AppData appData = new AppData(computationManager, computationManager, Collections.emptyList(),
-                        Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+                    Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
                 AppStorage storage = MapDbAppStorage.createMem("mem", appData.getEventsBus());
                 AppFileSystem afs = new AppFileSystem("mem", false, storage);
                 appData.addFileSystem(afs);
                 afs.getRootFolder().createProject("test_project1");
                 afs.getRootFolder().createProject("test_project2");
                 storage.createNode(afs.getRootFolder().getId(), "test", FOLDER_PSEUDO_CLASS, "", 0,
-                        new NodeGenericMetadata().setString("k", "v"));
+                    new NodeGenericMetadata().setString("k", "v"));
                 storage.flush();
                 return appData;
             }
@@ -93,25 +94,25 @@ class AppFileSystemToolTest extends AbstractToolTest {
 
     @Test
     void testLsInconsistentNodes() {
-        assertCommandMatchTextOrRegex(new String[] {"afs", "--ls-inconsistent-nodes", "mem"}, 0, "mem:"
-                + System.lineSeparator() + "[a-z0-9-]+" + System.lineSeparator(), "");
-        assertCommandMatchTextOrRegex(new String[] {"afs", "--ls-inconsistent-nodes"}, 0, "mem:"
-                + System.lineSeparator() + "[a-z0-9-]+" + System.lineSeparator(), "");
+        assertCommandSuccessfulRegex(new String[] {"afs", "--ls-inconsistent-nodes", "mem"},
+            Pattern.compile("mem:" + System.lineSeparator() + "[a-z0-9-]+" + System.lineSeparator()));
+        assertCommandSuccessfulRegex(new String[] {"afs", "--ls-inconsistent-nodes"},
+            Pattern.compile("mem:" + System.lineSeparator() + "[a-z0-9-]+" + System.lineSeparator()));
     }
 
     @Test
     void testFixInconsistentNodes() {
-        assertCommandMatchTextOrRegex(new String[] {"afs", "--fix-inconsistent-nodes", "mem"}, 0, "mem:"
-                + System.lineSeparator() + "[a-z0-9-]+ fixed", "");
+        assertCommandSuccessfulRegex(new String[] {"afs", "--fix-inconsistent-nodes", "mem"},
+            Pattern.compile("mem:" + System.lineSeparator() + "[a-z0-9-]+ fixed"));
         assertCommandErrorMatch(new String[] {"afs", "--fix-inconsistent-nodes"}, 3, "IllegalArgumentException");
-        assertCommandMatchTextOrRegex(new String[] {"afs", "--ls-inconsistent-nodes", "mem", "nodeId"}, 0, "mem:"
-                + System.lineSeparator() + "[a-z0-9-]+" + System.lineSeparator(), "");
+        assertCommandSuccessfulRegex(new String[] {"afs", "--ls-inconsistent-nodes", "mem", "nodeId"},
+            Pattern.compile("mem:" + System.lineSeparator() + "[a-z0-9-]+" + System.lineSeparator()));
     }
 
     @Test
     void testRemoveInconsistentNodes() {
-        assertCommandMatchTextOrRegex(new String[] {"afs", "--rm-inconsistent-nodes", "mem"}, 0, "mem:"
-                + System.lineSeparator() + "[a-z0-9-]+ cleaned", "");
+        assertCommandSuccessfulRegex(new String[] {"afs", "--rm-inconsistent-nodes", "mem"},
+            Pattern.compile("mem:" + System.lineSeparator() + "[a-z0-9-]+ cleaned"));
         assertCommandErrorMatch(new String[] {"afs", "--rm-inconsistent-nodes"}, 3, "IllegalArgumentException");
     }
 }
