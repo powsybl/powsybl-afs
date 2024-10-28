@@ -94,5 +94,6 @@ class LocalAppStorageTest {
         assertEquals("Test format", case1.get().getDescription());
         DataSource ds = new AppStorageDataSource(storage, case1.get().getId(), case1.get().getName());
         assertNotNull(ds);
+        assertTrue(ds.isDataExtension("foo"));
     }
 }
