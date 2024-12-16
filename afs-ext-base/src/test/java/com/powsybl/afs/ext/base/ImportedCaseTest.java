@@ -141,7 +141,7 @@ class ImportedCaseTest extends AbstractProjectFileTest {
         assertNotNull(importedCase.getNetwork(Collections.singletonList(mockedListener)));
         network.getSubstation("s1").setTso("tso_new");
         verify(mockedListener, times(1))
-                .onUpdate(network.getSubstation("s1"), "tso", "TSO", "tso_new");
+                .onUpdate(network.getSubstation("s1"), "tso", null, "TSO", "tso_new");
 
         // test network query
         assertEquals("[\"s1\"]", importedCase.queryNetwork(ScriptType.GROOVY, "network.substations.collect { it.id }"));
