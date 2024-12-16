@@ -238,6 +238,6 @@ class VirtualCaseTest extends AbstractProjectFileTest {
         NetworkListener mockedListener = mock(DefaultNetworkListener.class);
         virtualCase4.getNetwork(Collections.singletonList(mockedListener));
         verify(mockedListener, times(1))
-                .onUpdate(network.getSubstation("s1"), "tso", "TSO", "tso_new");
+                .onUpdate(network.getSubstation("s1"), "tso", null, "TSO", "tso_new");
     }
 }
