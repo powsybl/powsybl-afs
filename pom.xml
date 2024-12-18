@@ -98,7 +98,7 @@
         <resteasy.version>6.2.10.Final</resteasy.version>
         <slf4j.version>2.0.13</slf4j.version>
         <springboot.version>3.4.0</springboot.version>
-        <swagger.version>2.2.22</swagger.version>
+        <swagger.version>2.2.25</swagger.version>
         <testcontainers.version>1.20.1</testcontainers.version>
         <tyrus.version>2.1.5</tyrus.version>
 
