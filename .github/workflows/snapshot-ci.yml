@@ -1,0 +1,175 @@
+name: Snapshot CI
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '20 3 * * *'
+  pull_request:
+
+jobs:
+  build_powsybl_afs:
+    name: Build Java ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+      fail-fast: false
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Set up JDK 17
+        uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9 # v4.2.1
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # Define script path variable
+      - name: Set up script path
+        run: |
+          SCRIPTS_PATH="${GITHUB_WORKSPACE}/scripts/.github/workflows/scripts"
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            SCRIPTS_PATH=$(echo "$SCRIPTS_PATH" | sed 's/\\/\//g')
+          fi
+          echo "SCRIPTS_PATH=$SCRIPTS_PATH" >> $GITHUB_ENV  
+
+      # Build powsybl-core on main branch
+      - name: Checkout core sources
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+        with:
+          repository: powsybl/powsybl-core
+          ref: main
+          path: powsybl-core
+
+      - name: Build powsybl-core
+        run: mvn -batch-mode --no-transfer-progress clean install -DskipTests
+        working-directory: ./powsybl-core
+
+      - name: Get powsybl-core version
+        run: echo "CORE_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
+        working-directory: ./powsybl-core
+
+      # Checkout script
+      # The script check_integration_branch.sh is located in the workflow folder of the repository
+      # It is necessary for checking out the integration branch if it exists
+      - name: Checkout script
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+        with:
+         sparse-checkout: |
+           .github
+         sparse-checkout-cone-mode: false
+         path: scripts
+
+      # Build powsybl-afs
+      - name: Checking for powsybl-afs snapshot branch
+        run: ${{ env.SCRIPTS_PATH }}/check_integration_branch.sh "https://github.com/powsybl/powsybl-afs.git" ${{ env.CORE_VERSION }}
+
+      - name: Checkout powsybl-afs
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+        with:
+          repository: powsybl/powsybl-afs
+          ref: ${{ env.INTEGRATION_BRANCH }}
+          path: powsybl-afs
+          submodules: true
+
+      - name: update pom.xml
+        run: mvn versions:set-property -Dproperty=powsyblcore.version -DnewVersion=$CORE_VERSION -DgenerateBackupPoms=false
+        working-directory: ./powsybl-afs
+
+      - name: Build with Maven (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        working-directory: ./powsybl-afs
+        run: ./mvnw --batch-mode -Pjacoco install
+
+      - name: Build with Maven (Windows)
+        if: matrix.os == 'windows-latest'
+        working-directory: .\powsybl-afs
+        run: mvnw.cmd --batch-mode install
+        shell: cmd
+
+      - name: Store job result
+        if: always()
+        run: |
+          echo "${{ matrix.os }}=${{ job.status }}" >> job_result_${{ matrix.os }}.txt
+
+      - name: Upload job result
+        if: always()
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # 4.3.3
+        with:
+          name: job-results_${{ matrix.os }}
+          path: job_result_${{ matrix.os }}.txt
+
+    outputs:
+      core-version: ${{ env.CORE_VERSION }}
+      afs-branch: ${{ env.INTEGRATION_BRANCH }}
+
+  # Slack notification
+  notify_slack:
+    needs: build_powsybl_afs
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Determine workflow status
+        id: workflow_status
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "icon=✅" >> $GITHUB_OUTPUT
+            echo "status=Successful" >> $GITHUB_OUTPUT
+          else
+            echo "icon=❌" >> $GITHUB_OUTPUT
+            echo "status=Failed" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Download job results
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+
+      - name: Combine job results
+        run: |
+          for dir in job-results_*; do
+            cat "$dir"/* >> combined_job_results.txt
+          done
+
+      - name: Format job results
+        id: format_results
+        run: |
+          formatted=""
+          while IFS='=' read -r os status; do
+            icon=$([ "$status" == "success" ] && echo ":white_check_mark:" || echo ":x:")
+            formatted+="${icon} Build powsybl-afs on *${os}*\\n"
+          done < combined_job_results.txt
+          formatted="${formatted%\\n}"  # Remove the last newline
+          echo "formatted_results=${formatted}" >> $GITHUB_OUTPUT
+
+      - name: Send Slack Notification
+        uses: 8398a7/action-slack@28ba43ae48961b90635b50953d216767a6bea486 # v3.16.2
+        with:
+          author_name: 'powsybl-afs on GitHub'
+          status: custom
+          custom_payload: |
+            {
+              attachments: [{
+                color: '${{ job.status }}' === 'success' ? "#319f4b" : '${{ job.status }}' === 'failure' ? "#f64538" : "#ffc965",
+                "blocks": [
+                  {
+                    "type": "section",
+                    "text": {
+                      "type": "mrkdwn",
+                      "text": "${{ steps.workflow_status.outputs.icon }} *${{ steps.workflow_status.outputs.status }} workflow: Snapshot-CI on <https://github.com/powsybl/powsybl-afs|powsybl-afs>*\n\nBranch built: ${{ needs.build_powsybl_afs.outputs.afs-branch }}\nPowSyBl-Core version used: ${{ needs.build_powsybl_afs.outputs.core-version }}"
+                    }
+                  },
+                  {
+                    "type": "divider"
+                  },
+                  {
+                    "type": "section",
+                    "text": {
+                      "type": "mrkdwn",
+                      "text": "*Workflow details:*\n\n${{ steps.format_results.outputs.formatted_results }}\n\nSee logs on <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|GitHub>"
+                    }
+                  }
+                ]
+              }]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_POWSYBL_WEBHOOK_URL }}
