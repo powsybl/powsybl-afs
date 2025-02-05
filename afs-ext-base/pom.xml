@@ -115,6 +115,10 @@
             <artifactId>powsybl-iidm-impl</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.powsybl</groupId>
+            <artifactId>powsybl-scripting</artifactId>
+        </dependency>
     </dependencies>
 
 </project>
