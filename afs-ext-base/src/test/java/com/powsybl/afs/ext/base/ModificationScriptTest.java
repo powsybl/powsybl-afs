@@ -11,6 +11,7 @@ import com.powsybl.afs.*;
 import com.powsybl.afs.mapdb.storage.MapDbAppStorage;
 import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.InMemoryEventsBus;
+import com.powsybl.afs.storage.NodeInfo;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -181,4 +182,51 @@ class ModificationScriptTest extends AbstractProjectFileTest {
         assertEquals("include_script11", include1.getName());
         assertEquals("include_script11", script.getIncludedScripts().get(1).getName());
     }
+
+    @Test
+    void testModificationScriptCreationWithCustomPseudoClass() {
+        // Create a project in the root folder
+        Project project = afs.getRootFolder().createProject("project");
+
+        // Define a custom pseudo-class value
+        String customPseudoClass = "customPseudo";
+
+        // Build a ModificationScript using the custom pseudo-class
+        ModificationScript modificationScript = project.getRootFolder().fileBuilder(ModificationScriptBuilder.class)
+                .withName("customScript")
+                .withType(ScriptType.GROOVY)
+                .withContent("println 'hello'")
+                .withPseudoClass(customPseudoClass)
+                .build();
+
+        // Retrieve the node info for the created script from storage
+        NodeInfo nodeInfo = storage.getChildNode(project.getRootFolder().getId(), "customScript")
+                .orElseThrow(() -> new AssertionError("Node 'customScript' not found"));
+
+        // Assert that the pseudo-class of the node is set to the custom value
+        assertEquals(customPseudoClass, nodeInfo.getPseudoClass());
+    }
+
+    @Test
+    void testModificationScriptCreationWithDefaultPseudoClass() {
+        // Create a project in the root folder
+        Project project = afs.getRootFolder().createProject("project");
+
+        // Build a ModificationScript without specifying a pseudo-class, so the default should be used
+        ModificationScript modificationScript = project.getRootFolder().fileBuilder(ModificationScriptBuilder.class)
+                .withName("defaultScript")
+                .withType(ScriptType.GROOVY)
+                .withContent("println 'hello'")
+                .build();
+
+        // Retrieve the node info for the created script from storage
+        NodeInfo nodeInfo = storage.getChildNode(project.getRootFolder().getId(), "defaultScript")
+                .orElseThrow(() -> new AssertionError("Node 'defaultScript' not found"));
+
+        // Assert that the pseudo-class of the node is set to the default value defined in ModificationScript.PSEUDO_CLASS
+        assertEquals(ModificationScript.PSEUDO_CLASS, nodeInfo.getPseudoClass());
+    }
+
+
+
 }

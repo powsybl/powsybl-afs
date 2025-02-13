@@ -32,6 +32,8 @@ public class ModificationScriptBuilder implements ProjectFileBuilder<Modificatio
 
     private String content;
 
+    private String pseudoClass = ModificationScript.PSEUDO_CLASS;
+
     public ModificationScriptBuilder(ProjectFileBuildContext context) {
         this.context = Objects.requireNonNull(context);
     }
@@ -48,6 +50,11 @@ public class ModificationScriptBuilder implements ProjectFileBuilder<Modificatio
 
     public ModificationScriptBuilder withContent(String content) {
         this.content = content;
+        return this;
+    }
+
+    public ModificationScriptBuilder withPseudoClass(String pseudoClass) {
+        this.pseudoClass = pseudoClass;
         return this;
     }
 
@@ -69,7 +76,7 @@ public class ModificationScriptBuilder implements ProjectFileBuilder<Modificatio
         }
 
         // create project file
-        NodeInfo info = context.getStorage().createNode(context.getFolderInfo().getId(), name, ModificationScript.PSEUDO_CLASS, "", ModificationScript.VERSION,
+        NodeInfo info = context.getStorage().createNode(context.getFolderInfo().getId(), name, pseudoClass, "", ModificationScript.VERSION,
                 new NodeGenericMetadata().setString(ModificationScript.SCRIPT_TYPE, type.name()));
 
         // store script
