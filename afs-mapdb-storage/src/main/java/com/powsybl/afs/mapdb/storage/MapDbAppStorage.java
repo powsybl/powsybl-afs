@@ -194,7 +194,7 @@ public class MapDbAppStorage extends AbstractAppStorage {
         List<V> values = map.get(key);
         List<V> values2;
         if (values == null) {
-            values2 = ImmutableList.of(value);
+            values2 = List.of(value);
         } else {
             values2 = ImmutableList.<V>builder()
                     .addAll(values)

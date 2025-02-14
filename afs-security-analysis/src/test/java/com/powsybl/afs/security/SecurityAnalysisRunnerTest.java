@@ -107,19 +107,19 @@ public class SecurityAnalysisRunnerTest extends AbstractProjectFileTest {
 
     @Override
     protected List<FileExtension> getFileExtensions() {
-        return ImmutableList.of(new CaseExtension(importersLoader));
+        return List.of(new CaseExtension(importersLoader));
     }
 
     @Override
     protected List<ProjectFileExtension> getProjectFileExtensions() {
-        return ImmutableList.of(new ImportedCaseExtension(importersLoader, new ImportConfig()),
+        return List.of(new ImportedCaseExtension(importersLoader, new ImportConfig()),
                 new ContingencyStoreExtension(),
                 new SecurityAnalysisRunnerExtension(new SecurityAnalysisParameters()));
     }
 
     @Override
     protected List<ServiceExtension> getServiceExtensions() {
-        return ImmutableList.of(new SecurityAnalysisServiceExtensionMock(),
+        return List.of(new SecurityAnalysisServiceExtensionMock(),
                 new LocalNetworkCacheServiceExtension());
     }
 

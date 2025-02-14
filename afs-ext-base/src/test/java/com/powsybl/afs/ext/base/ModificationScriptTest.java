@@ -32,12 +32,12 @@ class ModificationScriptTest extends AbstractProjectFileTest {
 
     @Override
     protected List<FileExtension> getFileExtensions() {
-        return ImmutableList.of(new CaseExtension());
+        return List.of(new CaseExtension());
     }
 
     @Override
     protected List<ProjectFileExtension> getProjectFileExtensions() {
-        return ImmutableList.of(new ModificationScriptExtension(), new GenericScriptExtension());
+        return List.of(new ModificationScriptExtension(), new GenericScriptExtension());
     }
 
     @Test

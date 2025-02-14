@@ -198,7 +198,7 @@ class AfsBaseTest {
 
         ProjectFolder dir5 = rootFolder.createFolder("dir5");
         ProjectFolder dir6 = dir5.createFolder("dir6");
-        assertEquals(ImmutableList.of("dir5", "dir6"), dir6.getPath().toList().subList(1, 3));
+        assertEquals(List.of("dir5", "dir6"), dir6.getPath().toList().subList(1, 3));
         assertEquals("dir5/dir6", dir6.getPath().toString());
         assertEquals("dir6", rootFolder.getChild("dir5/dir6").orElseThrow(AssertionError::new).getName());
 

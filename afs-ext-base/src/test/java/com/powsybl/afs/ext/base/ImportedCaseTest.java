@@ -64,17 +64,17 @@ class ImportedCaseTest extends AbstractProjectFileTest {
 
     @Override
     protected List<FileExtension> getFileExtensions() {
-        return ImmutableList.of(new CaseExtension(createImportersLoader()));
+        return List.of(new CaseExtension(createImportersLoader()));
     }
 
     @Override
     protected List<ProjectFileExtension> getProjectFileExtensions() {
-        return ImmutableList.of(new ImportedCaseExtension(createExportersLoader(), createImportersLoader(), new ImportConfig()));
+        return List.of(new ImportedCaseExtension(createExportersLoader(), createImportersLoader(), new ImportConfig()));
     }
 
     @Override
     protected List<ServiceExtension> getServiceExtensions() {
-        return ImmutableList.of(new LocalNetworkCacheServiceExtension());
+        return List.of(new LocalNetworkCacheServiceExtension());
     }
 
     @Override

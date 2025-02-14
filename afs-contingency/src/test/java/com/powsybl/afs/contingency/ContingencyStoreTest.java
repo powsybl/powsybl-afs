@@ -35,7 +35,7 @@ class ContingencyStoreTest extends AbstractProjectFileTest {
 
     @Override
     protected List<ProjectFileExtension> getProjectFileExtensions() {
-        return ImmutableList.of(new ContingencyStoreExtension());
+        return List.of(new ContingencyStoreExtension());
     }
 
     @Test

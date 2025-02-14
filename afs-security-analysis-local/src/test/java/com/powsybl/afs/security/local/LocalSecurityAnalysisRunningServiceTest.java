@@ -29,7 +29,7 @@ class LocalSecurityAnalysisRunningServiceTest extends SecurityAnalysisRunnerTest
             Constructor<SecurityAnalysis.Runner> constructor = SecurityAnalysis.Runner.class.getDeclaredConstructor(SecurityAnalysisProvider.class);
             constructor.setAccessible(true);
             SecurityAnalysis.Runner runner = constructor.newInstance(new SecurityAnalysisProviderMock());
-            return ImmutableList.of(new LocalSecurityAnalysisRunningServiceExtension(runner),
+            return List.of(new LocalSecurityAnalysisRunningServiceExtension(runner),
                     new LocalNetworkCacheServiceExtension());
         } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
             throw new AssertionError();

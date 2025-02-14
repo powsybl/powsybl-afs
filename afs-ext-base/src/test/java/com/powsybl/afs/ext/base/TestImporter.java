@@ -47,7 +47,7 @@ public class TestImporter implements Importer {
 
     @Override
     public List<Parameter> getParameters() {
-        return ImmutableList.of(new Parameter("param1", ParameterType.BOOLEAN, "", Boolean.TRUE),
+        return List.of(new Parameter("param1", ParameterType.BOOLEAN, "", Boolean.TRUE),
                 new Parameter("param2", ParameterType.STRING, "", "value"));
     }
 
