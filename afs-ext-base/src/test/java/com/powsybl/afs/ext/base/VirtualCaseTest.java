@@ -6,17 +6,25 @@
  */
 package com.powsybl.afs.ext.base;
 
-import com.google.common.collect.ImmutableList;
-import com.powsybl.afs.*;
+import com.powsybl.afs.AbstractProjectFileTest;
+import com.powsybl.afs.AfsCircularDependencyException;
+import com.powsybl.afs.AfsException;
+import com.powsybl.afs.FileExtension;
+import com.powsybl.afs.Folder;
+import com.powsybl.afs.Project;
+import com.powsybl.afs.ProjectFile;
+import com.powsybl.afs.ProjectFileExtension;
+import com.powsybl.afs.ProjectFolder;
+import com.powsybl.afs.ServiceExtension;
 import com.powsybl.afs.mapdb.storage.MapDbAppStorage;
 import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.InMemoryEventsBus;
 import com.powsybl.afs.storage.NodeGenericMetadata;
 import com.powsybl.afs.storage.NodeInfo;
+import com.powsybl.iidm.network.DefaultNetworkListener;
 import com.powsybl.iidm.network.ImportConfig;
 import com.powsybl.iidm.network.ImportersLoader;
 import com.powsybl.iidm.network.ImportersLoaderList;
-import com.powsybl.iidm.network.DefaultNetworkListener;
 import com.powsybl.iidm.network.NetworkListener;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,7 +34,12 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -53,8 +66,8 @@ class VirtualCaseTest extends AbstractProjectFileTest {
     @Override
     protected List<ProjectFileExtension> getProjectFileExtensions() {
         return List.of(new ImportedCaseExtension(createImportersLoader(), new ImportConfig()),
-                                new ModificationScriptExtension(),
-                                new VirtualCaseExtension());
+            new ModificationScriptExtension(),
+            new VirtualCaseExtension());
     }
 
     @Override
@@ -67,7 +80,7 @@ class VirtualCaseTest extends AbstractProjectFileTest {
         super.setup();
         NodeInfo rootFolderInfo = storage.createRootNodeIfNotExists("root", Folder.PSEUDO_CLASS);
         NodeInfo nodeInfo = storage.createNode(rootFolderInfo.getId(), "network", Case.PSEUDO_CLASS, "", Case.VERSION,
-                new NodeGenericMetadata().setString(Case.FORMAT, TestImporter.FORMAT));
+            new NodeGenericMetadata().setString(Case.FORMAT, TestImporter.FORMAT));
         storage.setConsistent(nodeInfo.getId());
     }
 
@@ -84,49 +97,49 @@ class VirtualCaseTest extends AbstractProjectFileTest {
 
         // import case into project
         ImportedCase importedCase = folder.fileBuilder(ImportedCaseBuilder.class)
-                .withCase(aCase)
-                .build();
+            .withCase(aCase)
+            .build();
 
         // create groovy script
         ModificationScript script = folder.fileBuilder(ModificationScriptBuilder.class)
-                .withName("script")
-                .withType(ScriptType.GROOVY)
-                .withContent("print 'hello'")
-                .build();
+            .withName("script")
+            .withType(ScriptType.GROOVY)
+            .withContent("print 'hello'")
+            .build();
 
         // create virtual by applying groovy script on imported case
         try {
             VirtualCase virtualCase = folder.fileBuilder(VirtualCaseBuilder.class)
-                    .withCase(importedCase)
-                    .withScript(script)
-                    .build();
+                .withCase(importedCase)
+                .withScript(script)
+                .build();
             fail();
         } catch (AfsException ignored) {
         }
 
         try {
             VirtualCase virtualCase = folder.fileBuilder(VirtualCaseBuilder.class)
-                    .withName("network2")
-                    .withScript(script)
-                    .build();
+                .withName("network2")
+                .withScript(script)
+                .build();
             fail();
         } catch (AfsException ignored) {
         }
 
         try {
             VirtualCase virtualCase = folder.fileBuilder(VirtualCaseBuilder.class)
-                    .withName("network2")
-                    .withCase(importedCase)
-                    .build();
+                .withName("network2")
+                .withCase(importedCase)
+                .build();
             fail();
         } catch (AfsException ignored) {
         }
 
         VirtualCase virtualCase = folder.fileBuilder(VirtualCaseBuilder.class)
-                .withName("network2")
-                .withCase(importedCase)
-                .withScript(script)
-                .build();
+            .withName("network2")
+            .withCase(importedCase)
+            .withScript(script)
+            .build();
 
         assertEquals("network2", virtualCase.getName());
         assertTrue(virtualCase.getCase().isPresent());
@@ -149,16 +162,16 @@ class VirtualCaseTest extends AbstractProjectFileTest {
 
         // test script error
         ModificationScript scriptWithError = folder.fileBuilder(ModificationScriptBuilder.class)
-                .withName("scriptWithError")
-                .withType(ScriptType.GROOVY)
-                .withContent("prin 'hello'")
-                .build();
+            .withName("scriptWithError")
+            .withType(ScriptType.GROOVY)
+            .withContent("prin 'hello'")
+            .build();
 
         VirtualCase virtualCaseWithError = folder.fileBuilder(VirtualCaseBuilder.class)
-                .withName("network2")
-                .withCase(importedCase)
-                .withScript(scriptWithError)
-                .build();
+            .withName("network2")
+            .withCase(importedCase)
+            .withScript(scriptWithError)
+            .build();
 
         try {
             virtualCaseWithError.getNetwork();
@@ -191,17 +204,17 @@ class VirtualCaseTest extends AbstractProjectFileTest {
 
         //test missing dependencies
         VirtualCase virtualCase3 = folder.fileBuilder(VirtualCaseBuilder.class)
-                .withName("network3")
-                .withCase(importedCase)
-                .withScript(scriptWithError)
-                .build();
+            .withName("network3")
+            .withCase(importedCase)
+            .withScript(scriptWithError)
+            .build();
 
         importedCase.delete();
         assertTrue(virtualCase3.mandatoryDependenciesAreMissing());
 
         ImportedCase importedCase2 = folder.fileBuilder(ImportedCaseBuilder.class)
-                .withCase(aCase)
-                .build();
+            .withCase(aCase)
+            .build();
 
         virtualCase3.setCase(importedCase2);
 
@@ -212,9 +225,9 @@ class VirtualCaseTest extends AbstractProjectFileTest {
         assertEquals(importedCase2.getName(), virtualCase3.getCase().map(ProjectFile::getName).orElse(null));
 
         ImportedCase importedCase3 = folder.fileBuilder(ImportedCaseBuilder.class)
-                .withCase(aCase)
-                .withName("importedCase3")
-                .build();
+            .withCase(aCase)
+            .withName("importedCase3")
+            .build();
 
         virtualCase3.replaceDependency(importedCase2.getId(), importedCase3);
 
@@ -225,19 +238,19 @@ class VirtualCaseTest extends AbstractProjectFileTest {
 
         // test network listener
         ModificationScript scriptModif = folder.fileBuilder(ModificationScriptBuilder.class)
-                .withName("scriptModif")
-                .withType(ScriptType.GROOVY)
-                .withContent("network.getSubstation('s1').setTso('tso_new')")
-                .build();
+            .withName("scriptModif")
+            .withType(ScriptType.GROOVY)
+            .withContent("network.getSubstation('s1').setTso('tso_new')")
+            .build();
         VirtualCase virtualCase4 = folder.fileBuilder(VirtualCaseBuilder.class)
-                .withName("network4")
-                .withCase(importedCase3)
-                .withScript(scriptModif)
-                .build();
+            .withName("network4")
+            .withCase(importedCase3)
+            .withScript(scriptModif)
+            .build();
 
         NetworkListener mockedListener = mock(DefaultNetworkListener.class);
         virtualCase4.getNetwork(Collections.singletonList(mockedListener));
         verify(mockedListener, times(1))
-                .onUpdate(network.getSubstation("s1"), "tso", null, "TSO", "tso_new");
+            .onUpdate(network.getSubstation("s1"), "tso", null, "TSO", "tso_new");
     }
 }

@@ -6,7 +6,6 @@
  */
 package com.powsybl.afs.local.storage;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import com.powsybl.afs.Folder;
@@ -32,7 +31,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
@@ -55,7 +58,7 @@ class LocalAppStorageTest {
         ComputationManager computationManager = Mockito.mock(ComputationManager.class);
         Network network = Mockito.mock(Network.class);
         List<LocalFileScanner> fileExtensions
-                = Collections.singletonList(new LocalCaseScanner(new ImportConfig(), new ImportersLoaderList(new TestImporter(network))));
+            = Collections.singletonList(new LocalCaseScanner(new ImportConfig(), new ImportersLoaderList(new TestImporter(network))));
         storage = new LocalAppStorage(rootDir, "mem", fileExtensions, Collections.emptyList(), computationManager);
     }
 
@@ -80,7 +83,7 @@ class LocalAppStorageTest {
         assertTrue(storage.isConsistent(rootNodeInfo.getId()));
         assertFalse(storage.getParentNode(rootNodeInfo.getId()).isPresent());
         assertEquals(List.of("%2Fcases%2Fn.tst", "%2Fcases%2Fn2.tst"),
-                     storage.getChildNodes(rootNodeInfo.getId()).stream().map(NodeInfo::getId).collect(Collectors.toList()));
+            storage.getChildNodes(rootNodeInfo.getId()).stream().map(NodeInfo::getId).collect(Collectors.toList()));
         Optional<NodeInfo> case1 = storage.getChildNode(rootNodeInfo.getId(), "n.tst");
         assertTrue(case1.isPresent());
         assertEquals(rootNodeInfo, storage.getParentNode(case1.get().getId()).orElseThrow(AssertionError::new));

@@ -6,7 +6,6 @@
  */
 package com.powsybl.afs.action.dsl;
 
-import com.google.common.collect.ImmutableList;
 import com.powsybl.afs.AbstractProjectFileTest;
 import com.powsybl.afs.Project;
 import com.powsybl.afs.ProjectFileExtension;

@@ -6,22 +6,48 @@
  */
 package com.powsybl.afs.mapdb.storage;
 
-import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.powsybl.afs.storage.*;
+import com.powsybl.afs.storage.AbstractAppStorage;
+import com.powsybl.afs.storage.AfsStorageException;
+import com.powsybl.afs.storage.EventsBus;
+import com.powsybl.afs.storage.NodeDependency;
+import com.powsybl.afs.storage.NodeGenericMetadata;
+import com.powsybl.afs.storage.NodeInfo;
 import com.powsybl.afs.storage.events.*;
-import com.powsybl.timeseries.*;
+import com.powsybl.timeseries.AbstractPoint;
+import com.powsybl.timeseries.DataChunk;
+import com.powsybl.timeseries.DoubleDataChunk;
+import com.powsybl.timeseries.StringDataChunk;
+import com.powsybl.timeseries.TimeSeriesDataType;
+import com.powsybl.timeseries.TimeSeriesMetadata;
+import com.powsybl.timeseries.TimeSeriesVersions;
 import org.apache.commons.lang3.SystemUtils;
 import org.mapdb.Atomic;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.Serializer;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -30,9 +56,94 @@ import java.util.stream.Stream;
  */
 public class MapDbAppStorage extends AbstractAppStorage {
 
-    @FunctionalInterface
-    public interface MapDbAppStorageProvider<F, S, T, R> {
-        public R apply(F first, S second, T third);
+    private static final String NODE = "Node ";
+    private final String fileSystemName;
+    private final DB db;
+    private final Atomic.Var<NodeInfo> rootNodeVar;
+    private final ConcurrentMap<UUID, List<UUID>> childNodesMap;
+    private final ConcurrentMap<NamedLink, UUID> childNodeMap;
+    private final ConcurrentMap<UUID, UUID> parentNodeMap;
+    private final ConcurrentMap<UUID, NodeInfo> nodeInfoMap;
+    private final ConcurrentMap<NamedLink, byte[]> dataMap;
+    private final ConcurrentMap<UUID, Set<String>> dataNamesMap;
+    private final ConcurrentMap<UUID, Boolean> nodeConsistencyMap;
+    private final ConcurrentMap<UUID, Set<String>> timeSeriesNamesMap;
+    private final ConcurrentMap<NamedLink, TimeSeriesMetadata> timeSeriesMetadataMap;
+    private final ConcurrentMap<TimeSeriesKey, Integer> timeSeriesLastChunkMap;
+    private final ConcurrentMap<TimeSeriesChunkKey, DoubleDataChunk> doubleTimeSeriesChunksMap;
+    private final ConcurrentMap<TimeSeriesChunkKey, StringDataChunk> stringTimeSeriesChunksMap;
+    private final ConcurrentMap<UUID, List<NamedLink>> dependencyNodesMap;
+    private final ConcurrentMap<NamedLink, List<UUID>> dependencyNodesByNameMap;
+    private final ConcurrentMap<UUID, List<UUID>> backwardDependencyNodesMap;
+
+    protected MapDbAppStorage(String fileSystemName, Supplier<DB> db, EventsBus eventsBus) {
+        this.fileSystemName = Objects.requireNonNull(fileSystemName);
+        this.db = db.get();
+
+        rootNodeVar = this.db.atomicVar("rootNode", NodeInfoSerializer.INSTANCE)
+            .createOrOpen();
+
+        childNodesMap = this.db
+            .hashMap("childNodes", UuidSerializer.INSTANCE, UuidListSerializer.INSTANCE)
+            .createOrOpen();
+
+        childNodeMap = this.db
+            .hashMap("childNode", NamedLinkSerializer.INSTANCE, UuidSerializer.INSTANCE)
+            .createOrOpen();
+
+        parentNodeMap = this.db
+            .hashMap("parentNode", UuidSerializer.INSTANCE, UuidSerializer.INSTANCE)
+            .createOrOpen();
+
+        nodeInfoMap = this.db
+            .hashMap("nodeInfo", UuidSerializer.INSTANCE, NodeInfoSerializer.INSTANCE)
+            .createOrOpen();
+
+        dataMap = this.db
+            .hashMap("data", NamedLinkSerializer.INSTANCE, Serializer.BYTE_ARRAY)
+            .createOrOpen();
+
+        dataNamesMap = this.db
+            .hashMap("dataNames", UuidSerializer.INSTANCE, StringSetSerializer.INSTANCE)
+            .createOrOpen();
+
+        nodeConsistencyMap = this.db
+            .hashMap("nodeConsistency", UuidSerializer.INSTANCE, Serializer.BOOLEAN)
+            .createOrOpen();
+
+        timeSeriesNamesMap = this.db
+            .hashMap("timeSeriesNamesMap", UuidSerializer.INSTANCE, StringSetSerializer.INSTANCE)
+            .createOrOpen();
+
+        timeSeriesMetadataMap = this.db
+            .hashMap("timeSeriesMetadataMap", NamedLinkSerializer.INSTANCE, TimeSeriesMetadataSerializer.INSTANCE)
+            .createOrOpen();
+
+        timeSeriesLastChunkMap = this.db
+            .hashMap("timeSeriesLastChunkMap", TimeSeriesKeySerializer.INSTANCE, Serializer.INTEGER)
+            .createOrOpen();
+
+        doubleTimeSeriesChunksMap = this.db
+            .hashMap("doubleTimeSeriesChunksMap", TimeSeriesChunkKeySerializer.INSTANCE, DoubleDataChunkSerializer.INSTANCE)
+            .createOrOpen();
+
+        stringTimeSeriesChunksMap = this.db
+            .hashMap("stringTimeSeriesChunksMap", TimeSeriesChunkKeySerializer.INSTANCE, StringDataChunkSerializer.INSTANCE)
+            .createOrOpen();
+
+        dependencyNodesMap = this.db
+            .hashMap("dependencyNodes", UuidSerializer.INSTANCE, NamedLinkListSerializer.INSTANCE)
+            .createOrOpen();
+
+        dependencyNodesByNameMap = this.db
+            .hashMap("dependencyNodesByName", NamedLinkSerializer.INSTANCE, UuidListSerializer.INSTANCE)
+            .createOrOpen();
+
+        backwardDependencyNodesMap = this.db
+            .hashMap("backwardDependencyNodes", UuidSerializer.INSTANCE, UuidListSerializer.INSTANCE)
+            .createOrOpen();
+
+        this.eventsBus = Objects.requireNonNull(eventsBus);
     }
 
     public static MapDbAppStorage createMem(String fileSystemName, EventsBus eventsBus) {
@@ -48,121 +159,15 @@ public class MapDbAppStorage extends AbstractAppStorage {
     public static MapDbAppStorage createMmapFile(String fileSystemName, File dbFile, EventsBus eventsBus) {
         return new MapDbAppStorage(fileSystemName, () -> {
             DBMaker.Maker maker = DBMaker.fileDB(dbFile)
-                    .transactionEnable();
+                .transactionEnable();
             // it is not recommanded to use mmap on Windows (crash)
             // http://www.mapdb.org/blog/mmap_files_alloc_and_jvm_crash/
             if (!SystemUtils.IS_OS_WINDOWS) {
                 maker.fileMmapEnableIfSupported()
-                        .fileMmapPreclearDisable();
+                    .fileMmapPreclearDisable();
             }
             return maker.make();
         }, eventsBus);
-    }
-
-    private final String fileSystemName;
-
-    private final DB db;
-
-    private final Atomic.Var<NodeInfo> rootNodeVar;
-
-    private final ConcurrentMap<UUID, List<UUID>> childNodesMap;
-
-    private final ConcurrentMap<NamedLink, UUID> childNodeMap;
-
-    private final ConcurrentMap<UUID, UUID> parentNodeMap;
-
-    private final ConcurrentMap<UUID, NodeInfo> nodeInfoMap;
-
-    private final ConcurrentMap<NamedLink, byte[]> dataMap;
-
-    private final ConcurrentMap<UUID, Set<String>> dataNamesMap;
-
-    private final ConcurrentMap<UUID, Boolean> nodeConsistencyMap;
-
-    private final ConcurrentMap<UUID, Set<String>> timeSeriesNamesMap;
-
-    private final ConcurrentMap<NamedLink, TimeSeriesMetadata> timeSeriesMetadataMap;
-
-    private final ConcurrentMap<TimeSeriesKey, Integer> timeSeriesLastChunkMap;
-
-    private final ConcurrentMap<TimeSeriesChunkKey, DoubleDataChunk> doubleTimeSeriesChunksMap;
-
-    private final ConcurrentMap<TimeSeriesChunkKey, StringDataChunk> stringTimeSeriesChunksMap;
-
-    private final ConcurrentMap<UUID, List<NamedLink>> dependencyNodesMap;
-
-    private final ConcurrentMap<NamedLink, List<UUID>> dependencyNodesByNameMap;
-
-    private final ConcurrentMap<UUID, List<UUID>> backwardDependencyNodesMap;
-
-    protected MapDbAppStorage(String fileSystemName, Supplier<DB> db, EventsBus eventsBus) {
-        this.fileSystemName = Objects.requireNonNull(fileSystemName);
-        this.db = db.get();
-
-        rootNodeVar = this.db.atomicVar("rootNode", NodeInfoSerializer.INSTANCE)
-                .createOrOpen();
-
-        childNodesMap = this.db
-                .hashMap("childNodes", UuidSerializer.INSTANCE, UuidListSerializer.INSTANCE)
-                .createOrOpen();
-
-        childNodeMap = this.db
-                .hashMap("childNode", NamedLinkSerializer.INSTANCE, UuidSerializer.INSTANCE)
-                .createOrOpen();
-
-        parentNodeMap = this.db
-                .hashMap("parentNode", UuidSerializer.INSTANCE, UuidSerializer.INSTANCE)
-                .createOrOpen();
-
-        nodeInfoMap = this.db
-                .hashMap("nodeInfo", UuidSerializer.INSTANCE, NodeInfoSerializer.INSTANCE)
-                .createOrOpen();
-
-        dataMap = this.db
-                .hashMap("data", NamedLinkSerializer.INSTANCE, Serializer.BYTE_ARRAY)
-                .createOrOpen();
-
-        dataNamesMap = this.db
-                .hashMap("dataNames", UuidSerializer.INSTANCE, StringSetSerializer.INSTANCE)
-                .createOrOpen();
-
-        nodeConsistencyMap = this.db
-                .hashMap("nodeConsistency", UuidSerializer.INSTANCE, Serializer.BOOLEAN)
-                .createOrOpen();
-
-        timeSeriesNamesMap = this.db
-                .hashMap("timeSeriesNamesMap", UuidSerializer.INSTANCE, StringSetSerializer.INSTANCE)
-                .createOrOpen();
-
-        timeSeriesMetadataMap = this.db
-                .hashMap("timeSeriesMetadataMap", NamedLinkSerializer.INSTANCE, TimeSeriesMetadataSerializer.INSTANCE)
-                .createOrOpen();
-
-        timeSeriesLastChunkMap = this.db
-                .hashMap("timeSeriesLastChunkMap", TimeSeriesKeySerializer.INSTANCE, Serializer.INTEGER)
-                .createOrOpen();
-
-        doubleTimeSeriesChunksMap = this.db
-                .hashMap("doubleTimeSeriesChunksMap", TimeSeriesChunkKeySerializer.INSTANCE, DoubleDataChunkSerializer.INSTANCE)
-                .createOrOpen();
-
-        stringTimeSeriesChunksMap = this.db
-                .hashMap("stringTimeSeriesChunksMap", TimeSeriesChunkKeySerializer.INSTANCE, StringDataChunkSerializer.INSTANCE)
-                .createOrOpen();
-
-        dependencyNodesMap = this.db
-                .hashMap("dependencyNodes", UuidSerializer.INSTANCE, NamedLinkListSerializer.INSTANCE)
-                .createOrOpen();
-
-        dependencyNodesByNameMap = this.db
-                .hashMap("dependencyNodesByName", NamedLinkSerializer.INSTANCE, UuidListSerializer.INSTANCE)
-                .createOrOpen();
-
-        backwardDependencyNodesMap = this.db
-                .hashMap("backwardDependencyNodes", UuidSerializer.INSTANCE, UuidListSerializer.INSTANCE)
-                .createOrOpen();
-
-        this.eventsBus = Objects.requireNonNull(eventsBus);
     }
 
     private static <K, V> Map<K, Set<V>> addToSet(Map<K, Set<V>> map, K key, V value) {
@@ -175,9 +180,9 @@ public class MapDbAppStorage extends AbstractAppStorage {
             values2 = ImmutableSet.of(value);
         } else {
             values2 = ImmutableSet.<V>builder()
-                    .addAll(values)
-                    .add(value)
-                    .build();
+                .addAll(values)
+                .add(value)
+                .build();
         }
         map.put(key, values2);
         return map;
@@ -197,9 +202,9 @@ public class MapDbAppStorage extends AbstractAppStorage {
             values2 = List.of(value);
         } else {
             values2 = ImmutableList.<V>builder()
-                    .addAll(values)
-                    .add(value)
-                    .build();
+                .addAll(values)
+                .add(value)
+                .build();
         }
         map.put(key, values2);
         return map;
@@ -233,7 +238,20 @@ public class MapDbAppStorage extends AbstractAppStorage {
         return removed;
     }
 
-    private static final String NODE = "Node ";
+    static UUID checkNodeId(String nodeId) {
+        try {
+            return UUID.fromString(nodeId);
+        } catch (IllegalArgumentException e) {
+            throw new AfsStorageException("Node id '" + nodeId + "' is expected to be a UUID");
+        }
+    }
+
+    private static UUID checkNullableNodeId(String nodeId) {
+        if (nodeId == null) {
+            return null;
+        }
+        return checkNodeId(nodeId);
+    }
 
     @Override
     public String getFileSystemName() {
@@ -260,25 +278,10 @@ public class MapDbAppStorage extends AbstractAppStorage {
         }
     }
 
-    static UUID checkNodeId(String nodeId) {
-        try {
-            return UUID.fromString(nodeId);
-        } catch (IllegalArgumentException e) {
-            throw new AfsStorageException("Node id '" + nodeId + "' is expected to be a UUID");
-        }
-    }
-
     private void checkNodeExists(UUID nodeUuid) {
         if (!nodeInfoMap.containsKey(nodeUuid)) {
             throw createNodeNotFoundException(nodeUuid);
         }
-    }
-
-    private static UUID checkNullableNodeId(String nodeId) {
-        if (nodeId == null) {
-            return null;
-        }
-        return checkNodeId(nodeId);
     }
 
     @Override
@@ -359,18 +362,18 @@ public class MapDbAppStorage extends AbstractAppStorage {
     public List<NodeInfo> getChildNodes(String nodeId) {
         List<UUID> childNodes = getAllChildNodes(nodeId);
         return childNodes.stream().map(this::getNodeInfo).filter(nodeInfo -> isConsistent(nodeInfo.getId()))
-                .collect(Collectors.toList());
+            .collect(Collectors.toList());
     }
 
     private List<NodeInfo> getInconsistentNodes(String nodeId) {
         List<UUID> childNodes = getAllChildNodes(nodeId);
 
         List<NodeInfo> inconsistentNodesInfos = childNodes.stream().map(this::getNodeInfo)
-                .filter(nodeInfo -> !isConsistent(nodeInfo.getId()))
-                .collect(Collectors.toList());
+            .filter(nodeInfo -> !isConsistent(nodeInfo.getId()))
+            .collect(Collectors.toList());
         List<NodeInfo> consistentNodesInfos = childNodes.stream().map(this::getNodeInfo)
-                .filter(nodeInfo -> isConsistent(nodeInfo.getId()))
-                .collect(Collectors.toList());
+            .filter(nodeInfo -> isConsistent(nodeInfo.getId()))
+            .toList();
 
         // now get recursively inconsistent nodes of consistent child nodes
         for (NodeInfo nodeInfo : consistentNodesInfos) {
@@ -663,10 +666,10 @@ public class MapDbAppStorage extends AbstractAppStorage {
         checkConsistency(nodeUuid);
         return Stream.concat(doubleTimeSeriesChunksMap.keySet().stream(),
                 stringTimeSeriesChunksMap.keySet().stream())
-                .map(TimeSeriesChunkKey::getTimeSeriesKey)
-                .filter(key -> key.getNodeUuid().equals(nodeUuid))
-                .map(TimeSeriesKey::getVersion)
-                .collect(Collectors.toSet());
+            .map(TimeSeriesChunkKey::getTimeSeriesKey)
+            .filter(key -> key.getNodeUuid().equals(nodeUuid))
+            .map(TimeSeriesKey::getVersion)
+            .collect(Collectors.toSet());
     }
 
     @Override
@@ -676,11 +679,11 @@ public class MapDbAppStorage extends AbstractAppStorage {
         checkConsistency(nodeUuid);
         Objects.requireNonNull(timeSeriesName);
         return Stream.concat(doubleTimeSeriesChunksMap.keySet().stream(),
-                             stringTimeSeriesChunksMap.keySet().stream())
-                .map(TimeSeriesChunkKey::getTimeSeriesKey)
-                .filter(key -> key.getNodeUuid().equals(nodeUuid) && key.getTimeSeriesName().equals(timeSeriesName))
-                .map(TimeSeriesKey::getVersion)
-                .collect(Collectors.toSet());
+                stringTimeSeriesChunksMap.keySet().stream())
+            .map(TimeSeriesChunkKey::getTimeSeriesKey)
+            .filter(key -> key.getNodeUuid().equals(nodeUuid) && key.getTimeSeriesName().equals(timeSeriesName))
+            .map(TimeSeriesKey::getVersion)
+            .collect(Collectors.toSet());
     }
 
     private <P extends AbstractPoint, C extends DataChunk<P, C>> List<C> getChunks(UUID nodeId, int version, String timeSeriesName,
@@ -705,8 +708,8 @@ public class MapDbAppStorage extends AbstractAppStorage {
         return chunks;
     }
 
-    private <P extends AbstractPoint, C extends DataChunk<P, C>>
-        Map<String, List<C>> getTimeSeriesData(String nodeId, Set<String> timeSeriesNames, int version, ConcurrentMap<TimeSeriesChunkKey, C> map) {
+    private <P extends AbstractPoint, C extends DataChunk<P, C>> Map<String, List<C>> getTimeSeriesData(
+        String nodeId, Set<String> timeSeriesNames, int version, ConcurrentMap<TimeSeriesChunkKey, C> map) {
         UUID nodeUuid = checkNodeId(nodeId);
         Objects.requireNonNull(timeSeriesNames);
         checkConsistency(nodeUuid);
@@ -716,8 +719,8 @@ public class MapDbAppStorage extends AbstractAppStorage {
         for (String timeSeriesName : timeSeriesNames) {
             TimeSeriesMetadata metadata = timeSeriesMetadataMap.get(new NamedLink(nodeUuid, timeSeriesName));
             if (metadata != null &&
-                    (metadata.getDataType() == TimeSeriesDataType.DOUBLE && map == doubleTimeSeriesChunksMap
-                        || metadata.getDataType() == TimeSeriesDataType.STRING && map == stringTimeSeriesChunksMap)) {
+                (metadata.getDataType() == TimeSeriesDataType.DOUBLE && map == doubleTimeSeriesChunksMap
+                    || metadata.getDataType() == TimeSeriesDataType.STRING && map == stringTimeSeriesChunksMap)) {
                 List<C> chunks = getChunks(nodeUuid, version, timeSeriesName, metadata, map);
                 timeSeriesData.put(timeSeriesName, chunks);
             }
@@ -754,8 +757,8 @@ public class MapDbAppStorage extends AbstractAppStorage {
         UUID nodeUuid = checkNodeId(nodeId);
         Objects.requireNonNull(map);
         List<TimeSeriesChunkKey> keys = map.keySet().stream()
-                .filter(chunkKey -> chunkKey.getTimeSeriesKey().getNodeUuid().compareTo(nodeUuid) == 0)
-                .collect(Collectors.toList());
+            .filter(chunkKey -> chunkKey.getTimeSeriesKey().getNodeUuid().compareTo(nodeUuid) == 0)
+            .collect(Collectors.toList());
         keys.forEach(key -> map.remove(key));
     }
 
@@ -790,8 +793,8 @@ public class MapDbAppStorage extends AbstractAppStorage {
             timeSeriesNamesMap.remove(nodeUuid);
         }
         List<TimeSeriesKey> keys = timeSeriesLastChunkMap.keySet().stream()
-                .filter(key -> key.getNodeUuid().compareTo(nodeUuid) == 0)
-                .collect(Collectors.toList());
+            .filter(key -> key.getNodeUuid().compareTo(nodeUuid) == 0)
+            .toList();
         keys.forEach(timeSeriesLastChunkMap::remove);
         clearTimeSeriesData(nodeId, doubleTimeSeriesChunksMap);
         clearTimeSeriesData(nodeId, stringTimeSeriesChunksMap);
@@ -822,7 +825,7 @@ public class MapDbAppStorage extends AbstractAppStorage {
             return Collections.emptySet();
         }
         return dependencyNodes.stream().map(this::getNodeInfo).filter(nodeInfo -> isConsistent(nodeInfo.getId()))
-                .collect(Collectors.toCollection(LinkedHashSet::new));
+            .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     @Override
@@ -834,9 +837,9 @@ public class MapDbAppStorage extends AbstractAppStorage {
             throw createNodeNotFoundException(nodeUuid);
         }
         return dependencyNodes.stream()
-                              .filter(namedLink -> isConsistent(getNodeInfo(namedLink.getNodeUuid()).getId()))
-                              .map(namedLink -> new NodeDependency(namedLink.getName(), getNodeInfo(namedLink.getNodeUuid())))
-                              .collect(Collectors.toSet());
+            .filter(namedLink -> isConsistent(getNodeInfo(namedLink.getNodeUuid()).getId()))
+            .map(namedLink -> new NodeDependency(namedLink.getName(), getNodeInfo(namedLink.getNodeUuid())))
+            .collect(Collectors.toSet());
     }
 
     @Override
@@ -848,9 +851,9 @@ public class MapDbAppStorage extends AbstractAppStorage {
             throw createNodeNotFoundException(nodeUuid);
         }
         return backwardDependencyNodes.stream()
-                                      .map(this::getNodeInfo)
-                                      .filter(nodeInfo -> isConsistent(nodeInfo.getId()))
-                                      .collect(Collectors.toSet());
+            .map(this::getNodeInfo)
+            .filter(nodeInfo -> isConsistent(nodeInfo.getId()))
+            .collect(Collectors.toSet());
     }
 
     @Override
@@ -882,5 +885,10 @@ public class MapDbAppStorage extends AbstractAppStorage {
     public void close() {
         db.commit();
         db.close();
+    }
+
+    @FunctionalInterface
+    public interface MapDbAppStorageProvider<F, S, T, R> {
+        R apply(F first, S second, T third);
     }
 }

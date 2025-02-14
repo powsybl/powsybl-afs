@@ -6,11 +6,14 @@
  */
 package com.powsybl.afs;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import com.powsybl.afs.mapdb.storage.MapDbAppStorage;
-import com.powsybl.afs.storage.*;
+import com.powsybl.afs.storage.AfsStorageException;
+import com.powsybl.afs.storage.AppStorage;
+import com.powsybl.afs.storage.InMemoryEventsBus;
+import com.powsybl.afs.storage.NodeGenericMetadata;
+import com.powsybl.afs.storage.NodeInfo;
 import com.powsybl.afs.storage.events.NodeEvent;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.iidm.network.NetworkFactoryService;
@@ -31,10 +34,24 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.function.BiConsumer;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
@@ -54,7 +71,7 @@ class AfsBaseTest {
         fileSystem = Jimfs.newFileSystem(Configuration.unix());
         ComputationManager computationManager = Mockito.mock(ComputationManager.class);
         ad = new AppData(computationManager, computationManager, Collections.emptyList(),
-                Collections.emptyList(), List.of(new FooFileExtension(), new WithDependencyFileExtension()), Collections.emptyList());
+            Collections.emptyList(), List.of(new FooFileExtension(), new WithDependencyFileExtension()), Collections.emptyList());
 
         storage = MapDbAppStorage.createMem("mem", ad.getEventsBus());
 
@@ -258,7 +275,7 @@ class AfsBaseTest {
         ProjectFolder rootFolder = project.getRootFolder();
         ProjectFolder dir1 = rootFolder.createFolder("dir1");
         try (Writer writer = new OutputStreamWriter(storage.writeBinaryData(dir1.getId(), "data1"));
-            Writer writer2 = new OutputStreamWriter(storage.writeBinaryData(dir1.getId(), "data2"))) {
+             Writer writer2 = new OutputStreamWriter(storage.writeBinaryData(dir1.getId(), "data2"))) {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -290,11 +307,10 @@ class AfsBaseTest {
         ProjectFolder dir2 = rootFolder.createFolder("dir2");
 
         NodeInfo testDataInfo = storage.createNode(dir1.getId(), "data", "data", "", 0, new NodeGenericMetadata());
-        NodeInfo testData2Info = storage.createNode(dir2.getId(), "data2", "data", "", 0,
-                new NodeGenericMetadata().setString("s1", "v1")
-                        .setDouble("d1", 1d)
-                        .setInt("i1", 2)
-                        .setBoolean("b1", false));
+        NodeInfo testData2Info = storage.createNode(dir2.getId(), "data2", "data", "", 0, new NodeGenericMetadata().setString("s1", "v1")
+            .setDouble("d1", 1d)
+            .setInt("i1", 2)
+            .setBoolean("b1", false));
         storage.setConsistent(testDataInfo.getId());
         storage.setConsistent(testData2Info.getId());
         storage.addDependency(testDataInfo.getId(), "mylink2", testData2Info.getId());
@@ -326,7 +342,7 @@ class AfsBaseTest {
         NodeInfo virtualTimeSeries = storage.createNode(dir1.getId(), "virtualTimeSeries", "TSV", "", 0, new NodeGenericMetadata());
 
         RegularTimeSeriesIndex index = RegularTimeSeriesIndex.create(Interval.parse("2015-01-01T00:00:00Z/2015-01-01T01:45:00Z"),
-                Duration.ofMinutes(15));
+            Duration.ofMinutes(15));
         storage.createTimeSeries(metrix.getId(), new TimeSeriesMetadata("ts1", TimeSeriesDataType.STRING, index));
         storage.createTimeSeries(virtualTimeSeries.getId(), new TimeSeriesMetadata("ts2", TimeSeriesDataType.DOUBLE, index));
 
@@ -357,16 +373,14 @@ class AfsBaseTest {
         ProjectFolder dir2 = rootFolder.createFolder("dir2");
 
         NodeInfo testDataInfo = storage.createNode(dir1.getId(), "data", "data", "", 0, new NodeGenericMetadata());
-        NodeInfo testData2Info = storage.createNode(dir2.getId(), "data2", "data", "", 0,
-                new NodeGenericMetadata().setString("s1", "v1")
-                        .setDouble("d1", 1d)
-                        .setInt("i1", 2)
-                        .setBoolean("b1", false));
-        NodeInfo testData3Info = storage.createNode(dir2.getId(), "data3", "data", "", 0,
-                new NodeGenericMetadata().setString("s1", "v1")
-                        .setDouble("d1", 1d)
-                        .setInt("i1", 2)
-                        .setBoolean("b1", false));
+        NodeInfo testData2Info = storage.createNode(dir2.getId(), "data2", "data", "", 0, new NodeGenericMetadata().setString("s1", "v1")
+            .setDouble("d1", 1d)
+            .setInt("i1", 2)
+            .setBoolean("b1", false));
+        NodeInfo testData3Info = storage.createNode(dir2.getId(), "data3", "data", "", 0, new NodeGenericMetadata().setString("s1", "v1")
+            .setDouble("d1", 1d)
+            .setInt("i1", 2)
+            .setBoolean("b1", false));
         storage.setConsistent(testDataInfo.getId());
         storage.setConsistent(testData2Info.getId());
         storage.setConsistent(testData3Info.getId());
@@ -406,16 +420,14 @@ class AfsBaseTest {
         ProjectFolder dir2 = rootFolder.createFolder("dir2");
 
         NodeInfo testDataInfo = storage.createNode(dir1.getId(), "data", "data", "", 0, new NodeGenericMetadata());
-        NodeInfo testData2Info = storage.createNode(dir1.getId(), "data2", "data", "", 0,
-                new NodeGenericMetadata().setString("s1", "v1")
-                        .setDouble("d1", 1d)
-                        .setInt("i1", 2)
-                        .setBoolean("b1", false));
-        NodeInfo testData3Info = storage.createNode(dir2.getId(), "data3", "data", "", 0,
-                new NodeGenericMetadata().setString("s1", "v1")
-                        .setDouble("d1", 1d)
-                        .setInt("i1", 2)
-                        .setBoolean("b1", false));
+        NodeInfo testData2Info = storage.createNode(dir1.getId(), "data2", "data", "", 0, new NodeGenericMetadata().setString("s1", "v1")
+            .setDouble("d1", 1d)
+            .setInt("i1", 2)
+            .setBoolean("b1", false));
+        NodeInfo testData3Info = storage.createNode(dir2.getId(), "data3", "data", "", 0, new NodeGenericMetadata().setString("s1", "v1")
+            .setDouble("d1", 1d)
+            .setInt("i1", 2)
+            .setBoolean("b1", false));
         storage.setConsistent(testDataInfo.getId());
         storage.setConsistent(testData2Info.getId());
         storage.setConsistent(testData3Info.getId());
@@ -448,8 +460,8 @@ class AfsBaseTest {
         ProjectFolder test1 = project.getRootFolder().createFolder("test1");
         ProjectFolder test2 = project.getRootFolder().createFolder("test2");
         FooFile file = test1.fileBuilder(FooFileBuilder.class)
-                .withName("foo")
-                .build();
+            .withName("foo")
+            .build();
         assertEquals(test1.getId(), file.getParent().orElseThrow(AssertionError::new).getId());
         assertEquals(1, test1.getChildren().size());
         assertTrue(test2.getChildren().isEmpty());
@@ -477,8 +489,8 @@ class AfsBaseTest {
     void findProjectFileTest() {
         Project project = afs.getRootFolder().createProject("test");
         FooFile createdFile = project.getRootFolder().fileBuilder(FooFileBuilder.class)
-                .withName("foo")
-                .build();
+            .withName("foo")
+            .build();
         ProjectFile foundFile = afs.findProjectFile(createdFile.getId(), FooFile.class);
         assertNotNull(foundFile);
         assertEquals(createdFile.getId(), foundFile.getId());
@@ -510,14 +522,14 @@ class AfsBaseTest {
         Folder folder = afs.getRootFolder().createFolder("testFolder");
         Project project = folder.createProject("test");
         FooFile createdFile = project.getRootFolder().fileBuilder(FooFileBuilder.class)
-                .withName("foo")
-                .build();
+            .withName("foo")
+            .build();
         ProjectFolder projectFolder = project.getRootFolder().createFolder("testFolder");
         FooFile nestedFile = projectFolder.fileBuilder(FooFileBuilder.class)
-                .withName("bar")
-                .build();
+            .withName("bar")
+            .build();
 
-        BiConsumer<AbstractNodeBase, AbstractNodeBase> checkResult = (source, result) -> {
+        BiConsumer<AbstractNodeBase<?>, AbstractNodeBase<?>> checkResult = (source, result) -> {
             assertNotNull(result);
             assertEquals(source.getClass(), result.getClass());
             assertEquals(source.getId(), result.getId());
@@ -552,11 +564,11 @@ class AfsBaseTest {
     void hasDeepDependencyTest() {
         Project project = afs.getRootFolder().createProject("test");
         FooFile createdFile = project.getRootFolder().fileBuilder(FooFileBuilder.class)
-                .withName("foo")
-                .build();
+            .withName("foo")
+            .build();
         FooFile otherFile = project.getRootFolder().fileBuilder(FooFileBuilder.class)
-                .withName("bar")
-                .build();
+            .withName("bar")
+            .build();
         createdFile.setDependencies("dep", Collections.singletonList(otherFile));
         assertTrue(createdFile.hasDeepDependency(otherFile));
         assertFalse(createdFile.hasDeepDependency(createdFile));
@@ -604,8 +616,8 @@ class AfsBaseTest {
         assertEquals(WithDependencyFile.class, connectedBackwardDependencies.get(0).getClass());
         WithDependencyFile withDependencyFile = (WithDependencyFile) connectedBackwardDependencies.get(0);
         Optional<NodeEvent> updateEvent2 = withDependencyFile.events.stream()
-                .filter(nodeEvent -> nodeEventType.equals(nodeEvent.getType()))
-                .findFirst();
+            .filter(nodeEvent -> nodeEventType.equals(nodeEvent.getType()))
+            .findFirst();
         assertFalse(updateEvent2.isEmpty());
         assertEquals(event, updateEvent2.get());
     }

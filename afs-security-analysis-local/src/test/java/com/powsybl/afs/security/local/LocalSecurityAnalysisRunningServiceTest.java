@@ -6,7 +6,6 @@
  */
 package com.powsybl.afs.security.local;
 
-import com.google.common.collect.ImmutableList;
 import com.powsybl.afs.ServiceExtension;
 import com.powsybl.afs.ext.base.LocalNetworkCacheServiceExtension;
 import com.powsybl.afs.security.SecurityAnalysisRunnerTest;

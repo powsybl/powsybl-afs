@@ -6,8 +6,14 @@
  */
 package com.powsybl.afs.ext.base;
 
-import com.google.common.collect.ImmutableList;
-import com.powsybl.afs.*;
+import com.powsybl.afs.AbstractProjectFileTest;
+import com.powsybl.afs.AfsCircularDependencyException;
+import com.powsybl.afs.AfsException;
+import com.powsybl.afs.FileExtension;
+import com.powsybl.afs.Project;
+import com.powsybl.afs.ProjectFileExtension;
+import com.powsybl.afs.ProjectFolder;
+import com.powsybl.afs.ProjectNode;
 import com.powsybl.afs.mapdb.storage.MapDbAppStorage;
 import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.InMemoryEventsBus;
@@ -18,7 +24,13 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
@@ -48,33 +60,33 @@ class ModificationScriptTest extends AbstractProjectFileTest {
         // create groovy script
         try {
             rootFolder.fileBuilder(ModificationScriptBuilder.class)
-                    .withType(ScriptType.GROOVY)
-                    .withContent("println 'hello'")
-                    .build();
+                .withType(ScriptType.GROOVY)
+                .withContent("println 'hello'")
+                .build();
             fail();
         } catch (AfsException ignored) {
         }
         try {
             rootFolder.fileBuilder(ModificationScriptBuilder.class)
-                    .withName("script")
-                    .withContent("println 'hello'")
-                    .build();
+                .withName("script")
+                .withContent("println 'hello'")
+                .build();
             fail();
         } catch (AfsException ignored) {
         }
         try {
             rootFolder.fileBuilder(ModificationScriptBuilder.class)
-                    .withName("script")
-                    .withType(ScriptType.GROOVY)
-                    .build();
+                .withName("script")
+                .withType(ScriptType.GROOVY)
+                .build();
             fail();
         } catch (AfsException ignored) {
         }
         ModificationScript script = rootFolder.fileBuilder(ModificationScriptBuilder.class)
-                .withName("script")
-                .withType(ScriptType.GROOVY)
-                .withContent("println 'hello'")
-                .build();
+            .withName("script")
+            .withType(ScriptType.GROOVY)
+            .withContent("println 'hello'")
+            .build();
         assertNotNull(script);
         assertEquals("script", script.getName());
         assertFalse(script.isFolder());
@@ -95,10 +107,10 @@ class ModificationScriptTest extends AbstractProjectFileTest {
         assertEquals("script", firstNode.getName());
 
         ModificationScript include1 = rootFolder.fileBuilder(ModificationScriptBuilder.class)
-                .withName("include_script1")
-                .withType(ScriptType.GROOVY)
-                .withContent("var foo=\"bar\"")
-                .build();
+            .withName("include_script1")
+            .withType(ScriptType.GROOVY)
+            .withContent("var foo=\"bar\"")
+            .build();
         assertNotNull(include1);
         script.addScript(include1);
         String contentWithInclude = script.readScript(true);
@@ -109,10 +121,10 @@ class ModificationScriptTest extends AbstractProjectFileTest {
         assertEquals(contentWithInclude, "var foo=\"bar\"\n\nvar foo=\"bar\"\n\nprintln 'bye'");
 
         ModificationScript include2 = rootFolder.fileBuilder(ModificationScriptBuilder.class)
-                .withName("include_script2")
-                .withType(ScriptType.GROOVY)
-                .withContent("var p0=1")
-                .build();
+            .withName("include_script2")
+            .withType(ScriptType.GROOVY)
+            .withContent("var p0=1")
+            .build();
         script.removeScript(include1.getId());
         script.addScript(include1);
         script.addScript(include2);
@@ -120,10 +132,10 @@ class ModificationScriptTest extends AbstractProjectFileTest {
         assertEquals(contentWithInclude, "var foo=\"bar\"\n\nvar p0=1\n\nprintln 'bye'");
 
         ModificationScript include3 = rootFolder.fileBuilder(ModificationScriptBuilder.class)
-                .withName("include_script3")
-                .withType(ScriptType.GROOVY)
-                .withContent("var pmax=2")
-                .build();
+            .withName("include_script3")
+            .withType(ScriptType.GROOVY)
+            .withContent("var pmax=2")
+            .build();
         script.addScript(include3);
         script.removeScript(include2.getId());
         contentWithInclude = script.readScript(true);
@@ -141,10 +153,10 @@ class ModificationScriptTest extends AbstractProjectFileTest {
         assertThatCode(() -> script.addScript(script)).isInstanceOf(AfsCircularDependencyException.class);
 
         GenericScript genericScript = rootFolder.fileBuilder(GenericScriptBuilder.class)
-                .withContent("some list")
-                .withType(ScriptType.GROOVY)
-                .withName("genericScript")
-                .build();
+            .withContent("some list")
+            .withType(ScriptType.GROOVY)
+            .withName("genericScript")
+            .build();
 
         assertEquals("some list", genericScript.readScript());
         script.addGenericScript(genericScript);
@@ -193,15 +205,15 @@ class ModificationScriptTest extends AbstractProjectFileTest {
 
         // Build a ModificationScript using the custom pseudo-class
         ModificationScript modificationScript = project.getRootFolder().fileBuilder(ModificationScriptBuilder.class)
-                .withName("customScript")
-                .withType(ScriptType.GROOVY)
-                .withContent("script content")
-                .withPseudoClass(customPseudoClass)
-                .build();
+            .withName("customScript")
+            .withType(ScriptType.GROOVY)
+            .withContent("script content")
+            .withPseudoClass(customPseudoClass)
+            .build();
 
         // Retrieve the node info for the created script from storage
         NodeInfo nodeInfo = storage.getChildNode(project.getRootFolder().getId(), "customScript")
-                .orElseThrow(() -> new AssertionError("Node 'customScript' not found"));
+            .orElseThrow(() -> new AssertionError("Node 'customScript' not found"));
 
         // Assert that the pseudo-class of the node is set to the custom value
         assertEquals(customPseudoClass, nodeInfo.getPseudoClass());
@@ -214,14 +226,14 @@ class ModificationScriptTest extends AbstractProjectFileTest {
 
         // Build a ModificationScript without specifying a pseudo-class, so the default should be used
         ModificationScript modificationScript = project.getRootFolder().fileBuilder(ModificationScriptBuilder.class)
-                .withName("defaultScript")
-                .withType(ScriptType.GROOVY)
-                .withContent("script content")
-                .build();
+            .withName("defaultScript")
+            .withType(ScriptType.GROOVY)
+            .withContent("script content")
+            .build();
 
         // Retrieve the node info for the created script from storage
         NodeInfo nodeInfo = storage.getChildNode(project.getRootFolder().getId(), "defaultScript")
-                .orElseThrow(() -> new AssertionError("Node 'defaultScript' not found"));
+            .orElseThrow(() -> new AssertionError("Node 'defaultScript' not found"));
 
         // Assert that the pseudo-class of the node is set to the default value defined in ModificationScript.PSEUDO_CLASS
         assertEquals(ModificationScript.PSEUDO_CLASS, nodeInfo.getPseudoClass());
