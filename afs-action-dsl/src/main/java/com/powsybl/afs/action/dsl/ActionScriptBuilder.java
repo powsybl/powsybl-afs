@@ -29,6 +29,8 @@ public class ActionScriptBuilder implements ProjectFileBuilder<ActionScript> {
 
     private String content;
 
+    private String pseudoClass = ActionScript.PSEUDO_CLASS;
+
     public ActionScriptBuilder(ProjectFileBuildContext context) {
         this.context = Objects.requireNonNull(context);
     }
@@ -40,6 +42,11 @@ public class ActionScriptBuilder implements ProjectFileBuilder<ActionScript> {
 
     public ActionScriptBuilder withContent(String content) {
         this.content = content;
+        return this;
+    }
+
+    public ActionScriptBuilder withPseudoClass(String pseudoClass) {
+        this.pseudoClass = pseudoClass;
         return this;
     }
 
@@ -58,7 +65,7 @@ public class ActionScriptBuilder implements ProjectFileBuilder<ActionScript> {
         }
 
         // create project file
-        NodeInfo info = context.getStorage().createNode(context.getFolderInfo().getId(), name, ActionScript.PSEUDO_CLASS, "", ActionScript.VERSION,
+        NodeInfo info = context.getStorage().createNode(context.getFolderInfo().getId(), name, pseudoClass, "", ActionScript.VERSION,
                 new NodeGenericMetadata());
 
         // store script
