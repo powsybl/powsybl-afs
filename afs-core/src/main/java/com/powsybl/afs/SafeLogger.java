@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import java.util.Arrays;
 
 /**
+ * Logger based on slf4j where all String inputs are sanitized
  * @author Nicolas Rol {@literal <nicolas.rol at rte-france.com>}
  */
 public class SafeLogger {
