@@ -50,6 +50,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -64,20 +65,20 @@ class AfsBaseTest {
 
     private AppFileSystem afs;
 
-    private AppData ad;
+    private AppData appData;
 
     @BeforeEach
     public void setup() {
         fileSystem = Jimfs.newFileSystem(Configuration.unix());
         ComputationManager computationManager = Mockito.mock(ComputationManager.class);
-        ad = new AppData(computationManager, computationManager, Collections.emptyList(),
+        appData = new AppData(computationManager, computationManager, Collections.emptyList(),
             Collections.emptyList(), List.of(new FooFileExtension(), new WithDependencyFileExtension()), Collections.emptyList());
 
-        storage = MapDbAppStorage.createMem("mem", ad.getEventsBus());
+        storage = MapDbAppStorage.createMem("mem", appData.getEventsBus());
 
         afs = new AppFileSystem("mem", true, storage);
-        afs.setData(ad);
-        ad.addFileSystem(afs);
+        afs.setData(appData);
+        appData.addFileSystem(afs);
     }
 
     @AfterEach
@@ -87,21 +88,32 @@ class AfsBaseTest {
     }
 
     @Test
-    void baseTest() {
-        assertSame(InMemoryEventsBus.class, ad.getEventsBus().getClass());
-        assertSame(afs, ad.getFileSystem("mem"));
-        assertNull(ad.getFileSystem("???"));
-        assertEquals(Collections.singletonList("mem"), ad.getRemotelyAccessibleFileSystemNames());
-        assertNotNull(ad.getRemotelyAccessibleStorage("mem"));
+    void appDataTest() {
+        assertSame(InMemoryEventsBus.class, appData.getEventsBus().getClass());
+        assertSame(afs, appData.getFileSystem("mem"));
+        assertNull(appData.getFileSystem("???"));
+        assertEquals(Collections.singletonList("mem"), appData.getRemotelyAccessibleFileSystemNames());
+        assertNotNull(appData.getRemotelyAccessibleStorage("mem"));
         assertEquals("mem", afs.getName());
-        assertEquals(2, ad.getProjectFileClasses().size());
+        assertEquals(2, appData.getProjectFileClasses().size());
+    }
+
+    @Test
+    void rootTest() {
         Folder root = afs.getRootFolder();
         assertNotNull(root);
+    }
+
+    @Test
+    void directoryTest() {
+        Folder root = afs.getRootFolder();
+
+        // Create a directory under root
         Folder dir1 = root.createFolder("dir1");
         assertTrue(storage.isConsistent(dir1.getId()));
         assertNotNull(dir1);
-        dir1.createFolder("dir2");
-        dir1.createFolder("dir3");
+
+        // Check from getting it back from root
         dir1 = root.getFolder("dir1").orElse(null);
         assertNotNull(dir1);
         assertTrue(dir1.isFolder());
@@ -113,75 +125,175 @@ class AfsBaseTest {
         assertFalse(dir1.isAheadOfVersion());
         assertEquals(dir1.getName(), dir1.toString());
         assertEquals("mem", dir1.getParent().orElseThrow(AssertionError::new).getName());
+    }
+
+    @Test
+    void subdirectoriesTest() {
+        Folder root = afs.getRootFolder();
+        Folder dir1 = root.createFolder("dir1");
+
+        // Create two subdirectories under dir1
+        dir1.createFolder("dir2");
+        dir1.createFolder("dir3");
+
+        // Check that dir1 has 2 children
+        assertEquals(2, dir1.getChildren().size());
+
+        // Tests on dir1/dir2
         Folder dir2 = dir1.getFolder("dir2").orElse(null);
         assertNotNull(dir2);
         assertNotNull(dir2.getParent());
         assertEquals("mem:/dir1", dir2.getParent().orElseThrow(AssertionError::new).getPath().toString());
-        assertEquals(2, dir1.getChildren().size());
-        Folder dir3 = root.getFolder("dir3").orElse(null);
-        assertNull(dir3);
         String str = dir2.getPath().toString();
         assertEquals("mem:/dir1/dir2", str);
+
+        // One way to get to dir1/dir2
         Folder mayBeDir2 = afs.getRootFolder().getFolder("dir1/dir2").orElse(null);
         assertNotNull(mayBeDir2);
         assertEquals("dir2", mayBeDir2.getName());
+
+        // Another way to get to dir1/dir2
         Folder mayBeDir2otherWay = afs.getRootFolder().getChild(Folder.class, "dir1", "dir2").orElse(null);
         assertNotNull(mayBeDir2otherWay);
         assertEquals("dir2", mayBeDir2otherWay.getName());
 
+        // dir3 doest not exist but dir1/dir3 does
+        Folder dir3 = root.getFolder("dir3").orElse(null);
+        assertNull(dir3);
+        dir3 = root.getFolder("dir1/dir3").orElse(null);
+        assertNotNull(dir3);
+    }
+
+    @Test
+    void projectTest() {
+        Folder root = afs.getRootFolder();
+        Folder dir1 = root.createFolder("dir1");
+        Folder dir2 = dir1.createFolder("dir2");
+
+        // Create a project under dir1/dir2
         Project project1 = dir2.createProject("project1");
         project1.setDescription("test project");
         assertNotNull(project1);
         assertEquals("project1", project1.getName());
         assertEquals("test project", project1.getDescription());
+
+        // Check the project parent
         assertNotNull(project1.getParent());
         assertEquals("mem:/dir1/dir2", project1.getParent().orElseThrow(AssertionError::new).getPath().toString());
-        assertTrue(project1.getRootFolder().getChildren().isEmpty());
-        assertSame(project1.getFileSystem(), afs);
 
-        Project project2 = dir2.createProject("project2");
-        project2.rename("project22");
-        assertEquals("project22", project2.getName());
+        // Check that the root folder of the project is empty
+        assertTrue(project1.getRootFolder().getChildren().isEmpty());
+
+        // Check the file system
+        assertSame(project1.getFileSystem(), afs);
+    }
+
+    @Test
+    void renameProjectTest() {
+        Folder root = afs.getRootFolder();
+        Folder dir1 = root.createFolder("dir1");
+        Project project = dir1.createProject("project2");
+        project.rename("project22");
+        assertEquals("project22", project.getName());
+    }
+
+    @Test
+    void renameProjectExceptionTest() {
+        Folder root = afs.getRootFolder();
+        Folder dir1 = root.createFolder("dir1");
+
+        // Create a first project called project1
+        dir1.createProject("project1");
+
+        // Create another project and try to rename it project1
+        Project project = dir1.createProject("project2");
+        AfsException exception = assertThrows(AfsException.class, () -> project.rename("project1"));
+        assertEquals("name already exists", exception.getMessage());
+    }
+
+    @Test
+    void deleteProjectTest() {
+        Folder root = afs.getRootFolder();
+        Folder dir1 = root.createFolder("dir1");
+
+        // Create a project
+        Project project = dir1.createProject("project3");
+        assertFalse(dir1.getChildren().isEmpty());
+
+        // Delete the project
+        project.delete();
+        assertTrue(dir1.getChildren().isEmpty());
+    }
+
+    @Test
+    void deleteNonEmptyFolderTest() {
+        Folder root = afs.getRootFolder();
+        Folder dir1 = root.createFolder("dir1");
+
+        // Create a project
+        dir1.createProject("project5");
+        AfsException exception = assertThrows(AfsException.class, dir1::delete, "non-empty folders can not be deleted");
+        assertEquals("non-empty folders can not be deleted", exception.getMessage());
+    }
+
+    @Test
+    void moveProjectTest() {
+        Folder root = afs.getRootFolder();
+        Folder dir1 = root.createFolder("dir1");
+        Folder dir2 = root.createFolder("dir2");
+
+        // Create a project in dir1
+        Project project = dir1.createProject("projet4");
+
+        // Check the directories content
+        assertFalse(dir1.getChildren().isEmpty());
+        assertTrue(dir2.getChildren().isEmpty());
+
+        // Move the project
+        project.moveTo(dir2);
+
+        // Check the directories content
+        assertTrue(dir1.getChildren().isEmpty());
+        assertFalse(dir2.getChildren().isEmpty());
+    }
+
+    @Test
+    void moveFolderInChildFolderTest() {
+        Folder root = afs.getRootFolder();
+        Folder dir1 = root.createFolder("dir1");
+        Folder dir2 = dir1.createFolder("dir2");
+        AfsException exception = assertThrows(AfsException.class, () -> dir1.moveTo(dir2));
+        assertEquals("The source node is an ancestor of the target node", exception.getMessage());
+    }
+
+    @Test
+    void ancestryTest() {
+        Folder root = afs.getRootFolder();
+        Folder dir1 = root.createFolder("dir1");
+        Folder dir2 = dir1.createFolder("dir2");
+        assertTrue(dir1.isParentOf(dir2));
+        assertTrue(root.isAncestorOf(dir2));
+        dir2.moveTo(dir1); // Does nothing
+        assertTrue(dir1.isParentOf(dir2));
+        assertTrue(root.isAncestorOf(dir2));
+    }
+
+    @Test
+    void baseTest() throws IOException {
+        Folder root = afs.getRootFolder();
+        Folder dir1 = root.createFolder("dir1");
+        dir1.createFolder("dir2");
+        dir1.createFolder("dir3");
+        Folder dir2 = dir1.getFolder("dir2").orElse(null);
+
+        Project project1 = dir2.createProject("project1");
+        project1.setDescription("test project");
 
         dir2.createProject("project5");
-        Project project102 = dir2.createProject("project6");
-        try {
-            project102.rename("project5");
-            fail();
-        } catch (AfsException ignored) {
-        }
-
-        Folder dir41 = dir2.createFolder("dir41");
-        Project project3 = dir41.createProject("project3");
-        project3.delete();
-        assertTrue(dir41.getChildren().isEmpty());
-
-        Folder dir51 = dir2.createFolder("dir51");
-        dir51.createProject("project5");
-        try {
-            dir51.delete();
-            fail();
-        } catch (AfsException ignored) {
-        }
-
-        Folder dir71 = root.createFolder("dir7");
-        Project project4 = dir41.createProject("projet4");
-        project4.moveTo(dir71);
-        assertFalse(dir71.getChildren().isEmpty());
 
         Folder dir81 = root.createFolder("dir8");
         Folder dir82 = dir81.createFolder("dir9");
-        try {
-            dir81.moveTo(dir82);
-            fail();
-        } catch (AfsException ignored) {
-        }
-
-        assertTrue(dir81.isParentOf(dir82));
-        assertTrue(root.isAncestorOf(dir82));
-        dir82.moveTo(dir81); // Does nothing
-        assertTrue(dir81.isParentOf(dir82));
-        assertTrue(root.isAncestorOf(dir82));
+        assertThrows(AfsException.class, () -> dir81.moveTo(dir82));
 
         List<String> added = new ArrayList<>();
         List<String> removed = new ArrayList<>();
@@ -207,11 +319,7 @@ class AfsBaseTest {
 
         dir4.delete();
         assertTrue(rootFolder.getChildren().isEmpty());
-        try {
-            dir4.getChildren();
-            fail();
-        } catch (Exception ignored) {
-        }
+        assertThrows(Exception.class, dir4::getChildren);
 
         ProjectFolder dir5 = rootFolder.createFolder("dir5");
         ProjectFolder dir6 = dir5.createFolder("dir6");
@@ -227,11 +335,8 @@ class AfsBaseTest {
         assertEquals("dir77", dir7.getName());
 
         Path rootDir = fileSystem.getPath("/root");
-        try {
-            Files.createDirectories(rootDir);
-            dir7.archive(rootDir);
-        } catch (IOException ignored) {
-        }
+        Files.createDirectories(rootDir);
+        dir7.archive(rootDir);
         Path child = rootDir.resolve(dir7.getId());
         assertTrue(Files.exists(child));
 
@@ -242,13 +347,8 @@ class AfsBaseTest {
         assertEquals("dir77", dir8.getChildren().get(0).getName());
 
         Path testDirNotExists = rootDir.resolve("testDirNotExists");
-        try {
-            dir7.archive(testDirNotExists);
-            fail();
-            dir8.findService(NetworkFactoryService.class);
-            fail();
-        } catch (UncheckedIOException ignored) {
-        }
+        assertThrows(UncheckedIOException.class, () -> dir7.archive(testDirNotExists));
+        assertThrows(AfsException.class, () -> dir8.findService(NetworkFactoryService.class));
     }
 
     @Test
