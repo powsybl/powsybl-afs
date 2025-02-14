@@ -195,7 +195,7 @@ class ModificationScriptTest extends AbstractProjectFileTest {
         ModificationScript modificationScript = project.getRootFolder().fileBuilder(ModificationScriptBuilder.class)
                 .withName("customScript")
                 .withType(ScriptType.GROOVY)
-                .withContent("println 'hello'")
+                .withContent("script content")
                 .withPseudoClass(customPseudoClass)
                 .build();
 
@@ -216,7 +216,7 @@ class ModificationScriptTest extends AbstractProjectFileTest {
         ModificationScript modificationScript = project.getRootFolder().fileBuilder(ModificationScriptBuilder.class)
                 .withName("defaultScript")
                 .withType(ScriptType.GROOVY)
-                .withContent("println 'hello'")
+                .withContent("script content")
                 .build();
 
         // Retrieve the node info for the created script from storage
