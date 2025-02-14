@@ -65,8 +65,6 @@ class ActionScriptTest extends AbstractProjectFileTest {
 
     }
 
-
-
     @Test
     void testActionScripCreationWithCustomPseudoClass() {
         // Create a project in the root folder
@@ -110,6 +108,5 @@ class ActionScriptTest extends AbstractProjectFileTest {
         // Assert that the pseudo-class of the node is set to the default value defined in ActionScript.PSEUDO_CLASS
         assertEquals(ActionScript.PSEUDO_CLASS, nodeInfo.getPseudoClass());
     }
-
 
 }
