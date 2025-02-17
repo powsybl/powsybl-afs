@@ -18,24 +18,28 @@ import com.powsybl.afs.mapdb.storage.MapDbAppStorage;
 import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.InMemoryEventsBus;
 import com.powsybl.afs.storage.NodeInfo;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 class ModificationScriptTest extends AbstractProjectFileTest {
+
+    private Project project;
+    private ProjectFolder rootFolder;
 
     @Override
     protected AppStorage createStorage() {
@@ -52,144 +56,329 @@ class ModificationScriptTest extends AbstractProjectFileTest {
         return List.of(new ModificationScriptExtension(), new GenericScriptExtension());
     }
 
-    @Test
-    void test() {
-        Project project = afs.getRootFolder().createProject("project");
-        ProjectFolder rootFolder = project.getRootFolder();
+    @Override
+    @BeforeEach
+    public void setup() throws IOException {
+        super.setup();
+        project = afs.getRootFolder().createProject("project");
+        rootFolder = project.getRootFolder();
+    }
 
-        // create groovy script
-        try {
-            rootFolder.fileBuilder(ModificationScriptBuilder.class)
-                .withType(ScriptType.GROOVY)
-                .withContent("println 'hello'")
-                .build();
-            fail();
-        } catch (AfsException ignored) {
-        }
-        try {
-            rootFolder.fileBuilder(ModificationScriptBuilder.class)
-                .withName("script")
-                .withContent("println 'hello'")
-                .build();
-            fail();
-        } catch (AfsException ignored) {
-        }
-        try {
-            rootFolder.fileBuilder(ModificationScriptBuilder.class)
-                .withName("script")
-                .withType(ScriptType.GROOVY)
-                .build();
-            fail();
-        } catch (AfsException ignored) {
-        }
+    @Test
+    void buildingScriptExceptionsTest() {
+        ModificationScriptBuilder builder;
+        AfsException exception;
+
+        // Missing name
+        builder = rootFolder.fileBuilder(ModificationScriptBuilder.class)
+            .withType(ScriptType.GROOVY)
+            .withContent("println 'hello'");
+        exception = assertThrows(AfsException.class, builder::build);
+        assertEquals("Name is not set", exception.getMessage());
+
+        // Missing Type
+        builder = rootFolder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("script")
+            .withContent("println 'hello'");
+        exception = assertThrows(AfsException.class, builder::build);
+        assertEquals("Script type is not set", exception.getMessage());
+
+        // Missing Content
+        builder = rootFolder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("script")
+            .withType(ScriptType.GROOVY);
+        exception = assertThrows(AfsException.class, builder::build);
+        assertEquals("Content is not set", exception.getMessage());
+    }
+
+    @Test
+    void createScriptTest() {
+        // Create script
         ModificationScript script = rootFolder.fileBuilder(ModificationScriptBuilder.class)
             .withName("script")
             .withType(ScriptType.GROOVY)
             .withContent("println 'hello'")
             .build();
+
+        // Check creation
         assertNotNull(script);
         assertEquals("script", script.getName());
         assertFalse(script.isFolder());
         assertTrue(script.getDependencies().isEmpty());
         assertEquals("println 'hello'", script.readScript());
+    }
+
+    @Test
+    void listenerTest() {
+        ModificationScript script = rootFolder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("script")
+            .withType(ScriptType.GROOVY)
+            .withContent("println 'hello'")
+            .build();
+
+        // Add listener
         AtomicBoolean scriptUpdated = new AtomicBoolean(false);
         ScriptListener listener = () -> scriptUpdated.set(true);
         script.addListener(listener);
+
+        // Update the script
         script.writeScript("println 'bye'");
+
+        // Check the update
         assertEquals("println 'bye'", script.readScript());
         assertTrue(scriptUpdated.get());
-        script.removeListener(listener);
+    }
 
-        // check script file is correctly scanned
+    @Test
+    void scriptDetectedInFolder() {
+        rootFolder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("script")
+            .withType(ScriptType.GROOVY)
+            .withContent("println 'hello'")
+            .build();
+
+        // Check in root folder
         assertEquals(1, rootFolder.getChildren().size());
         ProjectNode firstNode = rootFolder.getChildren().get(0);
         assertInstanceOf(ModificationScript.class, firstNode);
         assertEquals("script", firstNode.getName());
+    }
 
+    @Test
+    void includesTest() {
+        ModificationScript script = rootFolder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("script")
+            .withType(ScriptType.GROOVY)
+            .withContent("println 'bye'")
+            .build();
+
+        // Create some scripts to include
         ModificationScript include1 = rootFolder.fileBuilder(ModificationScriptBuilder.class)
             .withName("include_script1")
             .withType(ScriptType.GROOVY)
             .withContent("var foo=\"bar\"")
             .build();
-        assertNotNull(include1);
-        script.addScript(include1);
-        String contentWithInclude = script.readScript(true);
-        assertEquals(contentWithInclude, "var foo=\"bar\"\n\nprintln 'bye'");
-
-        script.addScript(include1);
-        contentWithInclude = script.readScript(true);
-        assertEquals(contentWithInclude, "var foo=\"bar\"\n\nvar foo=\"bar\"\n\nprintln 'bye'");
-
         ModificationScript include2 = rootFolder.fileBuilder(ModificationScriptBuilder.class)
             .withName("include_script2")
             .withType(ScriptType.GROOVY)
             .withContent("var p0=1")
             .build();
-        script.removeScript(include1.getId());
-        script.addScript(include1);
-        script.addScript(include2);
-        contentWithInclude = script.readScript(true);
-        assertEquals(contentWithInclude, "var foo=\"bar\"\n\nvar p0=1\n\nprintln 'bye'");
-
         ModificationScript include3 = rootFolder.fileBuilder(ModificationScriptBuilder.class)
             .withName("include_script3")
             .withType(ScriptType.GROOVY)
             .withContent("var pmax=2")
             .build();
+
+        // Add the first one
+        script.addScript(include1);
+        String contentWithInclude = script.readScript(true);
+        assertEquals("var foo=\"bar\"\n\nprintln 'bye'", contentWithInclude);
+
+        // Include it a second time
+        script.addScript(include1);
+        contentWithInclude = script.readScript(true);
+        assertEquals("var foo=\"bar\"\n\nvar foo=\"bar\"\n\nprintln 'bye'", contentWithInclude);
+
+        // Remove the first and add it one time and then the second one
+        script.removeScript(include1.getId());
+        script.addScript(include1);
+        script.addScript(include2);
+        contentWithInclude = script.readScript(true);
+        assertEquals("var foo=\"bar\"\n\nvar p0=1\n\nprintln 'bye'", contentWithInclude);
+
+        // Add the third and remove the second
         script.addScript(include3);
         script.removeScript(include2.getId());
         contentWithInclude = script.readScript(true);
-        assertEquals(contentWithInclude, "var foo=\"bar\"\n\nvar pmax=2\n\nprintln 'bye'");
+        assertEquals("var foo=\"bar\"\n\nvar pmax=2\n\nprintln 'bye'", contentWithInclude);
 
+        // Add the second again but in the third one
         include3.addScript(include2);
         contentWithInclude = script.readScript(true);
-        assertEquals(contentWithInclude, "var foo=\"bar\"\n\nvar p0=1\n\nvar pmax=2\n\nprintln 'bye'");
+        assertEquals("var foo=\"bar\"\n\nvar p0=1\n\nvar pmax=2\n\nprintln 'bye'", contentWithInclude);
 
+        // List of included scripts
         List<AbstractScript> includes = script.getIncludedScripts();
         assertEquals(2, includes.size());
-        assertEquals(includes.get(0).getId(), include1.getId());
-        assertEquals(includes.get(1).getId(), include3.getId());
+        assertEquals(include1.getId(), includes.get(0).getId());
+        assertEquals(include3.getId(), includes.get(1).getId());
+    }
 
-        assertThatCode(() -> script.addScript(script)).isInstanceOf(AfsCircularDependencyException.class);
+    @Test
+    void circularInclusionTest() {
+        ModificationScript script = rootFolder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("script")
+            .withType(ScriptType.GROOVY)
+            .withContent("println 'hello'")
+            .build();
 
+        // Include the script in itself
+        AfsCircularDependencyException exception = assertThrows(AfsCircularDependencyException.class, () -> script.addScript(script));
+        assertEquals("Circular dependency detected", exception.getMessage());
+    }
+
+    @Test
+    void includeGenericScriptTest() {
+        ModificationScript script = rootFolder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("script")
+            .withType(ScriptType.GROOVY)
+            .withContent("println 'bye'")
+            .build();
+        ModificationScript include1 = rootFolder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("include_script1")
+            .withType(ScriptType.GROOVY)
+            .withContent("var foo=\"bar\"")
+            .build();
+        ModificationScript include2 = rootFolder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("include_script2")
+            .withType(ScriptType.GROOVY)
+            .withContent("var p0=1")
+            .build();
+        ModificationScript include3 = rootFolder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("include_script3")
+            .withType(ScriptType.GROOVY)
+            .withContent("var pmax=2")
+            .build();
+        script.addScript(include1);
+        script.addScript(include3);
+        include3.addScript(include2);
+
+        // Create a generic script
+        GenericScript genericScript = rootFolder.fileBuilder(GenericScriptBuilder.class)
+            .withContent("some list")
+            .withType(ScriptType.GROOVY)
+            .withName("genericScript")
+            .build();
+        assertEquals("some list", genericScript.readScript());
+
+        // Include the generic script to the script
+        script.addGenericScript(genericScript);
+        assertEquals("var foo=\"bar\"\n\nvar p0=1\n\nvar pmax=2\n\nsome list\n\nprintln 'bye'", script.readScript(true));
+    }
+
+    @Test
+    void genericScriptCircularDependencyTest() {
         GenericScript genericScript = rootFolder.fileBuilder(GenericScriptBuilder.class)
             .withContent("some list")
             .withType(ScriptType.GROOVY)
             .withName("genericScript")
             .build();
 
-        assertEquals("some list", genericScript.readScript());
-        script.addGenericScript(genericScript);
-        assertEquals("var foo=\"bar\"\n\nvar p0=1\n\nvar pmax=2\n\nsome list\n\nprintln 'bye'", script.readScript(true));
-        assertThatCode(() -> genericScript.addGenericScript(genericScript)).isInstanceOf(AfsCircularDependencyException.class);
-        script.removeScript(genericScript.getId());
+        // Include the script in itself
+        AfsCircularDependencyException exception = assertThrows(AfsCircularDependencyException.class, () -> genericScript.addGenericScript(genericScript));
+        assertEquals("Circular dependency detected", exception.getMessage());
+    }
 
+    @Test
+    void switchDependencyTest() {
+        ModificationScript script = rootFolder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("script")
+            .withType(ScriptType.GROOVY)
+            .withContent("println 'bye'")
+            .build();
+        ModificationScript include1 = rootFolder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("include_script1")
+            .withType(ScriptType.GROOVY)
+            .withContent("var foo=\"bar\"")
+            .build();
+        ModificationScript include2 = rootFolder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("include_script2")
+            .withType(ScriptType.GROOVY)
+            .withContent("var p0=1")
+            .build();
+        ModificationScript include3 = rootFolder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("include_script3")
+            .withType(ScriptType.GROOVY)
+            .withContent("var pmax=2")
+            .build();
+        script.addScript(include1);
+        script.addScript(include3);
+        include3.addScript(include2);
+
+        // Switch the two included scripts
         script.switchIncludedDependencies(0, 1);
+        String contentWithInclude = script.readScript(true);
+        assertEquals("var p0=1\n\nvar pmax=2\n\nvar foo=\"bar\"\n\nprintln 'bye'", contentWithInclude);
 
-        List<AbstractScript> includedScripts = script.getIncludedScripts();
+        // List of included scripts
+        List<AbstractScript> includes = script.getIncludedScripts();
         assertEquals(2, includes.size());
-        assertEquals(includedScripts.get(0).getId(), include3.getId());
-        assertEquals(includedScripts.get(1).getId(), include1.getId());
+        assertEquals(include3.getId(), includes.get(0).getId());
+        assertEquals(include1.getId(), includes.get(1).getId());
+    }
 
-        assertThatCode(() -> script.switchIncludedDependencies(0, -1)).isInstanceOf(AfsException.class);
-        assertThatCode(() -> script.switchIncludedDependencies(1, 2)).isInstanceOf(AfsException.class);
+    @Test
+    void switchDependencyExceptionsTest() {
+        ModificationScript script = rootFolder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("script")
+            .withType(ScriptType.GROOVY)
+            .withContent("println 'bye'")
+            .build();
+        ModificationScript include1 = rootFolder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("include_script1")
+            .withType(ScriptType.GROOVY)
+            .withContent("var foo=\"bar\"")
+            .build();
+        ModificationScript include2 = rootFolder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("include_script2")
+            .withType(ScriptType.GROOVY)
+            .withContent("var p0=1")
+            .build();
+        ModificationScript include3 = rootFolder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("include_script3")
+            .withType(ScriptType.GROOVY)
+            .withContent("var pmax=2")
+            .build();
+        script.addScript(include1);
+        script.addScript(include3);
+        include3.addScript(include2);
 
-        assertThatCode(() -> rootFolder.fileBuilder(GenericScriptBuilder.class).build()).isInstanceOf(AfsException.class).hasMessage("Name is not set");
-        assertThatCode(() -> rootFolder.fileBuilder(GenericScriptBuilder.class).withName("foo").build()).isInstanceOf(AfsException.class).hasMessage("Script type is not set");
-        assertThatCode(() -> rootFolder.fileBuilder(GenericScriptBuilder.class).withName("foo").withType(ScriptType.GROOVY).build()).isInstanceOf(AfsException.class).hasMessage("Content is not set");
-        assertThatCode(() -> rootFolder.fileBuilder(GenericScriptBuilder.class).withName("include_script2").withType(ScriptType.GROOVY).withContent("hello").build()).isInstanceOf(AfsException.class).hasMessage("Parent folder already contains a 'include_script2' node");
+        // Switch non-existing dependencies
+        AfsException exception = assertThrows(AfsException.class, () -> script.switchIncludedDependencies(0, -1));
+        assertEquals("One or both indexes values are out of bounds", exception.getMessage());
+        exception = assertThrows(AfsException.class, () -> script.switchIncludedDependencies(1, 2));
+        assertEquals("One or both indexes values are out of bounds", exception.getMessage());
+    }
 
-        //assert that the cache is correctly cleared
+    @Test
+    void renameAndCacheTest() {
+        ModificationScript script = rootFolder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("script")
+            .withType(ScriptType.GROOVY)
+            .withContent("println 'bye'")
+            .build();
+        ModificationScript include1 = rootFolder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("include_script1")
+            .withType(ScriptType.GROOVY)
+            .withContent("var foo=\"bar\"")
+            .build();
+        ModificationScript include2 = rootFolder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("include_script2")
+            .withType(ScriptType.GROOVY)
+            .withContent("var p0=1")
+            .build();
+        ModificationScript include3 = rootFolder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("include_script3")
+            .withType(ScriptType.GROOVY)
+            .withContent("var pmax=2")
+            .build();
+        script.addScript(include3);
+        script.addScript(include1);
+        include3.addScript(include2);
+
+        // Original names
         assertEquals("include_script1", include1.getName());
         assertEquals("include_script3", include3.getName());
         assertEquals("include_script1", script.getIncludedScripts().get(1).getName());
         assertEquals("include_script3", script.getIncludedScripts().get(0).getName());
 
+        // Rename a script without clearing the cache - the name change is not taken into account
         include1.rename("include_script11");
         assertEquals("include_script11", include1.getName());
         assertNotEquals("include_script11", script.getIncludedScripts().get(1).getName());
         assertEquals("include_script1", script.getIncludedScripts().get(1).getName());
 
+        // Clear the cache - the name change is taken into account
         script.clearDependenciesCache();
         assertEquals("include_script11", include1.getName());
         assertEquals("include_script11", script.getIncludedScripts().get(1).getName());
@@ -197,14 +386,11 @@ class ModificationScriptTest extends AbstractProjectFileTest {
 
     @Test
     void testModificationScriptCreationWithCustomPseudoClass() {
-        // Create a project in the root folder
-        Project project = afs.getRootFolder().createProject("project");
-
         // Define a custom pseudo-class value
         String customPseudoClass = "customPseudo";
 
         // Build a ModificationScript using the custom pseudo-class
-        ModificationScript modificationScript = project.getRootFolder().fileBuilder(ModificationScriptBuilder.class)
+        project.getRootFolder().fileBuilder(ModificationScriptBuilder.class)
             .withName("customScript")
             .withType(ScriptType.GROOVY)
             .withContent("script content")
@@ -221,11 +407,8 @@ class ModificationScriptTest extends AbstractProjectFileTest {
 
     @Test
     void testModificationScriptCreationWithDefaultPseudoClass() {
-        // Create a project in the root folder
-        Project project = afs.getRootFolder().createProject("project");
-
         // Build a ModificationScript without specifying a pseudo-class, so the default should be used
-        ModificationScript modificationScript = project.getRootFolder().fileBuilder(ModificationScriptBuilder.class)
+        project.getRootFolder().fileBuilder(ModificationScriptBuilder.class)
             .withName("defaultScript")
             .withType(ScriptType.GROOVY)
             .withContent("script content")
