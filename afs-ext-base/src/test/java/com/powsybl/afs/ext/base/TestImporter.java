@@ -66,5 +66,6 @@ public class TestImporter implements Importer {
 
     @Override
     public void copy(ReadOnlyDataSource fromDataSource, DataSource toDataSource) {
+        // Nothing to do here
     }
 }
