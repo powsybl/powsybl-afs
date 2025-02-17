@@ -30,7 +30,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  */
 public class GenericScriptTest extends AbstractProjectFileTest {
 
-    private Project project;
     private ProjectFolder rootFolder;
 
     @Override
@@ -52,7 +51,7 @@ public class GenericScriptTest extends AbstractProjectFileTest {
     @BeforeEach
     public void setup() throws IOException {
         super.setup();
-        project = afs.getRootFolder().createProject("project");
+        Project project = afs.getRootFolder().createProject("project");
         rootFolder = project.getRootFolder();
     }
 
