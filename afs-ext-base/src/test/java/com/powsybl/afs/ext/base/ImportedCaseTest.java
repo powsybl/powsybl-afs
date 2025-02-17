@@ -19,6 +19,7 @@ import com.powsybl.afs.ProjectFolder;
 import com.powsybl.afs.ProjectNode;
 import com.powsybl.afs.ServiceExtension;
 import com.powsybl.afs.mapdb.storage.MapDbAppStorage;
+import com.powsybl.afs.storage.AfsStorageException;
 import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.InMemoryEventsBus;
 import com.powsybl.afs.storage.NodeGenericMetadata;
@@ -43,13 +44,14 @@ import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -59,6 +61,8 @@ import static org.mockito.Mockito.verify;
  */
 class ImportedCaseTest extends AbstractProjectFileTest {
 
+    private static final String NODE_NOT_FOUND_REGEX = "Node [0-9a-fA-F-]{36} not found";
+    private static final Pattern NODE_NOT_FOUND_PATTERN = Pattern.compile(NODE_NOT_FOUND_REGEX);
     private FileSystem fileSystem;
 
     @Override
@@ -112,7 +116,7 @@ class ImportedCaseTest extends AbstractProjectFileTest {
     }
 
     @Test
-    void test() {
+    void caseExistsTest() {
         Folder root = afs.getRootFolder();
 
         // check case exist
@@ -122,61 +126,137 @@ class ImportedCaseTest extends AbstractProjectFileTest {
         assertEquals("network", aCase.getName());
         assertEquals("Test format", aCase.getDescription());
         assertFalse(aCase.isFolder());
+    }
 
-        // create project
+    @Test
+    void importCaseInProject() {
+        Folder root = afs.getRootFolder();
+        Case aCase = (Case) root.getChildren().get(0);
+
+        // create project end project folder
         Project project = root.createProject("project");
-        assertNotNull(project);
-
-        // create project folder
         ProjectFolder folder = project.getRootFolder().createFolder("folder");
-        assertTrue(folder.getChildren().isEmpty());
 
-        // import case into project
-        try {
-            folder.fileBuilder(ImportedCaseBuilder.class)
-                .build();
-            fail();
-        } catch (AfsException ignored) {
-        }
+        // Create a builder
+        ImportedCaseBuilder builder = folder.fileBuilder(ImportedCaseBuilder.class);
+
+        // Building the case does not wirk when parameters are missing
+        AfsException exception = assertThrows(AfsException.class, builder::build);
+        assertEquals("Case or data source is not set", exception.getMessage());
+
+        // Build the ImportedCase
+        ImportedCase importedCase = builder
+            .withCase(aCase)
+            .withParameter("param1", "true")
+            .withParameters(ImmutableMap.of("param2", "1"))
+            .build();
+
+        // Check the ImportedCase
+        assertNotNull(importedCase);
+        assertFalse(importedCase.isFolder());
+        assertNotNull(importedCase.getNetwork());
+        assertTrue(importedCase.getDependencies().isEmpty());
+    }
+
+    @Test
+    void listenerTest() {
+        Folder root = afs.getRootFolder();
+        Case aCase = (Case) root.getChildren().get(0);
+        Project project = root.createProject("project");
+        ProjectFolder folder = project.getRootFolder().createFolder("folder");
         ImportedCase importedCase = folder.fileBuilder(ImportedCaseBuilder.class)
             .withCase(aCase)
             .withParameter("param1", "true")
             .withParameters(ImmutableMap.of("param2", "1"))
             .build();
-        assertNotNull(importedCase);
-        assertFalse(importedCase.isFolder());
-        assertNotNull(importedCase.getNetwork());
-        assertTrue(importedCase.getDependencies().isEmpty());
 
-        // test network listener
+        // Mock a listener
         NetworkListener mockedListener = mock(DefaultNetworkListener.class);
+
+        // Get the network and add the listener to it
         assertNotNull(importedCase.getNetwork(Collections.singletonList(mockedListener)));
+
+        // Update something in the network
         network.getSubstation("s1").setTso("tso_new");
+
+        // Check that the listener saw it
         verify(mockedListener, times(1))
             .onUpdate(network.getSubstation("s1"), "tso", null, "TSO", "tso_new");
+    }
+
+    @Test
+    void queryNetworkTest() {
+        Folder root = afs.getRootFolder();
+        Case aCase = (Case) root.getChildren().get(0);
+        Project project = root.createProject("project");
+        ProjectFolder folder = project.getRootFolder().createFolder("folder");
+        ImportedCase importedCase = folder.fileBuilder(ImportedCaseBuilder.class)
+            .withCase(aCase)
+            .withParameter("param1", "true")
+            .withParameters(ImmutableMap.of("param2", "1"))
+            .build();
 
         // test network query
         assertEquals("[\"s1\"]", importedCase.queryNetwork(ScriptType.GROOVY, "network.substations.collect { it.id }"));
+    }
+
+    @Test
+    void reloadImportedCaseTest() {
+        Folder root = afs.getRootFolder();
+        Case aCase = (Case) root.getChildren().get(0);
+        Project project = root.createProject("project");
+        ProjectFolder folder = project.getRootFolder().createFolder("folder");
+        folder.fileBuilder(ImportedCaseBuilder.class)
+            .withCase(aCase)
+            .withParameter("param1", "true")
+            .withParameters(ImmutableMap.of("param2", "1"))
+            .build();
+        assertEquals(1, folder.getChildren().size());
 
         // try to reload the imported case
-        assertEquals(1, folder.getChildren().size());
         ProjectNode projectNode = folder.getChildren().get(0);
         assertNotNull(projectNode);
-        assertTrue(projectNode instanceof ImportedCase);
+        assertInstanceOf(ImportedCase.class, projectNode);
         ImportedCase importedCase2 = (ImportedCase) projectNode;
         assertEquals(TestImporter.FORMAT, importedCase2.getImporter().getFormat());
         assertEquals(2, importedCase2.getParameters().size());
         assertEquals("true", importedCase2.getParameters().getProperty("param1"));
+    }
+
+    @Test
+    void checkChildByNameTest() {
+        Folder root = afs.getRootFolder();
+        Case aCase = (Case) root.getChildren().get(0);
+        Project project = root.createProject("project");
+        ProjectFolder folder = project.getRootFolder().createFolder("folder");
+        folder.fileBuilder(ImportedCaseBuilder.class)
+            .withCase(aCase)
+            .withParameter("param1", "true")
+            .withParameters(ImmutableMap.of("param2", "1"))
+            .build();
 
         assertTrue(folder.getChild(ImportedCase.class, "network").isPresent());
+    }
 
-        // delete imported case
+    @Test
+    void deletedImportedCaseTest() {
+        Folder root = afs.getRootFolder();
+        Case aCase = (Case) root.getChildren().get(0);
+        Project project = root.createProject("project");
+        ProjectFolder folder = project.getRootFolder().createFolder("folder");
+        folder.fileBuilder(ImportedCaseBuilder.class)
+            .withCase(aCase)
+            .withParameter("param1", "true")
+            .withParameters(ImmutableMap.of("param2", "1"))
+            .build();
+        ProjectNode projectNode = folder.getChildren().get(0);
+
+        // Delete the imported case
         projectNode.delete();
         assertTrue(folder.getChildren().isEmpty());
-        try {
-            projectNode.getName();
-        } catch (Exception ignored) {
-        }
+        String deletedNodeId = projectNode.getId();
+        AfsStorageException deletedNodeException = assertThrows(AfsStorageException.class, () -> storage.getNodeInfo(deletedNodeId));
+        assertTrue(NODE_NOT_FOUND_PATTERN.matcher(deletedNodeException.getMessage()).matches());
     }
 
     @Test
