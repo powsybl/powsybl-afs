@@ -43,6 +43,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiConsumer;
+import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -66,6 +67,9 @@ class AfsBaseTest {
     private AppFileSystem afs;
 
     private AppData appData;
+
+    private static final String NODE_NOT_FOUND_REGEX = "Node [0-9a-fA-F-]{36} not found";
+    private static final Pattern NODE_NOT_FOUND_PATTERN = Pattern.compile(NODE_NOT_FOUND_REGEX);
 
     @BeforeEach
     public void setup() {
@@ -258,6 +262,37 @@ class AfsBaseTest {
     }
 
     @Test
+    void createFolderInProjectTest() {
+        Folder root = afs.getRootFolder();
+        Folder dir1 = root.createFolder("dir1");
+        Project project = dir1.createProject("projet4");
+        ProjectFolder rootFolder = project.getRootFolder();
+
+        // Create a new folder inside the root folder
+        ProjectFolder dir2 = rootFolder.createFolder("dir2");
+
+        // Some checks on the new folder
+        assertTrue(dir2.isFolder());
+        assertEquals("dir2", dir2.getName());
+        assertNotNull(dir2.getParent());
+        assertTrue(dir2.getChildren().isEmpty());
+        assertEquals(1, rootFolder.getChildren().size());
+
+        // Remove the new folder
+        dir2.delete();
+        assertTrue(rootFolder.getChildren().isEmpty());
+        AfsStorageException exception = assertThrows(AfsStorageException.class, dir2::getChildren);
+        assertTrue(NODE_NOT_FOUND_PATTERN.matcher(exception.getMessage()).matches());
+
+        // Create new folders
+        ProjectFolder dir5 = rootFolder.createFolder("dir5");
+        ProjectFolder dir6 = dir5.createFolder("dir6");
+        assertEquals(List.of("dir5", "dir6"), dir6.getPath().toList().subList(1, 3));
+        assertEquals("dir5/dir6", dir6.getPath().toString());
+        assertEquals("dir6", rootFolder.getChild("dir5/dir6").orElseThrow(AssertionError::new).getName());
+    }
+
+    @Test
     void moveFolderInChildFolderTest() {
         Folder root = afs.getRootFolder();
         Folder dir1 = root.createFolder("dir1");
@@ -279,22 +314,11 @@ class AfsBaseTest {
     }
 
     @Test
-    void baseTest() throws IOException {
+    void listenerTest() {
         Folder root = afs.getRootFolder();
         Folder dir1 = root.createFolder("dir1");
-        dir1.createFolder("dir2");
-        dir1.createFolder("dir3");
-        Folder dir2 = dir1.getFolder("dir2").orElse(null);
-
-        Project project1 = dir2.createProject("project1");
-        project1.setDescription("test project");
-
-        dir2.createProject("project5");
-
-        Folder dir81 = root.createFolder("dir8");
-        Folder dir82 = dir81.createFolder("dir9");
-        assertThrows(AfsException.class, () -> dir81.moveTo(dir82));
-
+        Project project = dir1.createProject("projet4");
+        // Configure listeners
         List<String> added = new ArrayList<>();
         List<String> removed = new ArrayList<>();
         ProjectFolderListener l = new ProjectFolderListener() {
@@ -308,47 +332,77 @@ class AfsBaseTest {
                 removed.add(nodeId);
             }
         };
-        ProjectFolder rootFolder = project1.getRootFolder();
+
+        // Add the listener to the project's root folder
+        ProjectFolder rootFolder = project.getRootFolder();
         rootFolder.addListener(l);
-        ProjectFolder dir4 = rootFolder.createFolder("dir4");
-        assertTrue(dir4.isFolder());
-        assertEquals("dir4", dir4.getName());
-        assertNotNull(dir4.getParent());
-        assertTrue(dir4.getChildren().isEmpty());
-        assertEquals(1, rootFolder.getChildren().size());
 
-        dir4.delete();
-        assertTrue(rootFolder.getChildren().isEmpty());
-        assertThrows(Exception.class, dir4::getChildren);
+        // Create a new folder inside the root folder
+        ProjectFolder dir2 = rootFolder.createFolder("dir2");
 
-        ProjectFolder dir5 = rootFolder.createFolder("dir5");
-        ProjectFolder dir6 = dir5.createFolder("dir6");
-        assertEquals(List.of("dir5", "dir6"), dir6.getPath().toList().subList(1, 3));
-        assertEquals("dir5/dir6", dir6.getPath().toString());
-        assertEquals("dir6", rootFolder.getChild("dir5/dir6").orElseThrow(AssertionError::new).getName());
+        // Remove the new folder
+        dir2.delete();
 
-        assertEquals(Arrays.asList(dir4.getId(), dir5.getId()), added);
-        assertEquals(Collections.singletonList(dir4.getId()), removed);
+        // Create a new folder
+        ProjectFolder dir3 = rootFolder.createFolder("dir3");
 
-        ProjectFolder dir7 = rootFolder.createFolder("dir7");
-        dir7.rename("dir77");
-        assertEquals("dir77", dir7.getName());
+        // Check the listeners
+        assertEquals(Arrays.asList(dir2.getId(), dir3.getId()), added);
+        assertEquals(Collections.singletonList(dir2.getId()), removed);
+    }
 
+    @Test
+    void renameProjectFolderTest() {
+        Folder root = afs.getRootFolder();
+        Folder dir1 = root.createFolder("dir1");
+        Project project = dir1.createProject("projet1");
+        ProjectFolder rootFolder = project.getRootFolder();
+
+        ProjectFolder dir2 = rootFolder.createFolder("dir2");
+        dir2.rename("dir22");
+        assertEquals("dir22", dir2.getName());
+    }
+
+    @Test
+    void archivingTest() throws IOException {
+        Folder root = afs.getRootFolder();
+        Folder dir1 = root.createFolder("dir1");
+        Project project = dir1.createProject("projet1");
+        ProjectFolder rootFolder = project.getRootFolder();
+        ProjectFolder dir2 = rootFolder.createFolder("dir2");
         Path rootDir = fileSystem.getPath("/root");
         Files.createDirectories(rootDir);
-        dir7.archive(rootDir);
-        Path child = rootDir.resolve(dir7.getId());
+
+        // Archive
+        dir2.archive(rootDir);
+        Path child = rootDir.resolve(dir2.getId());
         assertTrue(Files.exists(child));
 
+        // Unarchive
         ProjectFolder dir8 = rootFolder.createFolder("dir8");
         assertEquals(0, dir8.getChildren().size());
         dir8.unarchive(child);
         assertEquals(1, dir8.getChildren().size());
-        assertEquals("dir77", dir8.getChildren().get(0).getName());
+        assertEquals("dir2", dir8.getChildren().get(0).getName());
+    }
 
+    @Test
+    void archiveExceptionTest() throws IOException {
+        Folder root = afs.getRootFolder();
+        Folder dir1 = root.createFolder("dir1");
+        Project project = dir1.createProject("projet1");
+        ProjectFolder rootFolder = project.getRootFolder();
+        ProjectFolder dir2 = rootFolder.createFolder("dir2");
+        Path rootDir = fileSystem.getPath("/root");
+        Files.createDirectories(rootDir);
+
+        // Archive a non-existing folder
         Path testDirNotExists = rootDir.resolve("testDirNotExists");
-        assertThrows(UncheckedIOException.class, () -> dir7.archive(testDirNotExists));
-        assertThrows(AfsException.class, () -> dir8.findService(NetworkFactoryService.class));
+        assertThrows(UncheckedIOException.class, () -> dir2.archive(testDirNotExists));
+
+        ProjectFolder dir3 = rootFolder.createFolder("dir3");
+        AfsException exception = assertThrows(AfsException.class, () -> dir3.findService(NetworkFactoryService.class));
+        assertEquals("No service found for class interface com.powsybl.iidm.network.NetworkFactoryService", exception.getMessage());
     }
 
     @Test
@@ -356,12 +410,11 @@ class AfsBaseTest {
         Project project = afs.getRootFolder().createProject("test");
         ProjectFolder rootFolder = project.getRootFolder();
         ProjectFolder dir1 = rootFolder.createFolder("dir1");
-        Path child = null;
         Path rootDir = fileSystem.getPath("/root");
         Files.createDirectory(rootDir);
         Files.createDirectory(rootDir.resolve("test"));
         dir1.archive(rootDir.resolve("test"), true, false, new HashMap<>());
-        child = rootDir.resolve("test.zip");
+        Path child = rootDir.resolve("test.zip");
         assertTrue(Files.exists(child));
 
         ProjectFolder dir2 = rootFolder.createFolder("dir2");
@@ -374,20 +427,22 @@ class AfsBaseTest {
         Project project = afs.getRootFolder().createProject("test");
         ProjectFolder rootFolder = project.getRootFolder();
         ProjectFolder dir1 = rootFolder.createFolder("dir1");
-        try (Writer writer = new OutputStreamWriter(storage.writeBinaryData(dir1.getId(), "data1"));
-             Writer writer2 = new OutputStreamWriter(storage.writeBinaryData(dir1.getId(), "data2"))) {
+        Path rootDir = fileSystem.getPath("/root");
+        Files.createDirectory(rootDir);
+
+        // Write two files associated with the same node
+        try (Writer ignored = new OutputStreamWriter(storage.writeBinaryData(dir1.getId(), "data1"));
+            Writer ignored1 = new OutputStreamWriter(storage.writeBinaryData(dir1.getId(), "data2"))) {
+            // Nothing to write inside, we just want to create the files
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-        Path child = null;
-        Path rootDir = fileSystem.getPath("/root");
-        Files.createDirectory(rootDir);
         Map<String, List<String>> blackList = new HashMap<>();
         List<String> deleteExtension = new ArrayList<>();
         deleteExtension.add("data1");
         blackList.put("projectFolder", deleteExtension);
         dir1.archive(rootDir, blackList);
-        child = rootDir.resolve(dir1.getId());
+        Path child = rootDir.resolve(dir1.getId());
         assertTrue(Files.exists(child));
 
         ProjectFolder dir2 = rootFolder.createFolder("dir2");
