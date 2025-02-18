@@ -25,7 +25,9 @@ import java.nio.file.FileSystem;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
@@ -35,12 +37,12 @@ class LocalAppFileSystemProviderTest {
     private FileSystem fileSystem;
 
     @BeforeEach
-    public void setUp() throws Exception {
+    void setUp() {
         fileSystem = Jimfs.newFileSystem(Configuration.unix());
     }
 
     @AfterEach
-    public void tearDown() throws Exception {
+    void tearDown() throws Exception {
         fileSystem.close();
     }
 
@@ -50,9 +52,9 @@ class LocalAppFileSystemProviderTest {
         LocalAppFileSystemConfig config = new LocalAppFileSystemConfig("drive", true, fileSystem.getPath("/work"));
         LocalFileScanner extension = new LocalCaseScanner(new ImportConfig(), new ImportersLoaderList());
         List<AppFileSystem> fileSystems = new LocalAppFileSystemProvider(Collections.singletonList(config),
-                                                                         Collections.singletonList(extension),
-                                                                         Collections.emptyList())
-                .getFileSystems(new AppFileSystemProviderContext(computationManager, null, new InMemoryEventsBus()));
+            Collections.singletonList(extension),
+            Collections.emptyList())
+            .getFileSystems(new AppFileSystemProviderContext(computationManager, null, new InMemoryEventsBus()));
         assertEquals(1, fileSystems.size());
         assertInstanceOf(LocalAppFileSystem.class, fileSystems.get(0));
         assertEquals("drive", fileSystems.get(0).getName());
