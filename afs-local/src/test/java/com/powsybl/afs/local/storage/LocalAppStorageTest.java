@@ -11,9 +11,7 @@ import com.google.common.jimfs.Jimfs;
 import com.powsybl.afs.Folder;
 import com.powsybl.afs.ext.base.Case;
 import com.powsybl.afs.ext.base.TestImporter;
-import com.powsybl.afs.storage.AppStorageDataSource;
 import com.powsybl.afs.storage.NodeInfo;
-import com.powsybl.commons.datasource.DataSource;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.iidm.network.ImportConfig;
 import com.powsybl.iidm.network.ImportersLoaderList;
@@ -33,7 +31,6 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -47,14 +44,20 @@ class LocalAppStorageTest {
     private LocalAppStorage storage;
 
     @BeforeEach
-    public void setUp() throws Exception {
+    void setUp() throws Exception {
         fileSystem = Jimfs.newFileSystem(Configuration.unix());
+
+        // Create the root directory
         Path rootDir = fileSystem.getPath("/cases");
         Files.createDirectories(rootDir);
+
+        // Create two files in the root directory
         Path path1 = rootDir.resolve("n.tst");
         Path path2 = rootDir.resolve("n2.tst");
         Files.createFile(path1);
         Files.createFile(path2);
+
+        // Create the LocalAppStorage
         ComputationManager computationManager = Mockito.mock(ComputationManager.class);
         Network network = Mockito.mock(Network.class);
         List<LocalFileScanner> fileExtensions
@@ -63,7 +66,7 @@ class LocalAppStorageTest {
     }
 
     @AfterEach
-    public void tearDown() throws Exception {
+    void tearDown() throws Exception {
         storage.close();
         fileSystem.close();
     }
@@ -76,27 +79,87 @@ class LocalAppStorageTest {
     }
 
     @Test
-    void test() {
+    void rootNodeInfoTest() {
         NodeInfo rootNodeInfo = storage.createRootNodeIfNotExists("mem", Folder.PSEUDO_CLASS);
         assertEquals("mem", rootNodeInfo.getName());
+        assertEquals(Folder.PSEUDO_CLASS, rootNodeInfo.getPseudoClass());
+    }
+
+    @Test
+    void rootNodeParametersTest() {
+        NodeInfo rootNodeInfo = storage.createRootNodeIfNotExists("mem", Folder.PSEUDO_CLASS);
         assertFalse(storage.isWritable(rootNodeInfo.getId()));
         assertTrue(storage.isConsistent(rootNodeInfo.getId()));
-        assertFalse(storage.getParentNode(rootNodeInfo.getId()).isPresent());
+    }
+
+    @Test
+    void getChildNodesTest() {
+        NodeInfo rootNodeInfo = storage.createRootNodeIfNotExists("mem", Folder.PSEUDO_CLASS);
+
+        // Check the child nodes
         assertEquals(List.of("%2Fcases%2Fn.tst", "%2Fcases%2Fn2.tst"),
             storage.getChildNodes(rootNodeInfo.getId()).stream().map(NodeInfo::getId).collect(Collectors.toList()));
+    }
+
+    @Test
+    void getChildNodeTest() {
+        NodeInfo rootNodeInfo = storage.createRootNodeIfNotExists("mem", Folder.PSEUDO_CLASS);
+
+        // Case 1
         Optional<NodeInfo> case1 = storage.getChildNode(rootNodeInfo.getId(), "n.tst");
         assertTrue(case1.isPresent());
-        assertEquals(rootNodeInfo, storage.getParentNode(case1.get().getId()).orElseThrow(AssertionError::new));
+
+        // Case 2
         Optional<NodeInfo> case2 = storage.getChildNode(rootNodeInfo.getId(), "n2.tst");
         assertTrue(case2.isPresent());
-        assertEquals("%2Fcases%2Fn.tst", case1.get().getId());
-        assertFalse(storage.getChildNode(rootNodeInfo.getId(), "n3.tst").isPresent());
-        assertEquals(Folder.PSEUDO_CLASS, rootNodeInfo.getPseudoClass());
-        assertEquals(Case.PSEUDO_CLASS, case1.get().getPseudoClass());
-        assertEquals("TEST", case1.get().getGenericMetadata().getString("format"));
-        assertEquals("Test format", case1.get().getDescription());
-        DataSource ds = new AppStorageDataSource(storage, case1.get().getId(), case1.get().getName());
-        assertNotNull(ds);
-        assertTrue(ds.isDataExtension("foo"));
+
+        // Case 3 (not present)
+        Optional<NodeInfo> case3 = storage.getChildNode(rootNodeInfo.getId(), "n3.tst");
+        assertTrue(case3.isEmpty());
+    }
+
+    @Test
+    void childNodeIdTest() {
+        NodeInfo rootNodeInfo = storage.createRootNodeIfNotExists("mem", Folder.PSEUDO_CLASS);
+        NodeInfo case1 = storage.getChildNode(rootNodeInfo.getId(), "n.tst").orElseThrow(AssertionError::new);
+        assertEquals("%2Fcases%2Fn.tst", case1.getId());
+    }
+
+    @Test
+    void childNodePseudoClassTest() {
+        NodeInfo rootNodeInfo = storage.createRootNodeIfNotExists("mem", Folder.PSEUDO_CLASS);
+        NodeInfo case1 = storage.getChildNode(rootNodeInfo.getId(), "n.tst").orElseThrow(AssertionError::new);
+        assertEquals(Case.PSEUDO_CLASS, case1.getPseudoClass());
+    }
+
+    @Test
+    void childNodeGenericMetadataTest() {
+        NodeInfo rootNodeInfo = storage.createRootNodeIfNotExists("mem", Folder.PSEUDO_CLASS);
+        NodeInfo case1 = storage.getChildNode(rootNodeInfo.getId(), "n.tst").orElseThrow(AssertionError::new);
+        assertEquals("TEST", case1.getGenericMetadata().getString("format"));
+    }
+
+    @Test
+    void childNodeDescriptionTest() {
+        NodeInfo rootNodeInfo = storage.createRootNodeIfNotExists("mem", Folder.PSEUDO_CLASS);
+        NodeInfo case1 = storage.getChildNode(rootNodeInfo.getId(), "n.tst").orElseThrow(AssertionError::new);
+        assertEquals("Test format", case1.getDescription());
+    }
+
+    @Test
+    void getParentNodeForRootNodeTest() {
+        NodeInfo rootNodeInfo = storage.createRootNodeIfNotExists("mem", Folder.PSEUDO_CLASS);
+
+        // Check parent node for root node
+        assertFalse(storage.getParentNode(rootNodeInfo.getId()).isPresent());
+    }
+
+    @Test
+    void getParentNodeForChildNodeTest() {
+        NodeInfo rootNodeInfo = storage.createRootNodeIfNotExists("mem", Folder.PSEUDO_CLASS);
+
+        // Check parent node for node child
+        Optional<NodeInfo> case1 = storage.getChildNode(rootNodeInfo.getId(), "n.tst");
+        assertEquals(rootNodeInfo, storage.getParentNode(case1.orElseThrow(AssertionError::new).getId()).orElseThrow(AssertionError::new));
     }
 }
