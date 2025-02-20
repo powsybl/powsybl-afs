@@ -11,7 +11,9 @@ import com.google.common.jimfs.Jimfs;
 import com.powsybl.afs.Folder;
 import com.powsybl.afs.ext.base.Case;
 import com.powsybl.afs.ext.base.TestImporter;
+import com.powsybl.afs.storage.AppStorageDataSource;
 import com.powsybl.afs.storage.NodeInfo;
+import com.powsybl.commons.datasource.DataSource;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.iidm.network.ImportConfig;
 import com.powsybl.iidm.network.ImportersLoaderList;
@@ -31,6 +33,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -161,5 +164,14 @@ class LocalAppStorageTest {
         // Check parent node for node child
         Optional<NodeInfo> case1 = storage.getChildNode(rootNodeInfo.getId(), "n.tst");
         assertEquals(rootNodeInfo, storage.getParentNode(case1.orElseThrow(AssertionError::new).getId()).orElseThrow(AssertionError::new));
+    }
+
+    @Test
+    void appStorageDataSourceFromChildNodeTest() {
+        NodeInfo rootNodeInfo = storage.createRootNodeIfNotExists("mem", Folder.PSEUDO_CLASS);
+        NodeInfo case1 = storage.getChildNode(rootNodeInfo.getId(), "n.tst").orElseThrow(AssertionError::new);
+        DataSource ds = new AppStorageDataSource(storage, case1.getId(), case1.getName());
+        assertNotNull(ds);
+        assertTrue(ds.isDataExtension("foo"));
     }
 }
