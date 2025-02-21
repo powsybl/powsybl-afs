@@ -24,7 +24,7 @@ class NodeInfoTest {
     private ObjectMapper objectMapper;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         objectMapper = JsonUtil.createObjectMapper()
             .registerModule(new AppStorageJsonModule());
     }
