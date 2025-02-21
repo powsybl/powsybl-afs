@@ -11,8 +11,8 @@ import com.google.common.testing.EqualsTester;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
@@ -23,11 +23,11 @@ class NodeGenericMetadataTest {
     void test() {
         // check getters
         NodeGenericMetadata metadata = new NodeGenericMetadata()
-                .setString("s1", "a")
-                .setString("s2", "b")
-                .setDouble("d1", 0d)
-                .setInt("i1", 1)
-                .setBoolean("b1", true);
+            .setString("s1", "a")
+            .setString("s2", "b")
+            .setDouble("d1", 0d)
+            .setInt("i1", 1)
+            .setBoolean("b1", true);
         assertEquals("a", metadata.getString("s1"));
         assertEquals("b", metadata.getString("s2"));
         assertEquals(ImmutableMap.of("s1", "a", "s2", "b"), metadata.getStrings());
@@ -39,18 +39,15 @@ class NodeGenericMetadataTest {
         assertEquals(ImmutableMap.of("b1", true), metadata.getBooleans());
 
         // check metadata not found
-        try {
-            metadata.getString("s3");
-            fail();
-        } catch (IllegalArgumentException ignored) {
-        }
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> metadata.getString("s3"));
+        assertEquals("String metadata 's3' not found", exception.getMessage());
 
         // check equality
         new EqualsTester()
-                .addEqualityGroup(new NodeGenericMetadata().setString("s1", "a"),
-                                  new NodeGenericMetadata().setString("s1", "a"))
-                .addEqualityGroup(new NodeGenericMetadata().setDouble("d1", 3d),
-                                  new NodeGenericMetadata().setDouble("d1", 3d))
-                .testEquals();
+            .addEqualityGroup(new NodeGenericMetadata().setString("s1", "a"),
+                new NodeGenericMetadata().setString("s1", "a"))
+            .addEqualityGroup(new NodeGenericMetadata().setDouble("d1", 3d),
+                new NodeGenericMetadata().setDouble("d1", 3d))
+            .testEquals();
     }
 }
