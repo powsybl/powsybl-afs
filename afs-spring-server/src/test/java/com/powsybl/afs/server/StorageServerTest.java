@@ -20,6 +20,7 @@ import com.powsybl.commons.exceptions.UncheckedUriSyntaxException;
 import com.powsybl.computation.ComputationManager;
 import jakarta.servlet.ServletContext;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -77,6 +78,12 @@ class StorageServerTest extends AbstractAppStorageTest {
             List<AppFileSystemProvider> fsProviders = ImmutableList.of(m -> ImmutableList.of(fs));
             return new AppData(cm, cm, fsProviders, eventBus);
         }
+    }
+
+    @AfterEach
+    public void tearDown() {
+        clearAllNodes();
+        super.tearDown();
     }
 
     private URI getRestUri() {

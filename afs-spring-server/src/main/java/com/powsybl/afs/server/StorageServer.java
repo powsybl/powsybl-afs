@@ -44,14 +44,55 @@ import java.util.*;
 @Tag(name = "afs")
 public class StorageServer {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(StorageServer.class);
     public static final String API_VERSION = "v1";
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(StorageServer.class);
     private final AppDataWrapper appDataWrapper;
 
     @Autowired
     public StorageServer(AppDataWrapper appDataWrapper) {
         this.appDataWrapper = appDataWrapper;
+    }
+
+    private static StreamingResponseBody copyToBodyAndClose(InputStream inputStream) {
+        return outputStream -> {
+            try (InputStream toClose = inputStream) {
+                IOUtils.copy(toClose, outputStream);
+            }
+        };
+    }
+
+    private static <T> ResponseEntity<T> ok() {
+        return ResponseEntity.ok().build();
+    }
+
+    private static <T> ResponseEntity<T> noContent() {
+        return ResponseEntity.noContent().build();
+    }
+
+    private static <T> ResponseEntity<T> ok(T body) {
+        return ResponseEntity.ok(body);
+    }
+
+    private static <T> ResponseEntity<T> okIfPresent(Optional<T> body) {
+        return body
+            .map(StorageServer::ok)
+            .orElseGet(StorageServer::noContent);
+    }
+
+    private static void logInfo(String message, Object... params) {
+        if (LOGGER.isInfoEnabled()) {
+            Object[] objects = Arrays.stream(params)
+                .map(StorageServer::encode)
+                .toArray();
+            LOGGER.info(message, objects);
+        }
+    }
+
+    private static Object encode(Object input) {
+        if (input instanceof String s) {
+            return s.replaceAll("[\n\r\t]", "_");
+        }
+        return input;
     }
 
     @GetMapping(value = "fileSystems")
@@ -418,14 +459,6 @@ public class StorageServer {
         return okIfPresent(storage.readBinaryData(nodeId, name).map(StorageServer::copyToBodyAndClose));
     }
 
-    private static StreamingResponseBody copyToBodyAndClose(InputStream inputStream) {
-        return outputStream -> {
-            try (InputStream toClose = inputStream) {
-                IOUtils.copy(toClose, outputStream);
-            }
-        };
-    }
-
     @GetMapping(value = "fileSystems/{fileSystemName}/nodes/{nodeId}/data/{name}", produces = MediaType.TEXT_PLAIN_VALUE)
     @Operation(summary = "", responses = {
         @ApiResponse(content = @Content(schema = @Schema(implementation = String.class))),
@@ -697,39 +730,5 @@ public class StorageServer {
         AppStorage storage = appDataWrapper.getStorage(fileSystemName);
         storage.setMetadata(nodeId, nodeMetadata);
         return ok();
-    }
-
-    private static <T> ResponseEntity<T> ok() {
-        return ResponseEntity.ok().build();
-    }
-
-    private static <T> ResponseEntity<T> noContent() {
-        return ResponseEntity.noContent().build();
-    }
-
-    private static <T> ResponseEntity<T> ok(T body) {
-        return ResponseEntity.ok(body);
-    }
-
-    private static <T> ResponseEntity<T> okIfPresent(Optional<T> body) {
-        return body
-            .map(StorageServer::ok)
-            .orElseGet(StorageServer::noContent);
-    }
-
-    private static void logInfo(String message, Object... params) {
-        if (LOGGER.isInfoEnabled()) {
-            Object[] objects = Arrays.stream(params)
-                .map(StorageServer::encode)
-                .toArray();
-            LOGGER.info(message, objects);
-        }
-    }
-
-    private static Object encode(Object input) {
-        if (input instanceof String s) {
-            return s.replaceAll("[\n\r\t]", "_");
-        }
-        return input;
     }
 }

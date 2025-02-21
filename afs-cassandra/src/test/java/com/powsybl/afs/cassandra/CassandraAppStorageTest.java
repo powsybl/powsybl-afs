@@ -19,6 +19,7 @@ import com.powsybl.afs.storage.check.FileSystemCheckOptions;
 import com.powsybl.afs.storage.check.FileSystemCheckOptionsBuilder;
 import org.apache.commons.lang3.SystemUtils;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.testcontainers.containers.CassandraContainer;
@@ -47,12 +48,12 @@ class CassandraAppStorageTest extends AbstractAppStorageTest {
     private static CqlSession cassandraSession;
 
     @BeforeAll
-    public static void dontRunOnWindows() {
+    static void dontRunOnWindows() {
         assumeFalse(SystemUtils.IS_OS_WINDOWS);
     }
 
     @BeforeAll
-    public static void setUpCassandra() {
+    static void setUpCassandra() {
         // Create container
         cassandra = new CassandraContainer<>("cassandra:3.11.5")
             .withInitScript("afs.cql");
@@ -69,7 +70,7 @@ class CassandraAppStorageTest extends AbstractAppStorageTest {
     }
 
     @AfterAll
-    public static void tearDownCassandra() {
+    static void tearDownCassandra() {
         if (cassandraSession != null) {
             cassandraSession.close();
             if (cassandra != null) {
@@ -78,12 +79,19 @@ class CassandraAppStorageTest extends AbstractAppStorageTest {
         }
     }
 
+//    @Override
+//    @BeforeEach
+//    public void setUp() {
+//        eventStack = new LinkedBlockingQueue<>();
+//        this.storage = createStorage();
+//        this.storage.getEventsBus().addListener(l);
+//    }
+
+    @AfterEach
     @Override
-    @BeforeEach
-    public void setUp() {
-        eventStack = new LinkedBlockingQueue<>();
-        this.storage = createStorage();
-        this.storage.getEventsBus().addListener(l);
+    public void tearDown() {
+        super.tearDown();
+        clear();
     }
 
     @Override

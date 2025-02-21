@@ -46,6 +46,8 @@ public abstract class AbstractAppStorageTest {
     static final String DATA_FILE_CLASS = "data";
     private static final String NODE_NOT_FOUND_REGEX = "Node [0-9a-fA-F-]{36} not found";
     private static final Pattern NODE_NOT_FOUND_PATTERN = Pattern.compile(NODE_NOT_FOUND_REGEX);
+    private static final String IMPOSSIBLE_TO_RENAME_NODE_REGEX = "Impossible to rename node '[0-9a-fA-F-]{36}' with an empty name";
+    private static final Pattern IMPOSSIBLE_TO_RENAME_NODE_PATTERN = Pattern.compile(IMPOSSIBLE_TO_RENAME_NODE_REGEX);
 
     protected AppStorage storage;
 
@@ -71,6 +73,17 @@ public abstract class AbstractAppStorageTest {
         if (!storage.isClosed()) {
             storage.close();
         }
+        clearEventStack();
+    }
+
+    public void clearAllNodes() {
+        if (testFolderInfo != null) {
+            storage.deleteNode(testFolderInfo.getId());
+//            List<NodeInfo> childNodesInfo = storage.getChildNodes(rootFolderInfo.getId());
+//            childNodesInfo.forEach(nodeInfo -> storage.deleteNode(nodeInfo.getId()));
+        }
+//        List<NodeInfo> childNodesInfo = storage.getChildNodes(rootFolderInfo.getId());
+//        childNodesInfo.forEach(nodeInfo -> storage.deleteNode(nodeInfo.getId()));
     }
 
     @Test
@@ -751,7 +764,7 @@ public abstract class AbstractAppStorageTest {
 
         // Name empty
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> storage.renameNode(folder6NodeId, ""));
-        assertEquals("name should not be empty", exception.getMessage());
+        assertTrue(IMPOSSIBLE_TO_RENAME_NODE_PATTERN.matcher(exception.getMessage()).matches());
     }
 
     @Test
