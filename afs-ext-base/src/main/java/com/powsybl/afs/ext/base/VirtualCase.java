@@ -109,6 +109,6 @@ public class VirtualCase extends ProjectFile implements ProjectCase {
 
     @Override
     public boolean mandatoryDependenciesAreMissing() {
-        return !getCase().isPresent() || !getScript().isPresent();
+        return getCase().isEmpty() || getScript().isEmpty();
     }
 }

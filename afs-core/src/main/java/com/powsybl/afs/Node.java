@@ -41,7 +41,7 @@ public class Node extends AbstractNodeBase<Folder> {
     }
 
     private static boolean pathStop(Node node) {
-        return !node.getParent().isPresent();
+        return node.getParent().isEmpty();
     }
 
     private static String pathToString(List<String> path) {

@@ -7,11 +7,14 @@
 
 package com.powsybl.afs.storage;
 
+import com.google.common.jimfs.Configuration;
+import com.google.common.jimfs.Jimfs;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -22,12 +25,13 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 
 class UtilsTest {
-
+    private FileSystem fileSystem;
     private Path rootDir;
 
     @BeforeEach
-    public void setup() throws IOException {
-        rootDir = Files.createTempDirectory("test1");
+    void setup() throws IOException {
+        fileSystem = Jimfs.newFileSystem(Configuration.unix());
+        rootDir = Files.createTempDirectory(String.valueOf(fileSystem.getPath("test1")));
         Path folder = rootDir.resolve("test");
         Files.createDirectory(folder);
         Files.createDirectory(folder.resolve("subTest"));
@@ -35,8 +39,8 @@ class UtilsTest {
     }
 
     @AfterEach
-    public void tearDown() throws Exception {
-        Utils.deleteDirectory(rootDir);
+    void tearDown() throws Exception {
+        fileSystem.close();
     }
 
     @Test
@@ -62,21 +66,15 @@ class UtilsTest {
 
     @Test
     void deleteDirectoryTest() throws IOException {
-        Path rootDir2 = Files.createTempDirectory("test1");
-        Files.createFile(rootDir2.resolve("test"));
-        Utils.deleteDirectory(rootDir2);
-        assertTrue(Files.notExists(rootDir2));
+        Files.createFile(rootDir.resolve("test2"));
+        Utils.deleteDirectory(rootDir);
+        assertTrue(Files.notExists(rootDir));
     }
 
     @Test
     void checkDiskSpaceTest() throws IOException {
-        Path rootDir2 = Files.createTempDirectory("test1");
-        Files.createFile(rootDir2.resolve("test"));
-        try {
-            Utils.checkDiskSpace(rootDir2);
-        } catch (IOException ignored) {
-        }
-
+        Files.createFile(rootDir.resolve("test3"));
+        Utils.checkDiskSpace(rootDir);
     }
 
 }

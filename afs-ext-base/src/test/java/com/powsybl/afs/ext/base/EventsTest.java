@@ -11,58 +11,64 @@ import com.powsybl.afs.ext.base.events.ScriptModified;
 import com.powsybl.afs.ext.base.events.VirtualCaseCreated;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 class EventsTest {
+    private final Path path = Paths.get("/tmp/foo");
 
     @Test
-    void caseImportedTest() throws IOException {
-        CaseImported caseImported = new CaseImported("a", "b", Paths.get("/tmp/foo").toString());
+    void caseImportedTest() {
+        CaseImported caseImported = new CaseImported("a", "b", path.toString());
         assertEquals("a", caseImported.getId());
         assertEquals(CaseImported.TYPENAME, caseImported.getType());
         assertEquals("b", caseImported.getParentId());
         assertNotNull(caseImported.toString());
-        assertEquals(Paths.get("/tmp/foo").toString(), caseImported.getPath());
+        assertEquals(path.toString(), caseImported.getPath());
 
-        CaseImported caseImported2 = new CaseImported("a", "c", Paths.get("/tmp/foo").toString());
+        CaseImported caseImported2 = new CaseImported("a", "c", path.toString());
         assertNotEquals(caseImported, caseImported2);
         assertNotEquals(caseImported.hashCode(), caseImported2.hashCode());
-        assertNotEquals(caseImported, new ScriptModified("", "", Paths.get("/tmp/foo").toString()));
+        Object scriptModified = new ScriptModified("", "", path.toString());
+        assertNotEquals(caseImported, scriptModified);
     }
 
     @Test
-    void scriptModifiedTest() throws IOException {
-        ScriptModified scriptModified = new ScriptModified("a", "b", Paths.get("/tmp/foo").toString());
+    void scriptModifiedTest() {
+        ScriptModified scriptModified = new ScriptModified("a", "b", path.toString());
         assertEquals("a", scriptModified.getId());
         assertEquals(ScriptModified.TYPENAME, scriptModified.getType());
         assertEquals("b", scriptModified.getParentId());
         assertNotNull(scriptModified.toString());
 
-        ScriptModified scriptModified2 = new ScriptModified("a", "c", Paths.get("/tmp/foo").toString());
+        ScriptModified scriptModified2 = new ScriptModified("a", "c", path.toString());
         assertNotEquals(scriptModified, scriptModified2);
         assertNotEquals(scriptModified.hashCode(), scriptModified2.hashCode());
-        assertNotEquals(scriptModified, new CaseImported("", "", Paths.get("/tmp/foo").toString()));
+        Object caseImported = new CaseImported("", "", path.toString());
+        assertNotEquals(caseImported, scriptModified);
 
     }
 
     @Test
-    void virtualCaseCreatedTest() throws IOException {
-        VirtualCaseCreated virtualCaseCreated = new VirtualCaseCreated("a", "b", Paths.get("/tmp/foo").toString());
+    void virtualCaseCreatedTest() {
+        VirtualCaseCreated virtualCaseCreated = new VirtualCaseCreated("a", "b", path.toString());
         assertEquals("a", virtualCaseCreated.getId());
         assertEquals(VirtualCaseCreated.TYPENAME, virtualCaseCreated.getType());
         assertEquals("b", virtualCaseCreated.getParentId());
         assertNotNull(virtualCaseCreated.toString());
-        assertEquals(Paths.get("/tmp/foo").toString(), virtualCaseCreated.getPath());
+        assertEquals(path.toString(), virtualCaseCreated.getPath());
 
-        VirtualCaseCreated virtualCaseCreated2 = new VirtualCaseCreated("a", "c", Paths.get("/tmp/foo").toString());
+        VirtualCaseCreated virtualCaseCreated2 = new VirtualCaseCreated("a", "c", path.toString());
         assertNotEquals(virtualCaseCreated, virtualCaseCreated2);
         assertNotEquals(virtualCaseCreated.hashCode(), virtualCaseCreated2.hashCode());
-        assertNotEquals(virtualCaseCreated, new CaseImported("", "", Paths.get("/tmp/foo").toString()));
+        Object caseImported = new CaseImported("", "", path.toString());
+        assertNotEquals(caseImported, virtualCaseCreated);
     }
 }

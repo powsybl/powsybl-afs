@@ -10,10 +10,10 @@ import com.powsybl.afs.mapdb.storage.MapDbAppStorage;
 import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.NodeGenericMetadata;
 import com.powsybl.computation.ComputationManager;
-import com.powsybl.tools.test.AbstractToolTest;
 import com.powsybl.tools.Command;
 import com.powsybl.tools.Tool;
 import com.powsybl.tools.ToolRunningContext;
+import com.powsybl.tools.test.AbstractToolTest;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -23,9 +23,11 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.UUID;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
@@ -81,9 +83,17 @@ class AppFileSystemToolTest extends AbstractToolTest {
     void testArchive() throws IOException {
         Path archivePath = fileSystem.getPath("/tmp", UUID.randomUUID().toString());
         Files.createDirectories(archivePath);
-        assertEquals(0, Files.list(archivePath).count());
+        try (Stream<Path> paths = Files.list(archivePath)) {
+            assertEquals(0, paths.count());
+        } catch (Exception e) {
+            fail();
+        }
         assertCommandSuccessful(new String[] {"afs", "--archive", "mem", "--dir", archivePath.toString(), "--deleteResults"});
-        assertEquals(1, Files.list(archivePath).count());
+        try (Stream<Path> paths = Files.list(archivePath)) {
+            assertEquals(1, paths.count());
+        } catch (Exception e) {
+            fail();
+        }
     }
 
     @Test

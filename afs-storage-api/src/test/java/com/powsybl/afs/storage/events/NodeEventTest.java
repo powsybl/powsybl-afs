@@ -24,7 +24,7 @@ class NodeEventTest {
     private ObjectMapper objectMapper;
 
     @BeforeEach
-    public void setUp() throws Exception {
+    void setUp() {
         objectMapper = JsonUtil.createObjectMapper();
     }
 

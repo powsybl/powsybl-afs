@@ -56,13 +56,17 @@
     <dependencies>
         <!-- Compilation dependencies -->
         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>powsybl-afs-storage-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-computation-local</artifactId>
         </dependency>
         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>powsybl-afs-storage-api</artifactId>
-            <version>${project.version}</version>
+            <groupId>org.owasp.encoder</groupId>
+            <artifactId>encoder</artifactId>
         </dependency>
 
         <!-- Test dependencies -->

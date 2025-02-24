@@ -10,7 +10,6 @@ import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.iidm.network.Network;
-import com.powsybl.iidm.network.Substation;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
@@ -48,18 +47,18 @@ public abstract class AbstractProjectFileTest {
     @BeforeEach
     public void setup() throws IOException {
         network = Network.create("test", "test");
-        Substation s = network.newSubstation()
-                .setId("s1")
-                .setTso("TSO")
-                .add();
+        network.newSubstation()
+            .setId("s1")
+            .setTso("TSO")
+            .add();
         ComputationManager computationManager = new LocalComputationManager();
         storage = createStorage();
         afs = new AppFileSystem("mem", false, storage);
         ad = new AppData(computationManager, computationManager,
-                Collections.singletonList(computationManager1 -> Collections.singletonList(afs)),
-                getFileExtensions(),
-                getProjectFileExtensions(),
-                getServiceExtensions());
+            Collections.singletonList(computationManager1 -> Collections.singletonList(afs)),
+            getFileExtensions(),
+            getProjectFileExtensions(),
+            getServiceExtensions());
         afs.setData(ad);
     }
 

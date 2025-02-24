@@ -7,10 +7,22 @@
 
 package com.powsybl.afs.server;
 
-import com.google.common.collect.ImmutableList;
-import com.powsybl.afs.*;
+import com.powsybl.afs.AppData;
+import com.powsybl.afs.AppFileSystem;
+import com.powsybl.afs.AppFileSystemProvider;
+import com.powsybl.afs.Folder;
+import com.powsybl.afs.LocalTaskMonitor;
+import com.powsybl.afs.Project;
+import com.powsybl.afs.ProjectFile;
+import com.powsybl.afs.TaskMonitor;
 import com.powsybl.afs.mapdb.storage.MapDbAppStorage;
-import com.powsybl.afs.storage.*;
+import com.powsybl.afs.storage.AbstractAppStorageTest;
+import com.powsybl.afs.storage.AfsStorageException;
+import com.powsybl.afs.storage.AppStorage;
+import com.powsybl.afs.storage.EventsBus;
+import com.powsybl.afs.storage.InMemoryEventsBus;
+import com.powsybl.afs.storage.NodeGenericMetadata;
+import com.powsybl.afs.storage.NodeInfo;
 import com.powsybl.afs.storage.check.FileSystemCheckIssue;
 import com.powsybl.afs.storage.check.FileSystemCheckOptions;
 import com.powsybl.afs.storage.check.FileSystemCheckOptionsBuilder;
@@ -41,7 +53,8 @@ import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
@@ -74,7 +87,7 @@ class StorageServerTest extends AbstractAppStorageTest {
             AppFileSystem fs = new AppFileSystem(FS_TEST_NAME, true, storage, new LocalTaskMonitor());
             ComputationManager cm = Mockito.mock(ComputationManager.class);
 
-            List<AppFileSystemProvider> fsProviders = ImmutableList.of(m -> ImmutableList.of(fs));
+            List<AppFileSystemProvider> fsProviders = List.of(m -> List.of(fs));
             return new AppData(cm, cm, fsProviders, eventBus);
         }
     }

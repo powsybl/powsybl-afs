@@ -29,6 +29,99 @@ import com.powsybl.commons.datasource.DataSource;
 public class AppStorageDataSource implements DataSource {
 
     private static final String SEPARATOR = "__";
+    private static final Logger LOG = LoggerFactory.getLogger(AppStorageDataSource.class);
+    private final AppStorage storage;
+    private final String nodeId;
+    private final String nodeName;
+
+    public AppStorageDataSource(AppStorage storage, String nodeId, String nodeName) {
+        this.storage = Objects.requireNonNull(storage);
+        this.nodeId = Objects.requireNonNull(nodeId);
+        this.nodeName = Objects.requireNonNull(nodeName);
+    }
+
+    @Override
+    public String getBaseName() {
+        return nodeName;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @return true
+     */
+    @Override
+    public boolean isDataExtension(String ext) {
+        return true;
+    }
+
+    @Override
+    public OutputStream newOutputStream(final String suffix, final String ext, boolean append) {
+        if (append) {
+            throw new UnsupportedOperationException("Append mode not supported");
+        }
+        return storage.writeBinaryData(nodeId, new SuffixAndExtension(suffix, ext).toString());
+    }
+
+    @Override
+    public OutputStream newOutputStream(String fileName, boolean append) {
+        Objects.requireNonNull(fileName);
+        if (append) {
+            throw new UnsupportedOperationException("Append mode not supported");
+        }
+        return storage.writeBinaryData(nodeId, new FileName(fileName).toString());
+    }
+
+    @Override
+    public boolean exists(String suffix, String ext) {
+        return storage.dataExists(nodeId, new SuffixAndExtension(suffix, ext).toString());
+    }
+
+    @Override
+    public boolean exists(String fileName) {
+        return storage.dataExists(nodeId, new FileName(fileName).toString());
+    }
+
+    @Override
+    public InputStream newInputStream(String suffix, String ext) throws IOException {
+        return storage.readBinaryData(nodeId, new SuffixAndExtension(suffix, ext).toString())
+            .orElseThrow(() -> new IOException("*" + Objects.toString(suffix, "") + "." + Objects.toString(ext, "") + " does not exist"));
+    }
+
+    @Override
+    public InputStream newInputStream(String fileName) throws IOException {
+        return storage.readBinaryData(nodeId, new FileName(fileName).toString())
+            .orElseThrow(() -> new IOException(fileName + " does not exist"));
+    }
+
+    @Override
+    public Set<String> listNames(String regex) throws IOException {
+        Pattern p = Pattern.compile(regex);
+        Set<String> names = storage.getDataNames(nodeId).stream()
+            .filter(name -> p.matcher(name).matches())
+            .map(name -> Name.parse(name, new NameHandler<String>() {
+
+                @Override
+                public String onSuffixAndExtension(SuffixAndExtension suffixAndExtension) throws IOException {
+                    throw new AssertionError("Don't know how to unmap suffix-and-extension to a data source name " + name);
+                }
+
+                @Override
+                public String onFileName(FileName fileName) throws IOException {
+                    return fileName.getName();
+                }
+
+                @Override
+                public String onOther(Name otherName) {
+                    // Return the original name
+                    return name;
+                }
+            }))
+            .collect(Collectors.toSet());
+        LOG.info("AppStorageDataSource::listNames()");
+        names.forEach(n -> LOG.info("    {}", n));
+        return names;
+    }
 
     public interface Name {
 
@@ -124,100 +217,4 @@ public class AppStorageDataSource implements DataSource {
             return START_PATTERN + name;
         }
     }
-
-    private final AppStorage storage;
-
-    private final String nodeId;
-
-    private final String nodeName;
-
-    public AppStorageDataSource(AppStorage storage, String nodeId, String nodeName) {
-        this.storage = Objects.requireNonNull(storage);
-        this.nodeId = Objects.requireNonNull(nodeId);
-        this.nodeName = Objects.requireNonNull(nodeName);
-    }
-
-    @Override
-    public String getBaseName() {
-        return nodeName;
-    }
-
-    /**
-     * {@inheritDoc}
-     * @return true
-     */
-    @Override
-    public boolean isDataExtension(String ext) {
-        return true;
-    }
-
-    @Override
-    public OutputStream newOutputStream(final String suffix, final String ext, boolean append) {
-        if (append) {
-            throw new UnsupportedOperationException("Append mode not supported");
-        }
-        return storage.writeBinaryData(nodeId, new SuffixAndExtension(suffix, ext).toString());
-    }
-
-    @Override
-    public OutputStream newOutputStream(String fileName, boolean append) {
-        Objects.requireNonNull(fileName);
-        if (append) {
-            throw new UnsupportedOperationException("Append mode not supported");
-        }
-        return storage.writeBinaryData(nodeId, new FileName(fileName).toString());
-    }
-
-    @Override
-    public boolean exists(String suffix, String ext) {
-        return storage.dataExists(nodeId, new SuffixAndExtension(suffix, ext).toString());
-    }
-
-    @Override
-    public boolean exists(String fileName) {
-        return storage.dataExists(nodeId, new FileName(fileName).toString());
-    }
-
-    @Override
-    public InputStream newInputStream(String suffix, String ext) throws IOException {
-        return storage.readBinaryData(nodeId, new SuffixAndExtension(suffix, ext).toString())
-                .orElseThrow(() -> new IOException("*" + Objects.toString(suffix, "") + "." + Objects.toString(ext, "") + " does not exist"));
-    }
-
-    @Override
-    public InputStream newInputStream(String fileName) throws IOException {
-        return storage.readBinaryData(nodeId, new FileName(fileName).toString())
-                .orElseThrow(() -> new IOException(fileName + " does not exist"));
-    }
-
-    @Override
-    public Set<String> listNames(String regex) throws IOException {
-        Pattern p = Pattern.compile(regex);
-        Set<String> names = storage.getDataNames(nodeId).stream()
-                .filter(name -> p.matcher(name).matches())
-                .map(name -> Name.parse(name, new NameHandler<String>() {
-
-                    @Override
-                    public String onSuffixAndExtension(SuffixAndExtension suffixAndExtension) throws IOException {
-                        throw new AssertionError("Don't know how to unmap suffix-and-extension to a data source name " + name);
-                    }
-
-                    @Override
-                    public String onFileName(FileName fileName) throws IOException {
-                        return fileName.getName();
-                    }
-
-                    @Override
-                    public String onOther(Name otherName) {
-                        // Return the original name
-                        return name;
-                    }
-                }))
-                .collect(Collectors.toSet());
-        LOG.info("AppStorageDataSource::listNames()");
-        names.forEach(n -> LOG.info("    {}", n));
-        return names;
-    }
-
-    private static final Logger LOG = LoggerFactory.getLogger(AppStorageDataSource.class);
 }

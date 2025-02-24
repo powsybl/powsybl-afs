@@ -6,10 +6,12 @@
  */
 package com.powsybl.afs;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -20,15 +22,12 @@ import java.util.stream.Collectors;
  */
 public class LocalTaskMonitor implements TaskMonitor {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(LocalTaskMonitor.class);
+    private static final String TASK_NOT_FOUND = "Task '%s' not found";
     private final Map<UUID, Task> tasks = new HashMap<>();
     private final Map<UUID, Future> tasksFuture = new HashMap<>();
-
-    private long revision = 0L;
-
     private final Lock lock = new ReentrantLock();
-
     private final List<TaskListener> listeners = new ArrayList<>();
+    private long revision = 0L;
 
     @Override
     public Task startTask(ProjectFile projectFile) {
@@ -68,7 +67,7 @@ public class LocalTaskMonitor implements TaskMonitor {
         try {
             Task task = tasks.remove(id);
             if (task == null) {
-                throw new IllegalArgumentException("Task '" + id + "' not found");
+                throw new IllegalArgumentException(String.format(TASK_NOT_FOUND, id));
             }
             revision++;
 
@@ -87,9 +86,9 @@ public class LocalTaskMonitor implements TaskMonitor {
         lock.lock();
         try {
             return new Snapshot(tasks.values().stream()
-                    .filter(task -> projectId == null || task.getProjectId().equals(projectId))
-                    .map(Task::new).collect(Collectors.toList()),
-                    revision);
+                .filter(task -> projectId == null || task.getProjectId().equals(projectId))
+                .map(Task::new).collect(Collectors.toList()),
+                revision);
         } finally {
             lock.unlock();
         }
@@ -110,7 +109,7 @@ public class LocalTaskMonitor implements TaskMonitor {
         try {
             Task task = tasks.get(id);
             if (task == null) {
-                throw new IllegalArgumentException("Task '" + id + "' not found");
+                throw new IllegalArgumentException(String.format(TASK_NOT_FOUND, id));
             }
             revision++;
             task.setMessage(message);
@@ -160,7 +159,7 @@ public class LocalTaskMonitor implements TaskMonitor {
         try {
             Task task = tasks.get(taskId);
             if (task == null) {
-                throw new IllegalArgumentException("Task '" + taskId + "' not found");
+                throw new IllegalArgumentException(String.format(TASK_NOT_FOUND, taskId));
             }
             tasksFuture.put(taskId, future);
             task.setCancellable(future != null);
