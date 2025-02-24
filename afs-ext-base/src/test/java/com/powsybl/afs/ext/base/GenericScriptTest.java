@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 /**
  * @author Nicolas Rol {@literal <nicolas.rol at rte-france.com>}
  */
-public class GenericScriptTest extends AbstractProjectFileTest {
+class GenericScriptTest extends AbstractProjectFileTest {
 
     private ProjectFolder rootFolder;
 

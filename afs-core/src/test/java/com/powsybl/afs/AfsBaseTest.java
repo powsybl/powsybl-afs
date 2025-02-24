@@ -72,7 +72,7 @@ class AfsBaseTest {
     private static final Pattern NODE_NOT_FOUND_PATTERN = Pattern.compile(NODE_NOT_FOUND_REGEX);
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         fileSystem = Jimfs.newFileSystem(Configuration.unix());
         ComputationManager computationManager = Mockito.mock(ComputationManager.class);
         appData = new AppData(computationManager, computationManager, Collections.emptyList(),
@@ -86,7 +86,7 @@ class AfsBaseTest {
     }
 
     @AfterEach
-    public void tearDown() throws Exception {
+    void tearDown() throws Exception {
         storage.close();
         fileSystem.close();
     }
