@@ -23,8 +23,8 @@ public class VirtualCase extends ProjectFile implements ProjectCase {
     public static final String PSEUDO_CLASS = "virtualCase";
     public static final int VERSION = 0;
 
-    static final String CASE_DEPENDENCY_NAME = "case";
-    static final String SCRIPT_DEPENDENCY_NAME = "script";
+    public static final String CASE_DEPENDENCY_NAME = "case";
+    public static final String SCRIPT_DEPENDENCY_NAME = "script";
 
     private final DependencyCache<ProjectFile> projectCaseDependency = new DependencyCache<>(this, CASE_DEPENDENCY_NAME, ProjectFile.class);
 
