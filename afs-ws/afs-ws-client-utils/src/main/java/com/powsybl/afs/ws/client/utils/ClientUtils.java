@@ -21,6 +21,7 @@ import jakarta.ws.rs.core.Form;
 import jakarta.ws.rs.core.GenericType;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
+
 import java.net.URI;
 import java.util.Objects;
 import java.util.Optional;
@@ -37,8 +38,8 @@ public final class ClientUtils {
 
     public static Client createClient() {
         return new ResteasyClientBuilderImpl()
-                .connectionPoolSize(50)
-                .build();
+            .connectionPoolSize(50)
+            .build();
     }
 
     private static RuntimeException createServerErrorException(Response response) {
@@ -127,29 +128,22 @@ public final class ClientUtils {
         Objects.requireNonNull(login);
         Objects.requireNonNull(password);
 
-        Client client = ClientUtils.createClient()
-                .register(new JsonProvider());
-        try {
+        try (Client client = ClientUtils.createClient()
+            .register(new JsonProvider())) {
             Form form = new Form()
-                    .param("login", login)
-                    .param("password", password);
+                .param("login", login)
+                .param("password", password);
 
-            Response response = client.target(baseUri)
-                    .path("rest")
-                    .path("users")
-                    .path("login")
-                    .request()
-                    .post(Entity.form(form));
-            try {
+            try (Response response = client.target(baseUri)
+                .path("rest")
+                .path("users")
+                .path("login")
+                .request()
+                .post(Entity.form(form))) {
                 UserProfile profile = readEntityIfOk(response, UserProfile.class);
                 String token = response.getHeaderString(HttpHeaders.AUTHORIZATION);
                 return new UserSession(profile, token);
-            } finally {
-                response.close();
             }
-        } finally {
-            client.close();
         }
     }
-
 }

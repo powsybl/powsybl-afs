@@ -315,4 +315,13 @@ class LocalTaskMonitorTest extends AbstractProjectFileTest {
             .addEqualityGroup(new UpdateTaskMessageEvent(new UUID(0L, 1L), 1L, "bye"), new UpdateTaskMessageEvent(new UUID(0L, 1L), 1L, "bye"))
             .testEquals();
     }
+
+    @Test
+    void updateTaskFutureTest() {
+        try (TaskMonitor monitor = new LocalTaskMonitor()) {
+            UUID uuid = new UUID(0L, 0L);
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> monitor.updateTaskFuture(uuid, null));
+            assertEquals("Task '00000000-0000-0000-0000-000000000000' not found", exception.getMessage());
+        }
+    }
 }
