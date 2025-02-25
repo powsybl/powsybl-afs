@@ -14,7 +14,7 @@ import java.util.function.Function;
 /**
  * Helps exporting metadata to cassandra
  *
- * @author Quentin CAPY <cappy.quentin at rte-france.com>
+ * @author Quentin CAPY {@literal <cappy.quentin at rte-france.com>}
  */
 enum NodeMetadataGetter {
     DOUBLE("md", NodeGenericMetadata::getDoubles),
