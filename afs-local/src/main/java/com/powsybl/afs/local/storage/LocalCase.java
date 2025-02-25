@@ -6,6 +6,7 @@
  */
 package com.powsybl.afs.local.storage;
 
+import com.powsybl.afs.AfsException;
 import com.powsybl.afs.ext.base.Case;
 import com.powsybl.afs.storage.AppStorageDataSource;
 import com.powsybl.afs.storage.NodeGenericMetadata;
@@ -30,8 +31,8 @@ import java.util.*;
  */
 public class LocalCase implements LocalFile {
 
+    public static final String METHOD_NOT_IMPLEMENTED = "Method not implemented";
     private final Path file;
-
     private final Importer importer;
 
     public LocalCase(Path file, Importer importer) {
@@ -80,7 +81,7 @@ public class LocalCase implements LocalFile {
 
             @Override
             public Optional<InputStream> onOther(AppStorageDataSource.Name name) {
-                throw new AssertionError("Unknown data source name " + name);
+                throw new AfsException("Unknown data source name " + name);
             }
         });
     }
@@ -101,7 +102,7 @@ public class LocalCase implements LocalFile {
 
             @Override
             public Boolean onOther(AppStorageDataSource.Name name) {
-                throw new AssertionError("Unknown data source name " + name);
+                throw new AfsException("Unknown data source name " + name);
             }
         });
     }
@@ -121,37 +122,37 @@ public class LocalCase implements LocalFile {
 
     @Override
     public Set<String> getTimeSeriesNames() {
-        throw new AssertionError();
+        throw new AfsException(METHOD_NOT_IMPLEMENTED);
     }
 
     @Override
     public boolean timeSeriesExists(String timeSeriesName) {
-        throw new AssertionError();
+        throw new AfsException(METHOD_NOT_IMPLEMENTED);
     }
 
     @Override
     public Set<Integer> getTimeSeriesDataVersions() {
-        throw new AssertionError();
+        throw new AfsException(METHOD_NOT_IMPLEMENTED);
     }
 
     @Override
     public Set<Integer> getTimeSeriesDataVersions(String timeSeriesName) {
-        throw new AssertionError();
+        throw new AfsException(METHOD_NOT_IMPLEMENTED);
     }
 
     @Override
     public List<TimeSeriesMetadata> getTimeSeriesMetadata(Set<String> timeSeriesNames) {
-        throw new AssertionError();
+        throw new AfsException(METHOD_NOT_IMPLEMENTED);
     }
 
     @Override
     public Map<String, List<DoubleDataChunk>> getDoubleTimeSeriesData(Set<String> timeSeriesNames, int version) {
-        throw new AssertionError();
+        throw new AfsException(METHOD_NOT_IMPLEMENTED);
     }
 
     @Override
     public Map<String, List<StringDataChunk>> getStringTimeSeriesData(Set<String> timeSeriesNames, int version) {
-        throw new AssertionError();
+        throw new AfsException(METHOD_NOT_IMPLEMENTED);
     }
 
     private static final Logger LOG = LoggerFactory.getLogger(LocalCase.class);

@@ -8,6 +8,7 @@ package com.powsybl.afs.local.storage;
 
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
+import com.powsybl.afs.AfsException;
 import com.powsybl.afs.Folder;
 import com.powsybl.afs.ext.base.Case;
 import com.powsybl.afs.ext.base.TestImporter;
@@ -78,7 +79,7 @@ class LocalAppStorageTest {
     void testConsistent() {
         NodeInfo rootNodeInfo = storage.createRootNodeIfNotExists("mem", Folder.PSEUDO_CLASS);
         String id = rootNodeInfo.getId();
-        assertThrows(AssertionError.class, () -> storage.setConsistent(id));
+        assertThrows(AfsException.class, () -> storage.setConsistent(id));
     }
 
     @Test

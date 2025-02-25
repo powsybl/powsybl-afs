@@ -50,7 +50,7 @@ public final class DoubleDataChunkSerializer implements Serializer<DoubleDataChu
                 out.writeDouble(value);
             }
         } else {
-            throw new AssertionError();
+            throw new MapDbAfsException("Unexpected chunk type");
         }
     }
 
@@ -81,7 +81,7 @@ public final class DoubleDataChunkSerializer implements Serializer<DoubleDataChu
             }
             return new CompressedDoubleDataChunk(offset, uncompressedLength, stepValues, stepLengths);
         } else {
-            throw new AssertionError();
+            throw new MapDbAfsException("Unexpected chunk type");
         }
     }
 }

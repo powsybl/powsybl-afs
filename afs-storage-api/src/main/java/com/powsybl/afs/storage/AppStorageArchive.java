@@ -194,7 +194,8 @@ public class AppStorageArchive {
         for (String dataName : dataNames) {
             if (checkResultBlackList(archiveDependencies.getOutputBlackList(), dataName, nodeInfo.getPseudoClass())) {
                 Path dataFileName = dataDir.resolve(URLEncoder.encode(dataName, StandardCharsets.UTF_8.name()) + ".gz");
-                try (InputStream is = storage.readBinaryData(nodeInfo.getId(), dataName).orElseThrow(AssertionError::new);
+                try (InputStream is = storage.readBinaryData(nodeInfo.getId(), dataName)
+                    .orElseThrow(() -> new AfsStorageException("Unable to read archive data " + dataName));
                      OutputStream os = new GZIPOutputStream(Files.newOutputStream(dataFileName))) {
                     ByteStreams.copy(is, os);
                 }
@@ -239,7 +240,7 @@ public class AppStorageArchive {
                                 objectWriter.writeValue(writer, stringChunks);
                             }
                         }
-                        default -> throw new AssertionError("Unsupported data type " + metadata.getDataType());
+                        default -> throw new AfsStorageException("Unsupported data type " + metadata.getDataType());
                     }
                 }
             }
@@ -447,7 +448,7 @@ public class AppStorageArchive {
                             for (Path chunksFile : chunksStream) {
                                 Matcher matcher = CHUNKS_PATTERN.matcher(chunksFile.getFileName().toString());
                                 if (!matcher.matches()) {
-                                    throw new AssertionError("Invalid chunks file pattern");
+                                    throw new AfsStorageException("Invalid chunks file pattern");
                                 }
                                 int version = Integer.parseInt(matcher.group(1));
                                 try (Reader reader = new InputStreamReader(new GZIPInputStream(Files.newInputStream(chunksFile)), StandardCharsets.UTF_8)) {
@@ -464,7 +465,7 @@ public class AppStorageArchive {
                                             chunkCount[0] += stringChunks.size();
                                             storage.addStringTimeSeriesData(newNodeInfo.getId(), version, timeSeriesName, stringChunks);
                                         }
-                                        default -> throw new AssertionError("Unsupported data type " + metadata.getDataType());
+                                        default -> throw new AfsStorageException("Unsupported data type " + metadata.getDataType());
                                     }
                                 }
                             }

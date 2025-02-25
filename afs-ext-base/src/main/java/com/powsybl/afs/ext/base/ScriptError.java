@@ -6,6 +6,7 @@
  */
 package com.powsybl.afs.ext.base;
 
+import com.powsybl.afs.AfsException;
 import groovy.lang.GroovyRuntimeException;
 import org.codehaus.groovy.control.ErrorCollector;
 import org.codehaus.groovy.control.MultipleCompilationErrorsException;
@@ -59,10 +60,10 @@ public class ScriptError implements Serializable {
                 Exception cause = exceptionMessage.getCause();
                 return new ScriptError(cause.getMessage());
             } else {
-                throw new AssertionError("SyntaxErrorMessage or ExceptionMessage is expected");
+                throw new AfsException("SyntaxErrorMessage or ExceptionMessage is expected");
             }
         } else {
-            throw new AssertionError("At least one error is expected");
+            throw new AfsException("At least one error is expected");
         }
     }
 
