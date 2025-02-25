@@ -136,7 +136,7 @@ public class AppData implements AutoCloseable {
     }
 
     private static String[] more(String[] path) {
-        return path.length > 2 ? Arrays.copyOfRange(path, 2, path.length - 1) : new String[] {};
+        return path.length > 2 ? Arrays.copyOfRange(path, 2, path.length) : new String[] {};
     }
 
     private synchronized void loadFileSystems() {
