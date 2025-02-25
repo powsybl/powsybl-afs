@@ -108,7 +108,8 @@ public abstract class AbstractScript<T extends AbstractScript> extends ProjectFi
     @Override
     public String readScript() {
         try {
-            return CharStreams.toString(new InputStreamReader(storage.readBinaryData(info.getId(), scriptContentName).orElseThrow(AssertionError::new), StandardCharsets.UTF_8));
+            return CharStreams.toString(new InputStreamReader(storage.readBinaryData(info.getId(), scriptContentName)
+                .orElseThrow(() -> new AfsException("Unable to read data from the node " + info.getId())), StandardCharsets.UTF_8));
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

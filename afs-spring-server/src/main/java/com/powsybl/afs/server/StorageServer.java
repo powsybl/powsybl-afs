@@ -133,7 +133,7 @@ public class StorageServer {
                     storage.addStringTimeSeriesData(stringAddition.getNodeId(), stringAddition.getVersion(),
                         stringAddition.getTimeSeriesName(), stringAddition.getChunks());
                 }
-                default -> throw new AssertionError("Unknown change type " + change.getType());
+                default -> throw new AfsException("Unknown change type " + change.getType());
             }
         }
         // propagate flush to underlying storage

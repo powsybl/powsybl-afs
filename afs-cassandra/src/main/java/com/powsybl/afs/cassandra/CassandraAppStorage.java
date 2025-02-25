@@ -14,6 +14,7 @@ import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
+import com.powsybl.afs.AfsException;
 import com.powsybl.afs.storage.*;
 import com.powsybl.afs.storage.buffer.*;
 import com.powsybl.afs.storage.check.FileSystemCheckIssue;
@@ -66,7 +67,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
                     .setInstant(END, Instant.ofEpochMilli(index.getEndTime()))
                     .setLong(SPACING, index.getSpacing()));
             } else {
-                throw new AssertionError();
+                throw new CassandraAfsException("Flush exception - index is not a regular time series index");
             }
 
             writingContext.createdTimeSeriesCount++;
@@ -214,7 +215,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
                         flush((StringTimeSeriesChunksAddition) change, statements, writingContext);
                         break;
                     default:
-                        throw new AssertionError();
+                        throw new AfsException("Unexpected storage change type: " + change.getType());
                 }
             }
 
@@ -1244,7 +1245,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
                         .build());
                     break;
                 default:
-                    throw new AssertionError("Unknown chunk type " + chunkType);
+                    throw new AfsException("Unknown chunk type " + chunkType);
             }
         }
         batchStatements.addStatement(deleteFrom(TIME_SERIES_DATA_CHUNK_TYPES)

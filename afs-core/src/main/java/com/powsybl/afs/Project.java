@@ -33,7 +33,7 @@ public class Project extends File {
      * Get the root folder of this project.
      */
     public ProjectFolder getRootFolder() {
-        NodeInfo rootFolderInfo = storage.getChildNode(info.getId(), ROOT_FOLDER_NAME).orElseThrow(AssertionError::new);
+        NodeInfo rootFolderInfo = storage.getChildNode(info.getId(), ROOT_FOLDER_NAME).orElseThrow(() -> new AfsException("Root folder not found"));
         return new ProjectFolder(new ProjectFileCreationContext(rootFolderInfo, storage, this));
     }
 

@@ -10,6 +10,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.powsybl.afs.storage.AfsStorageException;
 import com.powsybl.afs.storage.NodeDependency;
 import com.powsybl.afs.storage.NodeInfo;
 
@@ -39,7 +40,7 @@ public class NodeDependencyDeserializer extends StdDeserializer<NodeDependency> 
                         name = jsonParser.getValueAsString();
                     }
                     case "nodeInfo" -> nodeInfo = new NodeInfoJsonDeserializer().deserialize(jsonParser, deserializationContext);
-                    default -> throw new AssertionError("Unexpected field: " + jsonParser.getCurrentName());
+                    default -> throw new AfsStorageException("Unexpected field: " + jsonParser.getCurrentName());
 
                 }
             }
