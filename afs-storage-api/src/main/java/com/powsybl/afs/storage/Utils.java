@@ -105,7 +105,7 @@ public final class Utils {
     }
 
     /**
-     * unzip
+     * Unzip a file. <i>Currently does not work with Jimfs generated files</i>
      *
      * @param zipPath zip Path
      * @param nodeDir path to the directory where unzip
@@ -114,7 +114,14 @@ public final class Utils {
      * @param thresholdRatio maximal compression ratio
      */
     public static void unzip(Path zipPath, Path nodeDir, int thresholdEntries, long thresholdSize, double thresholdRatio) throws IOException {
-        try (ZipFile zipFile = new ZipFile(String.valueOf(zipPath.normalize()))) {
+        // Normalize the file name
+        Path path = zipPath.normalize();
+
+        if (Files.notExists(path)) {
+            throw new IOException("File does not exist: " + zipPath.normalize().getFileName());
+        }
+
+        try (ZipFile zipFile = new ZipFile(String.valueOf(path))) {
             Enumeration<? extends ZipEntry> entries = zipFile.entries();
 
             AtomicInteger totalSizeArchive = new AtomicInteger(0);
