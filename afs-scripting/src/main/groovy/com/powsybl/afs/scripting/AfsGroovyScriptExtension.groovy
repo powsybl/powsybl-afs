@@ -15,7 +15,6 @@ import com.powsybl.afs.ProjectFileExtension
 import com.powsybl.afs.ServiceExtension
 import com.powsybl.afs.SoutTaskListener
 import com.powsybl.commons.util.ServiceLoaderCache
-import com.powsybl.computation.ComputationManager
 import com.powsybl.computation.DefaultComputationManagerConfig
 import com.powsybl.scripting.groovy.GroovyScriptExtension
 
@@ -25,7 +24,7 @@ import com.powsybl.scripting.groovy.GroovyScriptExtension
 @AutoService(GroovyScriptExtension.class)
 class AfsGroovyScriptExtension implements GroovyScriptExtension {
 
-    private final AppData data;
+    private final AppData data
 
     AfsGroovyScriptExtension() {
         this(new ServiceLoaderCache<>(AppFileSystemProvider.class).getServices(),
@@ -38,28 +37,28 @@ class AfsGroovyScriptExtension implements GroovyScriptExtension {
     AfsGroovyScriptExtension(List<AppFileSystemProvider> fileSystemProviders,
                              List<FileExtension> fileExtensions, List<ProjectFileExtension> projectFileExtensions,
                              List<ServiceExtension> serviceExtensions, DefaultComputationManagerConfig config) {
-        assert fileSystemProviders
-        assert fileExtensions
-        assert projectFileExtensions
-        assert serviceExtensions
-        assert config
+        Objects.requireNonNull(fileSystemProviders)
+        Objects.requireNonNull(fileExtensions)
+        Objects.requireNonNull(projectFileExtensions)
+        Objects.requireNonNull(serviceExtensions)
+        Objects.requireNonNull(config)
 
         data = new AppData(config.createShortTimeExecutionComputationManager(),
                 config.createLongTimeExecutionComputationManager(),
                 fileSystemProviders,
                 fileExtensions,
                 projectFileExtensions,
-                serviceExtensions);
+                serviceExtensions)
     }
 
     @Override
-    void load(Binding binding, ComputationManager computationManager) {
-        binding.afs = new AfsGroovyFacade(data);
+    void load(Binding binding, Map<Class<?>, Object> contextObjects) {
+        binding.afs = new AfsGroovyFacade(data)
 
         if (binding.hasProperty("out")) {
-            SoutTaskListener listener = new SoutTaskListener(binding.out);
+            SoutTaskListener listener = new SoutTaskListener(binding.out)
             for (AppFileSystem fileSystem : data.getFileSystems()) {
-                fileSystem.getTaskMonitor().addListener(listener);
+                fileSystem.getTaskMonitor().addListener(listener)
             }
         }
     }
@@ -67,7 +66,7 @@ class AfsGroovyScriptExtension implements GroovyScriptExtension {
     @Override
     void unload() {
         if (data != null) {
-            data.close();
+            data.close()
         }
     }
 }
