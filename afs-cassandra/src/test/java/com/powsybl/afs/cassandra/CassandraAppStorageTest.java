@@ -211,7 +211,7 @@ class CassandraAppStorageTest extends AbstractAppStorageTest {
     }
 
     private void assertAfsNodeNotFound(String id) {
-        assertThrows(CassandraAfsException.class, () -> storage.getNodeInfo(id), "not found");
+        assertThrows(AfsStorageException.class, () -> storage.getNodeInfo(id), "not found");
     }
 
     void testInconsistendNodeRepair() {
@@ -246,7 +246,7 @@ class CassandraAppStorageTest extends AbstractAppStorageTest {
         final List<FileSystemCheckIssue> repairIssue = storage.checkFileSystem(repairOption);
         assertTrue(repairIssue.get(0).isRepaired());
         String inconsistentNodeId = inconsistentNode.getId();
-        assertThrows(CassandraAfsException.class, () -> storage.getNodeInfo(inconsistentNodeId));
+        assertThrows(AfsStorageException.class, () -> storage.getNodeInfo(inconsistentNodeId));
     }
 
     void testAbsentChildRepair() {
@@ -278,7 +278,7 @@ class CassandraAppStorageTest extends AbstractAppStorageTest {
             .findFirst().orElseThrow(AssertionError::new);
 
         String absentChildId = absentChild.getId();
-        assertThrows(CassandraAfsException.class, () -> storage.getNodeInfo(absentChildId));
+        assertThrows(AfsStorageException.class, () -> storage.getNodeInfo(absentChildId));
 
         FileSystemCheckOptions noRepair = new FileSystemCheckOptionsBuilder()
             .addCheckTypes(CassandraAppStorage.REF_NOT_FOUND)

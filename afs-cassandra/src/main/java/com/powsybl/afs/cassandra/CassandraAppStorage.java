@@ -258,8 +258,8 @@ public class CassandraAppStorage extends AbstractAppStorage {
         preparedStatementsSupplier = Suppliers.memoize(() -> new PreparedStatements(this));
     }
 
-    private static CassandraAfsException createNodeNotFoundException(UUID nodeId) {
-        return new CassandraAfsException("Node '" + nodeId + "' not found");
+    private static AfsStorageException createNodeNotFoundException(UUID nodeId) {
+        return new AfsStorageException("Node " + nodeId + " not found");
     }
 
     private static boolean isConsistentBackwardCompatible(Row row, int i) {
@@ -400,7 +400,8 @@ public class CassandraAppStorage extends AbstractAppStorage {
     }
 
     private record NodeParameters(UUID nodeUuid, UUID parentNodeUuid, String name, String nodePseudoClass,
-                                  String description, int version, NodeGenericMetadata genericMetadata) { }
+                                  String description, int version, NodeGenericMetadata genericMetadata) {
+    }
 
     private NodeInfo createNode(NodeParameters nodeParameters,
                                 BatchStatementBuilder batchStatements) {
