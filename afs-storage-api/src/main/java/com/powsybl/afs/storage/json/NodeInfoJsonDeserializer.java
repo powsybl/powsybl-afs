@@ -10,6 +10,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.powsybl.afs.storage.AfsStorageException;
 import com.powsybl.afs.storage.NodeGenericMetadata;
 import com.powsybl.afs.storage.NodeInfo;
 
@@ -70,7 +71,7 @@ public class NodeInfoJsonDeserializer extends StdDeserializer<NodeInfo> {
                 jsonParser.nextToken();
                 parsingContext.metadata = new NodeGenericMetadataJsonDeserializer().deserialize(jsonParser, deserializationContext);
             }
-            default -> throw new AssertionError("Unexpected field: " + jsonParser.getCurrentName());
+            default -> throw new AfsStorageException("Unexpected field: " + jsonParser.getCurrentName());
         }
     }
 

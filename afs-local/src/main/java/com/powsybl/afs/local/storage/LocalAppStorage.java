@@ -7,6 +7,7 @@
 package com.powsybl.afs.local.storage;
 
 import com.google.common.collect.ImmutableList;
+import com.powsybl.afs.AfsException;
 import com.powsybl.afs.Folder;
 import com.powsybl.afs.storage.*;
 import com.powsybl.commons.exceptions.UncheckedUnsupportedEncodingException;
@@ -32,6 +33,8 @@ import java.util.stream.Collectors;
 public class LocalAppStorage extends AbstractAppStorage {
 
     private static final int DEFAULT_VERSION = 0;
+    public static final String METHOD_NOT_IMPLEMENTED = "Method not implemented";
+    public static final String FOLDER_IS_EMPTY = "Folder is empty";
 
     private final Path rootDir;
 
@@ -180,29 +183,29 @@ public class LocalAppStorage extends AbstractAppStorage {
                                     DEFAULT_VERSION,
                                     new NodeGenericMetadata());
             } else {
-                throw new AssertionError();
+                throw new AfsException(FOLDER_IS_EMPTY);
             }
         }
     }
 
     @Override
     public void setDescription(String nodeId, String description) {
-        throw new AssertionError();
+        throw new AfsException(METHOD_NOT_IMPLEMENTED);
     }
 
     @Override
     public void setConsistent(String nodeId) {
-        throw new AssertionError();
+        throw new AfsException(METHOD_NOT_IMPLEMENTED);
     }
 
     @Override
     public void renameNode(String nodeId, String name) {
-        throw new AssertionError();
+        throw new AfsException(METHOD_NOT_IMPLEMENTED);
     }
 
     @Override
     public void updateModificationTime(String nodeId) {
-        throw new AssertionError();
+        throw new AfsException(METHOD_NOT_IMPLEMENTED);
     }
 
     private boolean isLocalNode(Path path) {
@@ -219,7 +222,7 @@ public class LocalAppStorage extends AbstractAppStorage {
                     .map(this::getNodeInfo)
                     .collect(Collectors.toList());
         } else {
-            throw new AssertionError();
+            throw new AfsException(FOLDER_IS_EMPTY);
         }
     }
 
@@ -249,7 +252,7 @@ public class LocalAppStorage extends AbstractAppStorage {
             if (folder != null) {
                 parentPath = folder.getParentPath();
             } else {
-                throw new AssertionError();
+                throw new AfsException(FOLDER_IS_EMPTY);
             }
         }
         return parentPath.map(this::getNodeInfo);
@@ -257,7 +260,7 @@ public class LocalAppStorage extends AbstractAppStorage {
 
     @Override
     public void setParentNode(String nodeId, String newParentString) {
-        throw new AssertionError();
+        throw new AfsException(METHOD_NOT_IMPLEMENTED);
     }
 
     @Override
@@ -272,19 +275,19 @@ public class LocalAppStorage extends AbstractAppStorage {
 
     @Override
     public NodeInfo createNode(String parentString, String name, String nodePseudoClass, String description, int version, NodeGenericMetadata genericMetadata) {
-        throw new AssertionError();
+        throw new AfsException(METHOD_NOT_IMPLEMENTED);
     }
 
     @Override
     public String deleteNode(String nodeId) {
-        throw new AssertionError();
+        throw new AfsException(METHOD_NOT_IMPLEMENTED);
     }
 
     private LocalFile getFile(String nodeId) {
         Path path = nodeIdToPath(nodeId);
         LocalFile file = scanFile(path, true);
         if (file == null) {
-            throw new AssertionError();
+            throw new AfsException("File not found");
         }
         return file;
     }
@@ -297,7 +300,7 @@ public class LocalAppStorage extends AbstractAppStorage {
 
     @Override
     public OutputStream writeBinaryData(String nodeId, String name) {
-        throw new AssertionError();
+        throw new AfsException(METHOD_NOT_IMPLEMENTED);
     }
 
     @Override
@@ -314,12 +317,12 @@ public class LocalAppStorage extends AbstractAppStorage {
 
     @Override
     public boolean removeData(String nodeId, String name) {
-        throw new AssertionError();
+        throw new AfsException(METHOD_NOT_IMPLEMENTED);
     }
 
     @Override
     public void createTimeSeries(String nodeId, TimeSeriesMetadata metadata) {
-        throw new AssertionError();
+        throw new AfsException(METHOD_NOT_IMPLEMENTED);
     }
 
     @Override
@@ -358,7 +361,7 @@ public class LocalAppStorage extends AbstractAppStorage {
 
     @Override
     public void addDoubleTimeSeriesData(String nodeId, int version, String timeSeriesName, List<DoubleDataChunk> chunks) {
-        throw new AssertionError();
+        throw new AfsException(METHOD_NOT_IMPLEMENTED);
     }
 
     @Override
@@ -370,37 +373,37 @@ public class LocalAppStorage extends AbstractAppStorage {
 
     @Override
     public void addStringTimeSeriesData(String nodeId, int version, String timeSeriesName, List<StringDataChunk> chunks) {
-        throw new AssertionError();
+        throw new AfsException(METHOD_NOT_IMPLEMENTED);
     }
 
     @Override
     public void clearTimeSeries(String nodeId) {
-        throw new AssertionError();
+        throw new AfsException(METHOD_NOT_IMPLEMENTED);
     }
 
     @Override
     public void addDependency(String nodeId, String name, String toNodeId) {
-        throw new AssertionError();
+        throw new AfsException(METHOD_NOT_IMPLEMENTED);
     }
 
     @Override
     public Set<NodeInfo> getDependencies(String nodeId, String name) {
-        throw new AssertionError();
+        throw new AfsException(METHOD_NOT_IMPLEMENTED);
     }
 
     @Override
     public Set<NodeDependency> getDependencies(String nodeId) {
-        throw new AssertionError();
+        throw new AfsException(METHOD_NOT_IMPLEMENTED);
     }
 
     @Override
     public Set<NodeInfo> getBackwardDependencies(String nodeId) {
-        throw new AssertionError();
+        throw new AfsException(METHOD_NOT_IMPLEMENTED);
     }
 
     @Override
     public void removeDependency(String nodeId, String name, String toNodeId) {
-        throw new AssertionError();
+        throw new AfsException(METHOD_NOT_IMPLEMENTED);
     }
 
     @Override

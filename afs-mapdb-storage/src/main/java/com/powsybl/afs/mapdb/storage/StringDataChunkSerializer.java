@@ -49,7 +49,7 @@ public final class StringDataChunkSerializer implements Serializer<StringDataChu
                 out.writeUTF(value);
             }
         } else {
-            throw new AssertionError();
+            throw new MapDbAfsException("Unexpected chunk type");
         }
     }
 
@@ -80,7 +80,7 @@ public final class StringDataChunkSerializer implements Serializer<StringDataChu
             }
             return new CompressedStringDataChunk(offset, uncompressedLength, stepValues, stepLengths);
         } else {
-            throw new AssertionError();
+            throw new MapDbAfsException("Unexpected chunk type");
         }
     }
 }
