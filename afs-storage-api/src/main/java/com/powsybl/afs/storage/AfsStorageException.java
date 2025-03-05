@@ -13,6 +13,10 @@ import com.powsybl.commons.PowsyblException;
  */
 public class AfsStorageException extends PowsyblException {
 
+    public AfsStorageException() {
+        super();
+    }
+
     public AfsStorageException(String message) {
         super(message);
     }

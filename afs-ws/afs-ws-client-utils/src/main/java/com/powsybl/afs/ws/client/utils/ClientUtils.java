@@ -52,73 +52,11 @@ public final class ClientUtils {
             .build();
     }
 
-    private static RuntimeException createSpecificException(Response response, String... expectedExceptionClassNames) {
-        String body = response.readEntity(String.class);
-        try {
-            ExceptionDetail exceptionDetail = new ObjectMapper().readValue(body, ExceptionDetail.class);
-            String javaException = exceptionDetail.javaException();
-
-            // Check if the exception is empty
-            if (javaException == null) {
-                throw new AfsStorageException("No exception was found in response");
-            }
-
-            // Create the exception from the response
-            Class<?> exceptionClass = Class.forName(javaException);
-            String message = exceptionDetail.message();
-            Object instance = message != null ?
-                exceptionClass.getDeclaredConstructor(String.class).newInstance(message) :
-                exceptionClass.getDeclaredConstructor().newInstance();
-
-            // Test the different provided classes
-            for (String expectedExceptionClassName : expectedExceptionClassNames) {
-                Class<? extends RuntimeException> expectedExceptionClass = EXPECTED_EXCEPTION_CLASSES.get(expectedExceptionClassName);
-                if (expectedExceptionClass != null && expectedExceptionClass.isAssignableFrom(exceptionClass)) {
-                    return expectedExceptionClass.cast(instance);
-                }
-            }
-
-            // No corresponding class was found
-            throw new AfsStorageException("No corresponding exception class was found in: "
-                + String.join(", ", expectedExceptionClassNames));
-        } catch (ReflectiveOperationException e) {
-            throw new AfsStorageException("Reflexion exception: " + e.getMessage(), e);
-        } catch (Exception e) {
-            LOGGER.warn("Failed to handle registered exception", e);
-            throw new AfsStorageException("Failed to handle registered exception");
-        }
-    }
-
-    private static AfsStorageException createUnexpectedResponseStatus(Response.Status status) {
-        return new AfsStorageException("Unexpected response status: '" + status + "'");
-    }
-
-    private static RuntimeException createExceptionAccordingToResponse(Response response) {
-        Response.Status status = Response.Status.fromStatusCode(response.getStatus());
-        if (status == Response.Status.INTERNAL_SERVER_ERROR) {
-            return createSpecificException(response, "ScriptException", "AfsStorageException", "RuntimeException");
-        } else if (status == Response.Status.NOT_FOUND) {
-            return createSpecificException(response, "AfsNodeNotFoundException");
-        } else if (status == Response.Status.BAD_REQUEST) {
-            return createSpecificException(response, "AfsException");
-        } else {
-            return createUnexpectedResponseStatus(status);
-        }
-    }
-
     public static void checkOk(Response response) {
         Response.Status status = Response.Status.fromStatusCode(response.getStatus());
         if (status != Response.Status.OK) {
             throw createExceptionAccordingToResponse(response);
         }
-    }
-
-    private static <T> T readEntityAndLog(Response response, Class<T> entityType) {
-        T entity = response.readEntity(entityType);
-        if (LOGGER.isTraceEnabled()) {
-            LOGGER.trace("    --> {}", entity);
-        }
-        return entity;
     }
 
     public static <T> T readEntityIfOk(Response response, Class<T> entityType) {
@@ -160,23 +98,93 @@ public final class ClientUtils {
         Objects.requireNonNull(login);
         Objects.requireNonNull(password);
 
-        try (Client client = ClientUtils.createClient()
-            .register(new JsonProvider())) {
+        Client client = ClientUtils.createClient()
+            .register(new JsonProvider());
+        try {
             Form form = new Form()
-                .param("login", login)
-                .param("password", password);
+                    .param("login", login)
+                    .param("password", password);
 
-            try (Response response = client.target(baseUri)
-                .path("rest")
-                .path("users")
-                .path("login")
-                .request()
-                .post(Entity.form(form))) {
+            Response response = client.target(baseUri)
+                    .path("rest")
+                    .path("users")
+                    .path("login")
+                    .request()
+                    .post(Entity.form(form));
+            try {
                 UserProfile profile = readEntityIfOk(response, UserProfile.class);
                 String token = response.getHeaderString(HttpHeaders.AUTHORIZATION);
                 return new UserSession(profile, token);
+            } finally {
+                response.close();
             }
+        } finally {
+            client.close();
         }
+    }
+
+    private static RuntimeException createSpecificException(Response response, String... expectedExceptionClassNames) {
+        String body = response.readEntity(String.class);
+        try {
+            ExceptionDetail exceptionDetail = new ObjectMapper().readValue(body, ExceptionDetail.class);
+            String javaException = exceptionDetail.javaException();
+
+            // Check if the exception is empty
+            if (javaException == null) {
+                throw new AfsStorageException("No exception was found in response");
+            }
+
+            // Create the exception from the response
+            Class<?> exceptionClass = Class.forName(javaException);
+            String message = exceptionDetail.message();
+            Object instance = message != null ?
+                exceptionClass.getDeclaredConstructor(String.class).newInstance(message) :
+                exceptionClass.getDeclaredConstructor().newInstance();
+
+            // Test the different provided classes
+            for (String expectedExceptionClassName : expectedExceptionClassNames) {
+                Class<? extends RuntimeException> expectedExceptionClass = EXPECTED_EXCEPTION_CLASSES.get(expectedExceptionClassName);
+                if (expectedExceptionClass != null && expectedExceptionClass.isAssignableFrom(exceptionClass)) {
+                    return expectedExceptionClass.cast(instance);
+                }
+            }
+
+            // No corresponding class was found
+            throw new AfsStorageException("No corresponding exception class was found in: "
+                + String.join(", ", expectedExceptionClassNames));
+        } catch (ReflectiveOperationException e) {
+            throw new AfsStorageException("Reflexion exception: " + e.getMessage(), e);
+        } catch (AfsStorageException e) {
+            throw new AfsStorageException(e.getMessage(), e);
+        } catch (Exception e) {
+            LOGGER.warn("Failed to handle registered exception", e);
+            throw new AfsStorageException("Failed to handle registered exception");
+        }
+    }
+
+    private static AfsStorageException createUnexpectedResponseStatus(Response.Status status) {
+        return new AfsStorageException("Unexpected response status: '" + status + "'");
+    }
+
+    private static RuntimeException createExceptionAccordingToResponse(Response response) {
+        Response.Status status = Response.Status.fromStatusCode(response.getStatus());
+        if (status == Response.Status.INTERNAL_SERVER_ERROR) {
+            return createSpecificException(response, "ScriptException", "AfsStorageException", "RuntimeException");
+        } else if (status == Response.Status.NOT_FOUND) {
+            return createSpecificException(response, "AfsNodeNotFoundException");
+        } else if (status == Response.Status.BAD_REQUEST) {
+            return createSpecificException(response, "AfsException");
+        } else {
+            return createUnexpectedResponseStatus(status);
+        }
+    }
+
+    private static <T> T readEntityAndLog(Response response, Class<T> entityType) {
+        T entity = response.readEntity(entityType);
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace("    --> {}", entity);
+        }
+        return entity;
     }
 
 }

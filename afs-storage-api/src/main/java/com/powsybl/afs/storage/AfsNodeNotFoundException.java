@@ -15,17 +15,10 @@ import com.powsybl.commons.PowsyblException;
 public class AfsNodeNotFoundException extends PowsyblException {
 
     public AfsNodeNotFoundException() {
+        super();
     }
 
     public AfsNodeNotFoundException(String msg) {
         super(msg);
-    }
-
-    public AfsNodeNotFoundException(Throwable throwable) {
-        super(throwable);
-    }
-
-    public AfsNodeNotFoundException(String message, Throwable cause) {
-        super(message, cause);
     }
 }
