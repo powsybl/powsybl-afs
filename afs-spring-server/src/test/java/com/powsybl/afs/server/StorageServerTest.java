@@ -116,6 +116,11 @@ class StorageServerTest extends AbstractAppStorageTest {
     }
 
     @Override
+    public void waitIfNeededForEventStack() {
+        waitForEventStack();
+    }
+
+    @Override
     protected void nextDependentTests() throws InterruptedException {
         super.nextDependentTests();
         RemoteTaskMonitor taskMonitor = new RemoteTaskMonitor(FS_TEST_NAME, getRestUri(), null);

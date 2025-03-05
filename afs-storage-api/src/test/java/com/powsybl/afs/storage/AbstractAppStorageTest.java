@@ -113,6 +113,14 @@ public abstract class AbstractAppStorageTest {
         }
     }
 
+    public void waitIfNeededForEventStack() {
+        // Empty by default but you may consider using waitForEventStack here
+    }
+
+    public void waitForEventStack() {
+        await().until(() -> !eventStack.isEmpty());
+    }
+
     @Test
     @Order(1)
     public void createRootFolderTest() throws InterruptedException {
@@ -364,7 +372,7 @@ public abstract class AbstractAppStorageTest {
     public void secondDependencyCreationTest() throws InterruptedException {
         // Create the first dependency
         createFirstDependency();
-        await().until(() -> !eventStack.isEmpty());
+        waitIfNeededForEventStack();
         clearEventStack();
 
         // Add the second dependency
@@ -386,7 +394,7 @@ public abstract class AbstractAppStorageTest {
     public void secondDependencyRemovalTest() throws InterruptedException {
         // Create the first dependency
         createFirstDependency();
-        await().until(() -> !eventStack.isEmpty());
+        waitIfNeededForEventStack();
 
         // Add the second dependency
         storage.addDependency(dataNodeInfos.get(0).getId(), "mylink2", dataNodeInfos.get(1).getId());
@@ -508,7 +516,7 @@ public abstract class AbstractAppStorageTest {
     public void datasourceOnDataNodePatternTest() throws IOException, InterruptedException {
         // Previous things to do
         removeBlobInDataNode2();
-        await().until(() -> !eventStack.isEmpty());
+        waitIfNeededForEventStack();
         clearEventStack();
 
         // Create the datasource
@@ -561,7 +569,7 @@ public abstract class AbstractAppStorageTest {
     public void datasourceOnDataNodeFileNameTest() throws IOException, InterruptedException {
         // Previous things to do
         removeBlobInDataNode2();
-        await().until(() -> !eventStack.isEmpty());
+        waitIfNeededForEventStack();
         clearEventStack();
 
         // Create the datasource
@@ -900,7 +908,7 @@ public abstract class AbstractAppStorageTest {
         NodeInfo node = storage.createNode(rootFolderInfo.getId(), "testNode", "unknownFile", "", 0, metadata);
         storage.setConsistent(node.getId());
         storage.flush();
-        await().until(() -> !eventStack.isEmpty());
+        waitIfNeededForEventStack();
         clearEventStack();
 
         // Set a new metadata
@@ -923,7 +931,7 @@ public abstract class AbstractAppStorageTest {
         NodeInfo node = storage.createNode(rootFolderInfo.getId(), "testNode2", "unknownFile2", "", 0, cloneMetadata(metadata));
         storage.setConsistent(node.getId());
         storage.flush();
-        await().until(() -> !eventStack.isEmpty());
+        waitIfNeededForEventStack();
         clearEventStack();
 
         // Assert the metadata is the same and is empty
@@ -981,7 +989,7 @@ public abstract class AbstractAppStorageTest {
     private void createTestFolder() {
         // Previous things to do
         createRootFolder();
-        await().until(() -> !eventStack.isEmpty());
+        waitIfNeededForEventStack();
         clearEventStack();
 
         // Create a test folder
@@ -1002,7 +1010,7 @@ public abstract class AbstractAppStorageTest {
     private void setTestFolderDescription() {
         // Previous things to do
         createConsistentTestFolder();
-        await().until(() -> !eventStack.isEmpty());
+        waitIfNeededForEventStack();
         clearEventStack();
 
         // Set the test folder description
@@ -1018,7 +1026,7 @@ public abstract class AbstractAppStorageTest {
     private void createDataNodes() {
         // Previous things to do
         createConsistentTestFolder();
-        await().until(() -> !eventStack.isEmpty());
+        waitIfNeededForEventStack();
         clearEventStack();
 
         // Set the metadata for the node 2
@@ -1044,7 +1052,7 @@ public abstract class AbstractAppStorageTest {
     private void writeBinaryDataInNodes() {
         // Previous things to do
         createDataNodes();
-        await().until(() -> !eventStack.isEmpty());
+        waitIfNeededForEventStack();
         clearEventStack();
 
         // Write the data
@@ -1074,7 +1082,7 @@ public abstract class AbstractAppStorageTest {
     private void createFirstDependency() {
         // Previous things to do
         createDataNodes();
-        await().until(() -> !eventStack.isEmpty());
+        waitIfNeededForEventStack();
         clearEventStack();
 
         // Add a dependency
@@ -1085,7 +1093,7 @@ public abstract class AbstractAppStorageTest {
     private String deleteNode() {
         // Previous things to do
         createFirstDependency();
-        await().until(() -> !eventStack.isEmpty());
+        waitIfNeededForEventStack();
         clearEventStack();
 
         // Delete a node
@@ -1097,7 +1105,7 @@ public abstract class AbstractAppStorageTest {
     private void writeBlobInDataNode2() throws IOException {
         // Previous things to do
         deleteNode();
-        await().until(() -> !eventStack.isEmpty());
+        waitIfNeededForEventStack();
         clearEventStack();
 
         // Write the first blob
@@ -1110,7 +1118,7 @@ public abstract class AbstractAppStorageTest {
     private void removeBlobInDataNode2() throws IOException {
         // Previous things to do
         writeBlobInDataNode2();
-        await().until(() -> !eventStack.isEmpty());
+        waitIfNeededForEventStack();
         clearEventStack();
 
         // Remove blob
@@ -1129,7 +1137,7 @@ public abstract class AbstractAppStorageTest {
     private void createDoubleTimeSeries(TimeSeriesMetadata metadata) throws IOException {
         // Previous things to do
         removeBlobInDataNode2();
-        await().until(() -> !eventStack.isEmpty());
+        waitIfNeededForEventStack();
         clearEventStack();
 
         // Create the timeseries
@@ -1140,7 +1148,7 @@ public abstract class AbstractAppStorageTest {
     private void addDataToDoubleTimeSeries() throws IOException {
         // Previous things to do
         createDoubleTimeSeries(createTimeSeriesMetadata("ts1", TimeSeriesDataType.DOUBLE, Map.of("var1", "value1")));
-        await().until(() -> !eventStack.isEmpty());
+        waitIfNeededForEventStack();
         clearEventStack();
 
         // Add data to the timeseries
@@ -1153,7 +1161,7 @@ public abstract class AbstractAppStorageTest {
     private void createStringTimeSeries(TimeSeriesMetadata metadata) throws IOException {
         // Previous things to do
         addDataToDoubleTimeSeries();
-        await().until(() -> !eventStack.isEmpty());
+        waitIfNeededForEventStack();
         clearEventStack();
 
         // Create the timeseries
@@ -1164,7 +1172,7 @@ public abstract class AbstractAppStorageTest {
     private void addDataToStringTimeSeries() throws IOException {
         // Previous things to do
         createStringTimeSeries(createTimeSeriesMetadata("ts2", TimeSeriesDataType.STRING, Map.of()));
-        await().until(() -> !eventStack.isEmpty());
+        waitIfNeededForEventStack();
         clearEventStack();
 
         // Add data to the timeseries
@@ -1177,7 +1185,7 @@ public abstract class AbstractAppStorageTest {
     private void clearTimeSeries() throws IOException {
         // Previous things to do
         addDataToStringTimeSeries();
-        await().until(() -> !eventStack.isEmpty());
+        waitIfNeededForEventStack();
         clearEventStack();
 
         // Clear the timeseries
@@ -1188,7 +1196,7 @@ public abstract class AbstractAppStorageTest {
     private void createFoldersPlusAFile() throws IOException {
         // Previous things to do
         clearTimeSeries();
-        await().until(() -> !eventStack.isEmpty());
+        waitIfNeededForEventStack();
         clearEventStack();
 
         // Create two new folders
@@ -1221,7 +1229,7 @@ public abstract class AbstractAppStorageTest {
         // Previous things to do
         createFoldersPlusAFile();
         changeParent();
-        await().until(() -> !eventStack.isEmpty());
+        waitIfNeededForEventStack();
         clearEventStack();
 
         // create 2 folders
@@ -1242,7 +1250,7 @@ public abstract class AbstractAppStorageTest {
         createNodeForDeletion();
         NodeInfo folder4Info = storage.getChildNode(rootFolderInfo.getId(), "test4").orElseThrow();
         storage.deleteNode(folder4Info.getId());
-        await().until(() -> !eventStack.isEmpty());
+        waitIfNeededForEventStack();
         clearEventStack();
 
         // Metadata
@@ -1291,7 +1299,7 @@ public abstract class AbstractAppStorageTest {
 
     protected void createAllNodesAsInTest() throws IOException {
         prepareNodesForCascadeDeletion();
-        await().until(() -> !eventStack.isEmpty());
+        waitIfNeededForEventStack();
         clearEventStack();
     }
 
