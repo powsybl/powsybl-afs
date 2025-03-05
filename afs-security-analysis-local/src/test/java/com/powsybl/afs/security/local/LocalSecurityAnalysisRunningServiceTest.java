@@ -6,7 +6,6 @@
  */
 package com.powsybl.afs.security.local;
 
-import com.google.common.collect.ImmutableList;
 import com.powsybl.afs.ServiceExtension;
 import com.powsybl.afs.ext.base.LocalNetworkCacheServiceExtension;
 import com.powsybl.afs.security.SecurityAnalysisRunnerTest;
@@ -29,7 +28,7 @@ class LocalSecurityAnalysisRunningServiceTest extends SecurityAnalysisRunnerTest
             Constructor<SecurityAnalysis.Runner> constructor = SecurityAnalysis.Runner.class.getDeclaredConstructor(SecurityAnalysisProvider.class);
             constructor.setAccessible(true);
             SecurityAnalysis.Runner runner = constructor.newInstance(new SecurityAnalysisProviderMock());
-            return ImmutableList.of(new LocalSecurityAnalysisRunningServiceExtension(runner),
+            return List.of(new LocalSecurityAnalysisRunningServiceExtension(runner),
                     new LocalNetworkCacheServiceExtension());
         } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
             throw new AssertionError();

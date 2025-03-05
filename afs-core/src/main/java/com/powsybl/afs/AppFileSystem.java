@@ -6,7 +6,6 @@
  */
 package com.powsybl.afs;
 
-import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.powsybl.afs.storage.AfsStorageException;
 import com.powsybl.afs.storage.AppStorage;
@@ -18,6 +17,7 @@ import com.powsybl.afs.storage.check.FileSystemCheckOptions;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 /**
  * An AppFileSystem instance is a tree of {@link Node} objects, starting with its root folder.
@@ -98,7 +98,7 @@ public class AppFileSystem implements AutoCloseable {
         } else if (Project.PSEUDO_CLASS.equals(nodeInfo.getPseudoClass())) {
             return new Project(context);
         } else {
-            FileExtension extension = data.getFileExtensionByPseudoClass(nodeInfo.getPseudoClass());
+            FileExtension<?> extension = data.getFileExtensionByPseudoClass(nodeInfo.getPseudoClass());
             if (extension != null) {
                 return extension.createFile(context);
             } else {
@@ -153,7 +153,7 @@ public class AppFileSystem implements AutoCloseable {
             return new ProjectFolder(context);
         }
 
-        ProjectFileExtension extension = data.getProjectFileExtensionByPseudoClass(projectFileInfo.getPseudoClass());
+        ProjectFileExtension<?, ?> extension = data.getProjectFileExtensionByPseudoClass(projectFileInfo.getPseudoClass());
         if (extension != null) {
             return extension.createProjectFile(context);
         }
