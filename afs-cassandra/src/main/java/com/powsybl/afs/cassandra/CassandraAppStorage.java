@@ -37,7 +37,7 @@ import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.*;
 import static com.powsybl.afs.cassandra.CassandraConstants.*;
 
 /**
- * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
+ * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 public class CassandraAppStorage extends AbstractAppStorage {
 
