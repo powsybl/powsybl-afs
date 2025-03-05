@@ -99,7 +99,7 @@ public final class ClientUtils {
         Objects.requireNonNull(password);
 
         Client client = ClientUtils.createClient()
-            .register(new JsonProvider());
+                .register(new JsonProvider());
         try {
             Form form = new Form()
                     .param("login", login)
