@@ -9,6 +9,7 @@ package com.powsybl.afs;
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import com.powsybl.afs.mapdb.storage.MapDbAppStorage;
+import com.powsybl.afs.storage.AfsNodeNotFoundException;
 import com.powsybl.afs.storage.AfsStorageException;
 import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.InMemoryEventsBus;
@@ -53,12 +54,13 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 class AfsBaseTest {
+    private static final String NODE_NOT_FOUND_REGEX = "Node [0-9a-fA-F-]{36} not found";
+    private static final Pattern NODE_NOT_FOUND_PATTERN = Pattern.compile(NODE_NOT_FOUND_REGEX);
 
     private FileSystem fileSystem;
 
@@ -67,9 +69,6 @@ class AfsBaseTest {
     private AppFileSystem afs;
 
     private AppData appData;
-
-    private static final String NODE_NOT_FOUND_REGEX = "Node [0-9a-fA-F-]{36} not found";
-    private static final Pattern NODE_NOT_FOUND_PATTERN = Pattern.compile(NODE_NOT_FOUND_REGEX);
 
     @BeforeEach
     void setup() {
@@ -707,12 +706,9 @@ class AfsBaseTest {
         checkResult.accept(nestedFile, afs.fetchNode(nestedFile.getId()));
         checkResult.accept(projectFolder, afs.fetchNode(projectFolder.getId()));
 
-        try {
-            afs.fetchNode(UUID.randomUUID().toString());
-            fail();
-        } catch (AfsStorageException e) {
-            // ignored
-        }
+        String uuid = UUID.randomUUID().toString();
+        AfsNodeNotFoundException exception = assertThrows(AfsNodeNotFoundException.class, () -> afs.fetchNode(uuid));
+        assertTrue(NODE_NOT_FOUND_PATTERN.matcher(exception.getMessage()).matches());
     }
 
     @Test

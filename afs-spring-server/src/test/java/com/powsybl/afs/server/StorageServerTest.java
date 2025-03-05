@@ -7,6 +7,7 @@
 
 package com.powsybl.afs.server;
 
+import com.powsybl.afs.AfsException;
 import com.powsybl.afs.AppData;
 import com.powsybl.afs.AppFileSystem;
 import com.powsybl.afs.AppFileSystemProvider;
@@ -17,7 +18,6 @@ import com.powsybl.afs.ProjectFile;
 import com.powsybl.afs.TaskMonitor;
 import com.powsybl.afs.mapdb.storage.MapDbAppStorage;
 import com.powsybl.afs.storage.AbstractAppStorageTest;
-import com.powsybl.afs.storage.AfsStorageException;
 import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.EventsBus;
 import com.powsybl.afs.storage.InMemoryEventsBus;
@@ -32,6 +32,7 @@ import com.powsybl.commons.exceptions.UncheckedUriSyntaxException;
 import com.powsybl.computation.ComputationManager;
 import jakarta.servlet.ServletContext;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -48,11 +49,12 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -92,6 +94,13 @@ class StorageServerTest extends AbstractAppStorageTest {
         }
     }
 
+    @AfterEach
+    @Override
+    public void tearDown() {
+        clearAllNodes();
+        super.tearDown();
+    }
+
     private URI getRestUri() {
         try {
             String sheme = "http";
@@ -108,44 +117,53 @@ class StorageServerTest extends AbstractAppStorageTest {
     }
 
     @Override
+    public void waitIfNeededForEventStack() {
+        waitForEventStack();
+    }
+
+    @Override
     protected void nextDependentTests() throws InterruptedException {
         super.nextDependentTests();
-        RemoteTaskMonitor taskMonitor = new RemoteTaskMonitor(FS_TEST_NAME, getRestUri(), null);
-        NodeInfo root = storage.createRootNodeIfNotExists(storage.getFileSystemName(), Folder.PSEUDO_CLASS);
-        NodeInfo projectNode = storage.createNode(root.getId(), "project", Project.PSEUDO_CLASS, "test project", 0, new NodeGenericMetadata());
+        try (RemoteTaskMonitor taskMonitor = new RemoteTaskMonitor(FS_TEST_NAME, getRestUri(), null)) {
+            NodeInfo root = storage.createRootNodeIfNotExists(storage.getFileSystemName(), Folder.PSEUDO_CLASS);
+            NodeInfo projectNode = storage.createNode(root.getId(), "project", Project.PSEUDO_CLASS, "test project", 0, new NodeGenericMetadata());
 
-        Project project = Mockito.mock(Project.class);
-        when(project.getId()).thenReturn(projectNode.getId());
-        TaskMonitor.Task task = taskMonitor.startTask("task_test", project);
-        assertThat(task).isNotNull();
-        TaskMonitor.Snapshot snapshot = taskMonitor.takeSnapshot(project.getId());
-        assertThat(snapshot.getTasks().stream().anyMatch(t -> t.getId().equals(task.getId()))).isTrue();
+            Project project = Mockito.mock(Project.class);
+            when(project.getId()).thenReturn(projectNode.getId());
+            TaskMonitor.Task task = taskMonitor.startTask("task_test", project);
+            assertThat(task).isNotNull();
+            TaskMonitor.Snapshot snapshot = taskMonitor.takeSnapshot(project.getId());
+            assertThat(snapshot.getTasks().stream().anyMatch(t -> t.getId().equals(task.getId()))).isTrue();
 
-        ProjectFile projectFile = Mockito.mock(ProjectFile.class);
-        AfsStorageException error = assertThrows(AfsStorageException.class, () -> taskMonitor.startTask(projectFile));
-        assertTrue(Pattern.compile("\\{\"timestamp\":\"(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}[+-]\\d{2}:\\d{2})\",\"status\":\\d+,\"error\":\"[^\"]*\",\"path\":\"[^\"]*\"}")
-            .matcher(error.getMessage()).find());
+            ProjectFile projectFile = Mockito.mock(ProjectFile.class);
+            AfsException error = assertThrows(AfsException.class, () -> taskMonitor.startTask(projectFile));
+            assertEquals("Missing arguments - you need to provide either projectFileId or projectId and name", error.getMessage());
 
-        taskMonitor.updateTaskMessage(task.getId(), "new Message");
-        TaskMonitor.Snapshot snapshotAfterUpdate = taskMonitor.takeSnapshot(project.getId());
-        TaskMonitor.Task taskAfterUpdate = snapshotAfterUpdate.getTasks().stream().filter(t -> t.getId().equals(task.getId())).findFirst().get();
-        assertThat(taskAfterUpdate.getId()).isEqualTo(task.getId());
-        assertThat(taskAfterUpdate.getMessage()).isEqualTo("new Message");
+            taskMonitor.updateTaskMessage(task.getId(), "new Message");
+            TaskMonitor.Snapshot snapshotAfterUpdate = taskMonitor.takeSnapshot(project.getId());
+            Optional<TaskMonitor.Task> optionalTaskAfterUpdate = snapshotAfterUpdate.getTasks().stream()
+                .filter(t -> t.getId().equals(task.getId()))
+                .findFirst();
+            assertTrue(optionalTaskAfterUpdate.isPresent());
+            TaskMonitor.Task taskAfterUpdate = optionalTaskAfterUpdate.get();
+            assertThat(taskAfterUpdate.getId()).isEqualTo(task.getId());
+            assertThat(taskAfterUpdate.getMessage()).isEqualTo("new Message");
 
-        taskMonitor.stopTask(task.getId());
-        TaskMonitor.Snapshot snapshotAfterStop = taskMonitor.takeSnapshot(project.getId());
-        assertThat(snapshotAfterStop.getTasks().stream().anyMatch(t -> t.getId().equals(task.getId()))).isFalse();
+            taskMonitor.stopTask(task.getId());
+            TaskMonitor.Snapshot snapshotAfterStop = taskMonitor.takeSnapshot(project.getId());
+            assertThat(snapshotAfterStop.getTasks().stream().anyMatch(t -> t.getId().equals(task.getId()))).isFalse();
 
-        assertThatCode(() -> taskMonitor.updateTaskFuture(task.getId(), CompletableFuture.runAsync(() -> {
-        }))).isInstanceOf(TaskMonitor.NotACancellableTaskMonitor.class);
-        assertThat(taskMonitor.cancelTaskComputation(task.getId())).isFalse();
+            assertThatCode(() -> taskMonitor.updateTaskFuture(task.getId(), CompletableFuture.runAsync(() -> {
+            }))).isInstanceOf(TaskMonitor.NotACancellableTaskMonitor.class);
+            assertThat(taskMonitor.cancelTaskComputation(task.getId())).isFalse();
 
-        // cleanup
-        storage.deleteNode(projectNode.getId());
+            // cleanup
+            storage.deleteNode(projectNode.getId());
 
-        // clear events
-        eventStack.take();
-        eventStack.take();
+            // clear events
+            eventStack.take();
+            eventStack.take();
+        }
 
         testFileSystemCheck();
     }
