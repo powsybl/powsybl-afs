@@ -38,28 +38,27 @@ public final class Utils {
     /**
      * zip a directory
      *
-     * @param dir directory path to zip
+     * @param dir     directory path to zip
      * @param zipPath path to the zip to create
      * @throws IllegalArgumentException IllegalArgumentException
      */
     public static void zip(Path dir, Path zipPath, boolean deleteDirectory) throws IOException {
         try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(zipPath));
-             Stream<Path> walk = Files.walk(dir);) {
+            Stream<Path> walk = Files.walk(dir)) {
             walk.filter(someFileToZip -> !someFileToZip.equals(dir))
-                    .forEach(
-                        someFileToZip -> {
-                            Path pathInZip = dir.relativize(someFileToZip);
-                            try {
-                                if (Files.isDirectory(someFileToZip)) {
-                                    addDirectory(zos, pathInZip);
-                                } else {
-                                    addFile(zos, someFileToZip, pathInZip);
-                                }
-                            } catch (IOException e) {
-                                throw new AfsStorageException(e.getMessage());
-                            }
+                .forEach(someFileToZip -> {
+                    Path pathInZip = dir.relativize(someFileToZip);
+                    try {
+                        if (Files.isDirectory(someFileToZip)) {
+                            addDirectory(zos, pathInZip);
+                        } else {
+                            addFile(zos, someFileToZip, pathInZip);
+                        }
+                    } catch (IOException e) {
+                        throw new AfsStorageException(e.getMessage());
+                    }
 
-                        });
+                });
         } catch (IOException | AfsStorageException e) {
             throw new IOException(e);
         }
@@ -71,6 +70,7 @@ public final class Utils {
 
     /**
      * Check that there is enough space on the disk
+     *
      * @param dir directory to save
      * @throws IOException IOException
      */
@@ -126,7 +126,6 @@ public final class Utils {
      * delete directory
      *
      * @param directoryToBeDeleted directory to be deleted
-     * @return true if directory deleted
      */
     public static void deleteDirectory(Path directoryToBeDeleted) throws IOException {
         if (Files.isDirectory(directoryToBeDeleted)) {

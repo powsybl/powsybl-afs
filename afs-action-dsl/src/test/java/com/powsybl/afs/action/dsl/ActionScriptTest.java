@@ -6,7 +6,6 @@
  */
 package com.powsybl.afs.action.dsl;
 
-import com.google.common.collect.ImmutableList;
 import com.powsybl.afs.AbstractProjectFileTest;
 import com.powsybl.afs.Project;
 import com.powsybl.afs.ProjectFileExtension;
@@ -39,7 +38,7 @@ class ActionScriptTest extends AbstractProjectFileTest {
 
     @Override
     protected List<ProjectFileExtension> getProjectFileExtensions() {
-        return ImmutableList.of(new ActionScriptExtension());
+        return List.of(new ActionScriptExtension());
     }
 
     @Test
@@ -49,13 +48,13 @@ class ActionScriptTest extends AbstractProjectFileTest {
 
         // create contingency list
         ActionScript actionScript = project.getRootFolder().fileBuilder(ActionScriptBuilder.class)
-                .withName("contingencies")
-                .withContent(String.join(System.lineSeparator(),
-                        "contingency('c1') {",
-                        "    equipments 'l1'",
-                        "}",
-                        ""))
-                .build();
+            .withName("contingencies")
+            .withContent(String.join(System.lineSeparator(),
+                "contingency('c1') {",
+                "    equipments 'l1'",
+                "}",
+                ""))
+            .build();
         List<Contingency> contingencies = Collections.singletonList(new Contingency("c1", new LineContingency("l1")));
 
         Network network = Mockito.mock(Network.class);
@@ -75,15 +74,15 @@ class ActionScriptTest extends AbstractProjectFileTest {
 
         // Build an ActionScript using the custom pseudo-class
         project.getRootFolder().fileBuilder(ActionScriptBuilder.class)
-                .withName("customScript")
-                .withContent("script content")
-                .withPseudoClass(customPseudoClass)
-                .build();
+            .withName("customScript")
+            .withContent("script content")
+            .withPseudoClass(customPseudoClass)
+            .build();
 
         // Retrieve the node info for the created script from storage
         NodeInfo nodeInfo = storage
-                .getChildNode(project.getRootFolder().getId(), "customScript")
-                .orElseThrow(() -> new AssertionError("Node 'customScript' not found"));
+            .getChildNode(project.getRootFolder().getId(), "customScript")
+            .orElseThrow(() -> new AssertionError("Node 'customScript' not found"));
 
         // Assert that the pseudo-class of the node is set to the custom value
         assertEquals(customPseudoClass, nodeInfo.getPseudoClass());
@@ -96,14 +95,14 @@ class ActionScriptTest extends AbstractProjectFileTest {
 
         // Build an ActionScript without specifying a pseudo-class
         project.getRootFolder().fileBuilder(ActionScriptBuilder.class)
-                .withName("defaultScript")
-                .withContent("script content")
-                .build();
+            .withName("defaultScript")
+            .withContent("script content")
+            .build();
 
         // Retrieve the node info for the created script from storage
         NodeInfo nodeInfo = storage
-                .getChildNode(project.getRootFolder().getId(), "defaultScript")
-                .orElseThrow(() -> new AssertionError("Node 'defaultScript' not found"));
+            .getChildNode(project.getRootFolder().getId(), "defaultScript")
+            .orElseThrow(() -> new AssertionError("Node 'defaultScript' not found"));
 
         // Assert that the pseudo-class of the node is set to the default value defined in ActionScript.PSEUDO_CLASS
         assertEquals(ActionScript.PSEUDO_CLASS, nodeInfo.getPseudoClass());
