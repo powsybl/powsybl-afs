@@ -13,7 +13,12 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
-import com.powsybl.afs.storage.*;
+import com.powsybl.afs.storage.AbstractAppStorageTest;
+import com.powsybl.afs.storage.AfsNodeNotFoundException;
+import com.powsybl.afs.storage.AppStorage;
+import com.powsybl.afs.storage.InMemoryEventsBus;
+import com.powsybl.afs.storage.NodeGenericMetadata;
+import com.powsybl.afs.storage.NodeInfo;
 import com.powsybl.afs.storage.check.FileSystemCheckIssue;
 import com.powsybl.afs.storage.check.FileSystemCheckOptions;
 import com.powsybl.afs.storage.check.FileSystemCheckOptionsBuilder;
@@ -21,7 +26,6 @@ import org.apache.commons.lang3.SystemUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.testcontainers.containers.CassandraContainer;
 
 import java.io.IOException;
@@ -29,14 +33,21 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.insertInto;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 import static com.powsybl.afs.cassandra.CassandraConstants.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 /**
@@ -78,14 +89,6 @@ class CassandraAppStorageTest extends AbstractAppStorageTest {
             }
         }
     }
-
-//    @Override
-//    @BeforeEach
-//    public void setUp() {
-//        eventStack = new LinkedBlockingQueue<>();
-//        this.storage = createStorage();
-//        this.storage.getEventsBus().addListener(l);
-//    }
 
     @AfterEach
     @Override
@@ -211,7 +214,7 @@ class CassandraAppStorageTest extends AbstractAppStorageTest {
     }
 
     private void assertAfsNodeNotFound(String id) {
-        assertThrows(AfsStorageException.class, () -> storage.getNodeInfo(id), "not found");
+        assertThrows(AfsNodeNotFoundException.class, () -> storage.getNodeInfo(id), "not found");
     }
 
     void testInconsistendNodeRepair() {
@@ -246,7 +249,7 @@ class CassandraAppStorageTest extends AbstractAppStorageTest {
         final List<FileSystemCheckIssue> repairIssue = storage.checkFileSystem(repairOption);
         assertTrue(repairIssue.get(0).isRepaired());
         String inconsistentNodeId = inconsistentNode.getId();
-        assertThrows(AfsStorageException.class, () -> storage.getNodeInfo(inconsistentNodeId));
+        assertThrows(AfsNodeNotFoundException.class, () -> storage.getNodeInfo(inconsistentNodeId));
     }
 
     void testAbsentChildRepair() {
@@ -278,7 +281,7 @@ class CassandraAppStorageTest extends AbstractAppStorageTest {
             .findFirst().orElseThrow(AssertionError::new);
 
         String absentChildId = absentChild.getId();
-        assertThrows(AfsStorageException.class, () -> storage.getNodeInfo(absentChildId));
+        assertThrows(AfsNodeNotFoundException.class, () -> storage.getNodeInfo(absentChildId));
 
         FileSystemCheckOptions noRepair = new FileSystemCheckOptionsBuilder()
             .addCheckTypes(CassandraAppStorage.REF_NOT_FOUND)

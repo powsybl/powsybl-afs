@@ -7,15 +7,29 @@
 package com.powsybl.afs.server;
 
 import com.google.common.base.Strings;
-import com.powsybl.afs.*;
-import com.powsybl.afs.storage.*;
-import com.powsybl.afs.storage.buffer.*;
+import com.powsybl.afs.AfsException;
+import com.powsybl.afs.AppFileSystem;
+import com.powsybl.afs.Project;
+import com.powsybl.afs.ProjectFile;
+import com.powsybl.afs.TaskMonitor;
+import com.powsybl.afs.storage.AfsNodeNotFoundException;
+import com.powsybl.afs.storage.AfsStorageException;
+import com.powsybl.afs.storage.AppStorage;
+import com.powsybl.afs.storage.NodeDependency;
+import com.powsybl.afs.storage.NodeGenericMetadata;
+import com.powsybl.afs.storage.NodeInfo;
+import com.powsybl.afs.storage.buffer.DoubleTimeSeriesChunksAddition;
+import com.powsybl.afs.storage.buffer.StorageChange;
+import com.powsybl.afs.storage.buffer.StorageChangeSet;
+import com.powsybl.afs.storage.buffer.StringTimeSeriesChunksAddition;
+import com.powsybl.afs.storage.buffer.TimeSeriesCreation;
 import com.powsybl.afs.storage.check.FileSystemCheckIssue;
 import com.powsybl.afs.storage.check.FileSystemCheckOptionsBuilder;
 import com.powsybl.timeseries.DoubleDataChunk;
 import com.powsybl.timeseries.StringDataChunk;
 import com.powsybl.timeseries.TimeSeriesMetadata;
-import io.swagger.v3.oas.annotations.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -29,14 +43,27 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.time.Instant;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 
 @RestController
 @RequestMapping(value = "/rest/afs/" + StorageServer.API_VERSION)
@@ -223,7 +250,7 @@ public class StorageServer {
     @GetMapping(value = "fileSystems/{fileSystemName}/nodes/{nodeId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "", responses = {
         @ApiResponse(content = @Content(schema = @Schema(implementation = InputStream.class))),
-        @ApiResponse(responseCode = "200", description = ""),
+        @ApiResponse(responseCode = "200", description = "The info related to the node"),
         @ApiResponse(responseCode = "404", description = ""),
         @ApiResponse(responseCode = "500", description = "Error")})
     public ResponseEntity<NodeInfo> getNodeInfo(@Parameter(description = "File system name") @PathVariable("fileSystemName") String fileSystemName,
@@ -236,8 +263,8 @@ public class StorageServer {
     @GetMapping(value = "fileSystems/{fileSystemName}/nodes/{nodeId}/children", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Get child nodes", responses = {
         @ApiResponse(content = @Content(schema = @Schema(implementation = List.class))),
-        @ApiResponse(responseCode = "200", description = "The list of chid nodes"),
-        @ApiResponse(responseCode = "404", description = "Thera are no child nodes"),
+        @ApiResponse(responseCode = "200", description = "The list of child nodes"),
+        @ApiResponse(responseCode = "404", description = "There are no child nodes"),
         @ApiResponse(responseCode = "500", description = "Error")})
     public ResponseEntity<List<NodeInfo>> getChildNodes(@Parameter(description = "File system name") @PathVariable("fileSystemName") String fileSystemName,
                                                         @Parameter(description = "Node ID") @PathVariable("nodeId") String nodeId) {
@@ -412,7 +439,7 @@ public class StorageServer {
     @Operation(summary = "", responses = {
         @ApiResponse(content = @Content(schema = @Schema(implementation = Set.class))),
         @ApiResponse(responseCode = "200", description = ""),
-        @ApiResponse(responseCode = "404", description = ""),
+        @ApiResponse(responseCode = "404", description = "Node not found"),
         @ApiResponse(responseCode = "500", description = "Error")})
     public ResponseEntity<Set<NodeInfo>> getDependencies(@Parameter(description = "File system name") @PathVariable("fileSystemName") String fileSystemName,
                                                          @Parameter(description = "Node ID") @PathVariable("nodeId") String nodeId,
@@ -425,6 +452,7 @@ public class StorageServer {
     @DeleteMapping(value = "fileSystems/{fileSystemName}/nodes/{nodeId}/dependencies/{name}/{toNodeId}")
     @Operation(summary = "", responses = {
         @ApiResponse(responseCode = "200", description = ""),
+        @ApiResponse(responseCode = "404", description = "Node not found"),
         @ApiResponse(responseCode = "500", description = "Error")})
     public ResponseEntity<String> removeDependency(@Parameter(description = "File system name") @PathVariable("fileSystemName") String fileSystemName,
                                                    @Parameter(description = "Node ID") @PathVariable("nodeId") String nodeId,
@@ -438,6 +466,7 @@ public class StorageServer {
     @DeleteMapping(value = "fileSystems/{fileSystemName}/nodes/{nodeId}", produces = MediaType.TEXT_PLAIN_VALUE)
     @Operation(summary = "", responses = {
         @ApiResponse(responseCode = "200", description = ""),
+        @ApiResponse(responseCode = "404", description = "Node not found"),
         @ApiResponse(responseCode = "500", description = "Error")})
     public ResponseEntity<String> deleteNode(@Parameter(description = "File system name") @PathVariable("fileSystemName") String fileSystemName,
                                              @Parameter(description = "Node ID") @PathVariable("nodeId") String nodeId) {
@@ -648,16 +677,16 @@ public class StorageServer {
         if (projectFileId != null) {
             ProjectFile projectFile = fileSystem.findProjectFile(projectFileId, ProjectFile.class);
             if (projectFile == null) {
-                throw new AfsException("Project file '" + projectFileId + "' not found in file system '" + fileSystemName + "'");
+                throw new AfsNodeNotFoundException("Project file '" + projectFileId + "' not found in file system '" + fileSystemName + "'");
             }
             task = fileSystem.getTaskMonitor().startTask(projectFile);
         } else if (projectId != null && name != null) {
             Project project = fileSystem
                 .findProject(projectId)
-                .orElseThrow(() -> new AfsException("Project '" + projectId + "' not found in file system '" + fileSystemName + "'"));
+                .orElseThrow(() -> new AfsNodeNotFoundException("Project '" + projectId + "' not found in file system '" + fileSystemName + "'"));
             task = fileSystem.getTaskMonitor().startTask(name, project);
         } else {
-            throw new AfsException("Missing arguments");
+            throw new AfsException("Missing arguments - you need to provide either projectFileId or projectId and name");
         }
         return ResponseEntity.ok(task);
     }

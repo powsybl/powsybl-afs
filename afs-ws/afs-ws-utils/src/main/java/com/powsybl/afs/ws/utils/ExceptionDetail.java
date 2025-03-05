@@ -13,22 +13,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * @author Paul Bui-Quang {@literal <paul.buiquang at rte-france.com>}
  */
-public class ExceptionDetail {
-
-    private String javaException;
-    private String message;
+public record ExceptionDetail(String javaException, String message) {
 
     public ExceptionDetail(@JsonProperty("javaException") String javaException, @JsonProperty("message") String message) {
         this.javaException = javaException;
         this.message = message;
-    }
-
-    public String getJavaException() {
-        return javaException;
-    }
-
-    public String getMessage() {
-        return message;
     }
 
 }

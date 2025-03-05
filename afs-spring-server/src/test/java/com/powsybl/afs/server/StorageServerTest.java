@@ -8,9 +8,22 @@
 package com.powsybl.afs.server;
 
 import com.google.common.collect.ImmutableList;
-import com.powsybl.afs.*;
+import com.powsybl.afs.AfsException;
+import com.powsybl.afs.AppData;
+import com.powsybl.afs.AppFileSystem;
+import com.powsybl.afs.AppFileSystemProvider;
+import com.powsybl.afs.Folder;
+import com.powsybl.afs.LocalTaskMonitor;
+import com.powsybl.afs.Project;
+import com.powsybl.afs.ProjectFile;
+import com.powsybl.afs.TaskMonitor;
 import com.powsybl.afs.mapdb.storage.MapDbAppStorage;
-import com.powsybl.afs.storage.*;
+import com.powsybl.afs.storage.AbstractAppStorageTest;
+import com.powsybl.afs.storage.AppStorage;
+import com.powsybl.afs.storage.EventsBus;
+import com.powsybl.afs.storage.InMemoryEventsBus;
+import com.powsybl.afs.storage.NodeGenericMetadata;
+import com.powsybl.afs.storage.NodeInfo;
 import com.powsybl.afs.storage.check.FileSystemCheckIssue;
 import com.powsybl.afs.storage.check.FileSystemCheckOptions;
 import com.powsybl.afs.storage.check.FileSystemCheckOptionsBuilder;
@@ -38,11 +51,11 @@ import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
@@ -116,9 +129,8 @@ class StorageServerTest extends AbstractAppStorageTest {
         assertThat(snapshot.getTasks().stream().anyMatch(t -> t.getId().equals(task.getId()))).isTrue();
 
         ProjectFile projectFile = Mockito.mock(ProjectFile.class);
-        AfsStorageException error = assertThrows(AfsStorageException.class, () -> taskMonitor.startTask(projectFile));
-        assertTrue(Pattern.compile("\\{\"timestamp\":\"(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}[+-]\\d{2}:\\d{2})\",\"status\":\\d+,\"error\":\"[^\"]*\",\"path\":\"[^\"]*\"}")
-            .matcher(error.getMessage()).find());
+        AfsException error = assertThrows(AfsException.class, () -> taskMonitor.startTask(projectFile));
+        assertEquals("Missing arguments - you need to provide either projectFileId or projectId and name", error.getMessage());
 
         taskMonitor.updateTaskMessage(task.getId(), "new Message");
         TaskMonitor.Snapshot snapshotAfterUpdate = taskMonitor.takeSnapshot(project.getId());

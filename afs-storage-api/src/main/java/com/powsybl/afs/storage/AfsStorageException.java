@@ -16,4 +16,8 @@ public class AfsStorageException extends PowsyblException {
     public AfsStorageException(String message) {
         super(message);
     }
+
+    public AfsStorageException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

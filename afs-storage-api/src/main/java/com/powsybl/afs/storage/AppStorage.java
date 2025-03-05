@@ -261,4 +261,8 @@ public interface AppStorage extends AutoCloseable {
     default List<String> getSupportedFileSystemChecks() {
         return Collections.emptyList();
     }
+
+    default AfsNodeNotFoundException createNodeNotFoundException(UUID nodeUuid) {
+        return new AfsNodeNotFoundException("Node " + nodeUuid + " not found");
+    }
 }

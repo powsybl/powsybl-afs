@@ -9,18 +9,44 @@ package com.powsybl.afs.mapdb.storage;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.powsybl.afs.storage.*;
+import com.powsybl.afs.storage.AbstractAppStorage;
+import com.powsybl.afs.storage.AfsStorageException;
+import com.powsybl.afs.storage.EventsBus;
+import com.powsybl.afs.storage.NodeDependency;
+import com.powsybl.afs.storage.NodeGenericMetadata;
+import com.powsybl.afs.storage.NodeInfo;
 import com.powsybl.afs.storage.events.*;
-import com.powsybl.timeseries.*;
+import com.powsybl.timeseries.AbstractPoint;
+import com.powsybl.timeseries.DataChunk;
+import com.powsybl.timeseries.DoubleDataChunk;
+import com.powsybl.timeseries.StringDataChunk;
+import com.powsybl.timeseries.TimeSeriesDataType;
+import com.powsybl.timeseries.TimeSeriesMetadata;
+import com.powsybl.timeseries.TimeSeriesVersions;
 import org.apache.commons.lang3.SystemUtils;
 import org.mapdb.Atomic;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.Serializer;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -243,10 +269,6 @@ public class MapDbAppStorage extends AbstractAppStorage {
     @Override
     public boolean isRemote() {
         return false;
-    }
-
-    private AfsStorageException createNodeNotFoundException(UUID nodeUuid) {
-        return new AfsStorageException(NODE + nodeUuid + " not found");
     }
 
     private AfsStorageException createNodeDisabledException(UUID nodeUuid) {
@@ -487,7 +509,7 @@ public class MapDbAppStorage extends AbstractAppStorage {
         if (name.isEmpty()) {
             throw new IllegalArgumentException("Impossible to rename node '" + nodeId + "' with an empty name");
         }
-        
+
         NodeInfo nodeInfo = getNodeInfo(nodeId);
         getParentNode(nodeId).ifPresent(parentNode -> {
             UUID parentNodeUuid = checkNodeId(parentNode.getId());

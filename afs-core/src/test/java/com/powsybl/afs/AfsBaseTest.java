@@ -33,6 +33,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -40,6 +41,8 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 class AfsBaseTest {
+    private static final String NODE_NOT_FOUND_REGEX = "Node [0-9a-fA-F-]{36} not found";
+    private static final Pattern NODE_NOT_FOUND_PATTERN = Pattern.compile(NODE_NOT_FOUND_REGEX);
 
     private FileSystem fileSystem;
 
@@ -540,12 +543,9 @@ class AfsBaseTest {
         checkResult.accept(nestedFile, afs.fetchNode(nestedFile.getId()));
         checkResult.accept(projectFolder, afs.fetchNode(projectFolder.getId()));
 
-        try {
-            afs.fetchNode(UUID.randomUUID().toString());
-            fail();
-        } catch (AfsStorageException e) {
-            // ignored
-        }
+        String uuid = UUID.randomUUID().toString();
+        AfsNodeNotFoundException exception = assertThrows(AfsNodeNotFoundException.class, () -> afs.fetchNode(uuid));
+        assertTrue(NODE_NOT_FOUND_PATTERN.matcher(exception.getMessage()).matches());
     }
 
     @Test

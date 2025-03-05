@@ -258,10 +258,6 @@ public class CassandraAppStorage extends AbstractAppStorage {
         preparedStatementsSupplier = Suppliers.memoize(() -> new PreparedStatements(this));
     }
 
-    private static AfsStorageException createNodeNotFoundException(UUID nodeId) {
-        return new AfsStorageException("Node " + nodeId + " not found");
-    }
-
     private static boolean isConsistentBackwardCompatible(Row row, int i) {
         return row.isNull(i) || row.getBoolean(i);
     }
