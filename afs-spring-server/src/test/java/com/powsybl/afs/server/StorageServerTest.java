@@ -94,6 +94,7 @@ class StorageServerTest extends AbstractAppStorageTest {
     }
 
     @AfterEach
+    @Override
     public void tearDown() {
         clearAllNodes();
         super.tearDown();
