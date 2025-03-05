@@ -91,24 +91,18 @@ public final class Utils {
      */
     public static void unzip(Path zipPath, Path nodeDir) throws IOException {
         try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(zipPath))) {
-            Files.createDirectories(nodeDir);
-            ZipEntry entry;
-            while ((entry = zis.getNextEntry()) != null) {
-                Path outputEntryPath = nodeDir.resolve(entry.getName()).normalize();
-
-                // Validation against Zip Slip
-                if (!outputEntryPath.startsWith(nodeDir)) {
-                    throw new IOException("Invalid path detected: " + entry.getName());
-                }
-
-                if (entry.isDirectory()) {
-                    Files.createDirectories(outputEntryPath);
-                } else {
-                    Files.createDirectories(outputEntryPath.getParent());
+            Files.createDirectory(nodeDir);
+            ZipEntry entry = zis.getNextEntry();
+            while (entry != null) {
+                Path outputEntryPath = nodeDir.resolve(entry.getName());
+                if (entry.isDirectory() && !Files.exists(outputEntryPath)) {
+                    Files.createDirectory(outputEntryPath);
+                } else if (!entry.isDirectory()) {
                     try (OutputStream fos = Files.newOutputStream(outputEntryPath)) {
                         ByteStreams.copy(zis, fos);
                     }
                 }
+                entry = zis.getNextEntry();
             }
             zis.closeEntry();
         }
