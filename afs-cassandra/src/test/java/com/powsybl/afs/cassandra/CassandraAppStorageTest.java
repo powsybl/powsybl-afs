@@ -176,12 +176,11 @@ class CassandraAppStorageTest extends AbstractAppStorageTest {
             .addCheckTypes(CassandraAppStorage.ORPHAN_DATA)
             .repair().build();
         List<FileSystemCheckIssue> issues = storage.checkFileSystem(repairOption);
-        assertEquals(1,
-            issues.stream()
-                .filter(issue -> issue.getNodeId().equals(orphanDataId))
-                .filter(issue -> issue.getType().equals(CassandraAppStorage.ORPHAN_DATA))
-                .filter(issue -> issue.getNodeName().equals("N/A"))
-                .count()
+        assertEquals(1, issues.stream()
+            .filter(issue -> issue.getNodeId().equals(orphanDataId))
+            .filter(issue -> issue.getType().equals(CassandraAppStorage.ORPHAN_DATA))
+            .filter(issue -> issue.getNodeName().equals("N/A"))
+            .count()
         );
 
         assertTrue(storage.dataExists(rootFolderInfo.getId(), "should_exist"));
@@ -203,10 +202,9 @@ class CassandraAppStorageTest extends AbstractAppStorageTest {
             .addCheckTypes(CassandraAppStorage.ORPHAN_NODE)
             .repair().build();
         List<FileSystemCheckIssue> issues = storage.checkFileSystem(repairOption);
-        assertEquals(1,
-            issues.stream()
-                .filter(issue -> issue.getNodeId().equals(orphanNode.getId()))
-                .count());
+        assertEquals(1, issues.stream()
+            .filter(issue -> issue.getNodeId().equals(orphanNode.getId()))
+            .count());
         assertAfsNodeNotFound(orphanNode.getId());
         assertAfsNodeNotFound(orphanNode.getId());
         assertAfsNodeNotFound(orphanChild.getId());
@@ -287,12 +285,11 @@ class CassandraAppStorageTest extends AbstractAppStorageTest {
             .addCheckTypes(CassandraAppStorage.REF_NOT_FOUND)
             .build();
 
-        assertEquals(1,
-            storage.checkFileSystem(noRepair).stream()
-                .filter(issue -> issue.getType().equals(CassandraAppStorage.REF_NOT_FOUND))
-                .filter(issue -> issue.getNodeName().equals("absent_child"))
-                .filter(issue -> !issue.isRepaired())
-                .count()
+        assertEquals(1, storage.checkFileSystem(noRepair).stream()
+            .filter(issue -> issue.getType().equals(CassandraAppStorage.REF_NOT_FOUND))
+            .filter(issue -> issue.getNodeName().equals("absent_child"))
+            .filter(issue -> !issue.isRepaired())
+            .count()
         );
 
         //Check again, should still be here
@@ -312,11 +309,11 @@ class CassandraAppStorageTest extends AbstractAppStorageTest {
     }
 
     void testSupportedChecks() {
-        assertThat(storage.getSupportedFileSystemChecks())
-            .containsExactlyInAnyOrder(CassandraAppStorage.REF_NOT_FOUND,
-                FileSystemCheckOptions.EXPIRED_INCONSISTENT_NODES,
-                CassandraAppStorage.ORPHAN_NODE,
-                CassandraAppStorage.ORPHAN_DATA);
+        assertThat(storage.getSupportedFileSystemChecks()).containsExactlyInAnyOrder(
+            CassandraAppStorage.REF_NOT_FOUND,
+            FileSystemCheckOptions.EXPIRED_INCONSISTENT_NODES,
+            CassandraAppStorage.ORPHAN_NODE,
+            CassandraAppStorage.ORPHAN_DATA);
     }
 
     private NodeInfo createFolder(NodeInfo parent, String name) {
@@ -331,8 +328,6 @@ class CassandraAppStorageTest extends AbstractAppStorageTest {
         storage.setConsistent(rootChild.getId());
         createFolder(rootChild, "childChild");
         assertThat(storage.getParentNode(rootChild.getId()))
-            .hasValueSatisfying(parent -> {
-                assertEquals(root.getId(), parent.getId());
-            });
+            .hasValueSatisfying(parent -> assertEquals(root.getId(), parent.getId()));
     }
 }
