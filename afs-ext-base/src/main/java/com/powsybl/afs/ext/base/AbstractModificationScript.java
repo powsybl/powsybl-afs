@@ -11,9 +11,10 @@ package com.powsybl.afs.ext.base;
 import com.powsybl.afs.ProjectFileCreationContext;
 
 /**
+ * @deprecated since the creation of the repository
  * @author Paul Bui-Quang {@literal <paul.buiquang at rte-france.com>}
  */
-@Deprecated
+@Deprecated(since = "the creation of the repository")
 public abstract class AbstractModificationScript extends AbstractScript<AbstractModificationScript> {
     public AbstractModificationScript(ProjectFileCreationContext context, int codeVersion, String scriptContentName) {
         super(context, codeVersion, scriptContentName);

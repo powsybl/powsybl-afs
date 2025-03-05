@@ -677,11 +677,6 @@ public class RemoteAppStorage extends AbstractAppStorage {
     }
 
     @Override
-    public EventsBus getEventsBus() {
-        return eventsBus;
-    }
-
-    @Override
     public void createTimeSeries(String nodeId, TimeSeriesMetadata metadata) {
         Objects.requireNonNull(nodeId);
         Objects.requireNonNull(metadata);

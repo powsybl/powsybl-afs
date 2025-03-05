@@ -88,7 +88,7 @@ class StorageServerTest extends AbstractAppStorageTest {
             AppFileSystem fs = new AppFileSystem(FS_TEST_NAME, true, storage, new LocalTaskMonitor());
             ComputationManager cm = Mockito.mock(ComputationManager.class);
 
-            List<AppFileSystemProvider> fsProviders = ImmutableList.of(m -> ImmutableList.of(fs));
+            List<AppFileSystemProvider> fsProviders = List.of(m -> List.of(fs));
             return new AppData(cm, cm, fsProviders, eventBus);
         }
     }

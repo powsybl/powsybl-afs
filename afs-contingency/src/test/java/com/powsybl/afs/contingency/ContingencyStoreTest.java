@@ -6,7 +6,6 @@
  */
 package com.powsybl.afs.contingency;
 
-import com.google.common.collect.ImmutableList;
 import com.powsybl.afs.AbstractProjectFileTest;
 import com.powsybl.afs.Project;
 import com.powsybl.afs.ProjectFileExtension;
@@ -35,7 +34,7 @@ class ContingencyStoreTest extends AbstractProjectFileTest {
 
     @Override
     protected List<ProjectFileExtension> getProjectFileExtensions() {
-        return ImmutableList.of(new ContingencyStoreExtension());
+        return List.of(new ContingencyStoreExtension());
     }
 
     @Test

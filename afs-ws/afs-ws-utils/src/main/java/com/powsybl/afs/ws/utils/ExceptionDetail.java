@@ -19,5 +19,4 @@ public record ExceptionDetail(String javaException, String message) {
         this.javaException = javaException;
         this.message = message;
     }
-
 }

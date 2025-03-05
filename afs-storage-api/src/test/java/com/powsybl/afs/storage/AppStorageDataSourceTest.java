@@ -6,9 +6,16 @@
  */
 package com.powsybl.afs.storage;
 
+import com.powsybl.commons.datasource.DataSource;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.io.IOException;
+import java.io.OutputStream;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.mock;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
@@ -32,5 +39,33 @@ class AppStorageDataSourceTest {
         AppStorageDataSource.Name name = AppStorageDataSource.Name.parse("DATA_SOURCE_FILE_NAME__test.xml");
         assertInstanceOf(AppStorageDataSource.FileName.class, name);
         assertEquals("test.xml", ((AppStorageDataSource.FileName) name).getName());
+    }
+
+    @Test
+    void outputStreamByFileNameExceptionTest() {
+        try (AppStorage storage = mock(AppStorage.class)) {
+            DataSource ds = new AppStorageDataSource(storage, "nodeId", "nodeName");
+            try (OutputStream ignored = ds.newOutputStream("fileName", true)) {
+                fail();
+            } catch (UnsupportedOperationException e) {
+                assertEquals("Append mode not supported", e.getMessage());
+            } catch (IOException e) {
+                fail();
+            }
+        }
+    }
+
+    @Test
+    void outputStreamByBaseNameAndExtensionExceptionTest() {
+        try (AppStorage storage = mock(AppStorage.class)) {
+            DataSource ds = new AppStorageDataSource(storage, "nodeId", "nodeName");
+            try (OutputStream ignored = ds.newOutputStream("baseName", "extension", true)) {
+                fail();
+            } catch (UnsupportedOperationException e) {
+                assertEquals("Append mode not supported", e.getMessage());
+            } catch (IOException e) {
+                fail();
+            }
+        }
     }
 }

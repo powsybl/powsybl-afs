@@ -55,8 +55,8 @@ public class RemoteAppFileSystemProvider implements AppFileSystemProvider {
                 return RemoteAppStorage.getFileSystemNames(uri, context.getToken()).stream()
                         .map(fileSystemName -> {
                             WebsocketConnectionPolicy websocketPolicy = WebsocketConnectionPolicy.forConfig(config);
-                            RemoteAppStorage storage = new RemoteAppStorage(fileSystemName, uri, context.getToken(), websocketPolicy);
-                            RemoteTaskMonitor taskMonitor = new RemoteTaskMonitor(fileSystemName, uri, context.getToken());
+                            RemoteAppStorage storage = createRemoteAppStorage(fileSystemName, uri, context.getToken(), websocketPolicy);
+                            RemoteTaskMonitor taskMonitor = createRemoteTaskMonitor(fileSystemName, uri, context.getToken());
                             return new AppFileSystem(fileSystemName, true, storage, taskMonitor);
                         })
                         .collect(Collectors.toList());
@@ -68,5 +68,13 @@ public class RemoteAppFileSystemProvider implements AppFileSystemProvider {
             LOGGER.warn("Remote service config is missing");
             return Collections.emptyList();
         }
+    }
+
+    protected RemoteAppStorage createRemoteAppStorage(String fileSystemName, URI uri, String token, WebsocketConnectionPolicy websocketPolicy) {
+        return new RemoteAppStorage(fileSystemName, uri, token, websocketPolicy);
+    }
+
+    protected RemoteTaskMonitor createRemoteTaskMonitor(String fileSystemName, URI uri, String token) {
+        return new RemoteTaskMonitor(fileSystemName, uri, token);
     }
 }

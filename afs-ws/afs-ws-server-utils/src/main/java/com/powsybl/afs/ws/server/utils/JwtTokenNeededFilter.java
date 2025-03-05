@@ -38,7 +38,7 @@ public class JwtTokenNeededFilter implements ContainerRequestFilter {
     @Inject
     private KeyGenerator keyGenerator;
 
-    private boolean skipTokenValidityCheck;
+    private final boolean skipTokenValidityCheck;
 
     public JwtTokenNeededFilter() {
         this(PlatformConfig.defaultConfig());

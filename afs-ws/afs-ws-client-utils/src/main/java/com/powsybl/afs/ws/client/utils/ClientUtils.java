@@ -98,28 +98,22 @@ public final class ClientUtils {
         Objects.requireNonNull(login);
         Objects.requireNonNull(password);
 
-        Client client = ClientUtils.createClient()
-                .register(new JsonProvider());
-        try {
+        try (Client client = ClientUtils.createClient()
+            .register(new JsonProvider())) {
             Form form = new Form()
-                    .param("login", login)
-                    .param("password", password);
+                .param("login", login)
+                .param("password", password);
 
-            Response response = client.target(baseUri)
-                    .path("rest")
-                    .path("users")
-                    .path("login")
-                    .request()
-                    .post(Entity.form(form));
-            try {
+            try (Response response = client.target(baseUri)
+                .path("rest")
+                .path("users")
+                .path("login")
+                .request()
+                .post(Entity.form(form))) {
                 UserProfile profile = readEntityIfOk(response, UserProfile.class);
                 String token = response.getHeaderString(HttpHeaders.AUTHORIZATION);
                 return new UserSession(profile, token);
-            } finally {
-                response.close();
             }
-        } finally {
-            client.close();
         }
     }
 

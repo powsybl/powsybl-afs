@@ -30,6 +30,7 @@ import static org.mockito.Mockito.when;
  * @author Nicolas Rol {@literal <nicolas.rol at rte-france.com>}
  */
 class ClientUtilsTest {
+
     @Test
     void testCreateClient() {
         Client client = ClientUtils.createClient();

@@ -45,9 +45,24 @@ public class AppFileSystemTool implements Tool {
 
     private static final ServiceLoaderCache<ProjectFileExtension> PROJECT_FILE_EXECUTION = new ServiceLoaderCache<>(ProjectFileExtension.class);
 
+    private static InconsistentNodeParam getInconsistentNodeParam(CommandLine line, String optionName) {
+        String[] values = line.getOptionValues(optionName);
+        if (values == null) {
+            throw new IllegalArgumentException("Invalid values for option: " + optionName);
+        }
+        InconsistentNodeParam param = new InconsistentNodeParam();
+        if (values.length == 2) {
+            param.fileSystemName = values[0];
+            param.nodeId = values[1];
+        } else if (values.length == 1) {
+            param.fileSystemName = values[0];
+        }
+        return param;
+    }
+
     protected AppData createAppData(ToolRunningContext context) {
         return new AppData(context.getShortTimeExecutionComputationManager(),
-                context.getLongTimeExecutionComputationManager());
+            context.getLongTimeExecutionComputationManager());
     }
 
     @Override
@@ -73,72 +88,72 @@ public class AppFileSystemTool implements Tool {
                 Options options = new Options();
                 OptionGroup topLevelOptions = new OptionGroup();
                 topLevelOptions.addOption(Option.builder()
-                        .longOpt(LS)
-                        .desc("list files")
-                        .hasArg()
-                        .optionalArg(true)
-                        .argName("PATH")
-                        .build());
+                    .longOpt(LS)
+                    .desc("list files")
+                    .hasArg()
+                    .optionalArg(true)
+                    .argName("PATH")
+                    .build());
                 topLevelOptions.addOption(Option.builder()
-                        .longOpt(ARCHIVE)
-                        .desc("archive file system")
-                        .hasArg()
-                        .optionalArg(true)
-                        .argName(FILE_SYSTEM_NAME)
-                        .build());
+                    .longOpt(ARCHIVE)
+                    .desc("archive file system")
+                    .hasArg()
+                    .optionalArg(true)
+                    .argName(FILE_SYSTEM_NAME)
+                    .build());
                 topLevelOptions.addOption(Option.builder()
-                        .longOpt(UNARCHIVE)
-                        .desc("unarchive file system")
-                        .hasArg()
-                        .optionalArg(true)
-                        .argName(FILE_SYSTEM_NAME)
-                        .build());
+                    .longOpt(UNARCHIVE)
+                    .desc("unarchive file system")
+                    .hasArg()
+                    .optionalArg(true)
+                    .argName(FILE_SYSTEM_NAME)
+                    .build());
                 topLevelOptions.addOption(Option.builder()
-                        .longOpt(LS_INCONSISTENT_NODES)
-                        .desc("list the inconsistent nodes")
-                        .hasArg()
-                        .optionalArg(true)
-                        .argName(FILE_SYSTEM_NAME)
-                        .build());
+                    .longOpt(LS_INCONSISTENT_NODES)
+                    .desc("list the inconsistent nodes")
+                    .hasArg()
+                    .optionalArg(true)
+                    .argName(FILE_SYSTEM_NAME)
+                    .build());
                 topLevelOptions.addOption(Option.builder()
-                        .longOpt(FIX_INCONSISTENT_NODES)
-                        .desc("make inconsistent nodes consistent")
-                        .optionalArg(true)
-                        .argName(FILE_SYSTEM_NAME + "> <NODE_ID")
-                        .numberOfArgs(2)
-                        .valueSeparator(',')
-                        .build());
+                    .longOpt(FIX_INCONSISTENT_NODES)
+                    .desc("make inconsistent nodes consistent")
+                    .optionalArg(true)
+                    .argName(FILE_SYSTEM_NAME + "> <NODE_ID")
+                    .numberOfArgs(2)
+                    .valueSeparator(',')
+                    .build());
                 topLevelOptions.addOption(Option.builder()
-                        .longOpt(RM_INCONSISTENT_NODES)
-                        .desc("remove inconsistent nodes")
-                        .hasArg()
-                        .optionalArg(true)
-                        .argName(FILE_SYSTEM_NAME + "> <NODE_ID")
-                        .numberOfArgs(2)
-                        .valueSeparator(',')
-                        .build());
+                    .longOpt(RM_INCONSISTENT_NODES)
+                    .desc("remove inconsistent nodes")
+                    .hasArg()
+                    .optionalArg(true)
+                    .argName(FILE_SYSTEM_NAME + "> <NODE_ID")
+                    .numberOfArgs(2)
+                    .valueSeparator(',')
+                    .build());
                 options.addOptionGroup(topLevelOptions);
                 options.addOption(Option.builder()
-                        .longOpt(DELETE_RESULT_OPTNAME)
-                        .desc("delete results")
-                        .hasArg(false)
-                        .build());
+                    .longOpt(DELETE_RESULT_OPTNAME)
+                    .desc("delete results")
+                    .hasArg(false)
+                    .build());
                 options.addOption(Option.builder()
-                        .longOpt(DIR)
-                        .desc("directory")
-                        .hasArg()
-                        .argName("DIR")
-                        .build());
+                    .longOpt(DIR)
+                    .desc("directory")
+                    .hasArg()
+                    .argName("DIR")
+                    .build());
                 options.addOption(Option.builder()
-                        .longOpt(DEPENDENCIES)
-                        .desc("archive dependencies")
-                        .hasArg(false)
-                        .build());
+                    .longOpt(DEPENDENCIES)
+                    .desc("archive dependencies")
+                    .hasArg(false)
+                    .build());
                 options.addOption(Option.builder()
-                        .longOpt(ZIP)
-                        .desc("zip file system")
-                        .hasArg(false)
-                        .build());
+                    .longOpt(ZIP)
+                    .desc("zip file system")
+                    .hasArg(false)
+                    .build());
                 return options;
             }
 
@@ -171,16 +186,21 @@ public class AppFileSystemTool implements Tool {
         }
     }
 
+    private AppFileSystem getAppFileSystem(CommandLine line, AppData appData, String optionValue) {
+        String fileSystemName = line.getOptionValue(optionValue);
+        AppFileSystem fs = appData.getFileSystem(fileSystemName);
+        if (fs == null) {
+            throw new AfsException("File system '" + fileSystemName + "' not found");
+        }
+        return fs;
+    }
+
     private void runUnarchive(CommandLine line, ToolRunningContext context) {
         if (!line.hasOption(DIR)) {
             throw new AfsException("dir option is missing");
         }
         try (AppData appData = createAppData(context)) {
-            String fileSystemName = line.getOptionValue(UNARCHIVE);
-            AppFileSystem fs = appData.getFileSystem(fileSystemName);
-            if (fs == null) {
-                throw new AfsException("File system '" + fileSystemName + "' not found");
-            }
+            AppFileSystem fs = getAppFileSystem(line, appData, UNARCHIVE);
             Path dir = context.getFileSystem().getPath(line.getOptionValue(DIR));
             boolean mustZip = line.hasOption(ZIP);
             fs.getRootFolder().unarchive(dir, mustZip);
@@ -192,11 +212,7 @@ public class AppFileSystemTool implements Tool {
             throw new AfsException("dir option is missing");
         }
         try (AppData appData = createAppData(context)) {
-            String fileSystemName = line.getOptionValue(ARCHIVE);
-            AppFileSystem fs = appData.getFileSystem(fileSystemName);
-            if (fs == null) {
-                throw new AfsException("File system '" + fileSystemName + "' not found");
-            }
+            AppFileSystem fs = getAppFileSystem(line, appData, ARCHIVE);
             Path dir = context.getFileSystem().getPath(line.getOptionValue(DIR));
             boolean mustZip = line.hasOption(ZIP);
             boolean archiveDependencies = line.hasOption(DEPENDENCIES);
@@ -205,10 +221,10 @@ public class AppFileSystemTool implements Tool {
             List<String> keepTs = new ArrayList<>();
             if (deleteResult) {
                 outputBlackList = PROJECT_FILE_EXECUTION.getServices().stream()
-                        .collect(Collectors.toMap(ProjectFileExtension::getProjectFilePseudoClass,
-                                ProjectFileExtension::getOutputList));
+                    .collect(Collectors.toMap(ProjectFileExtension::getProjectFilePseudoClass,
+                        ProjectFileExtension::getOutputList));
                 keepTs = PROJECT_FILE_EXECUTION.getServices().stream().filter(ProjectFileExtension::removeTSWhenArchive).map(ProjectFileExtension::getProjectFilePseudoClass)
-                        .collect(Collectors.toList());
+                    .collect(Collectors.toList());
             }
             fs.getRootFolder().archive(dir, mustZip, archiveDependencies, outputBlackList, keepTs);
         }
@@ -250,33 +266,13 @@ public class AppFileSystemTool implements Tool {
                 });
             } else {
                 nodeInfos.stream()
-                        .filter(nodeInfo -> nodeId.equals(nodeInfo.getId()))
-                        .forEach(nodeInfo -> {
-                            fs.getStorage().setConsistent(nodeInfo.getId());
-                            context.getOutputStream().println(nodeInfo.getId() + " fixed");
-                        });
+                    .filter(nodeInfo -> nodeId.equals(nodeInfo.getId()))
+                    .forEach(nodeInfo -> {
+                        fs.getStorage().setConsistent(nodeInfo.getId());
+                        context.getOutputStream().println(nodeInfo.getId() + " fixed");
+                    });
             }
         }
-    }
-
-    static class InconsistentNodeParam {
-        String fileSystemName;
-        String nodeId;
-    }
-
-    private static InconsistentNodeParam getInconsistentNodeParam(CommandLine line, String optionName) {
-        String[] values = line.getOptionValues(optionName);
-        if (values == null) {
-            throw new IllegalArgumentException("Invalid values for option: " + optionName);
-        }
-        InconsistentNodeParam param = new InconsistentNodeParam();
-        if (values.length == 2) {
-            param.fileSystemName = values[0];
-            param.nodeId = values[1];
-        } else if (values.length == 1) {
-            param.fileSystemName = values[0];
-        }
-        return param;
     }
 
     private void runFixInconsistentNodes(CommandLine line, ToolRunningContext context) {
@@ -307,11 +303,11 @@ public class AppFileSystemTool implements Tool {
                 });
             } else {
                 nodeInfos.stream()
-                        .filter(nodeInfo -> nodeId.equals(nodeInfo.getId()))
-                        .forEach(nodeInfo -> {
-                            fs.getStorage().deleteNode(nodeInfo.getId());
-                            context.getOutputStream().println(nodeInfo.getId() + " cleaned");
-                        });
+                    .filter(nodeInfo -> nodeId.equals(nodeInfo.getId()))
+                    .forEach(nodeInfo -> {
+                        fs.getStorage().deleteNode(nodeInfo.getId());
+                        context.getOutputStream().println(nodeInfo.getId() + " cleaned");
+                    });
             }
         }
     }
@@ -351,5 +347,10 @@ public class AppFileSystemTool implements Tool {
             Command command = getCommand();
             CommandLineTools.printCommandUsage(command.getName(), command.getOptions(), command.getUsageFooter(), context.getErrorStream());
         }
+    }
+
+    static class InconsistentNodeParam {
+        String fileSystemName;
+        String nodeId;
     }
 }
