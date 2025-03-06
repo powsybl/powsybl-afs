@@ -97,7 +97,6 @@ class StorageServerTest extends AbstractAppStorageTest {
     @AfterEach
     @Override
     public void tearDown() {
-        clearAllNodes();
         super.tearDown();
     }
 
@@ -112,13 +111,13 @@ class StorageServerTest extends AbstractAppStorageTest {
 
     @Override
     protected AppStorage createStorage() {
-        URI restUri = getRestUri();
-        return new RemoteAppStorage(FS_TEST_NAME, restUri, "");
+        return createStorage(FS_TEST_NAME);
     }
 
     @Override
-    public void waitIfNeededForEventStack() {
-        waitForEventStack();
+    protected AppStorage createStorage(String fileSystemName) {
+        URI restUri = getRestUri();
+        return new RemoteAppStorage(fileSystemName, restUri, "");
     }
 
     @Override

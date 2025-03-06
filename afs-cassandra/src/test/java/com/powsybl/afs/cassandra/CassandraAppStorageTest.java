@@ -90,16 +90,21 @@ class CassandraAppStorageTest extends AbstractAppStorageTest {
         }
     }
 
-    @AfterEach
-    @Override
-    public void tearDown() {
-        super.tearDown();
-        clear();
-    }
+//    @AfterEach
+//    @Override
+//    public void tearDown() {
+//        super.tearDown();
+//        clear();
+//    }
 
     @Override
     protected AppStorage createStorage() {
-        return new CassandraAppStorage("test", () -> new CassandraTestContext(cassandraSession),
+        return createStorage("test");
+    }
+
+    @Override
+    protected AppStorage createStorage(String fileSystemName) {
+        return new CassandraAppStorage(fileSystemName, () -> new CassandraTestContext(cassandraSession),
             new CassandraAppStorageConfig(), new InMemoryEventsBus());
     }
 
