@@ -10,13 +10,7 @@ import com.google.common.io.ByteStreams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -102,7 +96,7 @@ public final class Utils {
     }
 
     /**
-     * Unzip a file. <i>Currently does not work with Jimfs generated files</i>
+     * Unzip a file.
      *
      * @param zipPath          zip Path
      * @param nodeDir          path to the directory where unzip
@@ -115,7 +109,7 @@ public final class Utils {
         Path path = zipPath.normalize();
 
         if (Files.notExists(path)) {
-            throw new IOException("File does not exist: " + zipPath.normalize().getFileName());
+            throw new IOException("File does not exist: " + path.getFileName());
         }
 
         // Create the destination directory if needed
@@ -127,7 +121,7 @@ public final class Utils {
         int entries = 0;
         long total = 0;
 
-        try (FileInputStream fis = new FileInputStream(path.toAbsolutePath().toString());
+        try (InputStream fis = Files.newInputStream(path);
              ZipInputStream zis = new ZipInputStream(new BufferedInputStream(fis))) {
             while ((entry = zis.getNextEntry()) != null) {
                 // Compressed size
@@ -139,11 +133,14 @@ public final class Utils {
                 // Write the files to the disk, but ensure that the filename is valid,
                 // and that the file is not insanely big
                 String name = validateFilename(entry.getName(), nodeDir.toAbsolutePath().toString());
+                Path entryPath = nodeDir.resolve(name);
                 if (entry.isDirectory()) {
-                    Files.createDirectories(Path.of(name));
+                    if (Files.notExists(entryPath)) {
+                        Files.createDirectories(entryPath);
+                    }
                     continue;
                 }
-                try (FileOutputStream fos = new FileOutputStream(name);
+                try (OutputStream fos = Files.newOutputStream(entryPath);
                      BufferedOutputStream dest = new BufferedOutputStream(fos, buffer)) {
                     while (total + buffer <= thresholdSize && (count = zis.read(data, 0, buffer)) != -1) {
                         dest.write(data, 0, count);
