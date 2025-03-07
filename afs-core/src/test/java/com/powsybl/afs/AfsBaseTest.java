@@ -10,7 +10,6 @@ import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import com.powsybl.afs.mapdb.storage.MapDbAppStorage;
 import com.powsybl.afs.storage.AfsNodeNotFoundException;
-import com.powsybl.afs.storage.AfsStorageException;
 import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.InMemoryEventsBus;
 import com.powsybl.afs.storage.NodeGenericMetadata;
@@ -280,7 +279,7 @@ class AfsBaseTest {
         // Remove the new folder
         dir2.delete();
         assertTrue(rootFolder.getChildren().isEmpty());
-        AfsStorageException exception = assertThrows(AfsStorageException.class, dir2::getChildren);
+        AfsNodeNotFoundException exception = assertThrows(AfsNodeNotFoundException.class, dir2::getChildren);
         assertTrue(NODE_NOT_FOUND_PATTERN.matcher(exception.getMessage()).matches());
 
         // Create new folders

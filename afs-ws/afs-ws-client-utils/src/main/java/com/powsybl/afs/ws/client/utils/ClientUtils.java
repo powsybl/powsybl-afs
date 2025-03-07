@@ -9,6 +9,7 @@ package com.powsybl.afs.ws.client.utils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.afs.AfsException;
 import com.powsybl.afs.ext.base.ScriptException;
+import com.powsybl.afs.storage.AfsFileSystemNotFoundException;
 import com.powsybl.afs.storage.AfsNodeNotFoundException;
 import com.powsybl.afs.storage.AfsStorageException;
 import com.powsybl.afs.ws.utils.ExceptionDetail;
@@ -39,6 +40,7 @@ public final class ClientUtils {
         "ScriptException", ScriptException.class,
         "RuntimeException", RuntimeException.class,
         "AfsNodeNotFoundException", AfsNodeNotFoundException.class,
+        "AfsFileSystemNotFoundException", AfsFileSystemNotFoundException.class,
         "AfsStorageException", AfsStorageException.class,
         "AfsException", AfsException.class
     );
@@ -165,7 +167,7 @@ public final class ClientUtils {
         if (status == Response.Status.INTERNAL_SERVER_ERROR) {
             return createSpecificException(response, "ScriptException", "AfsStorageException", "RuntimeException");
         } else if (status == Response.Status.NOT_FOUND) {
-            return createSpecificException(response, "AfsNodeNotFoundException");
+            return createSpecificException(response, "AfsNodeNotFoundException", "AfsFileSystemNotFoundException");
         } else if (status == Response.Status.BAD_REQUEST) {
             return createSpecificException(response, "AfsException");
         } else {

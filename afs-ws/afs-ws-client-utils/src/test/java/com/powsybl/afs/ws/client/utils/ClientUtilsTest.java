@@ -134,7 +134,7 @@ class ClientUtilsTest {
             .build()) {
 
             AfsStorageException exception = assertThrows(AfsStorageException.class, () -> ClientUtils.readEntityIfOk(response, String.class));
-            assertEquals("No corresponding exception class was found in: AfsNodeNotFoundException", exception.getMessage());
+            assertEquals("No corresponding exception class was found in: AfsNodeNotFoundException, AfsFileSystemNotFoundException", exception.getMessage());
         }
     }
 

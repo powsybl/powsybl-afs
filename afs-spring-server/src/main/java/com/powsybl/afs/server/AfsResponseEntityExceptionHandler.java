@@ -9,6 +9,7 @@ package com.powsybl.afs.server;
 
 import com.powsybl.afs.AfsException;
 import com.powsybl.afs.ext.base.ScriptException;
+import com.powsybl.afs.storage.AfsFileSystemNotFoundException;
 import com.powsybl.afs.storage.AfsNodeNotFoundException;
 import com.powsybl.afs.storage.AfsStorageException;
 import com.powsybl.afs.ws.utils.ExceptionDetail;
@@ -31,6 +32,11 @@ public class AfsResponseEntityExceptionHandler extends ResponseEntityExceptionHa
 
     @ExceptionHandler({AfsNodeNotFoundException.class})
     public ResponseEntity<Object> handleNodeNotFoundException(AfsNodeNotFoundException e) {
+        return new ResponseEntity<>(new ExceptionDetail(e.getClass().getCanonicalName(), e.getMessage()), HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler({AfsFileSystemNotFoundException.class})
+    public ResponseEntity<Object> handleFileSystemNotFoundException(AfsFileSystemNotFoundException e) {
         return new ResponseEntity<>(new ExceptionDetail(e.getClass().getCanonicalName(), e.getMessage()), HttpStatus.NOT_FOUND);
     }
 

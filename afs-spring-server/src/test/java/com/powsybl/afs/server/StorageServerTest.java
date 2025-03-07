@@ -86,10 +86,12 @@ class StorageServerTest extends AbstractAppStorageTest {
         public AppData getAppData() {
             EventsBus eventBus = new InMemoryEventsBus();
             AppStorage storage = Mockito.spy(MapDbAppStorage.createMem("mem", eventBus));
+            AppStorage storageRoot = Mockito.spy(MapDbAppStorage.createMem("memRootTest", eventBus));
             AppFileSystem fs = new AppFileSystem(FS_TEST_NAME, true, storage, new LocalTaskMonitor());
+            AppFileSystem fsRoot = new AppFileSystem("rootTest", true, storageRoot, new LocalTaskMonitor());
             ComputationManager cm = Mockito.mock(ComputationManager.class);
 
-            List<AppFileSystemProvider> fsProviders = List.of(m -> List.of(fs));
+            List<AppFileSystemProvider> fsProviders = List.of(m -> List.of(fs, fsRoot));
             return new AppData(cm, cm, fsProviders, eventBus);
         }
     }

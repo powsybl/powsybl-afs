@@ -20,13 +20,14 @@ import com.powsybl.timeseries.TimeSeriesIndex;
 import com.powsybl.timeseries.TimeSeriesMetadata;
 import com.powsybl.timeseries.UncompressedDoubleDataChunk;
 import com.powsybl.timeseries.UncompressedStringDataChunk;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestMethodOrder;
-import org.junit.jupiter.api.Timeout;
 import org.threeten.extra.Interval;
 
 import java.io.IOException;
@@ -63,12 +64,10 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Abstract class used to test the multiple implementations of AppStorage
- * <p>
- *     In multiple places, {@code await().until(() -> !eventStack.isEmpty());} is used in order to wait for the event
- *     stack to be updated (especially useful for implementations using remote servers
- * </p>
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
+ * @author Nicolas Rol {@literal <nicolas.rol at rte-france.com>}
  */
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public abstract class AbstractAppStorageTest {
 
@@ -88,6 +87,7 @@ public abstract class AbstractAppStorageTest {
     private NodeInfo test4FolderInfo;
     private NodeInfo test10FolderInfo;
     private NodeInfo test11FolderInfo;
+    private NodeInfo test12FolderInfo;
     private NodeInfo test13FolderInfo;
     private NodeInfo test14FolderInfo;
     private NodeInfo test15FolderInfo;
@@ -99,6 +99,7 @@ public abstract class AbstractAppStorageTest {
     private NodeInfo test22FolderInfo;
     private NodeInfo test23FolderInfo;
     private NodeInfo test24FolderInfo;
+    private NodeInfo test27FolderInfo;
     private NodeInfo test28FolderInfo;
     private NodeInfo test29FolderInfo;
     private NodeInfo test30FolderInfo;
@@ -111,13 +112,6 @@ public abstract class AbstractAppStorageTest {
     private NodeInfo test37FolderInfo;
     private NodeInfo test38FolderInfo;
     private NodeInfo test39FolderInfo;
-    private boolean lastTestIsFinished = false;
-
-    protected abstract AppStorage createStorage();
-
-    protected AppStorage createStorage(String fileSystemName) {
-        return createStorage();
-    }
 
     @BeforeEach
     public void setUp() throws IOException {
@@ -131,15 +125,19 @@ public abstract class AbstractAppStorageTest {
 
     @AfterEach
     public void tearDown() {
-        if (lastTestIsFinished && !storage.isClosed()) {
+        storage.flush();
+        clearEventStack();
+    }
+
+    @AfterAll
+    public void closeStorage() {
+        if (storage != null && !storage.isClosed()) {
             storage.close();
         }
-        clearEventStack();
     }
 
     @Test
     @Order(1)
-    @Timeout(5)
     public void createRootFolderTest() throws InterruptedException {
         try (AppStorage localStorage = createStorage("rootTest")) {
             BlockingQueue<NodeEvent> localEventStack = new LinkedBlockingQueue<>();
@@ -187,6 +185,10 @@ public abstract class AbstractAppStorageTest {
         assertFalse(storage.isConsistent(test2FolderInfo.getId()));
         assertEquals(1, storage.getInconsistentNodes().size());
         assertEquals(test2FolderInfo.getId(), storage.getInconsistentNodes().get(0).getId());
+
+        // Delete the inconsistent node
+        storage.deleteNode(test2FolderInfo.getId());
+        storage.flush();
     }
 
     @Test
@@ -358,28 +360,31 @@ public abstract class AbstractAppStorageTest {
             //Event must not be sent before stream is closed: should still be empty for now
             assertEventStack();
         }
+        storage.flush();
+        assertEventStack(new NodeDataUpdated(test11FolderInfo.getId(), "testData1"));
     }
 
     @Test
     @Order(12)
     public void namedDataItemsCreationTest() throws InterruptedException {
+        storage.flush();
         // Write the data
-        try (Writer writer = new OutputStreamWriter(storage.writeBinaryData(test11FolderInfo.getId(), "testData1"), StandardCharsets.UTF_8)) {
+        try (Writer writer = new OutputStreamWriter(storage.writeBinaryData(test12FolderInfo.getId(), "testData1"), StandardCharsets.UTF_8)) {
             writer.write("Content for testData1");
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-        try (Writer writer = new OutputStreamWriter(storage.writeBinaryData(test11FolderInfo.getId(), "testData2"), StandardCharsets.UTF_8)) {
+        try (Writer writer = new OutputStreamWriter(storage.writeBinaryData(test12FolderInfo.getId(), "testData2"), StandardCharsets.UTF_8)) {
             writer.write("Content for testData2");
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-        try (Writer writer = new OutputStreamWriter(storage.writeBinaryData(test11FolderInfo.getId(), "DATA_SOURCE_SUFFIX_EXT__Test3__ext"), StandardCharsets.UTF_8)) {
+        try (Writer writer = new OutputStreamWriter(storage.writeBinaryData(test12FolderInfo.getId(), "DATA_SOURCE_SUFFIX_EXT__Test3__ext"), StandardCharsets.UTF_8)) {
             writer.write("Content for DATA_SOURCE_SUFFIX_EXT__Test3__ext");
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-        try (Writer writer = new OutputStreamWriter(storage.writeBinaryData(test11FolderInfo.getId(), "DATA_SOURCE_FILE_NAME__Test4"), StandardCharsets.UTF_8)) {
+        try (Writer writer = new OutputStreamWriter(storage.writeBinaryData(test12FolderInfo.getId(), "DATA_SOURCE_FILE_NAME__Test4"), StandardCharsets.UTF_8)) {
             writer.write("Content for DATA_SOURCE_FILE_NAME__Test4");
         } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -387,14 +392,14 @@ public abstract class AbstractAppStorageTest {
         storage.flush();
 
         // check events
-        assertEventStack(new NodeDataUpdated(test11FolderInfo.getId(), "testData1"),
-            new NodeDataUpdated(test11FolderInfo.getId(), "testData2"),
-            new NodeDataUpdated(test11FolderInfo.getId(), "DATA_SOURCE_SUFFIX_EXT__Test3__ext"),
-            new NodeDataUpdated(test11FolderInfo.getId(), "DATA_SOURCE_FILE_NAME__Test4"));
+        assertEventStack(new NodeDataUpdated(test12FolderInfo.getId(), "testData1"),
+            new NodeDataUpdated(test12FolderInfo.getId(), "testData2"),
+            new NodeDataUpdated(test12FolderInfo.getId(), "DATA_SOURCE_SUFFIX_EXT__Test3__ext"),
+            new NodeDataUpdated(test12FolderInfo.getId(), "DATA_SOURCE_FILE_NAME__Test4"));
 
         // check data names
         assertEquals(Set.of("testData2", "testData1", "DATA_SOURCE_SUFFIX_EXT__Test3__ext", "DATA_SOURCE_FILE_NAME__Test4"),
-            storage.getDataNames(test11FolderInfo.getId()));
+            storage.getDataNames(test12FolderInfo.getId()));
     }
 
     @Test
@@ -567,6 +572,7 @@ public abstract class AbstractAppStorageTest {
 
         // Try to remove an existing blob
         assertTrue(storage.removeData(dataNode.getId(), "blob"));
+        storage.flush();
     }
 
     @Test
@@ -671,7 +677,7 @@ public abstract class AbstractAppStorageTest {
     @Order(27)
     public void datasourceByFilenameInputStreamOnNonExistingFileExceptionTest() {
         // Get the data nodes
-        NodeInfo dataNode = storage.getChildNode(test24FolderInfo.getId(), "data2").orElseThrow();
+        NodeInfo dataNode = storage.getChildNode(test27FolderInfo.getId(), "data2").orElseThrow();
 
         // Create the datasource
         DataSource ds = new AppStorageDataSource(storage, dataNode.getId(), dataNode.getName());
@@ -1052,6 +1058,15 @@ public abstract class AbstractAppStorageTest {
         nextDependentTests();
     }
 
+    protected abstract AppStorage createStorage();
+
+    protected abstract AppStorage createStorage(String fileSystemName);
+
+    protected void nextDependentTests() throws InterruptedException {
+        // Noop
+        // allow sub classes to continue tests using created node root
+    }
+
     private void clearEventStack() {
         eventStack.clear();
     }
@@ -1067,11 +1082,14 @@ public abstract class AbstractAppStorageTest {
         // Test 10
         test10FolderInfo = createTestFolder("test10");
 
-        // Tests 11, 12
+        // Tests 11
         test11FolderInfo = createDataNodes("test11");
 
+        // Tests 12
+        test12FolderInfo = createDataNodes("test12");
+
         // Test 13
-        test13FolderInfo = writeBinaryDataInNodes("test13");
+        test13FolderInfo = writeBinaryDataInNodes();
 
         // Test 14
         test14FolderInfo = createDataNodes("test14");
@@ -1080,7 +1098,7 @@ public abstract class AbstractAppStorageTest {
         test15FolderInfo = createFirstDependency("test15");
 
         // Test 16
-        test16FolderInfo = createSecondDependency("test16");
+        test16FolderInfo = createSecondDependency();
 
         // Test 17
         test17FolderInfo = createFirstDependency("test17");
@@ -1100,8 +1118,11 @@ public abstract class AbstractAppStorageTest {
         // Test 23
         test23FolderInfo = writeBlobInDataNode2("test23");
 
-        // Tests 24, 25, 26, 27
+        // Tests 24, 25, 26
         test24FolderInfo = removeBlobInDataNode2("test24");
+
+        // Tests 27
+        test27FolderInfo = removeBlobInDataNode2("test27");
 
         // Test 28
         test28FolderInfo = removeBlobInDataNode2("test28");
@@ -1113,13 +1134,13 @@ public abstract class AbstractAppStorageTest {
         test30FolderInfo = addDataToDoubleTimeSeries("test30");
 
         // Test 31
-        test31FolderInfo = createStringTimeSeries("test31");
+        test31FolderInfo = createStringTimeSeries();
 
         // Test 32
         test32FolderInfo = addDataToStringTimeSeries("test32");
 
         // Test 33
-        test33FolderInfo = createFoldersPlusAFile("test33");
+        test33FolderInfo = createFoldersPlusAFile();
 
         // Test 34
         test34FolderInfo = createTestFolder("test34");
@@ -1131,7 +1152,7 @@ public abstract class AbstractAppStorageTest {
         test36FolderInfo = createNodeToRename("test36");
 
         // Test 37
-        test37FolderInfo = prepareNodesForCascadeDeletion("test37");
+        test37FolderInfo = prepareNodesForCascadeDeletion();
 
         // Test 38
         test38FolderInfo = createTestFolder("test38");
@@ -1180,8 +1201,8 @@ public abstract class AbstractAppStorageTest {
         return testFolderInfo;
     }
 
-    private NodeInfo writeBinaryDataInNodes(String folderName) {
-        NodeInfo testFolderInfo = createDataNodes(folderName);
+    private NodeInfo writeBinaryDataInNodes() {
+        NodeInfo testFolderInfo = createDataNodes("test13");
 
         // Write the data
         try (Writer writer = new OutputStreamWriter(storage.writeBinaryData(testFolderInfo.getId(), "testData1"), StandardCharsets.UTF_8)) {
@@ -1222,8 +1243,8 @@ public abstract class AbstractAppStorageTest {
         return testFolderInfo;
     }
 
-    private NodeInfo createSecondDependency(String folderName) {
-        NodeInfo testFolderInfo = createFirstDependency(folderName);
+    private NodeInfo createSecondDependency() {
+        NodeInfo testFolderInfo = createFirstDependency("test16");
 
         // Get the data nodes
         NodeInfo dataNode1 = storage.getChildNode(testFolderInfo.getId(), "data").orElseThrow();
@@ -1316,8 +1337,8 @@ public abstract class AbstractAppStorageTest {
         return testFolderInfo;
     }
 
-    private NodeInfo createStringTimeSeries(String folderName) throws IOException {
-        NodeInfo testFolderInfo = addDataToDoubleTimeSeries(folderName);
+    private NodeInfo createStringTimeSeries() throws IOException {
+        NodeInfo testFolderInfo = addDataToDoubleTimeSeries("test31");
 
         // Get the data nodes
         NodeInfo dataNode2 = storage.getChildNode(testFolderInfo.getId(), "data2").orElseThrow();
@@ -1347,8 +1368,8 @@ public abstract class AbstractAppStorageTest {
         return testFolderInfo;
     }
 
-    private NodeInfo createFoldersPlusAFile(String folderName) {
-        NodeInfo testFolderInfo = createTestFolder(folderName);
+    private NodeInfo createFoldersPlusAFile() {
+        NodeInfo testFolderInfo = createTestFolder("test33");
 
         // Create two new folders
         NodeInfo folder1Info = storage.createNode(testFolderInfo.getId(), "test1", FOLDER_PSEUDO_CLASS, "", 0, new NodeGenericMetadata());
@@ -1386,8 +1407,8 @@ public abstract class AbstractAppStorageTest {
         return testFolderInfo;
     }
 
-    private NodeInfo prepareNodesForCascadeDeletion(String folderName) throws IOException {
-        NodeInfo testFolderInfo = createTestFolder(folderName);
+    private NodeInfo prepareNodesForCascadeDeletion() throws IOException {
+        NodeInfo testFolderInfo = createTestFolder("test37");
 
         // Create some nodes
         NodeInfo subFolder = storage.createNode(testFolderInfo.getId(), "test-delete", FOLDER_PSEUDO_CLASS, "", 0, new NodeGenericMetadata());
@@ -1441,11 +1462,6 @@ public abstract class AbstractAppStorageTest {
         NodeInfo nodeFromParent = storage.getChildNode(parent.getId(), node.getName())
             .orElseThrow(AssertionError::new);
         assertEquals(node, nodeFromParent);
-    }
-
-    protected void nextDependentTests() throws InterruptedException {
-        // Noop
-        // allow sub classes to continue tests using created node root
     }
 
     private void assertEventStack(NodeEvent... events) throws InterruptedException {

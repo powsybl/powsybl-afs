@@ -1,13 +1,13 @@
 package com.powsybl.afs.server;
 
 import com.powsybl.afs.AppData;
+import com.powsybl.afs.storage.AfsFileSystemNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.web.server.ResponseStatusException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -28,14 +28,14 @@ class AppDataWrapperTest {
     @Test
     void failedToGetStorage() {
         Mockito.when(appData.getRemotelyAccessibleStorage("fileSystem")).thenReturn(null);
-        ResponseStatusException error = assertThrows(ResponseStatusException.class, () -> appDataWrapper.getStorage("fileSystem"));
-        assertEquals("404 NOT_FOUND \"App file system 'fileSystem' not found\"", error.getMessage());
+        AfsFileSystemNotFoundException error = assertThrows(AfsFileSystemNotFoundException.class, () -> appDataWrapper.getStorage("fileSystem"));
+        assertEquals("App file system 'fileSystem' not found", error.getMessage());
     }
 
     @Test
     void failedToGetFileSystem() {
         Mockito.when(appData.getFileSystem("fileSystem")).thenReturn(null);
-        ResponseStatusException error = assertThrows(ResponseStatusException.class, () -> appDataWrapper.getFileSystem("fileSystem"));
-        assertEquals("404 NOT_FOUND \"App file system 'fileSystem' not found\"", error.getMessage());
+        AfsFileSystemNotFoundException error = assertThrows(AfsFileSystemNotFoundException.class, () -> appDataWrapper.getFileSystem("fileSystem"));
+        assertEquals("App file system 'fileSystem' not found", error.getMessage());
     }
 }
