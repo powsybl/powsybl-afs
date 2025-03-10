@@ -13,18 +13,7 @@ import com.powsybl.commons.PowsyblException;
  */
 public class MapDbAfsException extends PowsyblException {
 
-    public MapDbAfsException() {
-    }
-
     public MapDbAfsException(String message) {
         super(message);
-    }
-
-    public MapDbAfsException(Throwable throwable) {
-        super(throwable);
-    }
-
-    public MapDbAfsException(String message, Throwable cause) {
-        super(message, cause);
     }
 }
