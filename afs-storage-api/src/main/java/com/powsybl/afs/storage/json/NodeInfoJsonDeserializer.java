@@ -21,7 +21,7 @@ import java.io.IOException;
  */
 public class NodeInfoJsonDeserializer extends StdDeserializer<NodeInfo> {
 
-    private static class JsonParsingContext {
+    private static final class JsonParsingContext {
         String id = null;
         String name = null;
         String pseudoClass = null;
@@ -38,7 +38,7 @@ public class NodeInfoJsonDeserializer extends StdDeserializer<NodeInfo> {
 
     private static void parseFieldName(JsonParser jsonParser, DeserializationContext deserializationContext,
                                        JsonParsingContext parsingContext) throws IOException {
-        switch (jsonParser.getCurrentName()) {
+        switch (jsonParser.currentName()) {
             case NodeInfoJsonSerializer.ID -> {
                 jsonParser.nextToken();
                 parsingContext.id = jsonParser.getValueAsString();
@@ -71,7 +71,7 @@ public class NodeInfoJsonDeserializer extends StdDeserializer<NodeInfo> {
                 jsonParser.nextToken();
                 parsingContext.metadata = new NodeGenericMetadataJsonDeserializer().deserialize(jsonParser, deserializationContext);
             }
-            default -> throw new AfsStorageException("Unexpected field: " + jsonParser.getCurrentName());
+            default -> throw new AfsStorageException("Unexpected field: " + jsonParser.currentName());
         }
     }
 
