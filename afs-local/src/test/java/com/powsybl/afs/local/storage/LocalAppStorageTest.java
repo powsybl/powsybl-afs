@@ -184,6 +184,30 @@ class LocalAppStorageTest {
     }
 
     @Test
+    void setDescriptionExceptionTest() {
+        AfsException exception = assertThrows(AfsException.class, () -> storage.setDescription("any", "any"));
+        assertEquals(METHOD_NOT_IMPLEMENTED, exception.getMessage());
+    }
+
+    @Test
+    void setConsistentExceptionTest() {
+        AfsException exception = assertThrows(AfsException.class, () -> storage.setConsistent("any"));
+        assertEquals(METHOD_NOT_IMPLEMENTED, exception.getMessage());
+    }
+
+    @Test
+    void renameNodeExceptionTest() {
+        AfsException exception = assertThrows(AfsException.class, () -> storage.renameNode("any", "any"));
+        assertEquals(METHOD_NOT_IMPLEMENTED, exception.getMessage());
+    }
+
+    @Test
+    void updateModificationTimeExceptionTest() {
+        AfsException exception = assertThrows(AfsException.class, () -> storage.updateModificationTime("any"));
+        assertEquals(METHOD_NOT_IMPLEMENTED, exception.getMessage());
+    }
+
+    @Test
     void setParentNodeExceptionTest() {
         AfsException exception = assertThrows(AfsException.class, () -> storage.setParentNode("any", "any"));
         assertEquals(METHOD_NOT_IMPLEMENTED, exception.getMessage());
