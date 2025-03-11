@@ -15,6 +15,7 @@ import org.codehaus.groovy.control.messages.Message;
 import org.codehaus.groovy.control.messages.SyntaxErrorMessage;
 import org.codehaus.groovy.syntax.SyntaxException;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -24,6 +25,7 @@ import java.util.Objects;
  */
 public class ScriptError implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 8116688293120382652L;
 
     private final String message;
