@@ -10,6 +10,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.powsybl.afs.storage.AfsStorageException;
 import com.powsybl.afs.storage.NodeGenericMetadata;
 
 import java.io.IOException;
@@ -20,7 +21,7 @@ import java.util.Objects;
  */
 public class NodeGenericMetadataJsonDeserializer extends StdDeserializer<NodeGenericMetadata> {
 
-    private static class JsonParsingContext {
+    private static final class JsonParsingContext {
         final NodeGenericMetadata metadata = new NodeGenericMetadata();
         String type = null;
         String name = null;
@@ -31,7 +32,7 @@ public class NodeGenericMetadataJsonDeserializer extends StdDeserializer<NodeGen
     }
 
     private static void parseFieldName(JsonParser jsonParser, JsonParsingContext parsingContext) throws IOException {
-        switch (jsonParser.getCurrentName()) {
+        switch (jsonParser.currentName()) {
             case NodeGenericMetadataJsonSerializer.TYPE -> {
                 jsonParser.nextToken();
                 parsingContext.type = jsonParser.getValueAsString();
@@ -53,11 +54,10 @@ public class NodeGenericMetadataJsonDeserializer extends StdDeserializer<NodeGen
                         parsingContext.metadata.setInt(parsingContext.name, jsonParser.getValueAsInt());
                     case NodeGenericMetadataJsonSerializer.BOOLEAN ->
                         parsingContext.metadata.setBoolean(parsingContext.name, jsonParser.getValueAsBoolean());
-                    default -> throw new AssertionError("Unexpected metadata type " + parsingContext.type);
+                    default -> throw new AfsStorageException("Unexpected metadata type: " + parsingContext.type);
                 }
             }
-            default -> throw new AssertionError("Unexpected field: " + jsonParser.getCurrentName());
-
+            default -> throw new AfsStorageException("Unexpected field: " + jsonParser.currentName());
         }
     }
 

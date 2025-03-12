@@ -10,6 +10,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.powsybl.afs.storage.AfsStorageException;
 import com.powsybl.afs.storage.NodeDependency;
 import com.powsybl.afs.storage.NodeInfo;
 
@@ -33,19 +34,19 @@ public class NodeDependencyDeserializer extends StdDeserializer<NodeDependency> 
             if (token == JsonToken.END_OBJECT) {
                 break;
             } else if (token == JsonToken.FIELD_NAME) {
-                switch (jsonParser.getCurrentName()) {
+                switch (jsonParser.currentName()) {
                     case "name" -> {
                         jsonParser.nextToken();
                         name = jsonParser.getValueAsString();
                     }
                     case "nodeInfo" -> nodeInfo = new NodeInfoJsonDeserializer().deserialize(jsonParser, deserializationContext);
-                    default -> throw new AssertionError("Unexpected field: " + jsonParser.getCurrentName());
+                    default -> throw new AfsStorageException("Unexpected field: " + jsonParser.currentName());
 
                 }
             }
         }
         if (name == null || nodeInfo == null) {
-            throw new IllegalStateException("Inconsistent node dependency json");
+            throw new AfsStorageException("Inconsistent node dependency json");
         }
         return new NodeDependency(name, nodeInfo);
     }
