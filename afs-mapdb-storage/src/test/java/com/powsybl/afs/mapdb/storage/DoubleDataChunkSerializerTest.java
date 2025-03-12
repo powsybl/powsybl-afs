@@ -11,11 +11,8 @@ import com.powsybl.timeseries.CompressedDoubleDataChunk;
 import com.powsybl.timeseries.DoubleDataChunk;
 import com.powsybl.timeseries.UncompressedDoubleDataChunk;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mapdb.DataInput2;
 import org.mapdb.DataOutput2;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
 
@@ -23,16 +20,14 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
 
 /**
  * @author Nicolas Rol {@literal <nicolas.rol at rte-france.com>}
  */
-@ExtendWith(MockitoExtension.class)
 class DoubleDataChunkSerializerTest {
 
     private final DoubleDataChunkSerializer serializer = DoubleDataChunkSerializer.INSTANCE;
-    @Mock
-    private DoubleDataChunk invalidChunk;
 
     @Test
     void uncompressedChunkSerializationTest() throws IOException {
@@ -81,6 +76,7 @@ class DoubleDataChunkSerializerTest {
 
     @Test
     void invalidChunkTypeSerializationTest() throws IOException {
+        DoubleDataChunk invalidChunk = mock(DoubleDataChunk.class);
         try (DataOutput2 out = new DataOutput2()) {
             MapDbAfsException exception = assertThrows(MapDbAfsException.class, () -> serializer.serialize(out, invalidChunk));
             assertEquals("Unexpected chunk type", exception.getMessage());

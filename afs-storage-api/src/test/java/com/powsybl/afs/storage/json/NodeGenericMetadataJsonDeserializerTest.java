@@ -30,13 +30,13 @@ class NodeGenericMetadataJsonDeserializerTest {
     void stringMetadataTest() throws IOException {
         String json = """
             [
-                {"type": "string", "name": "nom", "value": "testValue"}
+                {"type": "string", "name": "aName", "value": "testValue"}
             ]""";
 
         JsonParser parser = new JsonFactory().createParser(json);
         NodeGenericMetadata metadata = deserializer.deserialize(parser, null);
 
-        assertEquals("testValue", metadata.getString("nom"));
+        assertEquals("testValue", metadata.getString("aName"));
     }
 
     @Test
@@ -56,52 +56,52 @@ class NodeGenericMetadataJsonDeserializerTest {
     void intMetadataTest() throws IOException {
         String json = """
             [
-                {"type": "int", "name": "nombre", "value": 42}
+                {"type": "int", "name": "number", "value": 42}
             ]""";
 
         JsonParser parser = new JsonFactory().createParser(json);
         NodeGenericMetadata metadata = deserializer.deserialize(parser, null);
 
-        assertEquals(42, metadata.getInt("nombre"));
+        assertEquals(42, metadata.getInt("number"));
     }
 
     @Test
     void booleanMetadataTest() throws IOException {
         String json = """
             [
-                {"type": "boolean", "name": "actif", "value": true}
+                {"type": "boolean", "name": "active", "value": true}
             ]""";
 
         JsonParser parser = new JsonFactory().createParser(json);
         NodeGenericMetadata metadata = deserializer.deserialize(parser, null);
 
-        assertTrue(metadata.getBoolean("actif"));
+        assertTrue(metadata.getBoolean("active"));
     }
 
     @Test
     void multipleMetadataTest() throws IOException {
         String json = """
             [
-                {"type": "string", "name": "nom", "value": "testValue"},
+                {"type": "string", "name": "aName", "value": "testValue"},
                 {"type": "double", "name": "pi", "value": 3.14159},
-                {"type": "int", "name": "nombre", "value": 42},
-                {"type": "boolean", "name": "actif", "value": true}
+                {"type": "int", "name": "number", "value": 42},
+                {"type": "boolean", "name": "active", "value": true}
             ]""";
 
         JsonParser parser = new JsonFactory().createParser(json);
         NodeGenericMetadata metadata = deserializer.deserialize(parser, null);
 
-        assertEquals("testValue", metadata.getString("nom"));
+        assertEquals("testValue", metadata.getString("aName"));
         assertEquals(3.14159, metadata.getDouble("pi"), 0.00001);
-        assertEquals(42, metadata.getInt("nombre"));
-        assertTrue(metadata.getBoolean("actif"));
+        assertEquals(42, metadata.getInt("number"));
+        assertTrue(metadata.getBoolean("active"));
     }
 
     @Test
     void missingNameExceptionTest() throws IOException {
         String json = """
             [
-                {"type": "string", "value": "ValeurSansNom"}
+                {"type": "string", "value": "unnamedValue"}
             ]""";
 
         try (JsonParser parser = new JsonFactory().createParser(json)) {
@@ -113,7 +113,7 @@ class NodeGenericMetadataJsonDeserializerTest {
     void missingTypeExceptionTest() throws IOException {
         String json = """
             [
-                {"name": "sansType", "value": "ValeurSansType"}
+                {"name": "sansType", "value": "untypedValue"}
             ]""";
 
         try (JsonParser parser = new JsonFactory().createParser(json)) {
@@ -125,7 +125,7 @@ class NodeGenericMetadataJsonDeserializerTest {
     void unexpectedMetadataTypeExceptionTest() throws IOException {
         String json = """
             [
-                {"type": "invalid", "name": "invalide", "value": "invalidValue"}
+                {"type": "invalid", "name": "invalid", "value": "invalidValue"}
             ]""";
 
         try (JsonParser parser = new JsonFactory().createParser(json)) {
@@ -138,7 +138,7 @@ class NodeGenericMetadataJsonDeserializerTest {
     void unexpectedFieldExceptionTest() throws IOException {
         String json = """
             [
-                {"type": "string", "name": "nom", "unexpected": "valeur"}
+                {"type": "string", "name": "aName", "unexpected": "valeur"}
             ]""";
 
         try (JsonParser parser = new JsonFactory().createParser(json)) {

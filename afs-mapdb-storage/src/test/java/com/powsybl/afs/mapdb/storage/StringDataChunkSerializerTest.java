@@ -13,7 +13,6 @@ import com.powsybl.timeseries.UncompressedStringDataChunk;
 import org.junit.jupiter.api.Test;
 import org.mapdb.DataInput2;
 import org.mapdb.DataOutput2;
-import org.mockito.Mock;
 
 import java.io.IOException;
 
@@ -21,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
 
 /**
  * @author Nicolas Rol {@literal <nicolas.rol at rte-france.com>}
@@ -28,8 +28,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class StringDataChunkSerializerTest {
 
     private final StringDataChunkSerializer serializer = StringDataChunkSerializer.INSTANCE;
-    @Mock
-    private StringDataChunk invalidChunk;
 
     @Test
     void uncompressedChunkSerializationTest() throws IOException {
@@ -78,6 +76,7 @@ class StringDataChunkSerializerTest {
 
     @Test
     void invalidChunkTypeSerializationTest() throws IOException {
+        StringDataChunk invalidChunk = mock(StringDataChunk.class);
         try (DataOutput2 out = new DataOutput2()) {
             MapDbAfsException exception = assertThrows(MapDbAfsException.class, () -> serializer.serialize(out, invalidChunk));
             assertEquals("Unexpected chunk type", exception.getMessage());

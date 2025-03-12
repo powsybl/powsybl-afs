@@ -37,7 +37,7 @@ class NodeInfoJsonDeserializerTest {
                 "modificationTime": 1672617600000,
                 "version": 3,
                 "metadata": [
-                    {"type": "string", "name": "nom", "value": "testValue"}
+                    {"type": "string", "name": "aName", "value": "testValue"}
                 ]
             }""";
 
@@ -53,7 +53,7 @@ class NodeInfoJsonDeserializerTest {
         assertEquals(3, nodeInfo.getVersion());
 
         NodeGenericMetadata metadata = nodeInfo.getGenericMetadata();
-        assertEquals("testValue", metadata.getString("nom"));
+        assertEquals("testValue", metadata.getString("aName"));
     }
 
     @Test
@@ -65,7 +65,7 @@ class NodeInfoJsonDeserializerTest {
                 "pseudoClass": "BasicNode",
                 "description": "Description test",
                 "metadata": [
-                    {"type": "string", "name": "nom", "value": "testValue"}
+                    {"type": "string", "name": "aName", "value": "testValue"}
                 ]
             }""";
 
@@ -81,7 +81,7 @@ class NodeInfoJsonDeserializerTest {
         assertEquals(-1, nodeInfo.getVersion());
 
         NodeGenericMetadata metadata = nodeInfo.getGenericMetadata();
-        assertEquals("testValue", metadata.getString("nom"));
+        assertEquals("testValue", metadata.getString("aName"));
     }
 
     @Test

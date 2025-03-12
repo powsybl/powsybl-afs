@@ -95,7 +95,7 @@ class NodeDependencyDeserializerTest {
 
     @Test
     void testDeserializeUnexpectedField() throws Exception {
-        // Json with missing nodeInfo field
+        // Json with unexpected field
         String json = """
             {
                 "name": "testNode",
