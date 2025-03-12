@@ -46,7 +46,7 @@ public class NodeDependencyDeserializer extends StdDeserializer<NodeDependency> 
             }
         }
         if (name == null || nodeInfo == null) {
-            throw new IllegalStateException("Inconsistent node dependency json");
+            throw new AfsStorageException("Inconsistent node dependency json");
         }
         return new NodeDependency(name, nodeInfo);
     }

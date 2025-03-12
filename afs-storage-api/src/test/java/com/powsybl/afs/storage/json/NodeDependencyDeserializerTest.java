@@ -74,7 +74,7 @@ class NodeDependencyDeserializerTest {
             }""";
 
         try (JsonParser parser = new JsonFactory().createParser(json)) {
-            IllegalStateException exception = assertThrows(IllegalStateException.class, () -> deserializer.deserialize(parser, null));
+            AfsStorageException exception = assertThrows(AfsStorageException.class, () -> deserializer.deserialize(parser, null));
             assertEquals("Inconsistent node dependency json", exception.getMessage());
         }
     }
@@ -88,7 +88,7 @@ class NodeDependencyDeserializerTest {
             }""";
 
         try (JsonParser parser = new JsonFactory().createParser(json)) {
-            IllegalStateException exception = assertThrows(IllegalStateException.class, () -> deserializer.deserialize(parser, null));
+            AfsStorageException exception = assertThrows(AfsStorageException.class, () -> deserializer.deserialize(parser, null));
             assertEquals("Inconsistent node dependency json", exception.getMessage());
         }
     }
