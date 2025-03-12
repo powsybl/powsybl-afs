@@ -51,6 +51,11 @@
         </dependency>
 
         <dependency>
+            <groupId>com.powsybl</groupId>
+            <artifactId>powsybl-afs-ext-base</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>powsybl-afs-storage-api</artifactId>
             <version>${project.version}</version>
@@ -75,13 +80,13 @@
 
         <!-- Test dependencies -->
         <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
+            <groupId>com.google.jimfs</groupId>
+            <artifactId>jimfs</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.google.jimfs</groupId>
-            <artifactId>jimfs</artifactId>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
