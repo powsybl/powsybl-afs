@@ -410,7 +410,7 @@ public abstract class AbstractAppStorageTest {
 
         // check data names seen from data source
         assertEquals(Set.of("testData2", "testData1"), ds1.listNames("^testD.*"));
-        AssertionError error = assertThrows(AssertionError.class, () -> ds1.listNames("^DATA_SOURCE_SUFFIX.*"));
+        AfsStorageException error = assertThrows(AfsStorageException.class, () -> ds1.listNames("^DATA_SOURCE_SUFFIX.*"));
         assertEquals("Don't know how to unmap suffix-and-extension to a data source name DATA_SOURCE_SUFFIX_EXT__Test3__ext",
             error.getMessage());
         assertEquals(Set.of("Test4"), ds1.listNames("^DATA_SOURCE_FILE.*"));

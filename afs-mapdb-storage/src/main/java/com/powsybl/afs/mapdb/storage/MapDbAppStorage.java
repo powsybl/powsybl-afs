@@ -699,7 +699,7 @@ public class MapDbAppStorage extends AbstractAppStorage {
         for (int chunkNum = 0; chunkNum <= lastChunkNum; chunkNum++) {
             C chunk = map.get(new TimeSeriesChunkKey(key, chunkNum));
             if (chunk == null) {
-                throw new AssertionError("chunk is null");
+                throw new MapDbAfsException("chunk is null");
             }
             if (chunk.getDataType() != metadata.getDataType()) {
                 throw new IllegalStateException("Bad chunk data type");
