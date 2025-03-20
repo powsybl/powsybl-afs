@@ -18,6 +18,11 @@ public class ForwardingAppStorageTest extends AbstractAppStorageTest {
 
     @Override
     protected AppStorage createStorage() {
-        return new ForwardingAppStorage(MapDbAppStorage.createMem("mem", new InMemoryEventsBus()));
+        return createStorage("mem");
+    }
+
+    @Override
+    protected AppStorage createStorage(String fileSystemName) {
+        return new ForwardingAppStorage(MapDbAppStorage.createMem(fileSystemName, new InMemoryEventsBus()));
     }
 }

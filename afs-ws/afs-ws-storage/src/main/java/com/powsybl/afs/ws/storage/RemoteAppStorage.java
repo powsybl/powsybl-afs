@@ -237,6 +237,9 @@ public class RemoteAppStorage extends AbstractAppStorage {
     public void renameNode(String nodeId, String name) {
         Objects.requireNonNull(nodeId);
         Objects.requireNonNull(name);
+        if (name.isEmpty()) {
+            throw new IllegalArgumentException("Impossible to rename node '" + nodeId + "' with an empty name");
+        }
 
         // flush buffer to keep change order
         changeBuffer.flush();
