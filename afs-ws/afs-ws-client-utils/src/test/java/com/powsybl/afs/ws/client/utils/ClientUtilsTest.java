@@ -10,11 +10,20 @@ package com.powsybl.afs.ws.client.utils;
 import com.powsybl.afs.AfsException;
 import com.powsybl.afs.storage.AfsNodeNotFoundException;
 import com.powsybl.afs.storage.AfsStorageException;
+import com.powsybl.afs.ws.utils.JsonProvider;
+import com.powsybl.commons.net.UserProfile;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.Invocation;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
+import java.net.URI;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -23,7 +32,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 /**
@@ -200,6 +213,45 @@ class ClientUtilsTest {
 
             Optional<String> result = ClientUtils.readOptionalEntityIfOk(response, String.class);
             assertTrue(result.isEmpty());
+        }
+    }
+
+    @Test
+    void authenticateTest() {
+        URI baseUri = URI.create("http://localhost");
+        String login = "user";
+        String password = "password";
+
+        try (MockedStatic<ClientUtils> mockedClientUtils = mockStatic(ClientUtils.class, Mockito.CALLS_REAL_METHODS)) {
+            // Mock the required elements
+            Client client = mock(Client.class);
+            WebTarget webTarget = mock(WebTarget.class);
+            Invocation.Builder builder = mock(Invocation.Builder.class);
+            Response response = mock(Response.class);
+
+            // Mock configuration - createClient
+            doReturn(client)  // Retourne le mock client après register()
+                .when(client)
+                .register(any(JsonProvider.class));
+            mockedClientUtils.when(ClientUtils::createClient).thenReturn(client);
+
+            // Mock configuration - client -> WebTarget -> Builder -> Response
+            when(client.target(baseUri)).thenReturn(webTarget);
+            when(webTarget.path(anyString())).thenReturn(webTarget);
+            when(webTarget.request()).thenReturn(builder);
+            when(builder.post(any(Entity.class))).thenReturn(response);
+
+            // Mock configuration - simulate response
+            when(response.getStatus()).thenReturn(Response.Status.OK.getStatusCode());
+            when(response.readEntity(UserProfile.class)).thenReturn(new UserProfile("firstName", "lastName"));
+            when(response.getHeaderString(HttpHeaders.AUTHORIZATION)).thenReturn("auth-token");
+
+            // Call the tested method
+            UserSession session = ClientUtils.authenticate(baseUri, login, password);
+
+            // Checks
+            assertNotNull(session);
+            assertEquals("auth-token", session.getToken());
         }
     }
 }
