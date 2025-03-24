@@ -34,7 +34,7 @@ public final class TimeSeriesIndexSerializer implements Serializer<TimeSeriesInd
             out.writeLong(regularIndex.getEndTime());
             out.writeLong(regularIndex.getSpacing());
         } else {
-            throw new AssertionError();
+            throw new MapDbAfsException("Index is not a regular time series index");
         }
     }
 
@@ -42,13 +42,13 @@ public final class TimeSeriesIndexSerializer implements Serializer<TimeSeriesInd
     public TimeSeriesIndex deserialize(DataInput2 input, int available) throws IOException {
         input.readInt(); // Storage version is retrieved here
         String indexType = input.readUTF();
-        long startTime = input.readLong();
-        long endTime = input.readLong();
-        long spacing = input.readLong();
         if ("regularIndex".equals(indexType)) {
+            long startTime = input.readLong();
+            long endTime = input.readLong();
+            long spacing = input.readLong();
             return new RegularTimeSeriesIndex(startTime, endTime, spacing);
         } else {
-            throw new AssertionError();
+            throw new MapDbAfsException("Index is not a regular time series index");
         }
     }
 }

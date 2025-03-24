@@ -53,7 +53,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
@@ -707,12 +706,9 @@ class AfsBaseTest {
         checkResult.accept(nestedFile, afs.fetchNode(nestedFile.getId()));
         checkResult.accept(projectFolder, afs.fetchNode(projectFolder.getId()));
 
-        try {
-            afs.fetchNode(UUID.randomUUID().toString());
-            fail();
-        } catch (AfsStorageException e) {
-            // ignored
-        }
+        String id = UUID.randomUUID().toString();
+        AfsStorageException exception = assertThrows(AfsStorageException.class, () -> afs.fetchNode(id));
+        assertTrue(NODE_NOT_FOUND_PATTERN.matcher(exception.getMessage()).matches());
     }
 
     @Test
