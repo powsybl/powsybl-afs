@@ -84,7 +84,7 @@ public class SecurityAnalysisRunner extends ProjectFile {
 
     public SecurityAnalysisParameters readParameters() {
         try (InputStream is = storage.readBinaryData(info.getId(), PARAMETERS_JSON_NAME)
-                .orElseThrow(AssertionError::new)) {
+                .orElseThrow(() -> new AfsException("Unable to read data from node " + info.getId()))) {
             return JsonSecurityAnalysisParameters.read(is);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -138,6 +138,6 @@ public class SecurityAnalysisRunner extends ProjectFile {
 
     @Override
     public boolean mandatoryDependenciesAreMissing() {
-        return !getCase().isPresent() || !getContingencyStore().isPresent();
+        return getCase().isEmpty() || getContingencyStore().isEmpty();
     }
 }

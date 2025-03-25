@@ -8,13 +8,13 @@ package com.powsybl.afs.ws.storage;
 
 import com.powsybl.afs.Project;
 import com.powsybl.afs.ProjectFile;
+import com.powsybl.afs.SafeLogger;
 import com.powsybl.afs.TaskListener;
 import com.powsybl.afs.TaskMonitor;
 import com.powsybl.afs.ws.client.utils.ClientUtils;
 import com.powsybl.afs.ws.client.utils.UncheckedDeploymentException;
 import com.powsybl.afs.ws.utils.AfsRestApi;
 import com.powsybl.afs.ws.utils.JsonProvider;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import jakarta.websocket.ContainerProvider;
@@ -27,6 +27,7 @@ import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URI;
@@ -45,8 +46,8 @@ import static com.powsybl.afs.ws.storage.RemoteAppStorage.getWebTarget;
  */
 public class RemoteTaskMonitor implements TaskMonitor {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RemoteTaskMonitor.class);
     public static final String FILE_SYSTEM_NAME = "fileSystemName";
+    private static final SafeLogger LOGGER = new SafeLogger(LoggerFactory.getLogger(RemoteTaskMonitor.class));
     private static final String TASK_ID = "taskId";
     private static final String TASK_PATH = "fileSystems/{fileSystemName}/tasks";
 
@@ -68,7 +69,7 @@ public class RemoteTaskMonitor implements TaskMonitor {
         this.token = token;
 
         client = ClientUtils.createClient()
-                .register(new JsonProvider());
+            .register(new JsonProvider());
 
         webTarget = getWebTarget(client, restUri);
     }
@@ -169,7 +170,7 @@ public class RemoteTaskMonitor implements TaskMonitor {
 
         URI wsUri = SocketsUtils.getWebSocketUri(restUri);
         URI endPointUri = URI.create(wsUri + "/messages/" + AfsRestApi.RESOURCE_ROOT + "/" +
-                AfsRestApi.VERSION + "/task_events/" + fileSystemName + "/" + listener.getProjectId());
+            AfsRestApi.VERSION + "/task_events/" + fileSystemName + "/" + listener.getProjectId());
 
         LOGGER.debug("Connecting to task event websocket for file system {} at {}", fileSystemName, endPointUri);
 

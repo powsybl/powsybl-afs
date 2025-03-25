@@ -6,6 +6,7 @@
  */
 package com.powsybl.afs.ws.storage;
 
+import com.powsybl.afs.storage.AfsStorageException;
 import com.powsybl.commons.exceptions.UncheckedUriSyntaxException;
 
 import java.net.URI;
@@ -23,7 +24,7 @@ public final class SocketsUtils {
             String wsScheme = switch (restUri.getScheme()) {
                 case "http" -> "ws";
                 case "https" -> "wss";
-                default -> throw new AssertionError("Unexpected scheme " + restUri.getScheme());
+                default -> throw new AfsStorageException("Unexpected scheme " + restUri.getScheme());
             };
             return new URI(wsScheme, restUri.getUserInfo(), restUri.getHost(), restUri.getPort(), restUri.getPath(), restUri.getQuery(), null);
         } catch (URISyntaxException e) {

@@ -51,7 +51,8 @@ public class ImportedCase extends AbstractProjectCase {
 
     public Properties getParameters() {
         Properties parameters = new Properties();
-        try (Reader reader = new InputStreamReader(storage.readBinaryData(info.getId(), PARAMETERS).orElseThrow(AssertionError::new), StandardCharsets.UTF_8)) {
+        try (Reader reader = new InputStreamReader(storage.readBinaryData(info.getId(), PARAMETERS)
+            .orElseThrow(() -> new AfsException("Unable to read data from node " + info.getId())), StandardCharsets.UTF_8)) {
             parameters.load(reader);
         } catch (IOException e) {
             throw new UncheckedIOException(e);

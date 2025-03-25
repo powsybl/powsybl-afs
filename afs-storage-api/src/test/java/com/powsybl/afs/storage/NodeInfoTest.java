@@ -24,22 +24,24 @@ class NodeInfoTest {
     private ObjectMapper objectMapper;
 
     @BeforeEach
-    public void setUp() throws Exception {
+    void setUp() {
         objectMapper = JsonUtil.createObjectMapper()
-                .registerModule(new AppStorageJsonModule());
+            .registerModule(new AppStorageJsonModule());
     }
 
     @Test
     void nodeInfoTest() throws IOException {
-        NodeInfo info = new NodeInfo("a", "b", "c", "d", 1000000, 1000001, 0,
-                new NodeGenericMetadata().setString("s1", "s1")
-                                         .setDouble("d1", 1d)
-                                         .setInt("i1", 2)
-                                         .setBoolean("b1", true));
+        NodeInfo info = new NodeInfo("a", "b", "c", "d", 1000000, 1000001, 0, new NodeGenericMetadata()
+            .setString("s1", "s1")
+            .setDouble("d1", 1d)
+            .setInt("i1", 2)
+            .setBoolean("b1", true)
+        );
         NodeInfo info2 = objectMapper.readValue(objectMapper.writeValueAsString(info), NodeInfo.class);
         assertEquals(info, info2);
         info.setVersion(1);
         assertEquals(1, info.getVersion());
-        assertNotEquals("A non NodeInfo object", info);
+        Object string = "A non NodeInfo object";
+        assertNotEquals(string, info);
     }
 }

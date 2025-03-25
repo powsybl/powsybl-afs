@@ -6,6 +6,7 @@
  */
 package com.powsybl.afs.ext.base;
 
+import com.powsybl.afs.AfsException;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.scripting.groovy.GroovyScriptExtension;
 import groovy.lang.Binding;
@@ -66,7 +67,7 @@ public final class ScriptUtils {
             if (scriptType == ScriptType.GROOVY) {
                 return runGroovyScript(network, reader, extensions, contextObjects);
             } else {
-                throw new AssertionError("Script type " + scriptType + " not supported");
+                throw new AfsException("Script type " + scriptType + " not supported");
             }
         } catch (IOException e) {
             throw new UncheckedIOException(e);

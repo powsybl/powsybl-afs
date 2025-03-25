@@ -13,6 +13,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.google.auto.service.AutoService;
+import com.powsybl.afs.AfsException;
 import com.powsybl.commons.extensions.ExtensionJsonSerializer;
 import com.powsybl.iidm.network.Country;
 import com.powsybl.security.LimitViolation;
@@ -69,7 +70,7 @@ public class SubjectInfoExtensionSerializer implements ExtensionJsonSerializer<L
         Set<Double> nominalVoltages = null;
 
         while (parser.nextToken() != JsonToken.END_OBJECT) {
-            switch (parser.getCurrentName()) {
+            switch (parser.currentName()) {
                 case "countries" -> {
                     parser.nextToken();
                     countries = parser.readValueAs(new TypeReference<TreeSet<Country>>() {
@@ -80,7 +81,7 @@ public class SubjectInfoExtensionSerializer implements ExtensionJsonSerializer<L
                     nominalVoltages = parser.readValueAs(new TypeReference<TreeSet<Double>>() {
                     });
                 }
-                default -> throw new AssertionError("Unexpected field: " + parser.getCurrentName());
+                default -> throw new AfsException("Unexpected field: " + parser.currentName());
             }
         }
 

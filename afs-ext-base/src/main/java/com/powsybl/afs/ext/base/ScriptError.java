@@ -6,6 +6,7 @@
  */
 package com.powsybl.afs.ext.base;
 
+import com.powsybl.afs.AfsException;
 import groovy.lang.GroovyRuntimeException;
 import org.codehaus.groovy.control.ErrorCollector;
 import org.codehaus.groovy.control.MultipleCompilationErrorsException;
@@ -14,6 +15,7 @@ import org.codehaus.groovy.control.messages.Message;
 import org.codehaus.groovy.control.messages.SyntaxErrorMessage;
 import org.codehaus.groovy.syntax.SyntaxException;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -23,6 +25,7 @@ import java.util.Objects;
  */
 public class ScriptError implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 8116688293120382652L;
 
     private final String message;
@@ -59,10 +62,10 @@ public class ScriptError implements Serializable {
                 Exception cause = exceptionMessage.getCause();
                 return new ScriptError(cause.getMessage());
             } else {
-                throw new AssertionError("SyntaxErrorMessage or ExceptionMessage is expected");
+                throw new AfsException("SyntaxErrorMessage or ExceptionMessage is expected");
             }
         } else {
-            throw new AssertionError("At least one error is expected");
+            throw new AfsException("At least one error is expected");
         }
     }
 

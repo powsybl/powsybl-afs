@@ -28,10 +28,10 @@ public abstract class AbstractScript<T extends AbstractScript> extends ProjectFi
 
     private static final String INCLUDED_SCRIPTS_DEPENDENCY_NAME = "scriptIncludes";
     private static final String DEFAULT_SCRIPTS_DELIMITER = "\n\n";
+    protected final OrderedDependencyManager orderedDependencyManager = new OrderedDependencyManager(this);
     private final String scriptContentName;
     private final List<ScriptListener> listeners = new ArrayList<>();
     private final AppStorageListener l = eventList -> processEvents(eventList.getEvents(), info.getId(), listeners);
-    protected final OrderedDependencyManager orderedDependencyManager = new OrderedDependencyManager(this);
 
     public AbstractScript(ProjectFileCreationContext context, int codeVersion, String scriptContentName) {
         super(context, codeVersion);
@@ -93,10 +93,10 @@ public abstract class AbstractScript<T extends AbstractScript> extends ProjectFi
         String ownContent = readScript();
         if (withIncludes) {
             String includesScript = orderedDependencyManager
-                    .getDependencies(INCLUDED_SCRIPTS_DEPENDENCY_NAME, AbstractScript.class)
-                    .stream()
-                    .map(script -> script.readScript(true))
-                    .collect(Collectors.joining(DEFAULT_SCRIPTS_DELIMITER));
+                .getDependencies(INCLUDED_SCRIPTS_DEPENDENCY_NAME, AbstractScript.class)
+                .stream()
+                .map(script -> script.readScript(true))
+                .collect(Collectors.joining(DEFAULT_SCRIPTS_DELIMITER));
             if (StringUtils.isNotBlank(includesScript)) {
                 includesScript += DEFAULT_SCRIPTS_DELIMITER;
             }
@@ -108,7 +108,8 @@ public abstract class AbstractScript<T extends AbstractScript> extends ProjectFi
     @Override
     public String readScript() {
         try {
-            return CharStreams.toString(new InputStreamReader(storage.readBinaryData(info.getId(), scriptContentName).orElseThrow(AssertionError::new), StandardCharsets.UTF_8));
+            return CharStreams.toString(new InputStreamReader(storage.readBinaryData(info.getId(), scriptContentName)
+                .orElseThrow(() -> new AfsException("Unable to read data from the node " + info.getId())), StandardCharsets.UTF_8));
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -117,7 +118,7 @@ public abstract class AbstractScript<T extends AbstractScript> extends ProjectFi
     @Override
     public void writeScript(String content) {
         try (Reader reader = new StringReader(content);
-             Writer writer = new OutputStreamWriter(storage.writeBinaryData(info.getId(), scriptContentName), StandardCharsets.UTF_8)) {
+            Writer writer = new OutputStreamWriter(storage.writeBinaryData(info.getId(), scriptContentName), StandardCharsets.UTF_8)) {
             CharStreams.copy(reader, writer);
         } catch (IOException e) {
             throw new UncheckedIOException(e);

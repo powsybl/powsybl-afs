@@ -101,7 +101,7 @@ public class LocalNetworkCacheService implements NetworkCacheService {
         } else if (projectCase instanceof VirtualCase virtualCase) {
             return loadNetworkFromVirtualCase(virtualCase, listeners, extensions, contextObjects);
         } else {
-            throw new AssertionError("ProjectCase implementation " + projectCase.getClass().getName() + " not supported");
+            throw new AfsException("ProjectCase implementation " + projectCase.getClass().getName() + " not supported");
         }
     }
 
