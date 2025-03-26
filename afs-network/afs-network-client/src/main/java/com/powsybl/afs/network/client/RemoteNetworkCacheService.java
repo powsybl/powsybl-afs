@@ -6,7 +6,6 @@
  */
 package com.powsybl.afs.network.client;
 
-import com.google.common.base.Supplier;
 import com.powsybl.afs.AfsException;
 import com.powsybl.afs.ProjectFile;
 import com.powsybl.afs.ext.base.NetworkCacheService;
@@ -37,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import static com.powsybl.afs.ws.client.utils.ClientUtils.checkOk;
 import static com.powsybl.afs.ws.client.utils.ClientUtils.readEntityIfOk;
