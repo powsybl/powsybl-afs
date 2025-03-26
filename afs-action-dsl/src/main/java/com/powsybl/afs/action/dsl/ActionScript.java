@@ -17,6 +17,7 @@ import com.powsybl.iidm.network.Network;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.ResourceBundle;
 
@@ -51,8 +52,18 @@ public class ActionScript extends AbstractScript<ActionScript> implements Contin
         return new ActionDslLoader(readScript(true)).load(network);
     }
 
+    public ActionDb load(Network network, Map<Class<?>, Object> contextObjects) {
+        Objects.requireNonNull(network);
+        return new ActionDslLoader(readScript(true)).load(network, contextObjects);
+    }
+
     @Override
     public List<Contingency> getContingencies(Network network) {
         return new ArrayList<>(load(network).getContingencies());
+    }
+
+    @Override
+    public List<Contingency> getContingencies(Network network, Map<Class<?>, Object> contextObjects) {
+        return new ArrayList<>(load(network, contextObjects).getContingencies());
     }
 }

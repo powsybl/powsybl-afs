@@ -8,8 +8,10 @@ package com.powsybl.afs.ext.base;
 
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.NetworkListener;
+import com.powsybl.scripting.groovy.GroovyScriptExtension;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Common interface for project files able to provide a Network.
@@ -20,7 +22,11 @@ public interface ProjectCase {
 
     String queryNetwork(ScriptType scriptType, String scriptContent);
 
+    String queryNetwork(ScriptType scriptType, String scriptContent, Iterable<GroovyScriptExtension> extensions, Map<Class<?>, Object> contextObjects);
+
     Network getNetwork();
+
+    Network getNetwork(Iterable<GroovyScriptExtension> extensions, Map<Class<?>, Object> contextObjects);
 
     /**
      * Get the network and add a listeners on it in order to listen changes due to virtual case script application.
@@ -30,6 +36,8 @@ public interface ProjectCase {
      * The user must check with the cache implementation he will use.
      */
     Network getNetwork(List<NetworkListener> listeners);
+
+    Network getNetwork(Iterable<GroovyScriptExtension> extensions, Map<Class<?>, Object> contextObjects, List<NetworkListener> listeners);
 
     void invalidateNetworkCache();
 
