@@ -7,22 +7,26 @@
 package com.powsybl.afs.ws.client.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.powsybl.afs.AfsException;
+import com.powsybl.afs.ext.base.ScriptException;
+import com.powsybl.afs.storage.AfsFileSystemNotFoundException;
+import com.powsybl.afs.storage.AfsNodeNotFoundException;
 import com.powsybl.afs.storage.AfsStorageException;
 import com.powsybl.afs.ws.utils.ExceptionDetail;
 import com.powsybl.afs.ws.utils.JsonProvider;
 import com.powsybl.commons.net.UserProfile;
-import org.jboss.resteasy.client.jaxrs.internal.ResteasyClientBuilderImpl;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Form;
 import jakarta.ws.rs.core.GenericType;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
+import org.jboss.resteasy.client.jaxrs.internal.ResteasyClientBuilderImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URI;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -32,6 +36,14 @@ import java.util.Optional;
 public final class ClientUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientUtils.class);
+    private static final Map<String, Class<? extends RuntimeException>> EXPECTED_EXCEPTION_CLASSES = Map.of(
+        "ScriptException", ScriptException.class,
+        "RuntimeException", RuntimeException.class,
+        "AfsNodeNotFoundException", AfsNodeNotFoundException.class,
+        "AfsFileSystemNotFoundException", AfsFileSystemNotFoundException.class,
+        "AfsStorageException", AfsStorageException.class,
+        "AfsException", AfsException.class
+    );
 
     private ClientUtils() {
     }
@@ -42,57 +54,19 @@ public final class ClientUtils {
             .build();
     }
 
-    private static RuntimeException createServerErrorException(Response response) {
-        String body = response.readEntity(String.class);
-        try {
-            ExceptionDetail exceptionDetail = new ObjectMapper().readValue(body, ExceptionDetail.class);
-            String javaException = exceptionDetail.javaException();
-            if (javaException != null) {
-                Class<?> exceptionClass = Class.forName(javaException);
-                if (RuntimeException.class.isAssignableFrom(exceptionClass)) {
-                    if (exceptionDetail.message() != null) {
-                        return (RuntimeException) exceptionClass.getConstructor(String.class).newInstance(exceptionDetail.message());
-                    }
-                    return (RuntimeException) exceptionClass.getDeclaredConstructor().newInstance();
-                }
-            }
-        } catch (Exception e) {
-            LOGGER.warn("Failed to handle registered exception", e);
-        }
-        return new AfsStorageException(body);
-    }
-
-    private static AfsStorageException createUnexpectedResponseStatus(Response.Status status) {
-        return new AfsStorageException("Unexpected response status: '" + status + "'");
-    }
-
     public static void checkOk(Response response) {
         Response.Status status = Response.Status.fromStatusCode(response.getStatus());
         if (status != Response.Status.OK) {
-            if (status == Response.Status.INTERNAL_SERVER_ERROR) {
-                throw createServerErrorException(response);
-            } else {
-                throw createUnexpectedResponseStatus(status);
-            }
+            throw createExceptionAccordingToResponse(response);
         }
-    }
-
-    private static <T> T readEntityAndLog(Response response, Class<T> entityType) {
-        T entity = response.readEntity(entityType);
-        if (LOGGER.isTraceEnabled()) {
-            LOGGER.trace("    --> {}", entity);
-        }
-        return entity;
     }
 
     public static <T> T readEntityIfOk(Response response, Class<T> entityType) {
         Response.Status status = Response.Status.fromStatusCode(response.getStatus());
         if (status == Response.Status.OK) {
             return readEntityAndLog(response, entityType);
-        } else if (status == Response.Status.INTERNAL_SERVER_ERROR) {
-            throw createServerErrorException(response);
         } else {
-            throw createUnexpectedResponseStatus(status);
+            throw createExceptionAccordingToResponse(response);
         }
     }
 
@@ -104,10 +78,8 @@ public final class ClientUtils {
                 LOGGER.trace("    --> {}", entity);
             }
             return entity;
-        } else if (status == Response.Status.INTERNAL_SERVER_ERROR) {
-            throw createServerErrorException(response);
         } else {
-            throw createUnexpectedResponseStatus(status);
+            throw createExceptionAccordingToResponse(response);
         }
 
     }
@@ -146,4 +118,68 @@ public final class ClientUtils {
             }
         }
     }
+
+    private static RuntimeException createSpecificException(Response response, String... expectedExceptionClassNames) {
+        String body = response.readEntity(String.class);
+        try {
+            ExceptionDetail exceptionDetail = new ObjectMapper().readValue(body, ExceptionDetail.class);
+            String javaException = exceptionDetail.javaException();
+
+            // Check if the exception is empty
+            if (javaException == null) {
+                throw new AfsStorageException("No exception was found in response");
+            }
+
+            // Create the exception from the response
+            Class<?> exceptionClass = Class.forName(javaException);
+            String message = exceptionDetail.message();
+            Object instance = message != null ?
+                exceptionClass.getDeclaredConstructor(String.class).newInstance(message) :
+                exceptionClass.getDeclaredConstructor().newInstance();
+
+            // Test the different provided classes
+            for (String expectedExceptionClassName : expectedExceptionClassNames) {
+                Class<? extends RuntimeException> expectedExceptionClass = EXPECTED_EXCEPTION_CLASSES.get(expectedExceptionClassName);
+                if (expectedExceptionClass != null && expectedExceptionClass.isAssignableFrom(exceptionClass)) {
+                    return expectedExceptionClass.cast(instance);
+                }
+            }
+
+            // No corresponding class was found
+            throw new AfsStorageException(String.format("Exception %s is not expected for this response status. Exception message is: '%s'", javaException, message));
+        } catch (ReflectiveOperationException e) {
+            throw new AfsStorageException("Unable to create exception: " + e.getMessage(), e);
+        } catch (AfsStorageException e) {
+            throw new AfsStorageException(e.getMessage(), e);
+        } catch (Exception e) {
+            LOGGER.warn("Failed to handle registered exception", e);
+            throw new AfsStorageException("Failed to handle registered exception");
+        }
+    }
+
+    private static AfsStorageException createUnexpectedResponseStatus(Response.Status status) {
+        return new AfsStorageException("Unexpected response status: '" + status + "'");
+    }
+
+    private static RuntimeException createExceptionAccordingToResponse(Response response) {
+        Response.Status status = Response.Status.fromStatusCode(response.getStatus());
+        if (status == Response.Status.INTERNAL_SERVER_ERROR) {
+            return createSpecificException(response, "ScriptException", "AfsStorageException", "RuntimeException");
+        } else if (status == Response.Status.NOT_FOUND) {
+            return createSpecificException(response, "AfsNodeNotFoundException", "AfsFileSystemNotFoundException");
+        } else if (status == Response.Status.BAD_REQUEST) {
+            return createSpecificException(response, "AfsException");
+        } else {
+            return createUnexpectedResponseStatus(status);
+        }
+    }
+
+    private static <T> T readEntityAndLog(Response response, Class<T> entityType) {
+        T entity = response.readEntity(entityType);
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace("    --> {}", entity);
+        }
+        return entity;
+    }
+
 }

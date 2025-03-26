@@ -263,10 +263,6 @@ public class MapDbAppStorage extends AbstractAppStorage {
         return false;
     }
 
-    private AfsStorageException createNodeNotFoundException(UUID nodeUuid) {
-        return new AfsStorageException(NODE + nodeUuid + " not found");
-    }
-
     private AfsStorageException createNodeDisabledException(UUID nodeUuid) {
         return new AfsStorageException(NODE + nodeUuid + " is disabled");
     }
@@ -486,6 +482,11 @@ public class MapDbAppStorage extends AbstractAppStorage {
     @Override
     public void renameNode(String nodeId, String name) {
         UUID nodeUuid = checkNodeId(nodeId);
+        Objects.requireNonNull(name);
+        if (name.isEmpty()) {
+            throw new IllegalArgumentException("Impossible to rename node '" + nodeId + "' with an empty name");
+        }
+
         NodeInfo nodeInfo = getNodeInfo(nodeId);
         getParentNode(nodeId).ifPresent(parentNode -> {
             UUID parentNodeUuid = checkNodeId(parentNode.getId());

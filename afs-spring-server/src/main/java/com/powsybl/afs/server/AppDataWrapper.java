@@ -8,11 +8,10 @@ package com.powsybl.afs.server;
 
 import com.powsybl.afs.AppData;
 import com.powsybl.afs.AppFileSystem;
+import com.powsybl.afs.storage.AfsFileSystemNotFoundException;
 import com.powsybl.afs.storage.AppStorage;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Objects;
 
@@ -38,7 +37,7 @@ public class AppDataWrapper {
     public AppStorage getStorage(String fileSystemName) {
         AppStorage storage = appData.getRemotelyAccessibleStorage(fileSystemName);
         if (storage == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "App file system '" + fileSystemName + "' not found");
+            throw new AfsFileSystemNotFoundException("App file system '" + fileSystemName + "' not found");
         }
         return storage;
     }
@@ -48,7 +47,7 @@ public class AppDataWrapper {
         Objects.requireNonNull(name);
         AppFileSystem fileSystem = appData.getFileSystem(name);
         if (fileSystem == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "App file system '" + name + "' not found");
+            throw new AfsFileSystemNotFoundException("App file system '" + name + "' not found");
         }
         return fileSystem;
     }

@@ -7,9 +7,13 @@
  */
 package com.powsybl.afs.ws.client.utils;
 
+import com.powsybl.afs.AfsException;
+import com.powsybl.afs.storage.AfsNodeNotFoundException;
+import com.powsybl.afs.storage.AfsStorageException;
 import com.powsybl.afs.ws.utils.JsonProvider;
 import com.powsybl.commons.net.UserProfile;
 import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.Invocation;
 import jakarta.ws.rs.client.WebTarget;
@@ -25,6 +29,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -72,6 +77,132 @@ class ClientUtilsTest {
 
             String result = ClientUtils.readEntityIfOk(response, String.class);
             assertEquals("Test entity", result);
+        }
+    }
+
+    @Test
+    void testReadEntityIfOkWithNotFoundResponse() {
+        String exceptionBody = """
+            {
+              "javaException" : "com.powsybl.afs.storage.AfsNodeNotFoundException",
+              "message" : "Node faac9243-1314-421e-86cd-7bc3ced884bd not found"
+            }""";
+        try (Response response = Response
+            .status(Response.Status.NOT_FOUND)
+            .type(MediaType.APPLICATION_JSON)
+            .entity(exceptionBody)
+            .build()) {
+
+            AfsNodeNotFoundException exception = assertThrows(AfsNodeNotFoundException.class, () -> ClientUtils.readEntityIfOk(response, String.class));
+            assertEquals("Node faac9243-1314-421e-86cd-7bc3ced884bd not found", exception.getMessage());
+        }
+    }
+
+    @Test
+    void createSpecificExceptionNoExceptionMessageTest() {
+        String exceptionBody = """
+            {
+              "javaException" : "com.powsybl.afs.storage.AfsNodeNotFoundException"
+            }""";
+        try (Response response = Response
+            .status(Response.Status.NOT_FOUND)
+            .type(MediaType.APPLICATION_JSON)
+            .entity(exceptionBody)
+            .build()) {
+
+            AfsNodeNotFoundException exception = assertThrows(AfsNodeNotFoundException.class, () -> ClientUtils.readEntityIfOk(response, String.class));
+            assertNull(exception.getMessage());
+        }
+    }
+
+    @Test
+    void createSpecificExceptionNoJavaExceptionTest() {
+        String exceptionBody = """
+            {
+              "message" : "Node faac9243-1314-421e-86cd-7bc3ced884bd not found"
+            }""";
+        try (Response response = Response
+            .status(Response.Status.NOT_FOUND)
+            .type(MediaType.APPLICATION_JSON)
+            .entity(exceptionBody)
+            .build()) {
+
+            AfsStorageException exception = assertThrows(AfsStorageException.class, () -> ClientUtils.readEntityIfOk(response, String.class));
+            assertEquals("No exception was found in response", exception.getMessage());
+        }
+    }
+
+    @Test
+    void createSpecificExceptionNoCorrespondingExceptionFoundTest() {
+        // Unexpected type of exception for the Response status
+        String exceptionBody = """
+            {
+              "javaException" : "com.powsybl.afs.storage.AfsStorageException",
+              "message" : "Node faac9243-1314-421e-86cd-7bc3ced884bd not found"
+            }""";
+        try (Response response = Response
+            .status(Response.Status.NOT_FOUND)
+            .type(MediaType.APPLICATION_JSON)
+            .entity(exceptionBody)
+            .build()) {
+
+            AfsStorageException exception = assertThrows(AfsStorageException.class, () -> ClientUtils.readEntityIfOk(response, String.class));
+            assertEquals("Exception com.powsybl.afs.storage.AfsStorageException is not expected for this response status. Exception message is: 'Node faac9243-1314-421e-86cd-7bc3ced884bd not found'", exception.getMessage());
+        }
+    }
+
+    @Test
+    void createSpecificExceptionUnknownExceptionTest() {
+        // Unknown exception (here, it's the wrong package)
+        String exceptionBody = """
+            {
+              "javaException" : "com.powsybl.afs.storage.AfsException",
+              "message" : "Node faac9243-1314-421e-86cd-7bc3ced884bd not found"
+            }""";
+        try (Response response = Response
+            .status(Response.Status.NOT_FOUND)
+            .type(MediaType.APPLICATION_JSON)
+            .entity(exceptionBody)
+            .build()) {
+
+            AfsStorageException exception = assertThrows(AfsStorageException.class, () -> ClientUtils.readEntityIfOk(response, String.class));
+            assertEquals("Unable to create exception: com.powsybl.afs.storage.AfsException", exception.getMessage());
+        }
+    }
+
+    @Test
+    void createExceptionAccordingToResponseBadRequestTest() {
+        String exceptionBody = """
+            {
+              "javaException" : "com.powsybl.afs.AfsException",
+              "message" : "Exception message"
+            }""";
+        try (Response response = Response
+            .status(Response.Status.BAD_REQUEST)
+            .type(MediaType.APPLICATION_JSON)
+            .entity(exceptionBody)
+            .build()) {
+
+            AfsException exception = assertThrows(AfsException.class, () -> ClientUtils.readEntityIfOk(response, String.class));
+            assertEquals("Exception message", exception.getMessage());
+        }
+    }
+
+    @Test
+    void createExceptionAccordingToResponseUnexpectedStatusTest() {
+        String exceptionBody = """
+            {
+              "javaException" : "com.powsybl.afs.AfsException",
+              "message" : "Exception message"
+            }""";
+        try (Response response = Response
+            .status(Response.Status.UNAUTHORIZED)
+            .type(MediaType.APPLICATION_JSON)
+            .entity(exceptionBody)
+            .build()) {
+
+            AfsStorageException exception = assertThrows(AfsStorageException.class, () -> ClientUtils.readEntityIfOk(response, String.class));
+            assertEquals("Unexpected response status: 'Unauthorized'", exception.getMessage());
         }
     }
 
