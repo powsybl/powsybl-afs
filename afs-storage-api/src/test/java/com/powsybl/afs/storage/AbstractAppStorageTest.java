@@ -67,7 +67,10 @@ import static org.junit.jupiter.api.Assertions.fail;
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  * @author Nicolas Rol {@literal <nicolas.rol at rte-france.com>}
  */
+// Only one instance of the test class is created to avoid several initializations of the costly "storage" resource.
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+// Each tests are independent, but they follow a sequential logic.
+// Having them ordered allow to easily identify the step to analyze when tests are failing (it's the 1st failing)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public abstract class AbstractAppStorageTest {
 
@@ -490,7 +493,7 @@ public abstract class AbstractAppStorageTest {
         String deletedNodeId = storage.deleteNode(dataNode1.getId());
         storage.flush();
 
-        // Check the ID
+        // Check the ID (deleteNode returns the id of the deleted node parent)
         assertEquals(test17FolderInfo.getId(), deletedNodeId);
 
         // check event
@@ -872,8 +875,7 @@ public abstract class AbstractAppStorageTest {
         NodeInfo folder5Info = storage.getChildNode(test35FolderInfo.getId(), "test5").orElseThrow(AssertionError::new);
 
         // Rename the parent
-        String newName = "newtest5";
-        storage.renameNode(folder5Info.getId(), newName);
+        storage.renameNode(folder5Info.getId(), "newtest5");
         storage.flush();
 
         // Get the node again
@@ -975,7 +977,7 @@ public abstract class AbstractAppStorageTest {
         test39FolderInfo = storage.getNodeInfo(test39FolderInfo.getId());
         assertMetadataEquality(metadata, test39FolderInfo.getGenericMetadata());
 
-        // Change the metadata again
+        // Change the metadata again, to test another value type
         metadata.setBoolean("test1", true);
         storage.setMetadata(test39FolderInfo.getId(), cloneMetadata(metadata));
         storage.flush();
@@ -984,7 +986,7 @@ public abstract class AbstractAppStorageTest {
         test39FolderInfo = storage.getNodeInfo(test39FolderInfo.getId());
         assertMetadataEquality(metadata, test39FolderInfo.getGenericMetadata());
 
-        // Change the metadata again
+        // Change the metadata again, to test other value modifications
         metadata.getStrings().remove("test");
         metadata.setDouble("test2", 0.1);
         storage.setMetadata(test39FolderInfo.getId(), cloneMetadata(metadata));
@@ -994,7 +996,7 @@ public abstract class AbstractAppStorageTest {
         test39FolderInfo = storage.getNodeInfo(test39FolderInfo.getId());
         assertMetadataEquality(metadata, test39FolderInfo.getGenericMetadata());
 
-        // Change the metadata again
+        // Change the metadata again, to test int type
         metadata.setInt("test3", 1);
         storage.setMetadata(test39FolderInfo.getId(), cloneMetadata(metadata));
         storage.flush();
@@ -1072,11 +1074,11 @@ public abstract class AbstractAppStorageTest {
     }
 
     private void createStorageStructure() throws IOException {
-        // Test 2, 3
+        // Test 2, 3, 41
         rootFolderInfo = storage.createRootNodeIfNotExists(storage.getFileSystemName(), FOLDER_PSEUDO_CLASS);
         storage.flush();
 
-        // Tests 4, 5, 6, 7, 8, 9
+        // Tests 4, 5, 6, 8, 9
         test4FolderInfo = createTestFolder("test4");
 
         // Test 10
@@ -1103,7 +1105,7 @@ public abstract class AbstractAppStorageTest {
         // Test 17
         test17FolderInfo = createFirstDependency("test17");
 
-        // Test 18
+        // Test 18, 19
         test18FolderInfo = deleteNode("test18");
 
         // Test 20

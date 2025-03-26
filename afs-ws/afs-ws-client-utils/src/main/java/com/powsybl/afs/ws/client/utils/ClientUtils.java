@@ -146,10 +146,9 @@ public final class ClientUtils {
             }
 
             // No corresponding class was found
-            throw new AfsStorageException("No corresponding exception class was found in: "
-                + String.join(", ", expectedExceptionClassNames));
+            throw new AfsStorageException(String.format("Exception %s is not expected for this response status. Exception message is: '%s'", javaException, message));
         } catch (ReflectiveOperationException e) {
-            throw new AfsStorageException("Reflexion exception: " + e.getMessage(), e);
+            throw new AfsStorageException("Unable to create exception: " + e.getMessage(), e);
         } catch (AfsStorageException e) {
             throw new AfsStorageException(e.getMessage(), e);
         } catch (Exception e) {

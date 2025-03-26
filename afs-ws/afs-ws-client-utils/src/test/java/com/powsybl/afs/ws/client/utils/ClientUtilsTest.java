@@ -147,7 +147,7 @@ class ClientUtilsTest {
             .build()) {
 
             AfsStorageException exception = assertThrows(AfsStorageException.class, () -> ClientUtils.readEntityIfOk(response, String.class));
-            assertEquals("No corresponding exception class was found in: AfsNodeNotFoundException, AfsFileSystemNotFoundException", exception.getMessage());
+            assertEquals("Exception com.powsybl.afs.storage.AfsStorageException is not expected for this response status. Exception message is: 'Node faac9243-1314-421e-86cd-7bc3ced884bd not found'", exception.getMessage());
         }
     }
 
@@ -166,7 +166,7 @@ class ClientUtilsTest {
             .build()) {
 
             AfsStorageException exception = assertThrows(AfsStorageException.class, () -> ClientUtils.readEntityIfOk(response, String.class));
-            assertEquals("Reflexion exception: com.powsybl.afs.storage.AfsException", exception.getMessage());
+            assertEquals("Unable to create exception: com.powsybl.afs.storage.AfsException", exception.getMessage());
         }
     }
 
