@@ -25,6 +25,7 @@ import java.io.PrintStream;
 import java.io.Reader;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -34,18 +35,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 public abstract class AbstractGroovyScriptTest {
-
-    private final class AfsGroovyScriptExtensionMock implements GroovyScriptExtension {
-
-        @Override
-        public void load(Binding binding, ComputationManager computationManager) {
-            binding.setProperty("afs", new AfsGroovyFacade(data));
-        }
-
-        @Override
-        public void unload() {
-        }
-    }
 
     protected AppData data;
 
@@ -60,10 +49,10 @@ public abstract class AbstractGroovyScriptTest {
     protected AppStorage createStorage() {
         AppStorage storage = Mockito.mock(AppStorage.class);
         Mockito.when(storage.createRootNodeIfNotExists(Mockito.anyString(), Mockito.anyString()))
-                .thenAnswer(invocationOnMock -> new NodeInfo("id",
-                                                             (String) invocationOnMock.getArguments()[0],
-                                                             (String) invocationOnMock.getArguments()[1],
-                                                             "", 0L, 0L, 0, new NodeGenericMetadata()));
+            .thenAnswer(invocationOnMock -> new NodeInfo("id",
+                (String) invocationOnMock.getArguments()[0],
+                (String) invocationOnMock.getArguments()[1],
+                "", 0L, 0L, 0, new NodeGenericMetadata()));
         return storage;
     }
 
@@ -83,8 +72,8 @@ public abstract class AbstractGroovyScriptTest {
     public void setUp() {
         ComputationManager computationManager = Mockito.mock(ComputationManager.class);
         data = new AppData(computationManager, computationManager,
-                singletonList(cm -> singletonList(new AppFileSystem("mem", false, createStorage()))),
-                getFileExtensions(), getProjectFileExtensions(), getServiceExtensions());
+            singletonList(cm -> singletonList(new AppFileSystem("mem", false, createStorage()))),
+            getFileExtensions(), getProjectFileExtensions(), getServiceExtensions());
     }
 
     @AfterEach
@@ -99,5 +88,17 @@ public abstract class AbstractGroovyScriptTest {
             GroovyScripts.run(codeReader, getExtensions(), ps);
         }
         assertEquals(getExpectedOutput(), out.toString());
+    }
+
+    private final class AfsGroovyScriptExtensionMock implements GroovyScriptExtension {
+
+        @Override
+        public void load(Binding binding, Map<Class<?>, Object> contextObjects) {
+            binding.setProperty("afs", new AfsGroovyFacade(data));
+        }
+
+        @Override
+        public void unload() {
+        }
     }
 }

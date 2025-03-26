@@ -12,10 +12,12 @@ import com.powsybl.afs.ProjectFile;
 import com.powsybl.afs.ProjectFileCreationContext;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.NetworkListener;
+import com.powsybl.scripting.groovy.GroovyScriptExtension;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -46,12 +48,27 @@ class LocalNetworkCacheServiceTest {
         }
 
         @Override
+        public String queryNetwork(ScriptType scriptType, String scriptContent, Iterable<GroovyScriptExtension> extensions, Map<Class<?>, Object> contextObjects) {
+            return "";
+        }
+
+        @Override
         public Network getNetwork() {
             return null;
         }
 
         @Override
+        public Network getNetwork(Iterable<GroovyScriptExtension> extensions, Map<Class<?>, Object> contextObjects) {
+            return null;
+        }
+
+        @Override
         public Network getNetwork(List<NetworkListener> listeners) {
+            return null;
+        }
+
+        @Override
+        public Network getNetwork(Iterable<GroovyScriptExtension> extensions, Map<Class<?>, Object> contextObjects, List<NetworkListener> listeners) {
             return null;
         }
 

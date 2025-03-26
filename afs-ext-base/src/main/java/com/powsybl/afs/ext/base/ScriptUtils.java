@@ -8,6 +8,7 @@ package com.powsybl.afs.ext.base;
 
 import com.powsybl.afs.AfsException;
 import com.powsybl.iidm.network.Network;
+import com.powsybl.scripting.groovy.GroovyScriptExtension;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
 import groovy.lang.MissingMethodException;
@@ -15,7 +16,12 @@ import groovy.lang.MissingPropertyException;
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.MultipleCompilationErrorsException;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.io.UncheckedIOException;
+import java.util.Map;
 
 /**
  *
@@ -28,7 +34,7 @@ public final class ScriptUtils {
     private ScriptUtils() {
     }
 
-    private static ScriptResult<Object> runGroovyScript(Network network, Reader reader) {
+    private static ScriptResult<Object> runGroovyScript(Network network, Reader reader, Iterable<GroovyScriptExtension> extensions, Map<Class<?>, Object> contextObjects) {
         String output = "";
         ScriptError error = null;
         Object value = null;
@@ -37,6 +43,9 @@ public final class ScriptUtils {
             Binding binding = new Binding();
             binding.setProperty("network", network);
             binding.setProperty("out", outputWriter);
+
+            // Bindings through extensions
+            extensions.forEach(extension -> extension.load(binding, contextObjects));
 
             CompilerConfiguration config = new CompilerConfiguration();
             GroovyShell shell = new GroovyShell(binding, config);
@@ -53,10 +62,10 @@ public final class ScriptUtils {
         return new ScriptResult<>(value, output, error);
     }
 
-    public static ScriptResult<Object> runScript(Network network, ScriptType scriptType, String scriptContent) {
+    public static ScriptResult<Object> runScript(Network network, ScriptType scriptType, String scriptContent, Iterable<GroovyScriptExtension> extensions, Map<Class<?>, Object> contextObjects) {
         try (Reader reader = new StringReader(scriptContent)) {
             if (scriptType == ScriptType.GROOVY) {
-                return runGroovyScript(network, reader);
+                return runGroovyScript(network, reader, extensions, contextObjects);
             } else {
                 throw new AfsException("Script type " + scriptType + " not supported");
             }

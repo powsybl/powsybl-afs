@@ -14,7 +14,6 @@ import com.powsybl.commons.datasource.ReadOnlyDataSource;
 import com.powsybl.iidm.network.Importer;
 import com.powsybl.iidm.network.ImportersLoader;
 import com.powsybl.iidm.network.Network;
-import com.powsybl.iidm.network.NetworkListener;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -31,7 +30,7 @@ import java.util.Properties;
  *
  *  @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  */
-public class ImportedCase extends ProjectFile implements ProjectCase {
+public class ImportedCase extends AbstractProjectCase {
 
     public static final String PSEUDO_CLASS = "importedCase";
     public static final int VERSION = 0;
@@ -68,28 +67,6 @@ public class ImportedCase extends ProjectFile implements ProjectCase {
                 .filter(importer -> importer.getFormat().equals(format))
                 .findFirst()
                 .orElseThrow(() -> new AfsException("Importer not found for format " + format));
-    }
-
-    @Override
-    public String queryNetwork(ScriptType scriptType, String scriptContent) {
-        Objects.requireNonNull(scriptType);
-        Objects.requireNonNull(scriptContent);
-        return findService(NetworkCacheService.class).queryNetwork(this, scriptType, scriptContent);
-    }
-
-    @Override
-    public Network getNetwork() {
-        return findService(NetworkCacheService.class).getNetwork(this);
-    }
-
-    @Override
-    public Network getNetwork(List<NetworkListener> listeners) {
-        return findService(NetworkCacheService.class).getNetwork(this, listeners);
-    }
-
-    @Override
-    public void invalidateNetworkCache() {
-        findService(NetworkCacheService.class).invalidateCache(this);
     }
 
     @Override

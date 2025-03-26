@@ -6,9 +6,11 @@
  */
 package com.powsybl.afs.ext.base;
 
-import com.powsybl.afs.*;
-import com.powsybl.iidm.network.Network;
-import com.powsybl.iidm.network.NetworkListener;
+import com.powsybl.afs.AfsCircularDependencyException;
+import com.powsybl.afs.AfsException;
+import com.powsybl.afs.DependencyCache;
+import com.powsybl.afs.ProjectFile;
+import com.powsybl.afs.ProjectFileCreationContext;
 
 import java.util.Collections;
 import java.util.List;
@@ -18,7 +20,7 @@ import java.util.Optional;
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
-public class VirtualCase extends ProjectFile implements ProjectCase {
+public class VirtualCase extends AbstractProjectCase {
 
     public static final String PSEUDO_CLASS = "virtualCase";
     public static final int VERSION = 0;
@@ -61,28 +63,6 @@ public class VirtualCase extends ProjectFile implements ProjectCase {
 
     public String getOutput() {
         return findService(NetworkCacheService.class).getOutput(this);
-    }
-
-    @Override
-    public String queryNetwork(ScriptType scriptType, String scriptContent) {
-        Objects.requireNonNull(scriptType);
-        Objects.requireNonNull(scriptContent);
-        return findService(NetworkCacheService.class).queryNetwork(this, scriptType, scriptContent);
-    }
-
-    @Override
-    public Network getNetwork() {
-        return findService(NetworkCacheService.class).getNetwork(this);
-    }
-
-    @Override
-    public Network getNetwork(List<NetworkListener> listeners) {
-        return findService(NetworkCacheService.class).getNetwork(this, listeners);
-    }
-
-    @Override
-    public void invalidateNetworkCache() {
-        findService(NetworkCacheService.class).invalidateCache(this);
     }
 
     static AfsException createScriptLinkIsDeadException() {
