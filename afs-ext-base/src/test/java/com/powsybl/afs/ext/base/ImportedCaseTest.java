@@ -19,7 +19,7 @@ import com.powsybl.afs.ProjectFolder;
 import com.powsybl.afs.ProjectNode;
 import com.powsybl.afs.ServiceExtension;
 import com.powsybl.afs.mapdb.storage.MapDbAppStorage;
-import com.powsybl.afs.storage.AfsStorageException;
+import com.powsybl.afs.storage.AfsNodeNotFoundException;
 import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.InMemoryEventsBus;
 import com.powsybl.afs.storage.NodeGenericMetadata;
@@ -255,7 +255,7 @@ class ImportedCaseTest extends AbstractProjectFileTest {
         projectNode.delete();
         assertTrue(folder.getChildren().isEmpty());
         String deletedNodeId = projectNode.getId();
-        AfsStorageException deletedNodeException = assertThrows(AfsStorageException.class, () -> storage.getNodeInfo(deletedNodeId));
+        AfsNodeNotFoundException deletedNodeException = assertThrows(AfsNodeNotFoundException.class, () -> storage.getNodeInfo(deletedNodeId));
         assertTrue(NODE_NOT_FOUND_PATTERN.matcher(deletedNodeException.getMessage()).matches());
     }
 

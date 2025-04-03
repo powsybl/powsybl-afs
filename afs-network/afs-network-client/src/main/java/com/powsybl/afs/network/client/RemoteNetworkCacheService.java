@@ -6,7 +6,6 @@
  */
 package com.powsybl.afs.network.client;
 
-import com.google.common.base.Supplier;
 import com.powsybl.afs.AfsException;
 import com.powsybl.afs.ProjectFile;
 import com.powsybl.afs.ext.base.NetworkCacheService;
@@ -18,6 +17,7 @@ import com.powsybl.afs.ws.client.utils.RemoteServiceConfig;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.NetworkListener;
 import com.powsybl.iidm.serde.NetworkSerDe;
+import com.powsybl.scripting.groovy.GroovyScriptExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,13 +27,16 @@ import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import static com.powsybl.afs.ws.client.utils.ClientUtils.checkOk;
 import static com.powsybl.afs.ws.client.utils.ClientUtils.readEntityIfOk;
@@ -59,8 +62,8 @@ class RemoteNetworkCacheService implements NetworkCacheService {
 
     private static WebTarget createWebTarget(Client client, URI baseUri) {
         return client.target(baseUri)
-                .path("rest")
-                .path("networkCache");
+            .path("rest")
+            .path("networkCache");
     }
 
     private RemoteServiceConfig getConfig() {
@@ -76,31 +79,35 @@ class RemoteNetworkCacheService implements NetworkCacheService {
     }
 
     @Override
+    public <T extends ProjectFile & ProjectCase> Network getNetwork(T projectCase, Iterable<GroovyScriptExtension> extensions, Map<Class<?>, Object> contextObjects) {
+        return getNetwork(projectCase);
+    }
+
+    @Override
+    public <T extends ProjectFile & ProjectCase> Network getNetwork(T projectCase, List<NetworkListener> listeners, Iterable<GroovyScriptExtension> extensions, Map<Class<?>, Object> contextObjects) {
+        return getNetwork(projectCase);
+    }
+
+    @Override
     public <T extends ProjectFile & ProjectCase> Network getNetwork(T projectCase) {
         Objects.requireNonNull(projectCase);
 
         LOGGER.info("getNetwork(fileSystemName={}, nodeId={})", projectCase.getFileSystem().getName(),
-                projectCase.getId());
+            projectCase.getId());
 
-        Client client = ClientUtils.createClient();
-        try {
+        try (Client client = ClientUtils.createClient()) {
             WebTarget webTarget = createWebTarget(client, getConfig().getRestUri());
 
-            Response response = webTarget.path(NODE_PATH)
-                    .resolveTemplate(FILE_SYSTEM_NAME, projectCase.getFileSystem().getName())
-                    .resolveTemplate(NODE_ID, projectCase.getId())
-                    .request(MediaType.APPLICATION_XML)
-                    .header(HttpHeaders.AUTHORIZATION, token)
-                    .get();
-            try (InputStream is = readEntityIfOk(response, InputStream.class)) {
+            try (Response response = webTarget.path(NODE_PATH)
+                .resolveTemplate(FILE_SYSTEM_NAME, projectCase.getFileSystem().getName())
+                .resolveTemplate(NODE_ID, projectCase.getId())
+                .request(MediaType.APPLICATION_XML)
+                .header(HttpHeaders.AUTHORIZATION, token)
+                .get(); InputStream is = readEntityIfOk(response, InputStream.class)) {
                 return NetworkSerDe.read(is);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
-            } finally {
-                response.close();
             }
-        } finally {
-            client.close();
         }
     }
 
@@ -111,27 +118,26 @@ class RemoteNetworkCacheService implements NetworkCacheService {
         Objects.requireNonNull(scriptContent);
 
         LOGGER.info("queryNetwork(fileSystemName={}, nodeId={}, scriptType={}, scriptContent=...)",
-                projectCase.getFileSystem().getName(), projectCase.getId(), scriptType);
+            projectCase.getFileSystem().getName(), projectCase.getId(), scriptType);
 
-        Client client = ClientUtils.createClient();
-        try {
+        try (Client client = ClientUtils.createClient()) {
             WebTarget webTarget = createWebTarget(client, getConfig().getRestUri());
 
-            Response response = webTarget.path(NODE_PATH)
-                    .resolveTemplate(FILE_SYSTEM_NAME, projectCase.getFileSystem().getName())
-                    .resolveTemplate(NODE_ID, projectCase.getId())
-                    .queryParam("scriptType", scriptType.name())
-                    .request(MediaType.TEXT_PLAIN)
-                    .header(HttpHeaders.AUTHORIZATION, token)
-                    .post(Entity.text(scriptContent));
-            try {
+            try (Response response = webTarget.path(NODE_PATH)
+                .resolveTemplate(FILE_SYSTEM_NAME, projectCase.getFileSystem().getName())
+                .resolveTemplate(NODE_ID, projectCase.getId())
+                .queryParam("scriptType", scriptType.name())
+                .request(MediaType.TEXT_PLAIN)
+                .header(HttpHeaders.AUTHORIZATION, token)
+                .post(Entity.text(scriptContent))) {
                 return readEntityIfOk(response, String.class);
-            } finally {
-                response.close();
             }
-        } finally {
-            client.close();
         }
+    }
+
+    @Override
+    public <T extends ProjectFile & ProjectCase> String queryNetwork(T projectCase, ScriptType scriptType, String scriptContent, Iterable<GroovyScriptExtension> extensions, Map<Class<?>, Object> contextObjects) {
+        return queryNetwork(projectCase, scriptType, scriptContent);
     }
 
     @Override
@@ -139,25 +145,19 @@ class RemoteNetworkCacheService implements NetworkCacheService {
         Objects.requireNonNull(projectCase);
 
         LOGGER.info("invalidateCache(fileSystemName={}, nodeId={})",
-                projectCase.getFileSystem().getName(), projectCase.getId());
+            projectCase.getFileSystem().getName(), projectCase.getId());
 
-        Client client = ClientUtils.createClient();
-        try {
+        try (Client client = ClientUtils.createClient()) {
             WebTarget webTarget = createWebTarget(client, getConfig().getRestUri());
 
-            Response response = webTarget.path(NODE_PATH)
-                    .resolveTemplate(FILE_SYSTEM_NAME, projectCase.getFileSystem().getName())
-                    .resolveTemplate(NODE_ID, projectCase.getId())
-                    .request()
-                    .header(HttpHeaders.AUTHORIZATION, token)
-                    .delete();
-            try {
+            try (Response response = webTarget.path(NODE_PATH)
+                .resolveTemplate(FILE_SYSTEM_NAME, projectCase.getFileSystem().getName())
+                .resolveTemplate(NODE_ID, projectCase.getId())
+                .request()
+                .header(HttpHeaders.AUTHORIZATION, token)
+                .delete()) {
                 checkOk(response);
-            } finally {
-                response.close();
             }
-        } finally {
-            client.close();
         }
     }
 

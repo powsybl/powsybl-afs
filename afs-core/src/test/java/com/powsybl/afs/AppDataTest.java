@@ -88,13 +88,13 @@ class AppDataTest {
         appData.addFileSystem(afs);
         afs.getRootFolder().createProject("test_project1");
         Folder testFolder = afs.getRootFolder().createFolder("test_folder");
-        testFolder.createFolder("test_folder2");
+        Folder testFolder2 = testFolder.createFolder("test_folder2");
         testFolder.createProject("test_project2");
 
         assertTrue(appData.getNode("mem:/").isPresent());
         assertTrue(appData.getNode("mem:/test_folder").isPresent());
         assertEquals(testFolder.getName(), appData.getNode("mem:/test_folder").get().getName());
         assertTrue(appData.getNode("mem:/test_folder:/test_folder2").isPresent());
-        assertEquals(testFolder.getName(), appData.getNode("mem:/test_folder:/test_folder2").get().getName());
+        assertEquals(testFolder2.getName(), appData.getNode("mem:/test_folder:/test_folder2").get().getName());
     }
 }

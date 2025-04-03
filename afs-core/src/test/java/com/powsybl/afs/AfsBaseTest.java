@@ -9,7 +9,7 @@ package com.powsybl.afs;
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import com.powsybl.afs.mapdb.storage.MapDbAppStorage;
-import com.powsybl.afs.storage.AfsStorageException;
+import com.powsybl.afs.storage.AfsNodeNotFoundException;
 import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.InMemoryEventsBus;
 import com.powsybl.afs.storage.NodeGenericMetadata;
@@ -58,6 +58,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 class AfsBaseTest {
+    private static final String NODE_NOT_FOUND_REGEX = "Node [0-9a-fA-F-]{36} not found";
+    private static final Pattern NODE_NOT_FOUND_PATTERN = Pattern.compile(NODE_NOT_FOUND_REGEX);
 
     private FileSystem fileSystem;
 
@@ -66,9 +68,6 @@ class AfsBaseTest {
     private AppFileSystem afs;
 
     private AppData appData;
-
-    private static final String NODE_NOT_FOUND_REGEX = "Node [0-9a-fA-F-]{36} not found";
-    private static final Pattern NODE_NOT_FOUND_PATTERN = Pattern.compile(NODE_NOT_FOUND_REGEX);
 
     @BeforeEach
     void setup() {
@@ -280,7 +279,7 @@ class AfsBaseTest {
         // Remove the new folder
         dir2.delete();
         assertTrue(rootFolder.getChildren().isEmpty());
-        AfsStorageException exception = assertThrows(AfsStorageException.class, dir2::getChildren);
+        AfsNodeNotFoundException exception = assertThrows(AfsNodeNotFoundException.class, dir2::getChildren);
         assertTrue(NODE_NOT_FOUND_PATTERN.matcher(exception.getMessage()).matches());
 
         // Create new folders
@@ -706,8 +705,8 @@ class AfsBaseTest {
         checkResult.accept(nestedFile, afs.fetchNode(nestedFile.getId()));
         checkResult.accept(projectFolder, afs.fetchNode(projectFolder.getId()));
 
-        String id = UUID.randomUUID().toString();
-        AfsStorageException exception = assertThrows(AfsStorageException.class, () -> afs.fetchNode(id));
+        String uuid = UUID.randomUUID().toString();
+        AfsNodeNotFoundException exception = assertThrows(AfsNodeNotFoundException.class, () -> afs.fetchNode(uuid));
         assertTrue(NODE_NOT_FOUND_PATTERN.matcher(exception.getMessage()).matches());
     }
 

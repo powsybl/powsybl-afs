@@ -26,7 +26,12 @@ class MapDbAppStorageTest extends AbstractAppStorageTest {
 
     @Override
     protected AppStorage createStorage() {
-        return MapDbAppStorage.createMem("mem", new InMemoryEventsBus());
+        return createStorage(STRING_MEM);
+    }
+
+    @Override
+    protected AppStorage createStorage(String fileSystemName) {
+        return MapDbAppStorage.createMem(fileSystemName, new InMemoryEventsBus());
     }
 
     @Test

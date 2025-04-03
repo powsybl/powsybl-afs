@@ -17,13 +17,14 @@ import com.powsybl.contingency.Contingency;
 import com.powsybl.contingency.LineContingency;
 import com.powsybl.iidm.network.Line;
 import com.powsybl.iidm.network.Network;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
@@ -60,7 +61,9 @@ class ActionScriptTest extends AbstractProjectFileTest {
         Network network = Mockito.mock(Network.class);
         Mockito.when((Line) network.getIdentifiable("l1")).thenReturn(Mockito.mock(Line.class));
 
-        Assertions.assertThat(contingencies).hasSameElementsAs(actionScript.getContingencies(network));
+        assertThat(contingencies)
+            .hasSameElementsAs(actionScript.getContingencies(network))
+            .hasSameElementsAs(actionScript.getContingencies(network, new HashMap<>()));
 
     }
 
