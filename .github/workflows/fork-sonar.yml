@@ -112,12 +112,12 @@ jobs:
           mkdir -p ${{ runner.temp }}/extracted
           unzip -q ${{ runner.temp }}/artifacts/sonar-data.zip -d ${{ runner.temp }}/extracted
           cp -r ${{ runner.temp }}/extracted/* .
-          ls -la distribution-core/target/site/jacoco-aggregate/ || echo "Jacoco report directory not found"
+          ls -la afs-distribution/target/site/jacoco-aggregate/ || echo "Jacoco report directory not found"
 
       - name: Prepare Sonar Analysis
         run: |
           echo "Checking required directories..."
-          if [ -f "distribution-core/target/site/jacoco-aggregate/jacoco.xml" ]; then
+          if [ -f "afs-distribution/target/site/jacoco-aggregate/jacoco.xml" ]; then
             echo "Jacoco report found"
           else
             echo "Warning: Jacoco report not found at expected location"
@@ -151,7 +151,7 @@ jobs:
             echo "BINARIES : $BINARIES"
             echo "BINARIES=$BINARIES" >> $GITHUB_ENV
           fi
-          LIBRARIES="distribution-core/target/dependency"
+          LIBRARIES="afs-distribution/target/dependency"
           if [ -z "$LIBRARIES" ]; then
             echo "Warning: No libraries directory found!"
           else
@@ -173,7 +173,7 @@ jobs:
             -Dsonar.java.binaries="${{ env.BINARIES }}"
             -Dsonar.java.libraries="${{ env.LIBRARIES }}"
             -Dsonar.java.test.libraries="${{ env.LIBRARIES }}"
-            -Dsonar.coverage.jacoco.xmlReportPaths="distribution-core/target/site/jacoco-aggregate/jacoco.xml"
+            -Dsonar.coverage.jacoco.xmlReportPaths="afs-distribution/target/site/jacoco-aggregate/jacoco.xml"
             -Dsonar.pullrequest.key="${{ env.PR_NUMBER }}"
             -Dsonar.pullrequest.branch="$(git rev-parse --abbrev-ref HEAD)"
             -Dsonar.pullrequest.base="${{ env.BASE_REF }}"
