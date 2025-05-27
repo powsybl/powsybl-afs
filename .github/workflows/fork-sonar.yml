@@ -8,6 +8,9 @@ on:
 
 permissions:
   actions: write
+  checks: write
+  pull-requests: write
+  statuses: write
 
 jobs:
   sonar:
