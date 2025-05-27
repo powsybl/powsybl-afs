@@ -6,7 +6,11 @@ on:
     types:
       - completed
 
-permissions: {}
+permissions:
+  actions: write
+  checks: write
+  pull-requests: write
+  statuses: write
 
 jobs:
   sonar:
@@ -159,6 +163,8 @@ jobs:
             echo "LIBRARIES=$LIBRARIES" >> $GITHUB_ENV
           fi
 
+      # This sonar action should NOT be replaced by a direct use of the mvn verify command since we don't want external
+      # code to run in a workflow_run workflow (it may lead to security issues).
       - name: Run Sonar Analysis
         uses: SonarSource/sonarqube-scan-action@2500896589ef8f7247069a56136f8dc177c27ccf # v5.2.0
         env:
@@ -175,7 +181,7 @@ jobs:
             -Dsonar.java.test.libraries="${{ env.LIBRARIES }}"
             -Dsonar.coverage.jacoco.xmlReportPaths="afs-distribution/target/site/jacoco-aggregate/jacoco.xml"
             -Dsonar.pullrequest.key="${{ env.PR_NUMBER }}"
-            -Dsonar.pullrequest.branch="$(git rev-parse --abbrev-ref HEAD)"
+            -Dsonar.pullrequest.branch="${{ env.HEAD_REF }}"
             -Dsonar.pullrequest.base="${{ env.BASE_REF }}"
             -Dsonar.host.url=https://sonarcloud.io
             -Dsonar.scm.provider=git
