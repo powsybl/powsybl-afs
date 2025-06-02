@@ -5,12 +5,13 @@ on:
     workflows: [CI on forks - build and tests]
     types:
       - completed
+  pull_request: # Required for SonarCloud integration
 
 permissions:
-  actions: write
   checks: write
   pull-requests: write
   statuses: write
+  contents: read
 
 jobs:
   sonar:
