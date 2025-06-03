@@ -8,6 +8,7 @@ on:
   pull_request: # Required for SonarCloud integration
 
 permissions:
+  actions: write
   checks: write
   contents: read
   issues: read
