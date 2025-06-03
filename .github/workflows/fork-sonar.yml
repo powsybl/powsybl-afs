@@ -190,6 +190,7 @@ jobs:
             -Dsonar.pullrequest.github.repository=${{ github.repository }}
             -Dsonar.host.url=https://sonarcloud.io
             -Dsonar.scm.provider=git
+            -Dsonar.qualitygate.wait=true
 
       - name: Delete artifacts used in analysis
         if: always()
