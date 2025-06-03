@@ -59,6 +59,7 @@ jobs:
           mkdir -p pr-info
           echo "${{ github.event.pull_request.head.repo.full_name }}" > pr-info/repo-name
           echo "${{ github.event.pull_request.head.ref }}" > pr-info/head-ref
+          echo "${{ github.event.pull_request.head.sha }}" > pr-info/base-sha
           echo "${{ github.event.pull_request.number }}" > pr-info/pr-number
           echo "${{ github.event.pull_request.base.ref }}" > pr-info/base-ref
 
