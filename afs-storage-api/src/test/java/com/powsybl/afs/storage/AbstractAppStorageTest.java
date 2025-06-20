@@ -8,6 +8,7 @@ package com.powsybl.afs.storage;
 
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
+import com.google.re2j.Pattern;
 import com.powsybl.afs.storage.events.*;
 import com.powsybl.commons.datasource.DataSource;
 import com.powsybl.timeseries.CompressedDoubleDataChunk;
@@ -50,7 +51,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
