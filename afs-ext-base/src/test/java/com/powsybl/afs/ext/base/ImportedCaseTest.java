@@ -9,6 +9,7 @@ package com.powsybl.afs.ext.base;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
+import com.google.re2j.Pattern;
 import com.powsybl.afs.AbstractProjectFileTest;
 import com.powsybl.afs.AfsException;
 import com.powsybl.afs.FileExtension;
@@ -44,7 +45,6 @@ import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;

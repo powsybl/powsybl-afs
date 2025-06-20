@@ -6,19 +6,18 @@
  */
 package com.powsybl.afs.storage;
 
+import com.google.re2j.Pattern;
+import com.powsybl.commons.datasource.DataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.util.Objects;
 import java.util.Set;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.powsybl.commons.datasource.DataSource;
 
 /**
  * A datasource corresponding to a data blob stored in the file system.
