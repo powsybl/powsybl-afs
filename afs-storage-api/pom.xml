@@ -15,7 +15,7 @@
     <parent>
         <artifactId>powsybl-afs</artifactId>
         <groupId>com.powsybl</groupId>
-        <version>6.6.0-SNAPSHOT</version>
+        <version>6.7.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>powsybl-afs-storage-api</artifactId>
@@ -47,6 +47,10 @@
 
     <dependencies>
         <!-- Compilation dependencies -->
+        <dependency>
+            <groupId>com.google.re2j</groupId>
+            <artifactId>re2j</artifactId>
+        </dependency>
         <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-commons</artifactId>
