@@ -81,7 +81,7 @@ public class AppStorageArchive {
         }
     }
 
-    private static class UnarchiveContext {
+    private static final class UnarchiveContext {
 
         private final Map<String, String> idMapping = new HashMap<>();
 

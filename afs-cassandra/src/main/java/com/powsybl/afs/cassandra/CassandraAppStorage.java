@@ -1616,7 +1616,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
         STRING_COMPRESSED
     }
 
-    private static class TimeSeriesWritingContext {
+    private static final class TimeSeriesWritingContext {
         int createdTimeSeriesCount = 0;
         int insertedChunkCount = 0;
     }
