@@ -33,7 +33,7 @@ public abstract class AbstractScript<T extends AbstractScript> extends ProjectFi
     private final List<ScriptListener> listeners = new ArrayList<>();
     private final AppStorageListener l = eventList -> processEvents(eventList.getEvents(), info.getId(), listeners);
 
-    public AbstractScript(ProjectFileCreationContext context, int codeVersion, String scriptContentName) {
+    protected AbstractScript(ProjectFileCreationContext context, int codeVersion, String scriptContentName) {
         super(context, codeVersion);
         this.scriptContentName = Objects.requireNonNull(scriptContentName);
         storage.getEventsBus().addListener(l);

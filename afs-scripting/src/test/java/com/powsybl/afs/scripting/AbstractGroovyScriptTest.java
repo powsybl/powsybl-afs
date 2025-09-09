@@ -99,6 +99,7 @@ public abstract class AbstractGroovyScriptTest {
 
         @Override
         public void unload() {
+            // Nothing to do
         }
     }
 }

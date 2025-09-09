@@ -15,7 +15,7 @@ public abstract class AbstractStorageChange implements StorageChange {
 
     protected final String nodeId;
 
-    public AbstractStorageChange(String nodeId) {
+    protected AbstractStorageChange(String nodeId) {
         this.nodeId = Objects.requireNonNull(nodeId);
     }
 

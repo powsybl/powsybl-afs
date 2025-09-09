@@ -8,8 +8,7 @@ package com.powsybl.afs.server.events;
 
 import com.powsybl.afs.server.AppDataWrapper;
 import com.powsybl.afs.server.StorageServer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.server.ServerHttpRequest;
@@ -22,15 +21,12 @@ import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
-import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import java.util.Objects;
 
 @Configuration
 @EnableWebSocket
 public class WebSocketServer implements WebSocketConfigurer {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketServer.class);
 
     private final AppDataWrapper appDataWrapper;
     private final WebSocketContext webSocketContext;
@@ -51,7 +47,7 @@ public class WebSocketServer implements WebSocketConfigurer {
             .addInterceptors(new UriTemplateHandshakeInterceptor());
     }
 
-    private static class UriTemplateHandshakeInterceptor implements HandshakeInterceptor {
+    private static final class UriTemplateHandshakeInterceptor implements HandshakeInterceptor {
         @Override
         public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
             HttpServletRequest origRequest = ((ServletServerHttpRequest) request).getServletRequest();
@@ -66,6 +62,7 @@ public class WebSocketServer implements WebSocketConfigurer {
 
         @Override
         public void afterHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Exception exception) {
+            // Nothing to do
         }
     }
 }

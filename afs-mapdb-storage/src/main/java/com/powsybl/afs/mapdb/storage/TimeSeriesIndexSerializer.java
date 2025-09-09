@@ -14,6 +14,8 @@ import org.mapdb.Serializer;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.time.Duration;
+import java.time.Instant;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
@@ -30,9 +32,9 @@ public final class TimeSeriesIndexSerializer implements Serializer<TimeSeriesInd
         out.writeInt(MapDbStorageConstants.STORAGE_VERSION);
         if (index instanceof RegularTimeSeriesIndex regularIndex) {
             out.writeUTF("regularIndex");
-            out.writeLong(regularIndex.getStartTime());
-            out.writeLong(regularIndex.getEndTime());
-            out.writeLong(regularIndex.getSpacing());
+            out.writeLong(regularIndex.getStartInstant().toEpochMilli());
+            out.writeLong(regularIndex.getEndInstant().toEpochMilli());
+            out.writeLong(regularIndex.getTimeStep().toMillis());
         } else {
             throw new MapDbAfsException("Index is not a regular time series index");
         }
@@ -46,7 +48,7 @@ public final class TimeSeriesIndexSerializer implements Serializer<TimeSeriesInd
             long startTime = input.readLong();
             long endTime = input.readLong();
             long spacing = input.readLong();
-            return new RegularTimeSeriesIndex(startTime, endTime, spacing);
+            return new RegularTimeSeriesIndex(Instant.ofEpochMilli(startTime), Instant.ofEpochMilli(endTime), Duration.ofMillis(spacing));
         } else {
             throw new MapDbAfsException("Index is not a regular time series index");
         }

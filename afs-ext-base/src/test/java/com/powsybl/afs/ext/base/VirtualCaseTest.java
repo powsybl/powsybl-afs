@@ -79,6 +79,7 @@ class VirtualCaseTest extends AbstractProjectFileTest {
     }
 
     @BeforeEach
+    @Override
     public void setup() throws IOException {
         super.setup();
         NodeInfo rootFolderInfo = storage.createRootNodeIfNotExists("root", Folder.PSEUDO_CLASS);

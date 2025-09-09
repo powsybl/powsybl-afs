@@ -25,7 +25,7 @@ import com.powsybl.afs.storage.check.FileSystemCheckOptionsBuilder;
 import org.apache.commons.lang3.SystemUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.testcontainers.containers.CassandraContainer;
+import org.testcontainers.cassandra.CassandraContainer;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -54,7 +54,7 @@ import static org.junit.jupiter.api.Assumptions.assumeFalse;
  */
 class CassandraAppStorageTest extends AbstractAppStorageTest {
 
-    private static CassandraContainer<?> cassandra;
+    private static CassandraContainer cassandra;
     private static CqlSession cassandraSession;
 
     @BeforeAll
@@ -65,7 +65,7 @@ class CassandraAppStorageTest extends AbstractAppStorageTest {
     @BeforeAll
     static void setUpCassandra() {
         // Create container
-        cassandra = new CassandraContainer<>("cassandra:3.11.5")
+        cassandra = new CassandraContainer("cassandra:3.11.5")
             .withInitScript("afs.cql");
 
         // Start the container

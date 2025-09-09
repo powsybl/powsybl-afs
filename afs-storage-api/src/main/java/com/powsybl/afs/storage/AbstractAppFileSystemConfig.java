@@ -19,7 +19,7 @@ public abstract class AbstractAppFileSystemConfig<T extends AbstractAppFileSyste
 
     protected boolean remotelyAccessible;
 
-    public AbstractAppFileSystemConfig(String driveName, boolean remotelyAccessible) {
+    protected AbstractAppFileSystemConfig(String driveName, boolean remotelyAccessible) {
         this.driveName = Objects.requireNonNull(driveName);
         this.remotelyAccessible = remotelyAccessible;
     }

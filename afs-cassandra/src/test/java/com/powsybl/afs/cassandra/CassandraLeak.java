@@ -17,6 +17,9 @@ import com.powsybl.timeseries.RegularTimeSeriesIndex;
 import com.powsybl.timeseries.TimeSeriesDataType;
 import com.powsybl.timeseries.TimeSeriesMetadata;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.selectFrom;
@@ -32,7 +35,7 @@ public class CassandraLeak {
         NodeInfo rootNodeId = storage.createRootNodeIfNotExists("test", "folder");
         NodeInfo nodeInfo = storage.createNode(rootNodeId.getId(), "test1", "folder", "", 0, new NodeGenericMetadata());
         storage.createTimeSeries(nodeInfo.getId(), new TimeSeriesMetadata("ts1", TimeSeriesDataType.DOUBLE, Collections.emptyMap(),
-                new RegularTimeSeriesIndex(100000, 100200, 100)));
+                new RegularTimeSeriesIndex(Instant.ofEpochMilli(100000), Instant.ofEpochMilli(100200), Duration.of(100, ChronoUnit.MILLIS))));
         storage.flush();
         ResultSet resultSet = cassandraSession
                 .execute(selectFrom(CassandraConstants.REGULAR_TIME_SERIES)

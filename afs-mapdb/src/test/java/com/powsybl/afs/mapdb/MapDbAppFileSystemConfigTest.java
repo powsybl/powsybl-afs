@@ -30,7 +30,7 @@ class MapDbAppFileSystemConfigTest {
     private InMemoryPlatformConfig platformConfig;
 
     @BeforeEach
-    public void setUp() throws Exception {
+    void setUp() throws Exception {
         fileSystem = Jimfs.newFileSystem(Configuration.unix());
         Files.createFile(fileSystem.getPath("/db"));
         Files.createFile(fileSystem.getPath("/db0"));
@@ -46,7 +46,7 @@ class MapDbAppFileSystemConfigTest {
     }
 
     @AfterEach
-    public void tearDown() throws Exception {
+    void tearDown() throws Exception {
         fileSystem.close();
     }
 
@@ -66,11 +66,7 @@ class MapDbAppFileSystemConfigTest {
         config.setDbFile(fileSystem.getPath("/db2"));
         assertEquals("db2", config.getDriveName());
         assertEquals(fileSystem.getPath("/db2"), config.getDbFile());
-        try {
-            config.setDbFile(fileSystem.getPath("/"));
-            fail();
-        } catch (Exception ignored) {
-        }
+        assertThrows(Exception.class, () -> config.setDbFile(fileSystem.getPath("/")));
     }
 
     @Test
