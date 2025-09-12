@@ -51,7 +51,7 @@ public class WebSocketServer implements WebSocketConfigurer {
             .addInterceptors(new UriTemplateHandshakeInterceptor());
     }
 
-    private static class UriTemplateHandshakeInterceptor implements HandshakeInterceptor {
+    private static final class UriTemplateHandshakeInterceptor implements HandshakeInterceptor {
         @Override
         public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
             HttpServletRequest origRequest = ((ServletServerHttpRequest) request).getServletRequest();
