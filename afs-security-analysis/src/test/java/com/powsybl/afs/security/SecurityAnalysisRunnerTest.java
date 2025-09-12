@@ -96,6 +96,7 @@ public class SecurityAnalysisRunnerTest extends AbstractProjectFileTest {
     }
 
     @BeforeEach
+    @Override
     public void setup() throws IOException {
         super.setup();
 

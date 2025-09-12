@@ -36,14 +36,14 @@ class MapDbAppFileSystemProviderTest {
     private Path dbFile;
 
     @BeforeEach
-    public void setUp() throws Exception {
+    void setUp() throws Exception {
         fileSystem = Jimfs.newFileSystem(Configuration.unix());
         dbFile = fileSystem.getPath("/db");
         Files.createFile(dbFile);
     }
 
     @AfterEach
-    public void tearDown() throws Exception {
+    void tearDown() throws Exception {
         fileSystem.close();
     }
 

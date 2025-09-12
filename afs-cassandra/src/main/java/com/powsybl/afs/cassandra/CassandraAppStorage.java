@@ -27,8 +27,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -63,9 +65,9 @@ public class CassandraAppStorage extends AbstractAppStorage {
                     .setString(TIME_SERIES_NAME, creation.getMetadata().getName())
                     .setString(DATA_TYPE, creation.getMetadata().getDataType().name())
                     .setMap(TIME_SERIES_TAGS, creation.getMetadata().getTags(), String.class, String.class)
-                    .setInstant(START, Instant.ofEpochMilli(index.getStartTime()))
-                    .setInstant(END, Instant.ofEpochMilli(index.getEndTime()))
-                    .setLong(SPACING, index.getSpacing()));
+                    .setInstant(START, index.getStartInstant())
+                    .setInstant(END, index.getEndInstant())
+                    .setLong(SPACING, index.getTimeStep().toMillis()));
             } else {
                 throw new CassandraAfsException("Flush exception - index is not a regular time series index");
             }
@@ -1051,9 +1053,9 @@ public class CassandraAppStorage extends AbstractAppStorage {
                 timeSeries.add(new TimeSeriesMetadata(name,
                     TimeSeriesDataType.valueOf(row.getString(1)),
                     tags,
-                    new RegularTimeSeriesIndex(startTime.toEpochMilli(),
-                        endTime.toEpochMilli(),
-                        row.getLong(5))));
+                    new RegularTimeSeriesIndex(startTime,
+                        endTime,
+                        Duration.of(row.getLong(5), ChronoUnit.MILLIS))));
             }
         }
         return timeSeries;

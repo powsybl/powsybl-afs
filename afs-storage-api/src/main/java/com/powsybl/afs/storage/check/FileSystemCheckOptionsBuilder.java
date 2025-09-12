@@ -15,10 +15,11 @@ import java.util.*;
 public class FileSystemCheckOptionsBuilder {
 
     private Instant inconsistentNodesExpirationTime;
-    private Set<String> types = new HashSet<>();
+    private final Set<String> types = new HashSet<>();
     private boolean repair = false;
 
     public FileSystemCheckOptionsBuilder() {
+        // Nothing here
     }
 
     /**
