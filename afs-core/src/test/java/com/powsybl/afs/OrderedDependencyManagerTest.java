@@ -7,7 +7,6 @@
  */
 package com.powsybl.afs;
 
-
 import com.powsybl.afs.mapdb.storage.MapDbAppStorage;
 import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.computation.ComputationManager;
