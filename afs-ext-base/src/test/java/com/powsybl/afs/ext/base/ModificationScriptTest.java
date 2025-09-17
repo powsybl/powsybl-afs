@@ -209,25 +209,25 @@ class ModificationScriptTest extends AbstractProjectFileTest {
     void addScriptsTest() {
         // GIVEN
         ModificationScript script = rootFolder.fileBuilder(ModificationScriptBuilder.class)
-                .withName("script")
-                .withType(ScriptType.GROOVY)
-                .withContent("println 'hello'")
-                .build();
+            .withName("script")
+            .withType(ScriptType.GROOVY)
+            .withContent("println 'hello'")
+            .build();
         ModificationScript include1 = rootFolder.fileBuilder(ModificationScriptBuilder.class)
-                .withName("include_script1")
-                .withType(ScriptType.GROOVY)
-                .withContent("var foo=\"bar\"")
-                .build();
+            .withName("include_script1")
+            .withType(ScriptType.GROOVY)
+            .withContent("var foo=\"bar\"")
+            .build();
         ModificationScript include2 = rootFolder.fileBuilder(ModificationScriptBuilder.class)
-                .withName("include_script2")
-                .withType(ScriptType.GROOVY)
-                .withContent("var p0=1")
-                .build();
+            .withName("include_script2")
+            .withType(ScriptType.GROOVY)
+            .withContent("var p0=1")
+            .build();
         ModificationScript include3 = rootFolder.fileBuilder(ModificationScriptBuilder.class)
-                .withName("include_script3")
-                .withType(ScriptType.GROOVY)
-                .withContent("var pmax=2")
-                .build();
+            .withName("include_script3")
+            .withType(ScriptType.GROOVY)
+            .withContent("var pmax=2")
+            .build();
         // WHEN
         script.addScripts(List.of(include1, include2, include3));
         // THEN
@@ -240,10 +240,10 @@ class ModificationScriptTest extends AbstractProjectFileTest {
     @Test
     void circularInclusionAddScriptsTest() {
         ModificationScript script = rootFolder.fileBuilder(ModificationScriptBuilder.class)
-                .withName("script")
-                .withType(ScriptType.GROOVY)
-                .withContent("println 'hello'")
-                .build();
+            .withName("script")
+            .withType(ScriptType.GROOVY)
+            .withContent("println 'hello'")
+            .build();
 
         // Include the script in itself
         AfsCircularDependencyException exception = assertThrows(AfsCircularDependencyException.class, () -> script.addScripts(List.of(script)));
@@ -254,25 +254,25 @@ class ModificationScriptTest extends AbstractProjectFileTest {
     void removeAllScriptsTest() {
         // GIVEN
         ModificationScript script = rootFolder.fileBuilder(ModificationScriptBuilder.class)
-                .withName("script")
-                .withType(ScriptType.GROOVY)
-                .withContent("println 'hello'")
-                .build();
+            .withName("script")
+            .withType(ScriptType.GROOVY)
+            .withContent("println 'hello'")
+            .build();
         ModificationScript include1 = rootFolder.fileBuilder(ModificationScriptBuilder.class)
-                .withName("include_script1")
-                .withType(ScriptType.GROOVY)
-                .withContent("var foo=\"bar\"")
-                .build();
+            .withName("include_script1")
+            .withType(ScriptType.GROOVY)
+            .withContent("var foo=\"bar\"")
+            .build();
         ModificationScript include2 = rootFolder.fileBuilder(ModificationScriptBuilder.class)
-                .withName("include_script2")
-                .withType(ScriptType.GROOVY)
-                .withContent("var p0=1")
-                .build();
+            .withName("include_script2")
+            .withType(ScriptType.GROOVY)
+            .withContent("var p0=1")
+            .build();
         ModificationScript include3 = rootFolder.fileBuilder(ModificationScriptBuilder.class)
-                .withName("include_script3")
-                .withType(ScriptType.GROOVY)
-                .withContent("var pmax=2")
-                .build();
+            .withName("include_script3")
+            .withType(ScriptType.GROOVY)
+            .withContent("var pmax=2")
+            .build();
         script.addScript(include1);
         script.addScript(include2);
         script.addScript(include3);
@@ -285,10 +285,10 @@ class ModificationScriptTest extends AbstractProjectFileTest {
     @Test
     void circularInclusionTest() {
         ModificationScript script = rootFolder.fileBuilder(ModificationScriptBuilder.class)
-                .withName("script")
-                .withType(ScriptType.GROOVY)
-                .withContent("println 'hello'")
-                .build();
+            .withName("script")
+            .withType(ScriptType.GROOVY)
+            .withContent("println 'hello'")
+            .build();
 
         // Include the script in itself
         AfsCircularDependencyException exception = assertThrows(AfsCircularDependencyException.class, () -> script.addScript(script));
@@ -298,15 +298,15 @@ class ModificationScriptTest extends AbstractProjectFileTest {
     @Test
     void circularInclusionDeepDependencyTest() {
         ModificationScript script = rootFolder.fileBuilder(ModificationScriptBuilder.class)
-                .withName("script")
-                .withType(ScriptType.GROOVY)
-                .withContent("println 'hello'")
-                .build();
+            .withName("script")
+            .withType(ScriptType.GROOVY)
+            .withContent("println 'hello'")
+            .build();
         ModificationScript scriptDeepDependency = rootFolder.fileBuilder(ModificationScriptBuilder.class)
-                .withName("scriptDeepDependency")
-                .withType(ScriptType.GROOVY)
-                .withContent("println 'hello deep'")
-                .build();
+            .withName("scriptDeepDependency")
+            .withType(ScriptType.GROOVY)
+            .withContent("println 'hello deep'")
+            .build();
         scriptDeepDependency.addScript(script);
 
         // Include the script in itself
@@ -360,10 +360,10 @@ class ModificationScriptTest extends AbstractProjectFileTest {
     @Test
     void genericScriptCircularDependencyTest() {
         GenericScript genericScript = rootFolder.fileBuilder(GenericScriptBuilder.class)
-                .withContent("some list")
-                .withType(ScriptType.GROOVY)
-                .withName("genericScript")
-                .build();
+            .withContent("some list")
+            .withType(ScriptType.GROOVY)
+            .withName("genericScript")
+            .build();
 
         // Include the script in itself
         AfsCircularDependencyException exception = assertThrows(AfsCircularDependencyException.class, () -> genericScript.addGenericScript(genericScript));
@@ -373,15 +373,15 @@ class ModificationScriptTest extends AbstractProjectFileTest {
     @Test
     void genericScriptCircularDependencyWithDeepDependencyTest() {
         GenericScript genericScript = rootFolder.fileBuilder(GenericScriptBuilder.class)
-                .withContent("some list")
-                .withType(ScriptType.GROOVY)
-                .withName("genericScript")
-                .build();
+            .withContent("some list")
+            .withType(ScriptType.GROOVY)
+            .withName("genericScript")
+            .build();
         GenericScript genericScriptDeep = rootFolder.fileBuilder(GenericScriptBuilder.class)
-                .withContent("some list")
-                .withType(ScriptType.GROOVY)
-                .withName("genericScriptDeep")
-                .build();
+            .withContent("some list")
+            .withType(ScriptType.GROOVY)
+            .withName("genericScriptDeep")
+            .build();
         genericScriptDeep.addGenericScript(genericScript);
 
         // Include the deep script
