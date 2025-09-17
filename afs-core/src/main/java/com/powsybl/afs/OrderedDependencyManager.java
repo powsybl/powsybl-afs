@@ -63,6 +63,10 @@ public class OrderedDependencyManager {
         setDependencies(name, nodes);
     }
 
+    /**
+     *
+     * @param name
+     */
     public void removeAllDependencies(String name) {
         setDependencies(name, Collections.emptyList());
     }
