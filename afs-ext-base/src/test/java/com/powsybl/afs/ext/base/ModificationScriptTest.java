@@ -315,7 +315,8 @@ class ModificationScriptTest extends AbstractProjectFileTest {
         AfsCircularDependencyException exception = assertThrows(AfsCircularDependencyException.class, () -> script.addScript(scriptDeepDependency));
         assertEquals("Circular dependency detected", exception.getMessage());
         // byList
-        exception = assertThrows(AfsCircularDependencyException.class, () -> script.addScripts(List.of(scriptDeepDependency)));
+        List<AbstractScript<?>> scripts = List.of(scriptDeepDependency);
+        exception = assertThrows(AfsCircularDependencyException.class, () -> script.addScripts(scripts));
         assertEquals("Circular dependency detected", exception.getMessage());
     }
 
