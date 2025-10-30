@@ -1,8 +1,9 @@
 /**
- * Copyright (c) 2018, RTE (http://www.rte-france.com)
+ * Copyright (c) 2018-2025, RTE (http://www.rte-france.com)
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * SPDX-License-Identifier: MPL-2.0
  */
 package com.powsybl.afs.ext.base;
 
@@ -72,8 +73,22 @@ public abstract class AbstractScript<T extends AbstractScript> extends ProjectFi
         invalidate();
     }
 
+    public void addScripts(List<AbstractScript<?>> includeScripts) {
+        if (includeScripts.stream().map(AbstractNodeBase::getId).toList().contains(getId())
+                || includeScripts.stream().anyMatch(includeScript -> includeScript.hasDeepDependency(this))) {
+            throw new AfsCircularDependencyException();
+        }
+        orderedDependencyManager.appendDependencies(INCLUDED_SCRIPTS_DEPENDENCY_NAME, Collections.unmodifiableList(includeScripts));
+        invalidate();
+    }
+
     public void removeScript(String scriptNodeId) {
         orderedDependencyManager.removeDependencies(INCLUDED_SCRIPTS_DEPENDENCY_NAME, Collections.singletonList(scriptNodeId));
+        invalidate();
+    }
+
+    public void removeAllScript() {
+        orderedDependencyManager.removeAllDependencies(INCLUDED_SCRIPTS_DEPENDENCY_NAME);
         invalidate();
     }
 

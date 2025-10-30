@@ -1,8 +1,9 @@
 /**
- * Copyright (c) 2017, RTE (http://www.rte-france.com)
+ * Copyright (c) 2017-2025, RTE (http://www.rte-france.com)
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * SPDX-License-Identifier: MPL-2.0
  */
 package com.powsybl.afs.ext.base;
 
@@ -205,6 +206,84 @@ class ModificationScriptTest extends AbstractProjectFileTest {
     }
 
     @Test
+    void addScriptsTest() {
+        // GIVEN
+        ModificationScript script = rootFolder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("script")
+            .withType(ScriptType.GROOVY)
+            .withContent("println 'hello'")
+            .build();
+        ModificationScript include1 = rootFolder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("include_script1")
+            .withType(ScriptType.GROOVY)
+            .withContent("var foo=\"bar\"")
+            .build();
+        ModificationScript include2 = rootFolder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("include_script2")
+            .withType(ScriptType.GROOVY)
+            .withContent("var p0=1")
+            .build();
+        ModificationScript include3 = rootFolder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("include_script3")
+            .withType(ScriptType.GROOVY)
+            .withContent("var pmax=2")
+            .build();
+        // WHEN
+        script.addScripts(List.of(include1, include2, include3));
+        // THEN
+        assertEquals(3, script.getIncludedScripts().size());
+        assertEquals(include1.getId(), script.getIncludedScripts().get(0).getId());
+        assertEquals(include2.getId(), script.getIncludedScripts().get(1).getId());
+        assertEquals(include3.getId(), script.getIncludedScripts().get(2).getId());
+    }
+
+    @Test
+    void circularInclusionAddScriptsTest() {
+        ModificationScript script = rootFolder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("script")
+            .withType(ScriptType.GROOVY)
+            .withContent("println 'hello'")
+            .build();
+
+        // Include the script in itself
+        List<AbstractScript<?>> scripts = List.of(script);
+        AfsCircularDependencyException exception = assertThrows(AfsCircularDependencyException.class, () -> script.addScripts(scripts));
+        assertEquals("Circular dependency detected", exception.getMessage());
+    }
+
+    @Test
+    void removeAllScriptsTest() {
+        // GIVEN
+        ModificationScript script = rootFolder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("script")
+            .withType(ScriptType.GROOVY)
+            .withContent("println 'hello'")
+            .build();
+        ModificationScript include1 = rootFolder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("include_script1")
+            .withType(ScriptType.GROOVY)
+            .withContent("var foo=\"bar\"")
+            .build();
+        ModificationScript include2 = rootFolder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("include_script2")
+            .withType(ScriptType.GROOVY)
+            .withContent("var p0=1")
+            .build();
+        ModificationScript include3 = rootFolder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("include_script3")
+            .withType(ScriptType.GROOVY)
+            .withContent("var pmax=2")
+            .build();
+        script.addScript(include1);
+        script.addScript(include2);
+        script.addScript(include3);
+        // WHEN
+        script.removeAllScript();
+        // THEN
+        assertEquals(0, script.getIncludedScripts().size());
+    }
+
+    @Test
     void circularInclusionTest() {
         ModificationScript script = rootFolder.fileBuilder(ModificationScriptBuilder.class)
             .withName("script")
@@ -214,6 +293,30 @@ class ModificationScriptTest extends AbstractProjectFileTest {
 
         // Include the script in itself
         AfsCircularDependencyException exception = assertThrows(AfsCircularDependencyException.class, () -> script.addScript(script));
+        assertEquals("Circular dependency detected", exception.getMessage());
+    }
+
+    @Test
+    void circularInclusionDeepDependencyTest() {
+        ModificationScript script = rootFolder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("script")
+            .withType(ScriptType.GROOVY)
+            .withContent("println 'hello'")
+            .build();
+        ModificationScript scriptDeepDependency = rootFolder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("scriptDeepDependency")
+            .withType(ScriptType.GROOVY)
+            .withContent("println 'hello deep'")
+            .build();
+        scriptDeepDependency.addScript(script);
+
+        // Include the script in itself
+        // One by one
+        AfsCircularDependencyException exception = assertThrows(AfsCircularDependencyException.class, () -> script.addScript(scriptDeepDependency));
+        assertEquals("Circular dependency detected", exception.getMessage());
+        // byList
+        List<AbstractScript<?>> scripts = List.of(scriptDeepDependency);
+        exception = assertThrows(AfsCircularDependencyException.class, () -> script.addScripts(scripts));
         assertEquals("Circular dependency detected", exception.getMessage());
     }
 
@@ -266,6 +369,25 @@ class ModificationScriptTest extends AbstractProjectFileTest {
 
         // Include the script in itself
         AfsCircularDependencyException exception = assertThrows(AfsCircularDependencyException.class, () -> genericScript.addGenericScript(genericScript));
+        assertEquals("Circular dependency detected", exception.getMessage());
+    }
+
+    @Test
+    void genericScriptCircularDependencyWithDeepDependencyTest() {
+        GenericScript genericScript = rootFolder.fileBuilder(GenericScriptBuilder.class)
+            .withContent("some list")
+            .withType(ScriptType.GROOVY)
+            .withName("genericScript")
+            .build();
+        GenericScript genericScriptDeep = rootFolder.fileBuilder(GenericScriptBuilder.class)
+            .withContent("some list")
+            .withType(ScriptType.GROOVY)
+            .withName("genericScriptDeep")
+            .build();
+        genericScriptDeep.addGenericScript(genericScript);
+
+        // Include the deep script
+        AfsCircularDependencyException exception = assertThrows(AfsCircularDependencyException.class, () -> genericScript.addGenericScript(genericScriptDeep));
         assertEquals("Circular dependency detected", exception.getMessage());
     }
 
