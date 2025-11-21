@@ -43,4 +43,8 @@ public interface NetworkCacheService {
     default <T extends ProjectFile & ProjectCase> String getOutput(T projectCase) {
         return StringUtils.EMPTY;
     }
+
+    default <T extends ProjectFile & ProjectCase> String getOutput(T projectCase, Iterable<GroovyScriptExtension> extensions, Map<Class<?>, Object> contextObjects) {
+        return StringUtils.EMPTY;
+    }
 }
