@@ -23,6 +23,7 @@ import jakarta.ws.rs.client.Invocation;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -139,6 +140,7 @@ class RemoteNetworkCacheServiceTest {
         assertNotNull(result);
         assertEquals(network.getId(), result.getId());
         network.getVoltageLevels().forEach(voltageLevel -> assertNotNull(result.getVoltageLevel(voltageLevel.getId())));
+        assertEquals(StringUtils.EMPTY, networkCacheService.getOutput(projectCase));
     }
 
     @Test
