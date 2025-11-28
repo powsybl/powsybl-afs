@@ -15,8 +15,8 @@ import java.util.Map;
 /**
  * @author Matthieu SAUR {@literal <matthieu.saur at rte-france.com>}
  */
-public class CustomScripTestExtension implements GroovyScriptExtension {
-    public CustomScripTestExtension() { /* */
+public class CustomScriptTestExtension implements GroovyScriptExtension {
+    public CustomScriptTestExtension() { /* */
     }
 
     @Override

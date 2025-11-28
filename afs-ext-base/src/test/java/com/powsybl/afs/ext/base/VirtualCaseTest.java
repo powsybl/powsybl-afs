@@ -345,7 +345,7 @@ class VirtualCaseTest extends AbstractProjectFileTest {
             .withCase(importedCase)
             .withScript(scriptModif)
             .build();
-        Iterable<GroovyScriptExtension> extensions = List.of(new CustomScripTestExtension());
+        Iterable<GroovyScriptExtension> extensions = List.of(new CustomScriptTestExtension());
         Map<Class<?>, Object> contextObjects = new HashMap<>();
         // WHEN
         ScriptException exceptionUnknownCommand = assertThrows(ScriptException.class, virtualCase::getNetwork);
