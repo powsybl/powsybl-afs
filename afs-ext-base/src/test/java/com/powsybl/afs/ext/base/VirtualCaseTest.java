@@ -25,14 +25,19 @@ import com.powsybl.iidm.network.DefaultNetworkListener;
 import com.powsybl.iidm.network.ImportConfig;
 import com.powsybl.iidm.network.ImportersLoader;
 import com.powsybl.iidm.network.ImportersLoaderList;
+import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.NetworkListener;
+import com.powsybl.scripting.groovy.GroovyScriptExtension;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -325,5 +330,40 @@ class VirtualCaseTest extends AbstractProjectFileTest {
         virtualCase.getNetwork(Collections.singletonList(mockedListener));
         verify(mockedListener, times(1))
             .onUpdate(network.getSubstation("s1"), "tso", null, "TSO", "tso_new");
+    }
+
+    @Test
+    void outputWithCustomCommand() {
+        // GIVEN
+        ModificationScript scriptModif = folder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("customCommandWriteInOutput")
+            .withType(ScriptType.GROOVY)
+            .withContent("customOut.write('log from customOut')")
+            .build();
+        VirtualCase virtualCase = folder.fileBuilder(VirtualCaseBuilder.class)
+            .withName("network4")
+            .withCase(importedCase)
+            .withScript(scriptModif)
+            .build();
+        Iterable<GroovyScriptExtension> extensions = List.of(new CustomScriptTestExtension());
+        Map<Class<?>, Object> contextObjects = new HashMap<>();
+        // WHEN
+        ScriptException exceptionUnknownCommand = assertThrows(ScriptException.class, virtualCase::getNetwork);
+        virtualCase.invalidate();
+        Network actualNetwork = virtualCase.getNetwork(extensions, contextObjects);
+        String output = virtualCase.getOutput(extensions, contextObjects);
+        String outputNoExtensionFromCache = virtualCase.getOutput();
+        virtualCase.invalidate();
+        String outputAfterInvalidate = virtualCase.getOutput(extensions, contextObjects);
+        virtualCase.invalidate();
+        String outputAfterInvalidateNoExtension = virtualCase.getOutput();
+        // THEN
+        assertThat(exceptionUnknownCommand.getMessage()).contains("No such property: customOut for class: test");
+        assertNotNull(actualNetwork);
+        assertNotNull(output);
+        assertEquals("log from customOut", output);
+        assertEquals("log from customOut", outputNoExtensionFromCache);
+        assertEquals("log from customOut", outputAfterInvalidate);
+        assertEquals("", outputAfterInvalidateNoExtension);
     }
 }

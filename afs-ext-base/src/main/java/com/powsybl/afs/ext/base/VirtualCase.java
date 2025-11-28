@@ -11,9 +11,11 @@ import com.powsybl.afs.AfsException;
 import com.powsybl.afs.DependencyCache;
 import com.powsybl.afs.ProjectFile;
 import com.powsybl.afs.ProjectFileCreationContext;
+import com.powsybl.scripting.groovy.GroovyScriptExtension;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -62,7 +64,11 @@ public class VirtualCase extends AbstractProjectCase {
     }
 
     public String getOutput() {
-        return findService(NetworkCacheService.class).getOutput(this);
+        return this.getOutput(Collections.emptyList(), Collections.emptyMap());
+    }
+
+    public String getOutput(Iterable<GroovyScriptExtension> extensions, Map<Class<?>, Object> contextObjects) {
+        return findService(NetworkCacheService.class).getOutput(this, extensions, contextObjects);
     }
 
     static AfsException createScriptLinkIsDeadException() {

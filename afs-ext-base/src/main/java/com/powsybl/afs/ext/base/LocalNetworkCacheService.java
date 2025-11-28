@@ -146,8 +146,8 @@ public class LocalNetworkCacheService implements NetworkCacheService {
     }
 
     @Override
-    public <T extends ProjectFile & ProjectCase> String getOutput(T projectCase) {
-        return cache.get(projectCase).getOutput();
+    public <T extends ProjectFile & ProjectCase> String getOutput(T projectCase, Iterable<GroovyScriptExtension> extensions, Map<Class<?>, Object> contextObjects) {
+        return cache.get(projectCase, extensions, contextObjects).getOutput();
     }
 
     @Override

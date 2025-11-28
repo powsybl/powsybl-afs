@@ -12,6 +12,7 @@ import com.powsybl.iidm.network.NetworkListener;
 import com.powsybl.scripting.groovy.GroovyScriptExtension;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -41,6 +42,10 @@ public interface NetworkCacheService {
     <T extends ProjectFile & ProjectCase> void removeListener(T projectCase, ProjectCaseListener listener);
 
     default <T extends ProjectFile & ProjectCase> String getOutput(T projectCase) {
+        return getOutput(projectCase, Collections.emptyList(), Collections.emptyMap());
+    }
+
+    default <T extends ProjectFile & ProjectCase> String getOutput(T projectCase, Iterable<GroovyScriptExtension> extensions, Map<Class<?>, Object> contextObjects) {
         return StringUtils.EMPTY;
     }
 }
