@@ -104,7 +104,7 @@
         <testcontainers.version>1.21.0</testcontainers.version>
         <tyrus.version>2.2.0</tyrus.version>
 
-        <powsyblcore.version>7.0.1</powsyblcore.version>
+        <powsyblcore.version>7.1.0</powsyblcore.version>
 
         <!-- Parameters used to generate the javadoc for groovy and java classes.
              See the pom file in powsybl-parent for more explanations. -->
