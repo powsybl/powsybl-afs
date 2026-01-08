@@ -1,0 +1,233 @@
+
+List of third-party dependencies grouped by their license type.
+
+
+    Apache License, Version 2.0
+
+        * An implementation of the Apache Cassandra® native protocol (com.datastax.oss:native-protocol:1.5.1 - https://github.com/datastax/native-protocol)
+        * Apache Cassandra Java Driver - core (org.apache.cassandra:java-driver-core:4.19.0 - https://github.com/datastax/java-driver/java-driver-core)
+        * Apache Cassandra Java Driver - guava shaded dep (org.apache.cassandra:java-driver-guava-shaded:4.19.0 - https://github.com/datastax/java-driver/java-driver-guava-shaded)
+        * Apache Cassandra Java Driver - query builder (org.apache.cassandra:java-driver-query-builder:4.19.0 - https://github.com/datastax/java-driver/java-driver-query-builder)
+        * Apache Commons CLI (commons-cli:commons-cli:1.9.0 - https://commons.apache.org/proper/commons-cli/)
+        * Apache Commons Codec (commons-codec:commons-codec:1.19.0 - https://commons.apache.org/proper/commons-codec/)
+        * Apache Commons Compress (org.apache.commons:commons-compress:1.27.1 - https://commons.apache.org/proper/commons-compress/)
+        * Apache Commons IO (commons-io:commons-io:2.19.0 - https://commons.apache.org/proper/commons-io/)
+        * Apache Commons Lang (org.apache.commons:commons-lang3:3.17.0 - https://commons.apache.org/proper/commons-lang/)
+        * Apache Commons Lang (org.apache.commons:commons-lang3:3.18.0 - https://commons.apache.org/proper/commons-lang/)
+        * Apache Commons Logging (commons-logging:commons-logging:1.2 - http://commons.apache.org/proper/commons-logging/)
+        * Apache Commons Logging (commons-logging:commons-logging:1.3.5 - https://commons.apache.org/proper/commons-logging/)
+        * Apache Commons Math (org.apache.commons:commons-math3:3.6.1 - http://commons.apache.org/proper/commons-math/)
+        * Apache Commons Text (org.apache.commons:commons-text:1.13.1 - https://commons.apache.org/proper/commons-text)
+        * Apache Groovy (org.apache.groovy:groovy:4.0.26 - https://groovy-lang.org)
+        * Apache Groovy (org.apache.groovy:groovy-json:4.0.26 - https://groovy-lang.org)
+        * Apache Groovy (org.apache.groovy:groovy-nio:4.0.26 - https://groovy-lang.org)
+        * Apache Groovy (org.apache.groovy:groovy-nio:4.0.28 - https://groovy-lang.org)
+        * Apache HttpClient (org.apache.httpcomponents:httpclient:4.5.14 - http://hc.apache.org/httpcomponents-client-ga)
+        * Apache HttpCore (org.apache.httpcomponents:httpcore:4.4.16 - http://hc.apache.org/httpcomponents-core-ga)
+        * Apache Log4j API (org.apache.logging.log4j:log4j-api:2.24.3 - https://logging.apache.org/log4j/2.x/log4j/log4j-api/)
+        * asyncutil (com.ibm.async:asyncutil:0.1.0 - http://github.com/ibm/java-async-util)
+        * Auto Common Libraries (com.google.auto:auto-common:1.2.1 - https://github.com/google/auto/tree/master/common)
+        * AutoService (com.google.auto.service:auto-service-annotations:1.1.1 - https://github.com/google/auto/tree/main/service)
+        * AutoService Processor (com.google.auto.service:auto-service:1.1.1 - https://github.com/google/auto/tree/main/service)
+        * config (com.typesafe:config:1.4.1 - https://github.com/lightbend/config)
+        * EJML (org.ejml:ejml-core:0.44.0 - http://ejml.org/)
+        * Elsa Serialization (org.mapdb:elsa:3.0.0-M5 - http://www.mapdb.org)
+        * error-prone annotations (com.google.errorprone:error_prone_annotations:2.36.0 - https://errorprone.info/error_prone_annotations)
+        * FindBugs-jsr305 (com.google.code.findbugs:jsr305:3.0.1 - http://findbugs.sourceforge.net/)
+        * graphviz-builder (org.anarres.graphviz:graphviz-builder:1.0.12 - https://github.com/shevek/graphviz4j)
+        * Guava: Google Core Libraries for Java (com.google.guava:guava:33.4.8-jre - https://github.com/google/guava)
+        * Guava InternalFutureFailureAccess and InternalFutures (com.google.guava:failureaccess:1.0.3 - https://github.com/google/guava/failureaccess)
+        * Guava ListenableFuture only (com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava - https://github.com/google/guava/listenablefuture)
+        * IntelliJ IDEA Annotations (org.jetbrains:annotations:13.0 - http://www.jetbrains.org)
+        * J2ObjC Annotations (com.google.j2objc:j2objc-annotations:3.0.0 - https://github.com/google/j2objc/)
+        * Jackson-annotations (com.fasterxml.jackson.core:jackson-annotations:2.12.7 - http://github.com/FasterXML/jackson)
+        * Jackson-annotations (com.fasterxml.jackson.core:jackson-annotations:2.13.4 - http://github.com/FasterXML/jackson)
+        * Jackson-annotations (com.fasterxml.jackson.core:jackson-annotations:2.19.0 - https://github.com/FasterXML/jackson)
+        * Jackson-annotations (com.fasterxml.jackson.core:jackson-annotations:2.19.2 - https://github.com/FasterXML/jackson)
+        * Jackson-core (com.fasterxml.jackson.core:jackson-core:2.12.7 - https://github.com/FasterXML/jackson-core)
+        * Jackson-core (com.fasterxml.jackson.core:jackson-core:2.13.4 - https://github.com/FasterXML/jackson-core)
+        * Jackson-core (com.fasterxml.jackson.core:jackson-core:2.19.0 - https://github.com/FasterXML/jackson-core)
+        * Jackson-core (com.fasterxml.jackson.core:jackson-core:2.19.2 - https://github.com/FasterXML/jackson-core)
+        * jackson-databind (com.fasterxml.jackson.core:jackson-databind:2.12.7.1 - http://github.com/FasterXML/jackson)
+        * jackson-databind (com.fasterxml.jackson.core:jackson-databind:2.13.4.2 - http://github.com/FasterXML/jackson)
+        * jackson-databind (com.fasterxml.jackson.core:jackson-databind:2.19.0 - https://github.com/FasterXML/jackson)
+        * jackson-databind (com.fasterxml.jackson.core:jackson-databind:2.19.2 - https://github.com/FasterXML/jackson)
+        * Jackson-dataformat-YAML (com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.19.2 - https://github.com/FasterXML/jackson-dataformats-text)
+        * Jackson datatype: jdk8 (com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.19.2 - https://github.com/FasterXML/jackson-modules-java8/jackson-datatype-jdk8)
+        * Jackson datatype: JSR310 (com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.19.2 - https://github.com/FasterXML/jackson-modules-java8/jackson-datatype-jsr310)
+        * Jackson Jakarta-RS: base (com.fasterxml.jackson.jakarta.rs:jackson-jakarta-rs-base:2.19.0 - https://github.com/FasterXML/jackson-jakarta-rs-providers/jackson-jakarta-rs-base)
+        * Jackson Jakarta-RS: base (com.fasterxml.jackson.jakarta.rs:jackson-jakarta-rs-base:2.19.2 - https://github.com/FasterXML/jackson-jakarta-rs-providers/jackson-jakarta-rs-base)
+        * Jackson Jakarta-RS: JSON (com.fasterxml.jackson.jakarta.rs:jackson-jakarta-rs-json-provider:2.19.0 - https://github.com/FasterXML/jackson-jakarta-rs-providers/jackson-jakarta-rs-json-provider)
+        * Jackson module: Jakarta XML Bind Annotations (jakarta.xml.bind) (com.fasterxml.jackson.module:jackson-module-jakarta-xmlbind-annotations:2.19.0 - https://github.com/FasterXML/jackson-modules-base)
+        * Jackson module: Jakarta XML Bind Annotations (jakarta.xml.bind) (com.fasterxml.jackson.module:jackson-module-jakarta-xmlbind-annotations:2.19.2 - https://github.com/FasterXML/jackson-modules-base)
+        * Jackson-module-parameter-names (com.fasterxml.jackson.module:jackson-module-parameter-names:2.19.2 - https://github.com/FasterXML/jackson-modules-java8/jackson-module-parameter-names)
+        * Jakarta Validation API (jakarta.validation:jakarta.validation-api:3.1.1 - https://beanvalidation.org)
+        * Jandex: Core (io.smallrye:jandex:3.4.0 - https://smallrye.io)
+        * JBoss Logging 3 (org.jboss.logging:jboss-logging:3.6.1.Final - http://www.jboss.org)
+        * jffi (com.github.jnr:jffi:1.3.9 - http://github.com/jnr/jffi)
+        * JHeaps (org.jheaps:jheaps:0.14 - http://www.jheaps.org)
+        * JJWT :: API (io.jsonwebtoken:jjwt-api:0.13.0 - https://github.com/jwtk/jjwt/jjwt-api)
+        * JJWT :: Extensions :: Jackson (io.jsonwebtoken:jjwt-jackson:0.13.0 - https://github.com/jwtk/jjwt/jjwt-jackson)
+        * JJWT :: Impl (io.jsonwebtoken:jjwt-impl:0.13.0 - https://github.com/jwtk/jjwt/jjwt-impl)
+        * jnr-a64asm (com.github.jnr:jnr-a64asm:1.0.0 - http://nexus.sonatype.org/oss-repository-hosting.html/jnr-a64asm)
+        * jnr-constants (com.github.jnr:jnr-constants:0.10.3 - http://github.com/jnr/jnr-constants)
+        * jnr-ffi (com.github.jnr:jnr-ffi:2.2.11 - http://github.com/jnr/jnr-ffi)
+        * JSpecify annotations (org.jspecify:jspecify:1.0.0 - http://jspecify.org/)
+        * Kotlin Stdlib (org.jetbrains.kotlin:kotlin-stdlib:1.9.25 - https://kotlinlang.org/)
+        * Log4j API to SLF4J Adapter (org.apache.logging.log4j:log4j-to-slf4j:2.24.3 - https://logging.apache.org/log4j/2.x/log4j/log4j-to-slf4j/)
+        * LZ4 and xxHash (net.jpountz.lz4:lz4:1.3.0 - https://github.com/jpountz/lz4-java)
+        * mapdb (org.mapdb:mapdb:3.1.0 - http://www.mapdb.org)
+        * MAT File Library / Core (us.hebi.matlab.mat:mfl-core:0.5.15 - https://github.com/HebiRobotics/MFL/mfl-core)
+        * MAT File Library / EJML (us.hebi.matlab.mat:mfl-ejml:0.5.15 - https://github.com/HebiRobotics/MFL/mfl-ejml)
+        * Metrics Core (io.dropwizard.metrics:metrics-core:4.1.18 - https://metrics.dropwizard.io/metrics-core)
+        * micrometer-commons (io.micrometer:micrometer-commons:1.14.11 - https://github.com/micrometer-metrics/micrometer)
+        * micrometer-commons (io.micrometer:micrometer-commons:1.15.4 - https://github.com/micrometer-metrics/micrometer)
+        * micrometer-observation (io.micrometer:micrometer-observation:1.14.11 - https://github.com/micrometer-metrics/micrometer)
+        * micrometer-observation (io.micrometer:micrometer-observation:1.15.4 - https://github.com/micrometer-metrics/micrometer)
+        * Netty/Buffer (io.netty:netty-buffer:4.1.94.Final - https://netty.io/netty-buffer/)
+        * Netty/Codec (io.netty:netty-codec:4.1.94.Final - https://netty.io/netty-codec/)
+        * Netty/Common (io.netty:netty-common:4.1.94.Final - https://netty.io/netty-common/)
+        * Netty/Handler (io.netty:netty-handler:4.1.94.Final - https://netty.io/netty-handler/)
+        * Netty/Resolver (io.netty:netty-resolver:4.1.94.Final - https://netty.io/netty-resolver/)
+        * Netty/Transport/Native/Unix/Common (io.netty:netty-transport-native-unix-common:4.1.94.Final - https://netty.io/netty-transport-native-unix-common/)
+        * Netty/Transport (io.netty:netty-transport:4.1.94.Final - https://netty.io/netty-transport/)
+        * RESTEasy Client (org.jboss.resteasy:resteasy-client:7.0.0.Final - https://resteasy.dev)
+        * RESTEasy Client API (org.jboss.resteasy:resteasy-client-api:7.0.0.Final - https://resteasy.dev)
+        * RESTEasy Core (org.jboss.resteasy:resteasy-core:7.0.0.Final - https://resteasy.dev)
+        * RESTEasy Core SPI (org.jboss.resteasy:resteasy-core-spi:7.0.0.Final - https://resteasy.dev)
+        * SIROCCO ::  Text Table Formatter (org.ow2.sirocco:sirocco-text-table-formatter:1.0 - http://www.ow2.org/sirocco-text-table-formatter)
+        * SnakeYAML (org.yaml:snakeyaml:2.3 - https://bitbucket.org/snakeyaml/snakeyaml)
+        * SnakeYAML (org.yaml:snakeyaml:2.4 - https://bitbucket.org/snakeyaml/snakeyaml)
+        * Spring AOP (org.springframework:spring-aop:6.2.11 - https://github.com/spring-projects/spring-framework)
+        * Spring Beans (org.springframework:spring-beans:6.2.11 - https://github.com/spring-projects/spring-framework)
+        * spring-boot (org.springframework.boot:spring-boot:3.5.6 - https://spring.io/projects/spring-boot)
+        * spring-boot-autoconfigure (org.springframework.boot:spring-boot-autoconfigure:3.5.6 - https://spring.io/projects/spring-boot)
+        * spring-boot-starter (org.springframework.boot:spring-boot-starter:3.5.6 - https://spring.io/projects/spring-boot)
+        * spring-boot-starter-json (org.springframework.boot:spring-boot-starter-json:3.5.6 - https://spring.io/projects/spring-boot)
+        * spring-boot-starter-logging (org.springframework.boot:spring-boot-starter-logging:3.5.6 - https://spring.io/projects/spring-boot)
+        * spring-boot-starter-tomcat (org.springframework.boot:spring-boot-starter-tomcat:3.5.6 - https://spring.io/projects/spring-boot)
+        * spring-boot-starter-web (org.springframework.boot:spring-boot-starter-web:3.5.6 - https://spring.io/projects/spring-boot)
+        * spring-boot-starter-websocket (org.springframework.boot:spring-boot-starter-websocket:3.5.6 - https://spring.io/projects/spring-boot)
+        * Spring Commons Logging Bridge (org.springframework:spring-jcl:6.2.11 - https://github.com/spring-projects/spring-framework)
+        * Spring Context (org.springframework:spring-context:6.2.11 - https://github.com/spring-projects/spring-framework)
+        * Spring Core (org.springframework:spring-core:6.2.11 - https://github.com/spring-projects/spring-framework)
+        * Spring Expression Language (SpEL) (org.springframework:spring-expression:6.2.11 - https://github.com/spring-projects/spring-framework)
+        * Spring Messaging (org.springframework:spring-messaging:6.2.11 - https://github.com/spring-projects/spring-framework)
+        * Spring Web (org.springframework:spring-web:6.2.11 - https://github.com/spring-projects/spring-framework)
+        * Spring Web MVC (org.springframework:spring-webmvc:6.2.11 - https://github.com/spring-projects/spring-framework)
+        * Spring WebSocket (org.springframework:spring-websocket:6.2.11 - https://github.com/spring-projects/spring-framework)
+        * swagger-annotations (io.swagger.core.v3:swagger-annotations:2.2.39 - https://github.com/swagger-api/swagger-core/modules/swagger-annotations)
+        * swagger-annotations-jakarta (io.swagger.core.v3:swagger-annotations-jakarta:2.2.39 - https://github.com/swagger-api/swagger-core/modules/swagger-annotations-jakarta)
+        * swagger-core-jakarta (io.swagger.core.v3:swagger-core-jakarta:2.2.39 - https://github.com/swagger-api/swagger-core/modules/swagger-core-jakarta)
+        * swagger-integration-jakarta (io.swagger.core.v3:swagger-integration-jakarta:2.2.39 - https://github.com/swagger-api/swagger-core/modules/swagger-integration-jakarta)
+        * swagger-jaxrs2-jakarta (io.swagger.core.v3:swagger-jaxrs2-jakarta:2.2.39 - https://github.com/swagger-api/swagger-core/modules/swagger-jaxrs2-jakarta)
+        * swagger-models-jakarta (io.swagger.core.v3:swagger-models-jakarta:2.2.39 - https://github.com/swagger-api/swagger-core/modules/swagger-models-jakarta)
+        * tomcat-embed-core (org.apache.tomcat.embed:tomcat-embed-core:10.1.46 - https://tomcat.apache.org/)
+        * tomcat-embed-el (org.apache.tomcat.embed:tomcat-embed-el:10.1.46 - https://tomcat.apache.org/)
+        * tomcat-embed-websocket (org.apache.tomcat.embed:tomcat-embed-websocket:10.1.46 - https://tomcat.apache.org/)
+        * univocity-parsers (com.univocity:univocity-parsers:2.9.0 - http://github.com/univocity/univocity-parsers)
+
+    Apache License, Version 2.0, GNU Lesser General Public License v2.1, Mozilla Public License Version 1.1
+
+        * Javassist (org.javassist:javassist:3.30.2-GA - https://www.javassist.org/)
+
+    BSD 0-clause License
+
+        * XZ for Java (org.tukaani:xz:1.10 - https://tukaani.org/xz/java.html)
+
+    BSD 2-clause License
+
+        * Native Library Loader (org.scijava:native-lib-loader:2.5.0 - https://github.com/scijava/native-lib-loader)
+        * StAX Utilities Project (net.java.dev.stax-utils:stax-utils:20070216 - http://java.net/projects/stax-utils/)
+        * zstd-jni (com.github.luben:zstd-jni:1.5.7-3 - https://github.com/luben/zstd-jni)
+
+    BSD 2-clause License, CC0 1.0 Universal
+
+        * HdrHistogram (org.hdrhistogram:HdrHistogram:2.1.12 - http://hdrhistogram.github.io/HdrHistogram/)
+
+    BSD 3-clause License
+
+        * ANTLR 3 Runtime (org.antlr:antlr-runtime:3.5.3 - http://www.antlr.org)
+        * asm (org.ow2.asm:asm:9.2 - http://asm.ow2.io/)
+        * asm-analysis (org.ow2.asm:asm-analysis:9.2 - http://asm.ow2.io/)
+        * asm-commons (org.ow2.asm:asm-commons:9.2 - http://asm.ow2.io/)
+        * asm-tree (org.ow2.asm:asm-tree:9.2 - http://asm.ow2.io/)
+        * asm-util (org.ow2.asm:asm-util:9.2 - http://asm.ow2.io/)
+        * Java Encoder (org.owasp.encoder:encoder:1.3.1 - https://www.owasp.org/index.php/OWASP_Java_Encoder_Project/encoder)
+        * StringTemplate 4 (org.antlr:ST4:4.3.4 - http://nexus.sonatype.org/oss-repository-hosting.html/ST4)
+        * ThreeTen-Extra (org.threeten:threeten-extra:1.8.0 - https://www.threeten.org/threeten-extra)
+
+    CC0 1.0 Universal
+
+        * reactive-streams (org.reactivestreams:reactive-streams:1.0.3 - http://www.reactive-streams.org/)
+
+    Creative Commons Attribution 2.5 Generic License
+
+        * "Java Concurrency in Practice" book annotations (net.jcip:jcip-annotations:1.0 - http://jcip.net/)
+
+    Eclipse Distribution License - v 1.0
+
+        * Angus Activation Registries (org.eclipse.angus:angus-activation:2.0.3 - https://github.com/eclipse-ee4j/angus-activation/angus-activation)
+        * Jakarta Activation (com.sun.activation:jakarta.activation:2.0.1 - https://github.com/eclipse-ee4j/jaf/jakarta.activation)
+        * Jakarta Activation API (jakarta.activation:jakarta.activation-api:2.1.3 - https://github.com/jakartaee/jaf-api)
+        * Jakarta Activation API (jakarta.activation:jakarta.activation-api:2.1.4 - https://github.com/jakartaee/jaf-api)
+        * Jakarta XML Binding API (jakarta.xml.bind:jakarta.xml.bind-api:3.0.1 - https://github.com/eclipse-ee4j/jaxb-api/jakarta.xml.bind-api)
+        * Jakarta XML Binding API (jakarta.xml.bind:jakarta.xml.bind-api:4.0.2 - https://github.com/jakartaee/jaxb-api/jakarta.xml.bind-api)
+
+    Eclipse Distribution License - v 1.0, Eclipse Public License - v 1.0
+
+        * Eclipse Collections API (org.eclipse.collections:eclipse-collections-api:13.0.0 - https://github.com/eclipse/eclipse-collections/eclipse-collections-api)
+        * Eclipse Collections Fork Join Utilities (org.eclipse.collections:eclipse-collections-forkjoin:13.0.0 - https://github.com/eclipse/eclipse-collections/eclipse-collections-forkjoin)
+        * Eclipse Collections Main Library (org.eclipse.collections:eclipse-collections:13.0.0 - https://github.com/eclipse/eclipse-collections/eclipse-collections)
+
+    Eclipse Public License 2.0, GNU General Public License v2.0 with Classpath exception
+
+        * Tyrus Client (org.glassfish.tyrus:tyrus-client:2.2.0 - https://projects.eclipse.org/projects/ee4j.tyrus/tyrus-client)
+        * Tyrus Container SPI (org.glassfish.tyrus:tyrus-spi:2.2.0 - https://projects.eclipse.org/projects/ee4j.tyrus/tyrus-spi)
+        * Tyrus Core (org.glassfish.tyrus:tyrus-core:2.2.0 - https://projects.eclipse.org/projects/ee4j.tyrus/tyrus-core)
+        * Tyrus JDK Client Container (org.glassfish.tyrus:tyrus-container-jdk-client:2.2.0 - https://projects.eclipse.org/projects/ee4j.tyrus/tyrus-containers-project/tyrus-container-jdk-client)
+
+    Eclipse Public License - v 1.0, GNU Lesser General Public License v2.1
+
+        * Logback Classic Module (ch.qos.logback:logback-classic:1.5.18 - http://logback.qos.ch/logback-classic)
+        * Logback Core Module (ch.qos.logback:logback-core:1.5.18 - http://logback.qos.ch/logback-core)
+
+    Eclipse Public License - v 2.0, GNU General Public License v2.0, GNU Lesser General Public License v2.1
+
+        * jnr-posix (com.github.jnr:jnr-posix:3.1.15 - http://nexus.sonatype.org/oss-repository-hosting.html/jnr-posix)
+
+    Eclipse Public License - v 2.0, GNU General Public License v2.0 with Classpath exception
+
+        * Jakarta Annotations API (jakarta.annotation:jakarta.annotation-api:2.1.1 - https://projects.eclipse.org/projects/ee4j.ca)
+        * Jakarta RESTful WS API (jakarta.ws.rs:jakarta.ws.rs-api:4.0.0 - https://github.com/jakartaee/rest/jakarta.ws.rs-api)
+        * Jakarta WebSocket - Client API (jakarta.websocket:jakarta.websocket-client-api:2.2.0 - https://projects.eclipse.org/projects/ee4j.websocket)
+        * Jakarta WebSocket - Server API (jakarta.websocket:jakarta.websocket-api:2.2.0 - https://projects.eclipse.org/projects/ee4j.websocket)
+
+    Eclipse Public License - v 2.0, GNU Lesser General Public License v2.1
+
+        * JGraphT - Core (org.jgrapht:jgrapht-core:1.5.2 - http://www.jgrapht.org/jgrapht-core)
+
+    GNU Lesser General Public License v2.1
+
+        * FindBugs-Annotations (com.google.code.findbugs:annotations:3.0.1 - http://findbugs.sourceforge.net/)
+        * GNU Trove (net.sf.trove4j:trove4j:3.0.3 - http://trove4j.sf.net)
+
+    Go License
+
+        * RE2/J (com.google.re2j:re2j:1.8 - http://github.com/google/re2j)
+
+    MIT License
+
+        * apfloat (org.apfloat:apfloat:1.10.1 - http://www.apfloat.org)
+        * ClassGraph (io.github.classgraph:classgraph:4.8.181 - https://github.com/classgraph/classgraph)
+        * jnr-x86asm (com.github.jnr:jnr-x86asm:1.0.2 - http://github.com/jnr/jnr-x86asm)
+        * JUL to SLF4J bridge (org.slf4j:jul-to-slf4j:2.0.17 - http://www.slf4j.org)
+        * SLF4J API Module (org.slf4j:slf4j-api:2.0.17 - http://www.slf4j.org)
+
+    MIT No Attribution License
+
+        * reactive-streams (org.reactivestreams:reactive-streams:1.0.4 - http://www.reactive-streams.org/)
+
+    Public Domain
+
+        * JAMA (gov.nist.math:jama:1.0.3 - http://math.nist.gov/javanumerics/jama/)
