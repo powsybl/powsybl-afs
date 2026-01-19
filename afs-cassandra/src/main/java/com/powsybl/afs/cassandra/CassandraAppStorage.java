@@ -766,6 +766,9 @@ public class CassandraAppStorage extends AbstractAppStorage {
         UUID nodeUuid = checkNodeId(nodeId);
         UUID newParentNodeUuid = checkNodeId(newParentNodeId);
 
+        // TODO - remove this test
+        LOGGER.info("TODO - remove this test");
+
         // flush buffer to keep change order
         changeBuffer.flush();
 
