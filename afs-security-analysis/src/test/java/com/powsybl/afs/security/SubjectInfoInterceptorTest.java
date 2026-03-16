@@ -6,13 +6,13 @@
  */
 package com.powsybl.afs.security;
 
+import com.powsybl.contingency.violations.LimitViolation;
+import com.powsybl.contingency.violations.LimitViolationType;
 import com.powsybl.iidm.network.Country;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.TwoSides;
 import com.powsybl.iidm.network.test.EurostagTutorialExample1Factory;
 import com.powsybl.loadflow.LoadFlowResult;
-import com.powsybl.security.LimitViolation;
-import com.powsybl.security.LimitViolationType;
 import com.powsybl.security.LimitViolationsResult;
 import com.powsybl.security.interceptors.DefaultSecurityAnalysisResultContext;
 import com.powsybl.security.results.PreContingencyResult;

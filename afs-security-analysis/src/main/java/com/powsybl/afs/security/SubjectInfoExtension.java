@@ -7,8 +7,8 @@
 package com.powsybl.afs.security;
 
 import com.powsybl.commons.extensions.AbstractExtension;
+import com.powsybl.contingency.violations.LimitViolation;
 import com.powsybl.iidm.network.Country;
-import com.powsybl.security.LimitViolation;
 
 import java.util.Collections;
 import java.util.Objects;
