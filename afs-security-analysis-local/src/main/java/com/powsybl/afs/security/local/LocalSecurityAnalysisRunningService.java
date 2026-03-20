@@ -14,8 +14,12 @@ import com.powsybl.afs.security.SecurityAnalysisRunningService;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.contingency.ContingenciesProvider;
 import com.powsybl.contingency.EmptyContingencyListProvider;
+import com.powsybl.contingency.violations.LimitViolationFilter;
 import com.powsybl.iidm.network.Network;
-import com.powsybl.security.*;
+import com.powsybl.security.SecurityAnalysis;
+import com.powsybl.security.SecurityAnalysisParameters;
+import com.powsybl.security.SecurityAnalysisReport;
+import com.powsybl.security.SecurityAnalysisRunParameters;
 import com.powsybl.security.interceptors.SecurityAnalysisInterceptor;
 import com.powsybl.security.interceptors.SecurityAnalysisInterceptors;
 
