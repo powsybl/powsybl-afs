@@ -6,8 +6,8 @@
  */
 package com.powsybl.afs.security;
 
+import com.powsybl.contingency.violations.LimitViolation;
 import com.powsybl.iidm.network.*;
-import com.powsybl.security.LimitViolation;
 import com.powsybl.security.LimitViolationsResult;
 import com.powsybl.security.interceptors.DefaultSecurityAnalysisInterceptor;
 import com.powsybl.security.interceptors.SecurityAnalysisResultContext;
