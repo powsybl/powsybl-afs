@@ -65,7 +65,7 @@ The `--zip` command create a zipped archive file.
 ### Required parameters
 
 **dir**  
-The `--dir` defines the path the folder the `archive` or `unarchive` commands will used to save or load the archive.
+The `--dir` defines the path the folder the `archive` or `unarchive` commands will use to save or load the archive.
 
 ## Examples
 This example shows how to list the content of an AFS root folder:
@@ -80,7 +80,7 @@ $> itools afs --ls "my-first-fs:/my-first-folder"
 my-first-project
 ```
 
-This example shows how to backup an AFS node to a directory:
+This example shows how to back up an AFS node to a directory:
 ```
 $> itools afs --archive my-first-fs --dir /tmp
 ```
