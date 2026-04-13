@@ -19,7 +19,7 @@ jobs:
 
     steps:
       - name: Set up JDK 21
-        uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # v5.0.0
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
           distribution: 'temurin'
           java-version: '21'
@@ -35,7 +35,7 @@ jobs:
 
       # Build powsybl-core on main branch
       - name: Checkout core sources
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: powsybl/powsybl-core
           ref: main
@@ -53,7 +53,7 @@ jobs:
       # The script check_snapshot_branch.sh is located in the workflow folder of the repository
       # It is necessary for checking out the integration branch if it exists
       - name: Checkout script
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
          sparse-checkout: |
            .github
@@ -65,7 +65,7 @@ jobs:
         run: ${{ env.SCRIPTS_PATH }}/check_snapshot_branch.sh "https://github.com/powsybl/powsybl-afs.git" ${{ env.CORE_VERSION }}
 
       - name: Checkout powsybl-afs
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: powsybl/powsybl-afs
           ref: ${{ env.SNAPSHOT_BRANCH }}
@@ -94,7 +94,7 @@ jobs:
 
       - name: Upload job result
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # 4.6.2
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # 7.0.0
         with:
           name: job-results_${{ matrix.os }}
           path: job_result_${{ matrix.os }}.txt
@@ -110,7 +110,7 @@ jobs:
     if: always()
     steps:
       - name: Download job results
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
 
       - name: Combine job results
         run: |
@@ -189,13 +189,10 @@ jobs:
             echo 'EOF' >> $GITHUB_OUTPUT
           fi
 
-
       - name: Send Slack Notification
-        uses: 8398a7/action-slack@1750b5085f3ec60384090fb7c52965ef822e869e # v3.18.0
+        uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
         if: ${{ steps.workflow_status.outputs.status != 'Successful' || github.event_name == 'workflow_dispatch' }}
         with:
-          author_name: 'powsybl-afs on GitHub'
-          status: custom
-          custom_payload: ${{ steps.prepare_payload.outputs.payload }}
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_POWSYBL_WEBHOOK_URL }}
+          webhook: ${{ secrets.SLACK_POWSYBL_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: ${{ steps.prepare_payload.outputs.payload }}
