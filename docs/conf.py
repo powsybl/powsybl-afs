@@ -20,7 +20,6 @@ source_path = os.path.abspath('..')
 sys.path.insert(0, source_path)
 print(f'appended {source_path}')
 
-
 # -- Project information -----------------------------------------------------
 
 project = 'PowSyBl AFS'
@@ -28,7 +27,7 @@ github_repository = "https://github.com/powsybl/powsybl-afs/"
 copyright_year = f'2018-{ datetime.datetime.now().year }'
 
 # Find the version and release information.
-# We have a single source of truth for our version number: pip's __init__.py file.
+# We have a single source of truth for our version number: our pom.xml file.
 # This next bit of code reads from it.
 file_with_version = os.path.join(source_path, "pom.xml")
 with open(file_with_version) as f:
@@ -52,7 +51,6 @@ with open(file_with_version) as f:
 
 # Short project name
 short_project = project.split(" ", 1)[1] if project.split(" ", 1)[0] == "PowSyBl" else project
-
 
 # -- General configuration ---------------------------------------------------
 
@@ -85,7 +83,7 @@ templates_path = ['_templates']
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'README.md']
 
 # Reference sections generation
 autosectionlabel_prefix_document = True
@@ -128,7 +126,7 @@ todo_include_todos = True
 
 # Links to external documentations : python 3 and pandas
 intersphinx_mapping = {
-    "powsyblcore": ("https://powsybl.readthedocs.io/projects/powsybl-core/en/latest/", None),
+    "powsyblcore": ("https://powsybl.readthedocs.io/projects/powsybl-core/en/latest/", None)
 }
 intersphinx_disabled_reftypes = ["*"]
 
@@ -138,14 +136,14 @@ autosummary_generate = True
 
 # -- Dependencies versions ---------------------------------------------------
 # This part will automatically look in the pom.xml to find versions corresponding to the dependencies whose
-# documentation is used in the present one, except if it's a SNAPSHOT version of if a specific version has been chosen
+# documentation is used in the present one, except if it's a SNAPSHOT version or if a specific version has been chosen
 # in intersphinx_mapping
 
 # Get the URL without the default version
 def extract_base_url(url):
     default_version = "latest"
 
-    m = re.match(r'(https\:\/\/.*)' + default_version + r'\/', url)
+    m = re.match(r'(^https\:\/\/.*)' + default_version + r'\/$', url)
     if m:
         return m.group(1)
 
@@ -158,9 +156,9 @@ def replace_versions(intersphinx_mapping, file):
                 dependency = m.group(1)
                 version = m.group(2)
                 if "SNAPSHOT" not in version and dependency in intersphinx_mapping:
-                    urlStart = extract_base_url(intersphinx_mapping[dependency][0])
-                    if urlStart:
-                        intersphinx_mapping[dependency] = (urlStart + version + "/", None)
+                    url_start = extract_base_url(intersphinx_mapping[dependency][0])
+                    if url_start:
+                        intersphinx_mapping[dependency] = (url_start + "v" + version + "/", None)
             if "</properties>" in line:
                 break
     return intersphinx_mapping

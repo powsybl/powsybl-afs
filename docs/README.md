@@ -25,7 +25,7 @@ intersphinx_mapping = {
 ~~~
 
 Then in your documentation file, you can add links to PowSyBl-Core documentation. If you want to link to a whole page,
-use one of the following example:
+use one of the following examples:
 ~~~Markdown
 - Let's talk about the power of {doc}`powsyblcore:simulation/loadflow/loadflow`. 
 - Let's talk about the power of {doc}`loadflow <powsyblcore:simulation/loadflow/loadflow>`.
@@ -40,7 +40,7 @@ If you want to link a specific part of a page, use one of those examples:
 - Let's talk about the power of [calculated time series](inv:powsyblcore:std:label:#calculated-timeseries).
 - Let's talk about the power of [calculated time series](inv:powsyblcore:*:*:#calculated-timeseries).
 ~~~
-*Note: for the last examples to work, there need to be a corresponding reference in the external documentation.
+*Note: for the last examples to work, there needs to be a corresponding reference in the external documentation.
 For those examples, `(timeseries)=` and `(calculated-timeseries)=` have been added right before the corresponding titles
 in the [TimeSeries page](inv:powsyblcore:std:doc#data/timeseries). Another way to make it work is to use the `autosectionlabel` module in Sphinx to
 automatically generate anchors for each title.*
