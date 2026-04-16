@@ -175,10 +175,10 @@ class ModificationScriptTest extends AbstractProjectFileTest {
         String contentWithInclude = script.readScript(true);
         assertEquals("var foo=\"bar\"\n\nprintln 'bye'", contentWithInclude);
 
-        // Include it a second time
+        // Include it a second time -> read once
         script.addScript(include1);
         contentWithInclude = script.readScript(true);
-        assertEquals("var foo=\"bar\"\n\nvar foo=\"bar\"\n\nprintln 'bye'", contentWithInclude);
+        assertEquals("var foo=\"bar\"\n\nprintln 'bye'", contentWithInclude);
 
         // Remove the first and add it one time and then the second one
         script.removeScript(include1.getId());

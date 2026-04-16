@@ -16,10 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -105,12 +102,20 @@ public abstract class AbstractScript<T extends AbstractScript> extends ProjectFi
 
     @Override
     public String readScript(boolean withIncludes) {
+        return this.readScript(withIncludes, new HashSet<>());
+    }
+
+    private String readScript(boolean withIncludes, Set<String> visited) {
+        if (!visited.add(this.info.getId())) {
+            return "";
+        }
         String ownContent = readScript();
         if (withIncludes) {
             String includesScript = orderedDependencyManager
                 .getDependencies(INCLUDED_SCRIPTS_DEPENDENCY_NAME, AbstractScript.class)
                 .stream()
-                .map(script -> script.readScript(true))
+                .map(script -> script.readScript(true, visited))
+                .filter(StringUtils::isNotBlank)
                 .collect(Collectors.joining(DEFAULT_SCRIPTS_DELIMITER));
             if (StringUtils.isNotBlank(includesScript)) {
                 includesScript += DEFAULT_SCRIPTS_DELIMITER;
