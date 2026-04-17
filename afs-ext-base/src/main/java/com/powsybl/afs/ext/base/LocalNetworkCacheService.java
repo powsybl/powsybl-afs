@@ -74,7 +74,7 @@ public class LocalNetworkCacheService implements NetworkCacheService {
     private static ScriptResult<Network> loadNetworkFromVirtualCase(VirtualCase virtualCase, List<NetworkListener> listeners, Iterable<GroovyScriptExtension> extensions, Map<Class<?>, Object> contextObjects) {
         ProjectCase baseCase = (ProjectCase) virtualCase.getCase().orElseThrow(() -> new AfsException("Case link is dead"));
 
-        ScriptResult<Network> network = loadNetworkFromProjectCase(baseCase, listeners);
+        ScriptResult<Network> network = loadNetworkFromProjectCase(baseCase, listeners, extensions, contextObjects);
 
         if (network.getError() != null) {
             return network;
@@ -85,10 +85,6 @@ public class LocalNetworkCacheService implements NetworkCacheService {
         LOGGER.info("Applying script to network of project case {}", virtualCase.getId());
 
         return applyScript(network.getValue(), network.getOutput(), script, extensions, contextObjects);
-    }
-
-    private static ScriptResult<Network> loadNetworkFromProjectCase(ProjectCase projectCase, List<NetworkListener> listeners) {
-        return loadNetworkFromProjectCase(projectCase, listeners, Collections.emptyList(), Collections.emptyMap());
     }
 
     private static ScriptResult<Network> loadNetworkFromProjectCase(ProjectCase projectCase, Iterable<GroovyScriptExtension> extensions, Map<Class<?>, Object> contextObjects) {

@@ -32,10 +32,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -366,4 +363,59 @@ class VirtualCaseTest extends AbstractProjectFileTest {
         assertEquals("log from customOut", outputAfterInvalidate);
         assertEquals("", outputAfterInvalidateNoExtension);
     }
+
+    @Test
+    void buildingVirtualCaseInVirtualCaseTest() {
+        // create groovy script
+        ModificationScript scriptHello = folder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("scriptHello")
+            .withType(ScriptType.GROOVY)
+            .withContent("customOut.write('HELLO')")
+            .build();
+        ModificationScript scriptWorld = folder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("scriptWorld")
+            .withType(ScriptType.GROOVY)
+            .withContent("customOut.write('-WORLD')")
+            .build();
+
+        // Build the child virtual case
+        VirtualCase virtualCaseChild = folder.fileBuilder(VirtualCaseBuilder.class)
+            .withName("network2")
+            .withCase(importedCase)
+            .withScript(scriptHello)
+            .build();
+
+        // Build the parent virtual case
+        VirtualCase virtualCaseParent = folder.fileBuilder(VirtualCaseBuilder.class)
+            .withName("network3")
+            .withCase(virtualCaseChild)
+            .withScript(scriptWorld)
+            .build();
+        Iterable<GroovyScriptExtension> extensions = List.of(new CustomScriptTestExtension());
+        Map<Class<?>, Object> contextObjects = Map.of();
+
+        // Global checks
+        assertEquals(1, importedCase.getBackwardDependencies().size());
+        assertEquals(1, scriptHello.getBackwardDependencies().size());
+        assertEquals(1, scriptWorld.getBackwardDependencies().size());
+
+        // Checks on the child virtual case
+        assertEquals("network2", virtualCaseChild.getName());
+        assertTrue(virtualCaseChild.getCase().isPresent());
+        assertTrue(virtualCaseChild.getScript().isPresent());
+        assertEquals(2, virtualCaseChild.getDependencies().size());
+        assertNotNull(virtualCaseChild.getNetwork(extensions, contextObjects));
+        assertFalse(virtualCaseChild.mandatoryDependenciesAreMissing());
+        assertEquals("HELLO", virtualCaseChild.getOutput());
+
+        // Checks on the parent virtual case
+        assertEquals("network3", virtualCaseParent.getName());
+        assertTrue(virtualCaseParent.getCase().isPresent());
+        assertTrue(virtualCaseParent.getScript().isPresent());
+        assertEquals(2, virtualCaseParent.getDependencies().size());
+        assertNotNull(virtualCaseParent.getNetwork(extensions, contextObjects));
+        assertFalse(virtualCaseParent.mandatoryDependenciesAreMissing());
+        assertEquals("HELLO-WORLD", virtualCaseParent.getOutput());
+    }
+
 }
