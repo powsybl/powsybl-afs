@@ -378,17 +378,17 @@ class VirtualCaseTest extends AbstractProjectFileTest {
             .withContent("customOut.write('-WORLD')")
             .build();
 
-        // Build the child virtual case
-        VirtualCase virtualCaseChild = folder.fileBuilder(VirtualCaseBuilder.class)
+        // Build the parent virtual case
+        VirtualCase virtualCaseParent = folder.fileBuilder(VirtualCaseBuilder.class)
             .withName("network2")
             .withCase(importedCase)
             .withScript(scriptHello)
             .build();
 
-        // Build the parent virtual case
-        VirtualCase virtualCaseParent = folder.fileBuilder(VirtualCaseBuilder.class)
+        // Build the child virtual case
+        VirtualCase virtualCaseChild = folder.fileBuilder(VirtualCaseBuilder.class)
             .withName("network3")
-            .withCase(virtualCaseChild)
+            .withCase(virtualCaseParent)
             .withScript(scriptWorld)
             .build();
         Iterable<GroovyScriptExtension> extensions = List.of(new CustomScriptTestExtension());
@@ -399,23 +399,23 @@ class VirtualCaseTest extends AbstractProjectFileTest {
         assertEquals(1, scriptHello.getBackwardDependencies().size());
         assertEquals(1, scriptWorld.getBackwardDependencies().size());
 
-        // Checks on the child virtual case
-        assertEquals("network2", virtualCaseChild.getName());
-        assertTrue(virtualCaseChild.getCase().isPresent());
-        assertTrue(virtualCaseChild.getScript().isPresent());
-        assertEquals(2, virtualCaseChild.getDependencies().size());
-        assertNotNull(virtualCaseChild.getNetwork(extensions, contextObjects));
-        assertFalse(virtualCaseChild.mandatoryDependenciesAreMissing());
-        assertEquals("HELLO", virtualCaseChild.getOutput());
-
         // Checks on the parent virtual case
-        assertEquals("network3", virtualCaseParent.getName());
+        assertEquals("network2", virtualCaseParent.getName());
         assertTrue(virtualCaseParent.getCase().isPresent());
         assertTrue(virtualCaseParent.getScript().isPresent());
         assertEquals(2, virtualCaseParent.getDependencies().size());
         assertNotNull(virtualCaseParent.getNetwork(extensions, contextObjects));
         assertFalse(virtualCaseParent.mandatoryDependenciesAreMissing());
-        assertEquals("HELLO-WORLD", virtualCaseParent.getOutput());
+        assertEquals("HELLO", virtualCaseParent.getOutput());
+
+        // Checks on the child virtual case
+        assertEquals("network3", virtualCaseChild.getName());
+        assertTrue(virtualCaseChild.getCase().isPresent());
+        assertTrue(virtualCaseChild.getScript().isPresent());
+        assertEquals(2, virtualCaseChild.getDependencies().size());
+        assertNotNull(virtualCaseChild.getNetwork(extensions, contextObjects));
+        assertFalse(virtualCaseChild.mandatoryDependenciesAreMissing());
+        assertEquals("HELLO-WORLD", virtualCaseChild.getOutput());
     }
 
 }
