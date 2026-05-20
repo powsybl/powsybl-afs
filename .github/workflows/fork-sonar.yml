@@ -17,47 +17,20 @@ jobs:
       github.event.workflow_run.conclusion == 'success'
     permissions:
       actions: write
-      checks: write
       contents: read
-      issues: read
       pull-requests: write
-      statuses: write
     steps:
       - name: Download PR information
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          script: |
-            let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
-               owner: context.repo.owner,
-               repo: context.repo.repo,
-               run_id: context.payload.workflow_run.id,
-            });
-            let prInfoArtifact = allArtifacts.data.artifacts.filter((artifact) => {
-              return artifact.name.startsWith("pr-info-")
-            })[0];
-            if (!prInfoArtifact) {
-              core.setFailed("❌ No PR info artifact found");
-              return;
-            }
-            let download = await github.rest.actions.downloadArtifact({
-               owner: context.repo.owner,
-               repo: context.repo.repo,
-               artifact_id: prInfoArtifact.id,
-               archive_format: 'zip',
-            });
-            const fs = require('fs');
-            const path = require('path');
-            const temp = '${{ runner.temp }}/pr-info';
-            if (!fs.existsSync(temp)){
-              fs.mkdirSync(temp, { recursive: true });
-            }
-            fs.writeFileSync(path.join(temp, 'pr-info.zip'), Buffer.from(download.data));
-            console.log("PR information downloaded");
+          pattern: pr-info-*
+          path: ${{ runner.temp }}/pr-info-extracted
+          merge-multiple: true
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract PR Information
         run: |
-          mkdir -p ${{ runner.temp }}/pr-info-extracted
-          unzip -q ${{ runner.temp }}/pr-info/pr-info.zip -d ${{ runner.temp }}/pr-info-extracted
           REPO_NAME=$(cat ${{ runner.temp }}/pr-info-extracted/repo-name)
           HEAD_REF=$(cat ${{ runner.temp }}/pr-info-extracted/head-ref)
           HEAD_SHA=$(cat ${{ runner.temp }}/pr-info-extracted/head-sha)
@@ -73,9 +46,17 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: ${{ env.HEAD_REF }}
+          ref: ${{ env.HEAD_SHA }}
           repository: ${{ env.REPO_NAME }}
           fetch-depth: 0
+
+      - name: Fetch base branch from target repository
+        run: |
+          git remote add upstream https://github.com/${{ github.repository }}.git
+          git fetch upstream ${{ env.BASE_REF }}
+          git branch ${{ env.BASE_REF }} refs/remotes/upstream/${{ env.BASE_REF }}
+          FORK_OWNER=$(echo "${{ env.REPO_NAME }}" | cut -d'/' -f1)
+          echo "SONAR_PR_BRANCH=${FORK_OWNER}:${{ env.HEAD_REF }}" >> $GITHUB_ENV
 
       - name: Set up JDK 21
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
@@ -84,45 +65,13 @@ jobs:
           java-version: '21'
           cache: 'maven'
 
-      - name: Download artifact
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+      - name: Download Sonar analysis data
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          script: |
-            let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
-               owner: context.repo.owner,
-               repo: context.repo.repo,
-               run_id: context.payload.workflow_run.id,
-            });
-            let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
-              return artifact.name.startsWith("data-for-sonar-analysis-")
-            })[0];
-            if (!matchArtifact) {
-              core.setFailed("❌ No matching artifact found");
-              return;
-            }
-            const prNumber = matchArtifact.name.replace("data-for-sonar-analysis-", "");
-            console.log(`PR number: ${prNumber}`);
-            core.exportVariable('PR_NUMBER', prNumber);
-            let download = await github.rest.actions.downloadArtifact({
-               owner: context.repo.owner,
-               repo: context.repo.repo,
-               artifact_id: matchArtifact.id,
-               archive_format: 'zip',
-            });
-            const fs = require('fs');
-            const path = require('path');
-            const temp = '${{ runner.temp }}/artifacts';
-            if (!fs.existsSync(temp)){
-              fs.mkdirSync(temp);
-            }
-            fs.writeFileSync(path.join(temp, 'sonar-data.zip'), Buffer.from(download.data));
-
-      - name: Extract Sonar Analysis Data
-        run: |
-          mkdir -p ${{ runner.temp }}/extracted
-          unzip -q ${{ runner.temp }}/artifacts/sonar-data.zip -d ${{ runner.temp }}/extracted
-          cp -r ${{ runner.temp }}/extracted/* .
-          ls -la afs-distribution/target/site/jacoco-aggregate/ || echo "Jacoco report directory not found"
+          pattern: data-for-sonar-analysis-*
+          merge-multiple: true
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Prepare Sonar Analysis
         run: |
@@ -188,7 +137,7 @@ jobs:
             "-Dsonar.java.test.libraries=${{ env.LIBRARIES }}"
             "-Dsonar.coverage.jacoco.xmlReportPaths=afs-distribution/target/site/jacoco-aggregate/jacoco.xml"
             "-Dsonar.pullrequest.key=${{ env.PR_NUMBER }}"
-            "-Dsonar.pullrequest.branch=${{ env.HEAD_REF }}"
+            "-Dsonar.pullrequest.branch=${{ env.SONAR_PR_BRANCH }}"
             "-Dsonar.pullrequest.base=${{ env.BASE_REF }}"
             -Dsonar.pullrequest.provider=github
             -Dsonar.pullrequest.github.repository=${{ github.repository }}
