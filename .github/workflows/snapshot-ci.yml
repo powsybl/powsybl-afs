@@ -5,10 +5,14 @@ on:
   schedule:
     - cron: '20 3 * * *'
 
+permissions: {}
+
 jobs:
   build_powsybl_afs:
     name: Build Java ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
@@ -26,12 +30,15 @@ jobs:
 
       # Define script path variable
       - name: Set up script path
+        id: script_path_setup
+        env:
+          MATRIX_OS: ${{ matrix.os }}
         run: |
           SCRIPTS_PATH="${GITHUB_WORKSPACE}/scripts/.github/workflows/scripts"
-          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+          if [[ "$MATRIX_OS" == "windows-latest" ]]; then
             SCRIPTS_PATH=$(echo "$SCRIPTS_PATH" | sed 's/\\/\//g')
           fi
-          echo "SCRIPTS_PATH=$SCRIPTS_PATH" >> $GITHUB_ENV  
+          echo "SCRIPTS_PATH=$SCRIPTS_PATH" >> $GITHUB_OUTPUT  
 
       # Build powsybl-core on main branch
       - name: Checkout core sources
@@ -40,13 +47,15 @@ jobs:
           repository: powsybl/powsybl-core
           ref: main
           path: powsybl-core
+          persist-credentials: false
 
       - name: Build powsybl-core
         run: mvn -batch-mode --no-transfer-progress clean install -DskipTests
         working-directory: ./powsybl-core
 
       - name: Get powsybl-core version
-        run: echo "CORE_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
+        id: get_core_version
+        run: echo "CORE_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_OUTPUT
         working-directory: ./powsybl-core
 
       # Checkout script
@@ -59,10 +68,14 @@ jobs:
            .github
          sparse-checkout-cone-mode: false
          path: scripts
+         persist-credentials: false
 
       # Build powsybl-afs
       - name: Checking for powsybl-afs snapshot branch
-        run: ${{ env.SCRIPTS_PATH }}/check_snapshot_branch.sh "https://github.com/powsybl/powsybl-afs.git" ${{ env.CORE_VERSION }}
+        env:
+          SCRIPTS_PATH: ${{ steps.script_path_setup.outputs.SCRIPTS_PATH }}
+          CORE_VERSION: ${{ steps.get_core_version.outputs.CORE_VERSION }}
+        run: $SCRIPTS_PATH/check_snapshot_branch.sh "https://github.com/powsybl/powsybl-afs.git" $CORE_VERSION
 
       - name: Checkout powsybl-afs
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -71,8 +84,11 @@ jobs:
           ref: ${{ env.SNAPSHOT_BRANCH }}
           path: powsybl-afs
           submodules: true
+          persist-credentials: false
 
       - name: update pom.xml
+        env:
+          CORE_VERSION: ${{ steps.get_core_version.outputs.CORE_VERSION }}
         run: mvn versions:set-property -Dproperty=powsyblcore.version -DnewVersion=$CORE_VERSION -DgenerateBackupPoms=false
         working-directory: ./powsybl-afs
 
@@ -84,13 +100,16 @@ jobs:
       - name: Build with Maven (Windows)
         if: matrix.os == 'windows-latest'
         working-directory: .\powsybl-afs
-        run: mvnw.cmd --batch-mode install
-        shell: cmd
+        run: ./mvnw.cmd --batch-mode install
+        shell: pwsh
 
       - name: Store job result
         if: always()
+        env:
+          MATRIX_OS: ${{ matrix.os }}
+          JOB_STATUS: ${{ job.status }}
         run: |
-          echo "${{ matrix.os }}=${{ job.status }}" >> job_result_${{ matrix.os }}.txt
+          echo "$MATRIX_OS=$JOB_STATUS" >> "job_result_$MATRIX_OS.txt"
 
       - name: Upload job result
         if: always()
@@ -100,7 +119,7 @@ jobs:
           path: job_result_${{ matrix.os }}.txt
 
     outputs:
-      core-version: ${{ env.CORE_VERSION }}
+      core-version: ${{ steps.get_core_version.outputs.CORE_VERSION }}
       afs-branch: ${{ env.SNAPSHOT_BRANCH }}
 
   # Slack notification
@@ -142,8 +161,16 @@ jobs:
 
       - name: Prepare Slack payload
         id: prepare_payload
+        env:
+          WORKFLOW_STATUS: ${{ steps.workflow_status.outputs.status }}
+          WORKFLOW_ICON: ${{ steps.workflow_status.outputs.icon }}
+          AFS_BRANCH: ${{ needs.build_powsybl_afs.outputs.afs-branch }}
+          CORE_VERSION: ${{ needs.build_powsybl_afs.outputs.core-version }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          FORMATTED_RESULTS: ${{ steps.format_results.outputs.formatted_results }}
         run: |
-          if [ "${{ steps.workflow_status.outputs.status }}" == "Successful" ]; then
+          if [ "$WORKFLOW_STATUS" == "Successful" ]; then
             echo 'payload<<EOF' >> $GITHUB_OUTPUT
             echo '{
               "attachments": [{
@@ -153,7 +180,7 @@ jobs:
                     "type": "section",
                     "text": {
                       "type": "mrkdwn",
-                      "text": "${{ steps.workflow_status.outputs.icon }} *${{ steps.workflow_status.outputs.status }} workflow: Snapshot-CI on <https://github.com/powsybl/powsybl-afs|powsybl-afs>*\n\nBranch built: ${{ needs.build_powsybl_afs.outputs.afs-branch }}\nPowSyBl-Core version used: ${{ needs.build_powsybl_afs.outputs.core-version }}\n\nSee logs on <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|GitHub>"
+                      "text": "'"$WORKFLOW_ICON"' *'"$WORKFLOW_STATUS"' workflow: Snapshot-CI on <https://github.com/powsybl/powsybl-afs|powsybl-afs>*\n\nBranch built: '"$AFS_BRANCH"'\nPowSyBl-Core version used: '"$CORE_VERSION"'\n\nSee logs on <https://github.com/'"$GITHUB_REPOSITORY"'/actions/runs/'"$GITHUB_RUN_ID"'|GitHub>"
                     }
                   }
                 ]
@@ -170,7 +197,7 @@ jobs:
                     "type": "section",
                     "text": {
                       "type": "mrkdwn",
-                      "text": "${{ steps.workflow_status.outputs.icon }} *${{ steps.workflow_status.outputs.status }} workflow: Snapshot-CI on <https://github.com/powsybl/powsybl-afs|powsybl-afs>*\n\nBranch built: ${{ needs.build_powsybl_afs.outputs.afs-branch }}\nPowSyBl-Core version used: ${{ needs.build_powsybl_afs.outputs.core-version }}"
+                      "text": "'"$WORKFLOW_ICON"' *'"$WORKFLOW_STATUS"' workflow: Snapshot-CI on <https://github.com/powsybl/powsybl-afs|powsybl-afs>*\n\nBranch built: '"$AFS_BRANCH"'\nPowSyBl-Core version used: '"$CORE_VERSION"'"
                     }
                   },
                   {
@@ -180,7 +207,7 @@ jobs:
                     "type": "section",
                     "text": {
                       "type": "mrkdwn",
-                      "text": "*Workflow details:*\n\n${{ steps.format_results.outputs.formatted_results }}\n\n@channel - See logs on <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|GitHub>"
+                      "text": "*Workflow details:*\n\n'"$FORMATTED_RESULTS"'\n\n@channel - See logs on <https://github.com/'"$GITHUB_REPOSITORY"'/actions/runs/'"$GITHUB_RUN_ID"'|GitHub>"
                     }
                   }
                 ]
