@@ -20,6 +20,21 @@ jobs:
       contents: read
       pull-requests: write
     steps:
+      - name: Verify workflow run origin
+        env:
+          IS_FORK: ${{ github.event.workflow_run.head_repository.fork }}
+          RUN_REPO: ${{ github.event.workflow_run.repository.full_name }}
+          EXPECTED_REPO: ${{ github.repository }}
+        run: |
+          if [[ "$IS_FORK" != "true" ]]; then
+            echo "❌ Expected a fork trigger — aborting"
+            exit 1
+          fi
+          if [[ "$RUN_REPO" != "$EXPECTED_REPO" ]]; then
+            echo "❌ Workflow did not run in the expected base repository"
+            exit 1
+          fi
+
       - name: Download PR information
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
@@ -30,33 +45,41 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract PR Information
+        id: pr-info
         run: |
           REPO_NAME=$(cat ${{ runner.temp }}/pr-info-extracted/repo-name)
           HEAD_REF=$(cat ${{ runner.temp }}/pr-info-extracted/head-ref)
           HEAD_SHA=$(cat ${{ runner.temp }}/pr-info-extracted/head-sha)
           PR_NUMBER=$(cat ${{ runner.temp }}/pr-info-extracted/pr-number)
           BASE_REF=$(cat ${{ runner.temp }}/pr-info-extracted/base-ref)
-          echo "REPO_NAME=$REPO_NAME" >> $GITHUB_ENV
-          echo "HEAD_REF=$HEAD_REF" >> $GITHUB_ENV
-          echo "HEAD_SHA=$HEAD_SHA" >> $GITHUB_ENV
-          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV 
-          echo "BASE_REF=$BASE_REF" >> $GITHUB_ENV
+          [[ "$HEAD_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "❌ Invalid HEAD_SHA"; exit 1; }
+          [[ "$PR_NUMBER" =~ ^[0-9]+$ ]]       || { echo "❌ Invalid PR_NUMBER"; exit 1; }
+          [[ "$HEAD_REF" =~ ^[a-zA-Z0-9/_.-]+$ ]] || { echo "❌ Invalid HEAD_REF"; exit 1; }
+          [[ "$BASE_REF" =~ ^[a-zA-Z0-9/_.-]+$ ]] || { echo "❌ Invalid BASE_REF"; exit 1; }
+          [[ "$REPO_NAME" =~ ^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$ ]] || { echo "❌ Invalid REPO_NAME"; exit 1; }
+          echo "repo-name=$REPO_NAME"   >> $GITHUB_OUTPUT
+          echo "head-ref=$HEAD_REF"     >> $GITHUB_OUTPUT
+          echo "head-sha=$HEAD_SHA"     >> $GITHUB_OUTPUT
+          echo "pr-number=$PR_NUMBER"   >> $GITHUB_OUTPUT
+          echo "base-ref=$BASE_REF"     >> $GITHUB_OUTPUT
           echo "PR information extracted: $REPO_NAME $HEAD_REF $HEAD_SHA $PR_NUMBER $BASE_REF"
 
       - name: Checkout sources
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: ${{ env.HEAD_SHA }}
-          repository: ${{ env.REPO_NAME }}
+          ref: ${{ steps.pr-info.outputs.head-sha }}
+          repository: ${{ steps.pr-info.outputs.repo-name }}
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Fetch base branch from target repository
+        id: id-branch
         run: |
           git remote add upstream https://github.com/${{ github.repository }}.git
-          git fetch upstream ${{ env.BASE_REF }}
-          git branch ${{ env.BASE_REF }} refs/remotes/upstream/${{ env.BASE_REF }}
-          FORK_OWNER=$(echo "${{ env.REPO_NAME }}" | cut -d'/' -f1)
-          echo "SONAR_PR_BRANCH=${FORK_OWNER}:${{ env.HEAD_REF }}" >> $GITHUB_ENV
+          git fetch upstream ${{ steps.pr-info.outputs.base-ref }}
+          git branch ${{ steps.pr-info.outputs.base-ref }} refs/remotes/upstream/${{ steps.pr-info.outputs.base-ref }}
+          FORK_OWNER=$(echo "${{ steps.pr-info.outputs.repo-name }}" | cut -d'/' -f1)
+          echo "sonar-pr-branch=${FORK_OWNER}:${{ steps.pr-info.outputs.head-ref }}" >> $GITHUB_OUTPUT
 
       - name: Set up JDK 21
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
@@ -74,6 +97,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Prepare Sonar Analysis
+        id: prepare-sonar-analysis
         run: |
           echo "Checking required directories..."
           if [ -f "afs-distribution/target/site/jacoco-aggregate/jacoco.xml" ]; then
@@ -87,35 +111,35 @@ jobs:
             echo "Warning: No source directories found!"
           else
             echo "SOURCES : $SOURCES"
-            echo "SOURCES=$SOURCES" >> $GITHUB_ENV
+            echo "sources=$SOURCES" >> $GITHUB_OUTPUT
           fi
           GENERATED=$(find . -type d -path "*/target/generated-sources" | sort -u | paste -sd "," -)
           if [ -z "$GENERATED" ]; then
             echo "Warning: No generated source directories found!"
           else
             echo "GENERATED : $GENERATED"
-            echo "GENERATED=$GENERATED" >> $GITHUB_ENV
+            echo "generated=$GENERATED" >> $GITHUB_OUTPUT
           fi
           TESTS=$(find . -type d -path "*/test/java" | sort -u | paste -sd "," -)
           if [ -z "$TESTS" ]; then
             echo "Warning: No test directories found!"
           else
             echo "TESTS : $TESTS"
-            echo "TESTS=$TESTS" >> $GITHUB_ENV
+            echo "tests=$TESTS" >> $GITHUB_OUTPUT
           fi
           BINARIES=$(find . -type d -path "*/target/classes" | sort -u | paste -sd "," -)
           if [ -z "$BINARIES" ]; then
             echo "Warning: No binaries directories found!"
           else
             echo "BINARIES : $BINARIES"
-            echo "BINARIES=$BINARIES" >> $GITHUB_ENV
+            echo "binaries=$BINARIES" >> $GITHUB_OUTPUT
           fi
           LIBRARIES="afs-distribution/target/dependency"
           if [ -z "$LIBRARIES" ]; then
             echo "Warning: No libraries directory found!"
           else
             echo "LIBRARIES : $LIBRARIES"
-            echo "LIBRARIES=$LIBRARIES" >> $GITHUB_ENV
+            echo "libraries=$LIBRARIES" >> $GITHUB_OUTPUT
           fi
 
       # This sonar action should NOT be replaced by a direct use of the mvn verify command since we don't want external
@@ -129,22 +153,22 @@ jobs:
           args: >
             -Dsonar.projectKey=com.powsybl:powsybl-afs
             -Dsonar.organization=powsybl-ci-github
-            "-Dsonar.sources=${{ env.SOURCES }}"
-            "-Dsonar.generatedSources=${{ env.GENERATED }}"
-            "-Dsonar.tests=${{ env.TESTS }}"
-            "-Dsonar.java.binaries=${{ env.BINARIES }}"
-            "-Dsonar.java.libraries=${{ env.LIBRARIES }}"
-            "-Dsonar.java.test.libraries=${{ env.LIBRARIES }}"
+            "-Dsonar.sources=${{ steps.prepare-sonar-analysis.outputs.sources }}"
+            "-Dsonar.generatedSources=${{ steps.prepare-sonar-analysis.outputs.generated }}"
+            "-Dsonar.tests=${{ steps.prepare-sonar-analysis.outputs.tests }}"
+            "-Dsonar.java.binaries=${{ steps.prepare-sonar-analysis.outputs.binaries }}"
+            "-Dsonar.java.libraries=${{ steps.prepare-sonar-analysis.outputs.libraries }}"
+            "-Dsonar.java.test.libraries=${{ steps.prepare-sonar-analysis.outputs.libraries }}"
             "-Dsonar.coverage.jacoco.xmlReportPaths=afs-distribution/target/site/jacoco-aggregate/jacoco.xml"
-            "-Dsonar.pullrequest.key=${{ env.PR_NUMBER }}"
-            "-Dsonar.pullrequest.branch=${{ env.SONAR_PR_BRANCH }}"
-            "-Dsonar.pullrequest.base=${{ env.BASE_REF }}"
+            "-Dsonar.pullrequest.key=${{ steps.pr-info.outputs.pr-number }}"
+            "-Dsonar.pullrequest.branch=${{ steps.id-branch.outputs.sonar-pr-branch }}"
+            "-Dsonar.pullrequest.base=${{ steps.pr-info.outputs.base-ref }}"
             -Dsonar.pullrequest.provider=github
             -Dsonar.pullrequest.github.repository=${{ github.repository }}
             -Dsonar.host.url=https://sonarcloud.io
             -Dsonar.scm.provider=git
             -Dsonar.qualitygate.wait=true
-            -Dsonar.scm.revision=${{ env.HEAD_SHA }}
+            -Dsonar.scm.revision=${{ steps.pr-info.outputs.head-sha }}
 
       - name: Delete artifacts used in analysis
         if: always()
