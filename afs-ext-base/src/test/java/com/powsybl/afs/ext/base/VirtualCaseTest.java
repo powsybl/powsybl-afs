@@ -21,7 +21,6 @@ import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.InMemoryEventsBus;
 import com.powsybl.afs.storage.NodeGenericMetadata;
 import com.powsybl.afs.storage.NodeInfo;
-import com.powsybl.iidm.network.DefaultNetworkListener;
 import com.powsybl.iidm.network.ImportConfig;
 import com.powsybl.iidm.network.ImportersLoader;
 import com.powsybl.iidm.network.ImportersLoaderList;
@@ -323,7 +322,7 @@ class VirtualCaseTest extends AbstractProjectFileTest {
             .withScript(scriptModif)
             .build();
 
-        NetworkListener mockedListener = mock(DefaultNetworkListener.class);
+        NetworkListener mockedListener = mock(NetworkListener.class);
         virtualCase.getNetwork(Collections.singletonList(mockedListener));
         verify(mockedListener, times(1))
             .onUpdate(network.getSubstation("s1"), "tso", null, "TSO", "tso_new");
