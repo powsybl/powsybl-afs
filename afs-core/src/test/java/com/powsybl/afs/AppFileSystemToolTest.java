@@ -38,7 +38,7 @@ class AppFileSystemToolTest extends AbstractToolTest {
 
     private static final String FOLDER_PSEUDO_CLASS = "folder";
 
-    public AppFileSystemToolTest() {
+    AppFileSystemToolTest() {
         ComputationManager computationManager = Mockito.mock(ComputationManager.class);
         tool = new AppFileSystemTool() {
             @Override

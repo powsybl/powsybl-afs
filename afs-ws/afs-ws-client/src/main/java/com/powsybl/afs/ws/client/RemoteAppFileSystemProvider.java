@@ -15,10 +15,10 @@ import com.powsybl.afs.ws.client.utils.RemoteServiceConfig;
 import com.powsybl.afs.ws.storage.RemoteAppStorage;
 import com.powsybl.afs.ws.storage.RemoteTaskMonitor;
 import com.powsybl.afs.ws.storage.websocket.WebsocketConnectionPolicy;
+import jakarta.ws.rs.ProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jakarta.ws.rs.ProcessingException;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;

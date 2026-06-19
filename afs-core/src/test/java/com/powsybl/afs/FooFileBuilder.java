@@ -6,8 +6,8 @@
  */
 package com.powsybl.afs;
 
-import com.powsybl.afs.storage.NodeInfo;
 import com.powsybl.afs.storage.NodeGenericMetadata;
+import com.powsybl.afs.storage.NodeInfo;
 
 import java.util.Objects;
 

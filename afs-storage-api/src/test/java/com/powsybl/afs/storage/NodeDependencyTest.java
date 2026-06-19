@@ -26,7 +26,9 @@ class NodeDependencyTest {
         NodeDependency dependency = new NodeDependency("l", info);
         assertEquals("l", dependency.getName());
         assertEquals(info, dependency.getNodeInfo());
-        assertEquals("NodeDependency(name=l, nodeInfo=NodeInfo(id=a, name=b, pseudoClass=c, description=d, creationTime=1000000, modificationTime=1000001, version=0, genericMetadata=NodeGenericMetadata(stringMetadata={}, doubleMetadata={}, intMetadata={}, booleanMetadata={})))", dependency.toString());
+        assertEquals("NodeDependency(name=l, nodeInfo=NodeInfo(id=a, name=b, pseudoClass=c, description=d, " +
+            "creationTime=1000000, modificationTime=1000001, version=0, genericMetadata=NodeGenericMetadata(stringMetadata={}, " +
+            "doubleMetadata={}, intMetadata={}, booleanMetadata={})))", dependency.toString());
 
         ObjectMapper objectMapper = JsonUtil.createObjectMapper()
                 .registerModule(new AppStorageJsonModule());

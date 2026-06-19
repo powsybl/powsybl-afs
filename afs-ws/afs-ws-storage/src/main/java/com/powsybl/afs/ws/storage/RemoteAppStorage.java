@@ -8,7 +8,10 @@ package com.powsybl.afs.ws.storage;
 
 import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.UncheckedExecutionException;
-import com.powsybl.afs.storage.*;
+import com.powsybl.afs.storage.AbstractAppStorage;
+import com.powsybl.afs.storage.NodeDependency;
+import com.powsybl.afs.storage.NodeGenericMetadata;
+import com.powsybl.afs.storage.NodeInfo;
 import com.powsybl.afs.storage.buffer.StorageChangeBuffer;
 import com.powsybl.afs.storage.check.FileSystemCheckIssue;
 import com.powsybl.afs.storage.check.FileSystemCheckOptions;
@@ -25,14 +28,14 @@ import com.powsybl.timeseries.DoubleDataChunk;
 import com.powsybl.timeseries.StringDataChunk;
 import com.powsybl.timeseries.TimeSeriesMetadata;
 import com.powsybl.timeseries.TimeSeriesVersions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import jakarta.ws.rs.client.AsyncInvoker;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.*;
 import java.net.URI;
 import java.time.Instant;
@@ -40,7 +43,9 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import static com.powsybl.afs.ws.client.utils.ClientUtils.*;
+import static com.powsybl.afs.ws.client.utils.ClientUtils.checkOk;
+import static com.powsybl.afs.ws.client.utils.ClientUtils.readEntityIfOk;
+import static com.powsybl.afs.ws.client.utils.ClientUtils.readOptionalEntityIfOk;
 
 /**
  * @author Ali Tahanout {@literal <ali.tahanout at rte-france.com>}
@@ -442,7 +447,7 @@ public class RemoteAppStorage extends AbstractAppStorage {
 
         private final Future<Response> response;
 
-        public OutputStreamPutRequest(AsyncInvoker asyncInvoker) {
+        OutputStreamPutRequest(AsyncInvoker asyncInvoker) {
             super(new PipedOutputStream());
             Objects.requireNonNull(asyncInvoker);
 
