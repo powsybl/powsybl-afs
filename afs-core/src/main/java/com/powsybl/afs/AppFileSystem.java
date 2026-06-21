@@ -46,7 +46,7 @@ public class AppFileSystem implements AutoCloseable {
 
     private final boolean remotelyAccessible;
 
-    private final AppStorage storage;
+    protected final AppStorage storage;
 
     private final Supplier<NodeInfo> rootNodeInfo;
 
@@ -234,7 +234,7 @@ public class AppFileSystem implements AutoCloseable {
         return data;
     }
 
-    void setData(AppData data) {
+    protected void setData(AppData data) {
         this.data = Objects.requireNonNull(data);
     }
 
