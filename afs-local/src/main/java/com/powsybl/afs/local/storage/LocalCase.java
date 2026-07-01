@@ -115,8 +115,8 @@ public class LocalCase implements LocalFile {
             LOG.info("LocalCase::getDataNames()");
             names.forEach(n -> LOG.info("    {}", n));
             return names;
-        } catch (IOException x) {
-            throw new UncheckedIOException("getDataNames()", x);
+        } catch (IOException exception) {
+            throw new UncheckedIOException("getDataNames()", exception);
         }
     }
 

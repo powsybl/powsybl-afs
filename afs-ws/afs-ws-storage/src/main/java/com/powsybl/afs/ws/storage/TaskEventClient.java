@@ -8,10 +8,10 @@ package com.powsybl.afs.ws.storage;
 
 import com.powsybl.afs.TaskEvent;
 import com.powsybl.afs.TaskListener;
+import jakarta.websocket.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jakarta.websocket.*;
 import java.util.Objects;
 
 /**

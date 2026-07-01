@@ -105,7 +105,8 @@ public class Folder extends Node implements FolderBase<Node, Folder> {
                     NodeInfo newProjectInfo = storage.createNode(info.getId(), name, Project.PSEUDO_CLASS, "", Project.VERSION, new NodeGenericMetadata());
                     storage.setConsistent(newProjectInfo.getId());
                     // create root project folder
-                    NodeInfo newProjectInfoRootFolder = storage.createNode(newProjectInfo.getId(), Project.ROOT_FOLDER_NAME, ProjectFolder.PSEUDO_CLASS, "", ProjectFolder.VERSION, new NodeGenericMetadata());
+                    NodeInfo newProjectInfoRootFolder = storage.createNode(newProjectInfo.getId(), Project.ROOT_FOLDER_NAME,
+                        ProjectFolder.PSEUDO_CLASS, "", ProjectFolder.VERSION, new NodeGenericMetadata());
                     storage.setConsistent(newProjectInfoRootFolder.getId());
                     storage.flush();
                     return newProjectInfo;

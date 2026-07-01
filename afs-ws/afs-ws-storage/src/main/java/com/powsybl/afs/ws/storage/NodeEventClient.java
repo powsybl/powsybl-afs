@@ -12,10 +12,10 @@ import com.powsybl.afs.storage.events.NodeEventContainer;
 import com.powsybl.afs.storage.events.NodeEventList;
 import com.powsybl.afs.ws.storage.websocket.WebsocketConnectionManager;
 import com.powsybl.commons.util.WeakListenerList;
+import jakarta.websocket.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jakarta.websocket.*;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Objects;

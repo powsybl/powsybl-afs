@@ -525,34 +525,36 @@ public class CassandraAppStorage extends AbstractAppStorage {
         changeBuffer.flush();
 
         NodeInfo nodeInfo = getNodeInfo(nodeId);
-        getParentNode(nodeId).ifPresent(parentNode -> {
-            UUID parentNodeUuid = checkNodeId(parentNode.getId());
-
-            // need to remove and re-insert row because child_name is part of partition key
-            getSession().execute(deleteFrom(CHILDREN_BY_NAME_AND_CLASS)
-                .whereColumn(ID).isEqualTo(literal(parentNodeUuid))
-                .whereColumn(CHILD_NAME).isEqualTo(literal(nodeInfo.getName()))
-                .whereColumn(CHILD_PSEUDO_CLASS).isEqualTo(literal(nodeInfo.getPseudoClass()))
-                .build());
-
-            getSession().execute(insertInto(CHILDREN_BY_NAME_AND_CLASS)
-                .value(ID, literal(parentNodeUuid))
-                .value(CHILD_NAME, literal(name))
-                .value(CHILD_ID, literal(nodeUuid))
-                .value(CHILD_PSEUDO_CLASS, literal(nodeInfo.getPseudoClass()))
-                .value(CHILD_DESCRIPTION, literal(nodeInfo.getDescription()))
-                .value(CHILD_CREATION_DATE, literal(Instant.ofEpochMilli(nodeInfo.getCreationTime())))
-                .value(CHILD_MODIFICATION_DATE, literal(Instant.ofEpochMilli(nodeInfo.getModificationTime())))
-                .value(CHILD_VERSION, literal(nodeInfo.getVersion()))
-                .values(addAllChildMetadata(nodeInfo))
-                .build());
-
-            getSession().execute(update(CHILDREN_BY_NAME_AND_CLASS)
-                .setColumn(NAME, literal(name))
-                .whereColumn(ID).isEqualTo(literal(nodeUuid))
-                .build());
-        });
+        getParentNode(nodeId).ifPresent(parentNode -> renameChildOfParentNode(name, parentNode, nodeInfo, nodeUuid));
         pushEvent(new NodeNameUpdated(nodeId, name), APPSTORAGE_NODE_TOPIC);
+    }
+
+    private void renameChildOfParentNode(String name, NodeInfo parentNode, NodeInfo nodeInfo, UUID nodeUuid) {
+        UUID parentNodeUuid = checkNodeId(parentNode.getId());
+
+        // need to remove and re-insert row because child_name is part of partition key
+        getSession().execute(deleteFrom(CHILDREN_BY_NAME_AND_CLASS)
+            .whereColumn(ID).isEqualTo(literal(parentNodeUuid))
+            .whereColumn(CHILD_NAME).isEqualTo(literal(nodeInfo.getName()))
+            .whereColumn(CHILD_PSEUDO_CLASS).isEqualTo(literal(nodeInfo.getPseudoClass()))
+            .build());
+
+        getSession().execute(insertInto(CHILDREN_BY_NAME_AND_CLASS)
+            .value(ID, literal(parentNodeUuid))
+            .value(CHILD_NAME, literal(name))
+            .value(CHILD_ID, literal(nodeUuid))
+            .value(CHILD_PSEUDO_CLASS, literal(nodeInfo.getPseudoClass()))
+            .value(CHILD_DESCRIPTION, literal(nodeInfo.getDescription()))
+            .value(CHILD_CREATION_DATE, literal(Instant.ofEpochMilli(nodeInfo.getCreationTime())))
+            .value(CHILD_MODIFICATION_DATE, literal(Instant.ofEpochMilli(nodeInfo.getModificationTime())))
+            .value(CHILD_VERSION, literal(nodeInfo.getVersion()))
+            .values(addAllChildMetadata(nodeInfo))
+            .build());
+
+        getSession().execute(update(CHILDREN_BY_NAME_AND_CLASS)
+            .setColumn(NAME, literal(name))
+            .whereColumn(ID).isEqualTo(literal(nodeUuid))
+            .build());
     }
 
     @Override

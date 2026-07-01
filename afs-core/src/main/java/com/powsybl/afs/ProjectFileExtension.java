@@ -16,17 +16,19 @@ import java.util.List;
  * In order to add a new type of project file to your {@link AppData} instance,
  * you need to implement that interface and declare it to the runtime using the
  * {@link com.google.auto.service.AutoService} annotation.
+ * </p>
  *
  * <p>
  * The instance needs to define the new class, a name identifying that class ("pseudo class"),
  * and to provide a builder object to create an actual instance of the new class. For instance:
+ * </p>
  *
  * <pre>
  *      {@literal @}AutoService(ProjectFileExtension.class)
- *      public class FooFileExtension implements ProjectFileExtension<FooFile, FooFileBuilder> {
+ *      public class FooFileExtension implements ProjectFileExtension&lt;FooFile, FooFileBuilder&gt; {
  *
  *      {@literal @}Override
- *      public Class<FooFile> getProjectFileClass() {
+ *      public Class&lt;FooFile&gt; getProjectFileClass() {
  *          return FooFile.class;
  *      }
  *
@@ -36,7 +38,7 @@ import java.util.List;
  *      }
  *
  *      {@literal @}Override
- *      public Class<FooFileBuilder> getProjectFileBuilderClass() {
+ *      public Class&lt;FooFileBuilder&gt; getProjectFileBuilderClass() {
  *          return FooFileBuilder.class;
  *      }
  *
