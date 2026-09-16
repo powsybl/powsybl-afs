@@ -85,14 +85,19 @@ public class Folder extends Node implements FolderBase<Node, Folder> {
      */
     @Override
     public Folder createFolder(String name) {
-        NodeInfo folderInfo = storage.getChildNode(info.getId(), name)
+        NodeInfo thisNodeInfo = storage.getNodeInfo(info.getId()); // check that this folder is consistent
+        if (thisNodeInfo == null) {
+            throw new AfsException("This folder doesn't exist (" + name + ")");
+        } else {
+            NodeInfo folderInfo = storage.getChildNode(info.getId(), name)
                 .orElseGet(() -> {
                     NodeInfo newFolderInfo = storage.createNode(info.getId(), name, PSEUDO_CLASS, "", VERSION, new NodeGenericMetadata());
                     storage.setConsistent(newFolderInfo.getId());
                     storage.flush();
                     return newFolderInfo;
                 });
-        return new Folder(new FileCreationContext(folderInfo, storage, fileSystem));
+            return new Folder(new FileCreationContext(folderInfo, storage, fileSystem));
+        }
 
     }
 
