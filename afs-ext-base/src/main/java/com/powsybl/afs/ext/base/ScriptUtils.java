@@ -103,7 +103,9 @@ public final class ScriptUtils {
             if (appendOutputToLogger) {
                 String log = String.valueOf(chars, offset, length);
                 log = log.replace(System.lineSeparator(), "");
-                ScriptUtils.LOGGER.info(log);
+                if (!log.isEmpty()) {
+                    ScriptUtils.LOGGER.info(log);
+                }
             }
         }
 
