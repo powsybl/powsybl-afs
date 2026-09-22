@@ -8,6 +8,7 @@ package com.powsybl.afs.security.local;
 
 import com.powsybl.contingency.ContingenciesProvider;
 import com.powsybl.contingency.violations.LimitViolation;
+import com.powsybl.contingency.violations.LimitViolationBuilder;
 import com.powsybl.contingency.violations.LimitViolationType;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.loadflow.LoadFlowResult;
@@ -41,9 +42,14 @@ public class SecurityAnalysisProviderMock implements SecurityAnalysisProvider {
                                                          String workingVariantId,
                                                          ContingenciesProvider contingenciesProvider,
                                                          SecurityAnalysisRunParameters runParameters) {
-        LimitViolationsResult preContingencyResult = new LimitViolationsResult(
-            List.of(new LimitViolation("s1", LimitViolationType.HIGH_VOLTAGE, 400.0, 1f, 440.0))
-        );
+        LimitViolation limitViolation = new LimitViolationBuilder()
+            .subject("s1")
+            .type(LimitViolationType.HIGH_VOLTAGE)
+            .limit(400.0)
+            .scaling(1f)
+            .value(440.0)
+            .build();
+        LimitViolationsResult preContingencyResult = new LimitViolationsResult(List.of(limitViolation));
         SecurityAnalysisResult result = new SecurityAnalysisResult(preContingencyResult,
             LoadFlowResult.ComponentResult.Status.CONVERGED, Collections.emptyList());
         return CompletableFuture.completedFuture(new SecurityAnalysisReport(result));

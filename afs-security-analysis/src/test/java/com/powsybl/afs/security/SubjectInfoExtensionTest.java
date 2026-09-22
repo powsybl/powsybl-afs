@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
 import com.powsybl.commons.json.JsonUtil;
 import com.powsybl.contingency.violations.LimitViolation;
+import com.powsybl.contingency.violations.LimitViolationBuilder;
 import com.powsybl.contingency.violations.LimitViolationType;
 import com.powsybl.iidm.network.Country;
 import com.powsybl.security.json.SecurityAnalysisJsonModule;
@@ -33,7 +34,13 @@ class SubjectInfoExtensionTest {
         assertEquals(Sets.newHashSet(225d, 400d), extension.getNominalVoltages());
         assertEquals(Sets.newHashSet(Country.FR, Country.BE), extension.getCountries());
 
-        LimitViolation violation = new LimitViolation("s", LimitViolationType.HIGH_VOLTAGE, 300, 1, 400);
+        LimitViolation violation = new LimitViolationBuilder()
+            .subject("s")
+            .type(LimitViolationType.HIGH_VOLTAGE)
+            .limit(300)
+            .scaling(1)
+            .value(400)
+            .build();
         violation.addExtension(SubjectInfoExtension.class, extension);
 
         ObjectMapper mapper = JsonUtil.createObjectMapper()
