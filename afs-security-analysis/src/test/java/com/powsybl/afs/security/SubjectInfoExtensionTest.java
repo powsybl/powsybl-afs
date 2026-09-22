@@ -44,7 +44,7 @@ class SubjectInfoExtensionTest {
                 "  \"subjectId\" : \"s\",",
                 "  \"limitType\" : \"HIGH_VOLTAGE\",",
                 "  \"limit\" : 300.0,",
-                "  \"limitReduction\" : 1.0,",
+                "  \"limitScaling\" : 1.0,",
                 "  \"value\" : 400.0,",
                 "  \"extensions\" : {",
                 "    \"SubjectInfo\" : {",
@@ -58,7 +58,7 @@ class SubjectInfoExtensionTest {
         assertEquals("s", violation2.getSubjectId());
         assertEquals(LimitViolationType.HIGH_VOLTAGE, violation2.getLimitType());
         assertEquals(300, violation2.getLimit(), 0);
-        assertEquals(1f, violation2.getLimitReduction(), 0f);
+        assertEquals(1f, violation2.getLimitScaling(), 0f);
         assertEquals(400, violation2.getValue(), 0);
         SubjectInfoExtension extension2 = violation2.getExtension(SubjectInfoExtension.class);
         assertNotNull(extension2);
