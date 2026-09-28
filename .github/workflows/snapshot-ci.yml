@@ -40,12 +40,28 @@ jobs:
           fi
           echo "SCRIPTS_PATH=$SCRIPTS_PATH" >> $GITHUB_OUTPUT  
 
-      # Build powsybl-core on main branch
+      # Checkout script
+      # The scripts are located in the workflow folder of the repository
+      # They are necessary for checking out the integration branch if it exists
+      - name: Checkout script
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          sparse-checkout: |
+            .github
+          sparse-checkout-cone-mode: false
+          path: scripts
+          persist-credentials: false
+
+      # Build powsybl-core
+      - name: Detect which powsybl-core reference to use
+        run: ./check_core_ref.sh
+        working-directory: ${{ env.SCRIPTS_PATH }}
+
       - name: Checkout core sources
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: powsybl/powsybl-core
-          ref: main
+          ref: ${{ env.CORE_REF }}
           path: powsybl-core
           persist-credentials: false
 
@@ -57,18 +73,6 @@ jobs:
         id: get_core_version
         run: echo "CORE_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_OUTPUT
         working-directory: ./powsybl-core
-
-      # Checkout script
-      # The script check_snapshot_branch.sh is located in the workflow folder of the repository
-      # It is necessary for checking out the integration branch if it exists
-      - name: Checkout script
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-         sparse-checkout: |
-           .github
-         sparse-checkout-cone-mode: false
-         path: scripts
-         persist-credentials: false
 
       # Build powsybl-afs
       - name: Checking for powsybl-afs snapshot branch
