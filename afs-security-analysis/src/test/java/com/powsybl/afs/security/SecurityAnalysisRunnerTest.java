@@ -33,6 +33,7 @@ import com.powsybl.commons.datasource.ReadOnlyDataSource;
 import com.powsybl.contingency.BranchContingency;
 import com.powsybl.contingency.Contingency;
 import com.powsybl.contingency.violations.LimitViolation;
+import com.powsybl.contingency.violations.LimitViolationBuilder;
 import com.powsybl.contingency.violations.LimitViolationType;
 import com.powsybl.iidm.network.ImportConfig;
 import com.powsybl.iidm.network.Importer;
@@ -67,8 +68,14 @@ public class SecurityAnalysisRunnerTest extends AbstractProjectFileTest {
     private final ImportersLoader importersLoader = new ImportersLoaderList(new ImporterMock());
 
     private static SecurityAnalysisResult createResult() {
-        LimitViolationsResult preContingencyResult = new LimitViolationsResult(
-            List.of(new LimitViolation("s1", LimitViolationType.HIGH_VOLTAGE, 400.0, 1f, 440.0)));
+        LimitViolation limitViolation = new LimitViolationBuilder()
+            .subject("s1")
+            .type(LimitViolationType.HIGH_VOLTAGE)
+            .limit(400.0)
+            .scaling(1f)
+            .value(440.0)
+            .build();
+        LimitViolationsResult preContingencyResult = new LimitViolationsResult(List.of(limitViolation));
         return new SecurityAnalysisResult(preContingencyResult, LoadFlowResult.ComponentResult.Status.CONVERGED, Collections.emptyList());
     }
 
