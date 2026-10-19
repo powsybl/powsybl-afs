@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
 import com.powsybl.commons.json.JsonUtil;
 import com.powsybl.contingency.violations.LimitViolation;
+import com.powsybl.contingency.violations.LimitViolationBuilder;
 import com.powsybl.contingency.violations.LimitViolationType;
 import com.powsybl.iidm.network.Country;
 import com.powsybl.security.json.SecurityAnalysisJsonModule;
@@ -33,7 +34,13 @@ class SubjectInfoExtensionTest {
         assertEquals(Sets.newHashSet(225d, 400d), extension.getNominalVoltages());
         assertEquals(Sets.newHashSet(Country.FR, Country.BE), extension.getCountries());
 
-        LimitViolation violation = new LimitViolation("s", LimitViolationType.HIGH_VOLTAGE, 300, 1, 400);
+        LimitViolation violation = new LimitViolationBuilder()
+            .subject("s")
+            .type(LimitViolationType.HIGH_VOLTAGE)
+            .limit(300)
+            .scaling(1)
+            .value(400)
+            .build();
         violation.addExtension(SubjectInfoExtension.class, extension);
 
         ObjectMapper mapper = JsonUtil.createObjectMapper()
@@ -44,7 +51,7 @@ class SubjectInfoExtensionTest {
                 "  \"subjectId\" : \"s\",",
                 "  \"limitType\" : \"HIGH_VOLTAGE\",",
                 "  \"limit\" : 300.0,",
-                "  \"limitReduction\" : 1.0,",
+                "  \"limitScaling\" : 1.0,",
                 "  \"value\" : 400.0,",
                 "  \"extensions\" : {",
                 "    \"SubjectInfo\" : {",
@@ -58,7 +65,7 @@ class SubjectInfoExtensionTest {
         assertEquals("s", violation2.getSubjectId());
         assertEquals(LimitViolationType.HIGH_VOLTAGE, violation2.getLimitType());
         assertEquals(300, violation2.getLimit(), 0);
-        assertEquals(1f, violation2.getLimitReduction(), 0f);
+        assertEquals(1f, violation2.getLimitScaling(), 0f);
         assertEquals(400, violation2.getValue(), 0);
         SubjectInfoExtension extension2 = violation2.getExtension(SubjectInfoExtension.class);
         assertNotNull(extension2);
