@@ -25,7 +25,7 @@ import org.springframework.web.socket.WebSocketSession;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  *
@@ -78,6 +78,7 @@ class TaskEventHandlerTest {
 
             @Override
             public void onEvent(TaskEvent event) {
+                // Nothing to do
             }
         };
 

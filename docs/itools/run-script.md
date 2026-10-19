@@ -33,8 +33,8 @@ Available arguments are:
 
 ## Groovy extensions
 The `run-script` command relies on a [plugin mechanism]() to load extensions. Those extensions 
-provide utility functions to make the usage of PowSyBl easier through the scripts. It avoids 
-the user to write boilerplate code hiding the technical complexity of framework into more user-friendly functions. 
+provide utility functions to make the usage of PowSyBl easier through the scripts. For the user, it avoids 
+writing boilerplate code hiding the technical complexity of the framework into more user-friendly functions. 
 PowSyBl provides the following extensions to:
 - [load a network from a file](inv:powsyblcore#load-a-network)
 - [save a network to a file](inv:powsyblcore#save-a-network)
@@ -48,7 +48,7 @@ This facade has two methods:
 - `getRootFolder`: this method returns the root [folder]() of the specified file system. From this root folder, 
 it is possible to navigate in the different folders and open the different projects. 
 
-In order to benefit from this feature, add `com.powsybl:powsybl-afs-scripting` to your classpath.
+To benefit from this feature, add `com.powsybl:powsybl-afs-scripting` to your classpath.
 
 **Example**
 ```groovy

@@ -9,8 +9,8 @@ package com.powsybl.afs;
 
 import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.AppStorageArchive;
-import com.powsybl.afs.storage.Utils;
 import com.powsybl.afs.storage.NodeInfo;
+import com.powsybl.afs.storage.Utils;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -36,7 +36,7 @@ public abstract class AbstractNodeBase<F> {
 
     protected int codeVersion;
 
-    public AbstractNodeBase(NodeInfo info, AppStorage storage, int codeVersion) {
+    protected AbstractNodeBase(NodeInfo info, AppStorage storage, int codeVersion) {
         this.info = Objects.requireNonNull(info);
         this.storage = Objects.requireNonNull(storage);
         this.codeVersion = codeVersion;

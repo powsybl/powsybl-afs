@@ -1,8 +1,9 @@
 /**
- * Copyright (c) 2018, RTE (http://www.rte-france.com)
+ * Copyright (c) 2018-2025, RTE (http://www.rte-france.com)
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * SPDX-License-Identifier: MPL-2.0
  */
 package com.powsybl.afs.ext.base;
 
@@ -15,10 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -33,7 +31,7 @@ public abstract class AbstractScript<T extends AbstractScript> extends ProjectFi
     private final List<ScriptListener> listeners = new ArrayList<>();
     private final AppStorageListener l = eventList -> processEvents(eventList.getEvents(), info.getId(), listeners);
 
-    public AbstractScript(ProjectFileCreationContext context, int codeVersion, String scriptContentName) {
+    protected AbstractScript(ProjectFileCreationContext context, int codeVersion, String scriptContentName) {
         super(context, codeVersion);
         this.scriptContentName = Objects.requireNonNull(scriptContentName);
         storage.getEventsBus().addListener(l);
@@ -72,8 +70,22 @@ public abstract class AbstractScript<T extends AbstractScript> extends ProjectFi
         invalidate();
     }
 
+    public void addScripts(List<AbstractScript<?>> includeScripts) {
+        if (includeScripts.stream().map(AbstractNodeBase::getId).toList().contains(getId())
+                || includeScripts.stream().anyMatch(includeScript -> includeScript.hasDeepDependency(this))) {
+            throw new AfsCircularDependencyException();
+        }
+        orderedDependencyManager.appendDependencies(INCLUDED_SCRIPTS_DEPENDENCY_NAME, Collections.unmodifiableList(includeScripts));
+        invalidate();
+    }
+
     public void removeScript(String scriptNodeId) {
         orderedDependencyManager.removeDependencies(INCLUDED_SCRIPTS_DEPENDENCY_NAME, Collections.singletonList(scriptNodeId));
+        invalidate();
+    }
+
+    public void removeAllScript() {
+        orderedDependencyManager.removeAllDependencies(INCLUDED_SCRIPTS_DEPENDENCY_NAME);
         invalidate();
     }
 
@@ -90,12 +102,20 @@ public abstract class AbstractScript<T extends AbstractScript> extends ProjectFi
 
     @Override
     public String readScript(boolean withIncludes) {
+        Set<String> visitedScript = new HashSet<>();
+        visitedScript.add(info.getId());
+
+        return this.readScript(withIncludes, visitedScript);
+    }
+
+    private String readScript(boolean withIncludes, Set<String> visited) {
         String ownContent = readScript();
         if (withIncludes) {
             String includesScript = orderedDependencyManager
                 .getDependencies(INCLUDED_SCRIPTS_DEPENDENCY_NAME, AbstractScript.class)
                 .stream()
-                .map(script -> script.readScript(true))
+                .filter(script -> visited.add(script.info.getId()))
+                .map(script -> script.readScript(true, visited))
                 .collect(Collectors.joining(DEFAULT_SCRIPTS_DELIMITER));
             if (StringUtils.isNotBlank(includesScript)) {
                 includesScript += DEFAULT_SCRIPTS_DELIMITER;

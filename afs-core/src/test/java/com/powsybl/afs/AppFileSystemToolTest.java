@@ -6,6 +6,7 @@
  */
 package com.powsybl.afs;
 
+import com.google.re2j.Pattern;
 import com.powsybl.afs.mapdb.storage.MapDbAppStorage;
 import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.NodeGenericMetadata;
@@ -22,7 +23,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.UUID;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -38,7 +38,7 @@ class AppFileSystemToolTest extends AbstractToolTest {
 
     private static final String FOLDER_PSEUDO_CLASS = "folder";
 
-    public AppFileSystemToolTest() {
+    AppFileSystemToolTest() {
         ComputationManager computationManager = Mockito.mock(ComputationManager.class);
         tool = new AppFileSystemTool() {
             @Override

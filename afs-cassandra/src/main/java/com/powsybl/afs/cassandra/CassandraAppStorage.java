@@ -27,8 +27,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -63,9 +65,9 @@ public class CassandraAppStorage extends AbstractAppStorage {
                     .setString(TIME_SERIES_NAME, creation.getMetadata().getName())
                     .setString(DATA_TYPE, creation.getMetadata().getDataType().name())
                     .setMap(TIME_SERIES_TAGS, creation.getMetadata().getTags(), String.class, String.class)
-                    .setInstant(START, Instant.ofEpochMilli(index.getStartTime()))
-                    .setInstant(END, Instant.ofEpochMilli(index.getEndTime()))
-                    .setLong(SPACING, index.getSpacing()));
+                    .setInstant(START, index.getStartInstant())
+                    .setInstant(END, index.getEndInstant())
+                    .setLong(SPACING, index.getTimeStep().toMillis()));
             } else {
                 throw new CassandraAfsException("Flush exception - index is not a regular time series index");
             }
@@ -523,34 +525,36 @@ public class CassandraAppStorage extends AbstractAppStorage {
         changeBuffer.flush();
 
         NodeInfo nodeInfo = getNodeInfo(nodeId);
-        getParentNode(nodeId).ifPresent(parentNode -> {
-            UUID parentNodeUuid = checkNodeId(parentNode.getId());
-
-            // need to remove and re-insert row because child_name is part of partition key
-            getSession().execute(deleteFrom(CHILDREN_BY_NAME_AND_CLASS)
-                .whereColumn(ID).isEqualTo(literal(parentNodeUuid))
-                .whereColumn(CHILD_NAME).isEqualTo(literal(nodeInfo.getName()))
-                .whereColumn(CHILD_PSEUDO_CLASS).isEqualTo(literal(nodeInfo.getPseudoClass()))
-                .build());
-
-            getSession().execute(insertInto(CHILDREN_BY_NAME_AND_CLASS)
-                .value(ID, literal(parentNodeUuid))
-                .value(CHILD_NAME, literal(name))
-                .value(CHILD_ID, literal(nodeUuid))
-                .value(CHILD_PSEUDO_CLASS, literal(nodeInfo.getPseudoClass()))
-                .value(CHILD_DESCRIPTION, literal(nodeInfo.getDescription()))
-                .value(CHILD_CREATION_DATE, literal(Instant.ofEpochMilli(nodeInfo.getCreationTime())))
-                .value(CHILD_MODIFICATION_DATE, literal(Instant.ofEpochMilli(nodeInfo.getModificationTime())))
-                .value(CHILD_VERSION, literal(nodeInfo.getVersion()))
-                .values(addAllChildMetadata(nodeInfo))
-                .build());
-
-            getSession().execute(update(CHILDREN_BY_NAME_AND_CLASS)
-                .setColumn(NAME, literal(name))
-                .whereColumn(ID).isEqualTo(literal(nodeUuid))
-                .build());
-        });
+        getParentNode(nodeId).ifPresent(parentNode -> renameChildOfParentNode(name, parentNode, nodeInfo, nodeUuid));
         pushEvent(new NodeNameUpdated(nodeId, name), APPSTORAGE_NODE_TOPIC);
+    }
+
+    private void renameChildOfParentNode(String name, NodeInfo parentNode, NodeInfo nodeInfo, UUID nodeUuid) {
+        UUID parentNodeUuid = checkNodeId(parentNode.getId());
+
+        // need to remove and re-insert row because child_name is part of partition key
+        getSession().execute(deleteFrom(CHILDREN_BY_NAME_AND_CLASS)
+            .whereColumn(ID).isEqualTo(literal(parentNodeUuid))
+            .whereColumn(CHILD_NAME).isEqualTo(literal(nodeInfo.getName()))
+            .whereColumn(CHILD_PSEUDO_CLASS).isEqualTo(literal(nodeInfo.getPseudoClass()))
+            .build());
+
+        getSession().execute(insertInto(CHILDREN_BY_NAME_AND_CLASS)
+            .value(ID, literal(parentNodeUuid))
+            .value(CHILD_NAME, literal(name))
+            .value(CHILD_ID, literal(nodeUuid))
+            .value(CHILD_PSEUDO_CLASS, literal(nodeInfo.getPseudoClass()))
+            .value(CHILD_DESCRIPTION, literal(nodeInfo.getDescription()))
+            .value(CHILD_CREATION_DATE, literal(Instant.ofEpochMilli(nodeInfo.getCreationTime())))
+            .value(CHILD_MODIFICATION_DATE, literal(Instant.ofEpochMilli(nodeInfo.getModificationTime())))
+            .value(CHILD_VERSION, literal(nodeInfo.getVersion()))
+            .values(addAllChildMetadata(nodeInfo))
+            .build());
+
+        getSession().execute(update(CHILDREN_BY_NAME_AND_CLASS)
+            .setColumn(NAME, literal(name))
+            .whereColumn(ID).isEqualTo(literal(nodeUuid))
+            .build());
     }
 
     @Override
@@ -1051,9 +1055,9 @@ public class CassandraAppStorage extends AbstractAppStorage {
                 timeSeries.add(new TimeSeriesMetadata(name,
                     TimeSeriesDataType.valueOf(row.getString(1)),
                     tags,
-                    new RegularTimeSeriesIndex(startTime.toEpochMilli(),
-                        endTime.toEpochMilli(),
-                        row.getLong(5))));
+                    new RegularTimeSeriesIndex(startTime,
+                        endTime,
+                        Duration.of(row.getLong(5), ChronoUnit.MILLIS))));
             }
         }
         return timeSeries;
@@ -1616,7 +1620,7 @@ public class CassandraAppStorage extends AbstractAppStorage {
         STRING_COMPRESSED
     }
 
-    private static class TimeSeriesWritingContext {
+    private static final class TimeSeriesWritingContext {
         int createdTimeSeriesCount = 0;
         int insertedChunkCount = 0;
     }

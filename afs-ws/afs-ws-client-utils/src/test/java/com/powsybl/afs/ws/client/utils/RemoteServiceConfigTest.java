@@ -27,12 +27,12 @@ class RemoteServiceConfigTest {
     private FileSystem fileSystem;
 
     @BeforeEach
-    public void createFileSystem() {
+    void createFileSystem() {
         fileSystem = Jimfs.newFileSystem(Configuration.unix());
     }
 
     @AfterEach
-    public void closeFileSystem() throws IOException {
+    void closeFileSystem() throws IOException {
         fileSystem.close();
     }
 

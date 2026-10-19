@@ -6,12 +6,12 @@
  */
 package com.powsybl.afs.ws.utils.gzip;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.ext.WriterInterceptor;
 import jakarta.ws.rs.ext.WriterInterceptorContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.zip.GZIPOutputStream;

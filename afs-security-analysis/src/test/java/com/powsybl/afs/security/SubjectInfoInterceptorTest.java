@@ -6,15 +6,16 @@
  */
 package com.powsybl.afs.security;
 
+import com.powsybl.contingency.violations.LimitViolation;
+import com.powsybl.contingency.violations.LimitViolationType;
 import com.powsybl.iidm.network.Country;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.TwoSides;
 import com.powsybl.iidm.network.test.EurostagTutorialExample1Factory;
 import com.powsybl.loadflow.LoadFlowResult;
-import com.powsybl.security.LimitViolation;
-import com.powsybl.security.LimitViolationType;
 import com.powsybl.security.LimitViolationsResult;
 import com.powsybl.security.interceptors.DefaultSecurityAnalysisResultContext;
+import com.powsybl.security.results.NetworkResult;
 import com.powsybl.security.results.PreContingencyResult;
 import org.junit.jupiter.api.Test;
 
@@ -43,7 +44,7 @@ class SubjectInfoInterceptorTest {
 
         LimitViolationsResult result = new LimitViolationsResult(Arrays.asList(violation1, violation2));
         PreContingencyResult preContingencyResult = new PreContingencyResult(LoadFlowResult.ComponentResult.Status.CONVERGED,
-                result, Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+                result, NetworkResult.empty(), 0.0);
         interceptor.onPreContingencyResult(preContingencyResult, new DefaultSecurityAnalysisResultContext(network));
 
         SubjectInfoExtension extension1 = violation1.getExtension(SubjectInfoExtension.class);

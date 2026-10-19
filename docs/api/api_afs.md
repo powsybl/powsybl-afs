@@ -27,7 +27,7 @@ For instance, if you use maven, in the dependencies section:
 </dependency>
 ```
 
-Beside your previous maven dependencies you have to add an IIDM implementation, or else you'll get the following exception: 
+Besides your previous maven dependencies, you have to add an IIDM implementation, or else you'll get the following exception: 
 ```
 com.powsybl.commons.PowSyBlException: No IIDM implementation found
 ```
@@ -44,7 +44,7 @@ To resolve this problem, add the following dependency to your `pom.xml` file:
 
 Note: 
 By default, PowSyBl will load the drives defined in your [configuration](../configuration/index.md) 
-file. To configure an new MapDB drive, add the following lines in your configuration file:
+file. To configure a new MapDB drive, add the following lines in your configuration file:
 
 **YAML**
 ```yaml
@@ -90,9 +90,9 @@ my-first-fs
     +--my-first-project
 ```
 
-## Using AFS from groovy scripts
+## Using AFS from Groovy scripts
 
-Your configured AFS is also accessible from groovy. This comes in 2 flavours, either with an 
+Your configured AFS is also accessible from groovy. This comes in two flavors, either with an 
 interactive console using the powsybl shell `powsyblsh`:
 ```bash
 powsyblsh
@@ -107,7 +107,7 @@ Or using the `itools` command to execute a groovy script:
 $> itools run-script --file my_script.groovy
 ```
 
-From groovy code, PowSyBl provides a variable called `afs` which exposes base methods to access 
+From Groovy code, PowSyBl provides a variable called `afs` which exposes base methods to access 
 configured file systems. You can then simply perform the same thing as in the java section this 
 way:
 ```groovy
@@ -128,8 +128,8 @@ types for grid studies. The most basic one may be the `ImportedCase` type, which
 `Network` object to the API.
 
 Such files may only be created inside a project. Projects may be seen as a kind of workspace 
-for a particular study or computation. Inside of a project, we can import a case from a file representing a network, 
-for example an [XIIDM](https://powsybl.readthedocs.io/projects/powsybl-core/en/latest/grid_exchange_formats/iidm/iidm.html) file or a [UCTE](https://powsybl.readthedocs.io/projects/powsybl-core/en/latest/grid_exchange_formats/ucte/ucte.html) file.
+for a particular study or computation. Inside a project, we can import a case from a file representing a network, 
+for example, an [XIIDM](https://powsybl.readthedocs.io/projects/powsybl-core/en/latest/grid_exchange_formats/iidm/iidm.html) file or a [UCTE](https://powsybl.readthedocs.io/projects/powsybl-core/en/latest/grid_exchange_formats/ucte/ucte.html) file.
 
 **Java**
 ```java
@@ -141,6 +141,7 @@ ImportedCase myImportedCase = myFirstProject.getRootFolder()
 ```
 
 **Groovy**
+
 Groovy provides a nice and simplified syntax:
 ```groovy
 myImportedCase = myFirstProject.getRootFolder().buildImportedCase {
@@ -184,7 +185,7 @@ Network network = myImportedCase.getNetwork();
 // Do some stuff with the network
 ```
 
-To delete the importCase file from the project you have to just call the delete method:
+To delete the importCase file from the project, you have to just call the delete method:
 ```java
 importCase.delete();
 ```
@@ -192,12 +193,12 @@ importCase.delete();
 ## Using a remote file system
 
 PowSyBl provides a special implementation of an application file system storage which forwards calls, through a REST API,
-to a remote AFS server. The server may use any storage implementation itself, for example the MapDB implementation. This
+to a remote AFS server. The server may use any storage implementation itself, for example, the MapDB implementation. This
 feature makes it easy to store data on a remote server.
 
 Read this documentation [page](../data/storage.md#remote-storage) to learn more about remote implementation.
 
-In order to use it you will need to:
+To use it, you will need to:
 - package in a war and deploy `powsybl-afs-ws-server` in a JEE server, like Wildfly
 - configure the AFS drives to allow remote access, by setting the optional `remotely-accessible` property to `true`
 
@@ -222,5 +223,5 @@ For more information, see the documentation of the [remove-service](../configura
 Now all file systems defined in the server configurations will be transparently accessible from your client application,
 without changing any of your code!
 
-This allows for great flexibility in the deployment of your application, for instance to run the same application as
+This allows for great flexibility in the deployment of your application, for instance, to run the same application as
 standalone or client/server.

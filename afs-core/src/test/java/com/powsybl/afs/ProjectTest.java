@@ -12,15 +12,13 @@ import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.InMemoryEventsBus;
 import com.powsybl.afs.storage.NodeGenericMetadata;
 import com.powsybl.afs.storage.NodeInfo;
-import com.powsybl.computation.ComputationManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
-import static org.junit.jupiter.api.Assertions.*;
-
-import java.io.IOException;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Amira KAHYA {@literal <amira.kahya at rte-france.com>}
@@ -32,15 +30,14 @@ class ProjectTest {
     private AppFileSystem afs;
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         storage = MapDbAppStorage.createMem("mem", new InMemoryEventsBus());
 
-        ComputationManager computationManager = Mockito.mock(ComputationManager.class);
         afs = new AppFileSystem("mem", true, storage);
     }
 
     @Test
-    void createProjectFolderTest() throws IOException {
+    void createProjectFolderTest() {
         Project project = afs.getRootFolder().createProject("test");
         NodeInfo info = storage.createNode(project.getId(), "test", FOLDER_PSEUDO_CLASS, "d", 0,
                 new NodeGenericMetadata().setString("k", "v"));
@@ -54,7 +51,7 @@ class ProjectTest {
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         storage.close();
     }
 }

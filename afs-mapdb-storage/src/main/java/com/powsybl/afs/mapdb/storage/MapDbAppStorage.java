@@ -760,7 +760,7 @@ public class MapDbAppStorage extends AbstractAppStorage {
         List<TimeSeriesChunkKey> keys = map.keySet().stream()
             .filter(chunkKey -> chunkKey.getTimeSeriesKey().getNodeUuid().compareTo(nodeUuid) == 0)
             .collect(Collectors.toList());
-        keys.forEach(key -> map.remove(key));
+        keys.forEach(map::remove);
     }
 
     @Override

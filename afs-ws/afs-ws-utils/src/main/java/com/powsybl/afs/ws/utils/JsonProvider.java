@@ -9,7 +9,6 @@ package com.powsybl.afs.ws.utils;
 import com.fasterxml.jackson.jakarta.rs.json.JacksonJsonProvider;
 import com.powsybl.afs.storage.json.AppStorageJsonModule;
 import com.powsybl.commons.json.JsonUtil;
-
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;

@@ -9,9 +9,9 @@ package com.powsybl.afs.security;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
 import com.powsybl.commons.json.JsonUtil;
+import com.powsybl.contingency.violations.LimitViolation;
+import com.powsybl.contingency.violations.LimitViolationType;
 import com.powsybl.iidm.network.Country;
-import com.powsybl.security.LimitViolation;
-import com.powsybl.security.LimitViolationType;
 import com.powsybl.security.json.SecurityAnalysisJsonModule;
 import org.junit.jupiter.api.Test;
 

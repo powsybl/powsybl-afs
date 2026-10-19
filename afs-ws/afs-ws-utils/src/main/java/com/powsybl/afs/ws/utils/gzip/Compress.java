@@ -6,8 +6,9 @@
  */
 package com.powsybl.afs.ws.utils.gzip;
 
-import java.lang.annotation.Retention;
 import jakarta.ws.rs.NameBinding;
+
+import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /**

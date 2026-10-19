@@ -6,11 +6,11 @@
  */
 package com.powsybl.afs.server.io;
 
-import org.springframework.http.HttpHeaders;
-
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpHeaders;
+
 import java.io.IOException;
 
 /**
@@ -95,9 +95,11 @@ public class GzipFilter implements Filter {
 
     @Override
     public void init(FilterConfig filterConfig) {
+        // nothing to do
     }
 
     @Override
     public void destroy() {
+        // nothing to do
     }
 }

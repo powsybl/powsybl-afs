@@ -9,6 +9,7 @@ package com.powsybl.afs.ext.base;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
+import com.google.re2j.Pattern;
 import com.powsybl.afs.AbstractProjectFileTest;
 import com.powsybl.afs.AfsException;
 import com.powsybl.afs.FileExtension;
@@ -24,7 +25,6 @@ import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.InMemoryEventsBus;
 import com.powsybl.afs.storage.NodeGenericMetadata;
 import com.powsybl.afs.storage.NodeInfo;
-import com.powsybl.iidm.network.DefaultNetworkListener;
 import com.powsybl.iidm.network.ExportersLoader;
 import com.powsybl.iidm.network.ExportersLoaderList;
 import com.powsybl.iidm.network.ImportConfig;
@@ -44,7 +44,6 @@ import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -171,7 +170,7 @@ class ImportedCaseTest extends AbstractProjectFileTest {
             .build();
 
         // Mock a listener
-        NetworkListener mockedListener = mock(DefaultNetworkListener.class);
+        NetworkListener mockedListener = mock(NetworkListener.class);
 
         // Get the network and add the listener to it
         assertNotNull(importedCase.getNetwork(Collections.singletonList(mockedListener)));

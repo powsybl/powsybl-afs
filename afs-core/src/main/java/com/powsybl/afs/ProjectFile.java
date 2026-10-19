@@ -27,8 +27,10 @@ public class ProjectFile extends ProjectNode {
         for (NodeEvent event : eventList.getEvents()) {
             if (event.getId().equals(getId())) {
                 switch (event.getType()) {
-                    case DependencyAdded.TYPENAME, DependencyRemoved.TYPENAME -> listeners.notify(listener -> listener.dependencyChanged(((DependencyEvent) event).getDependencyName()));
-                    case BackwardDependencyAdded.TYPENAME, BackwardDependencyRemoved.TYPENAME -> listeners.notify(listener -> listener.backwardDependencyChanged(((DependencyEvent) event).getDependencyName()));
+                    case DependencyAdded.TYPENAME, DependencyRemoved.TYPENAME ->
+                        listeners.notify(listener -> listener.dependencyChanged(((DependencyEvent) event).getDependencyName()));
+                    case BackwardDependencyAdded.TYPENAME, BackwardDependencyRemoved.TYPENAME ->
+                        listeners.notify(listener -> listener.backwardDependencyChanged(((DependencyEvent) event).getDependencyName()));
                     default -> {
                         // Do nothing
                     }
@@ -110,7 +112,11 @@ public class ProjectFile extends ProjectNode {
     public boolean hasDeepDependency(ProjectFile candidateDependency, String dependencyName) {
         List<ProjectFile> dependencies = (dependencyName != null) ?
                 getDependencies(dependencyName, ProjectFile.class) :
-                getDependencies().stream().map(ProjectDependency::getProjectNode).filter(dep -> ProjectFile.class.isAssignableFrom(dep.getClass())).map(ProjectFile.class::cast).collect(Collectors.toList());
+                getDependencies().stream()
+                    .map(ProjectDependency::getProjectNode)
+                    .filter(dep -> ProjectFile.class.isAssignableFrom(dep.getClass()))
+                    .map(ProjectFile.class::cast)
+                    .toList();
         return dependencies.stream().anyMatch(dep -> dep.getId().equals(candidateDependency.getId()) || dep.hasDeepDependency(candidateDependency, dependencyName));
     }
 

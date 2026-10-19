@@ -7,9 +7,15 @@
 package com.powsybl.afs.security.local;
 
 import com.powsybl.contingency.ContingenciesProvider;
+import com.powsybl.contingency.violations.LimitViolation;
+import com.powsybl.contingency.violations.LimitViolationType;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.loadflow.LoadFlowResult;
-import com.powsybl.security.*;
+import com.powsybl.security.LimitViolationsResult;
+import com.powsybl.security.SecurityAnalysisProvider;
+import com.powsybl.security.SecurityAnalysisReport;
+import com.powsybl.security.SecurityAnalysisResult;
+import com.powsybl.security.SecurityAnalysisRunParameters;
 
 import java.util.Collections;
 import java.util.List;

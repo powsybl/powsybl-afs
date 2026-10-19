@@ -6,18 +6,17 @@
  */
 package com.powsybl.afs.server.io;
 
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.WriteListener;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponseWrapper;
+import org.springframework.http.HttpHeaders;
+
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.Objects;
 import java.util.zip.GZIPOutputStream;
-
-import jakarta.servlet.ServletOutputStream;
-import jakarta.servlet.WriteListener;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpServletResponseWrapper;
-
-import org.springframework.http.HttpHeaders;
 
 /**
  * Wraps a response to gzip its content if its content-encoding is set to "gzip".
@@ -82,7 +81,7 @@ public class GzippedResponseWrapper extends HttpServletResponseWrapper {
         private final ServletOutputStream delegate;
         private final GZIPOutputStream gzOut;
 
-        public GzipResponseStream(ServletOutputStream delegate) throws IOException {
+        GzipResponseStream(ServletOutputStream delegate) throws IOException {
             this.delegate = Objects.requireNonNull(delegate);
             this.gzOut = new GZIPOutputStream(delegate);
         }

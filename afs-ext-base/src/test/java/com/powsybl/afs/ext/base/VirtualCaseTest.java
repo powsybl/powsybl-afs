@@ -21,18 +21,19 @@ import com.powsybl.afs.storage.AppStorage;
 import com.powsybl.afs.storage.InMemoryEventsBus;
 import com.powsybl.afs.storage.NodeGenericMetadata;
 import com.powsybl.afs.storage.NodeInfo;
-import com.powsybl.iidm.network.DefaultNetworkListener;
 import com.powsybl.iidm.network.ImportConfig;
 import com.powsybl.iidm.network.ImportersLoader;
 import com.powsybl.iidm.network.ImportersLoaderList;
+import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.NetworkListener;
+import com.powsybl.scripting.groovy.GroovyScriptExtension;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -79,6 +80,7 @@ class VirtualCaseTest extends AbstractProjectFileTest {
     }
 
     @BeforeEach
+    @Override
     public void setup() throws IOException {
         super.setup();
         NodeInfo rootFolderInfo = storage.createRootNodeIfNotExists("root", Folder.PSEUDO_CLASS);
@@ -320,9 +322,99 @@ class VirtualCaseTest extends AbstractProjectFileTest {
             .withScript(scriptModif)
             .build();
 
-        NetworkListener mockedListener = mock(DefaultNetworkListener.class);
+        NetworkListener mockedListener = mock(NetworkListener.class);
         virtualCase.getNetwork(Collections.singletonList(mockedListener));
         verify(mockedListener, times(1))
             .onUpdate(network.getSubstation("s1"), "tso", null, "TSO", "tso_new");
     }
+
+    @Test
+    void outputWithCustomCommand() {
+        // GIVEN
+        ModificationScript scriptModif = folder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("customCommandWriteInOutput")
+            .withType(ScriptType.GROOVY)
+            .withContent("customOut.write('log from customOut')")
+            .build();
+        VirtualCase virtualCase = folder.fileBuilder(VirtualCaseBuilder.class)
+            .withName("network4")
+            .withCase(importedCase)
+            .withScript(scriptModif)
+            .build();
+        Iterable<GroovyScriptExtension> extensions = List.of(new CustomScriptTestExtension());
+        Map<Class<?>, Object> contextObjects = new HashMap<>();
+        // WHEN
+        ScriptException exceptionUnknownCommand = assertThrows(ScriptException.class, virtualCase::getNetwork);
+        virtualCase.invalidate();
+        Network actualNetwork = virtualCase.getNetwork(extensions, contextObjects);
+        String output = virtualCase.getOutput(extensions, contextObjects);
+        String outputNoExtensionFromCache = virtualCase.getOutput();
+        virtualCase.invalidate();
+        String outputAfterInvalidate = virtualCase.getOutput(extensions, contextObjects);
+        virtualCase.invalidate();
+        String outputAfterInvalidateNoExtension = virtualCase.getOutput();
+        // THEN
+        assertThat(exceptionUnknownCommand.getMessage()).contains("No such property: customOut for class: test");
+        assertNotNull(actualNetwork);
+        assertNotNull(output);
+        assertEquals("log from customOut", output);
+        assertEquals("log from customOut", outputNoExtensionFromCache);
+        assertEquals("log from customOut", outputAfterInvalidate);
+        assertEquals("", outputAfterInvalidateNoExtension);
+    }
+
+    @Test
+    void buildingVirtualCaseInVirtualCaseTest() {
+        // create groovy script
+        ModificationScript scriptHello = folder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("scriptHello")
+            .withType(ScriptType.GROOVY)
+            .withContent("customOut.write('HELLO')")
+            .build();
+        ModificationScript scriptWorld = folder.fileBuilder(ModificationScriptBuilder.class)
+            .withName("scriptWorld")
+            .withType(ScriptType.GROOVY)
+            .withContent("customOut.write('-WORLD')")
+            .build();
+
+        // Build the parent virtual case
+        VirtualCase virtualCaseParent = folder.fileBuilder(VirtualCaseBuilder.class)
+            .withName("network2")
+            .withCase(importedCase)
+            .withScript(scriptHello)
+            .build();
+
+        // Build the child virtual case
+        VirtualCase virtualCaseChild = folder.fileBuilder(VirtualCaseBuilder.class)
+            .withName("network3")
+            .withCase(virtualCaseParent)
+            .withScript(scriptWorld)
+            .build();
+        Iterable<GroovyScriptExtension> extensions = List.of(new CustomScriptTestExtension());
+        Map<Class<?>, Object> contextObjects = Map.of();
+
+        // Global checks
+        assertEquals(1, importedCase.getBackwardDependencies().size());
+        assertEquals(1, scriptHello.getBackwardDependencies().size());
+        assertEquals(1, scriptWorld.getBackwardDependencies().size());
+
+        // Checks on the parent virtual case
+        assertEquals("network2", virtualCaseParent.getName());
+        assertTrue(virtualCaseParent.getCase().isPresent());
+        assertTrue(virtualCaseParent.getScript().isPresent());
+        assertEquals(2, virtualCaseParent.getDependencies().size());
+        assertNotNull(virtualCaseParent.getNetwork(extensions, contextObjects));
+        assertFalse(virtualCaseParent.mandatoryDependenciesAreMissing());
+        assertEquals("HELLO", virtualCaseParent.getOutput());
+
+        // Checks on the child virtual case
+        assertEquals("network3", virtualCaseChild.getName());
+        assertTrue(virtualCaseChild.getCase().isPresent());
+        assertTrue(virtualCaseChild.getScript().isPresent());
+        assertEquals(2, virtualCaseChild.getDependencies().size());
+        assertNotNull(virtualCaseChild.getNetwork(extensions, contextObjects));
+        assertFalse(virtualCaseChild.mandatoryDependenciesAreMissing());
+        assertEquals("HELLO-WORLD", virtualCaseChild.getOutput());
+    }
+
 }

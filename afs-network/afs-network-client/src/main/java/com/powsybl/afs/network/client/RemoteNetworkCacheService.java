@@ -18,15 +18,14 @@ import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.NetworkListener;
 import com.powsybl.iidm.serde.NetworkSerDe;
 import com.powsybl.scripting.groovy.GroovyScriptExtension;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -136,7 +135,8 @@ class RemoteNetworkCacheService implements NetworkCacheService {
     }
 
     @Override
-    public <T extends ProjectFile & ProjectCase> String queryNetwork(T projectCase, ScriptType scriptType, String scriptContent, Iterable<GroovyScriptExtension> extensions, Map<Class<?>, Object> contextObjects) {
+    public <T extends ProjectFile & ProjectCase> String queryNetwork(T projectCase, ScriptType scriptType, String scriptContent,
+                                                                     Iterable<GroovyScriptExtension> extensions, Map<Class<?>, Object> contextObjects) {
         return queryNetwork(projectCase, scriptType, scriptContent);
     }
 

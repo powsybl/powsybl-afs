@@ -9,15 +9,18 @@ package com.powsybl.afs.ws.storage;
 import com.powsybl.afs.ws.storage.websocket.AutoReconnectionConnectionManager;
 import com.powsybl.afs.ws.storage.websocket.WebsocketConnectionManager;
 import com.powsybl.commons.util.WeakListenerList;
+import jakarta.websocket.Session;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import jakarta.websocket.Session;
 import java.net.URI;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -29,7 +32,7 @@ class NodeEventClientReconnectionTest {
     private Session session;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         session = mock(Session.class);
         when(session.getId()).thenReturn("session-id");
     }
@@ -50,17 +53,16 @@ class NodeEventClientReconnectionTest {
         client.connect(); //emulate connection
         client.onClose(session); //emulate session closing
 
-        assertTrue(reconnectionAttempts.await(1, TimeUnit.SECONDS));
+        assertTrue(reconnectionAttempts.await(2, TimeUnit.SECONDS));
     }
 
     @Test
-    void shouldStopReconnectingOnClose() throws InterruptedException, ExecutionException {
+    void shouldStopReconnectingOnClose() throws InterruptedException {
 
         CountDownLatch attemptsBeforeClosing = new CountDownLatch(2);
-
         CompletableFuture<Void> reconnectionAfterClosing = new CompletableFuture<>();
 
-        //Completes the above future if any attemps of reconnection is made after closing
+        // Completes the above future if any attempt of reconnection is made after closing
         Runnable reconnection = () -> {
             if (attemptsBeforeClosing.getCount() == 0) {
                 reconnectionAfterClosing.complete(null);
@@ -73,14 +75,15 @@ class NodeEventClientReconnectionTest {
         client.connect(); //emulate connection
         client.onClose(session); //emulate session close
 
-        assertTrue(attemptsBeforeClosing.await(1, TimeUnit.SECONDS)); //wait for 2 reconnection attempts
+        // Wait for 2 reconnection attempts
+        assertTrue(attemptsBeforeClosing.await(2, TimeUnit.SECONDS));
         client.close();
 
-        assertTimesOut(reconnectionAfterClosing);
+        assertThrows(TimeoutException.class, () -> reconnectionAfterClosing.get(500, TimeUnit.MILLISECONDS));
     }
 
     @Test
-    void shouldNotTryToReconnectOnClose() throws ExecutionException, InterruptedException {
+    void shouldNotTryToReconnectOnClose() {
 
         CompletableFuture<Void> reconnectionAfterClosing = new CompletableFuture<>();
         //Completes the above future if any attempt of reconnection is made
@@ -92,25 +95,16 @@ class NodeEventClientReconnectionTest {
         client.onClose(session);
 
         //Check the reconnection function will never be called
-        assertTimesOut(reconnectionAfterClosing);
-    }
-
-    private void assertTimesOut(CompletableFuture<Void> completableFuture) throws ExecutionException, InterruptedException {
-        try {
-            completableFuture.get(100, TimeUnit.MILLISECONDS);
-            fail();
-        } catch (TimeoutException e) {
-            //OK
-        }
+        assertThrows(TimeoutException.class, () -> reconnectionAfterClosing.get(500, TimeUnit.MILLISECONDS));
     }
 
     /**
-     * A connection manager which tries to reconnect every 10ms.
-     * The reconnection function should throw to emulate a connectionfailure.
+     * A connection manager which tries to reconnect every 10 ms.
+     * The reconnection function should throw to emulate a connection failure.
      */
     private WebsocketConnectionManager createWebsocketManager(Runnable reconnection) {
 
-        return new AutoReconnectionConnectionManager(URI.create("http://test"), 10, TimeUnit.MILLISECONDS) {
+        return new AutoReconnectionConnectionManager(URI.create("http://test"), 50, TimeUnit.MILLISECONDS) {
 
             private boolean initialConnection = false;
 

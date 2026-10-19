@@ -14,6 +14,8 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
+import com.google.re2j.Matcher;
+import com.google.re2j.Pattern;
 import com.powsybl.afs.storage.json.AppStorageJsonModule;
 import com.powsybl.commons.json.JsonUtil;
 import com.powsybl.timeseries.DoubleDataChunk;
@@ -31,8 +33,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
@@ -62,7 +62,7 @@ public class AppStorageArchive {
         private final String name;
 
         @JsonCreator
-        public ArchiveDependency(@JsonProperty("nodeId") String nodeId, @JsonProperty("name") String name) {
+        ArchiveDependency(@JsonProperty("nodeId") String nodeId, @JsonProperty("name") String name) {
             this.nodeId = Objects.requireNonNull(nodeId);
             this.name = Objects.requireNonNull(name);
         }
@@ -81,7 +81,7 @@ public class AppStorageArchive {
         }
     }
 
-    private static class UnarchiveContext {
+    private static final class UnarchiveContext {
 
         private final Map<String, String> idMapping = new HashMap<>();
 
@@ -115,11 +115,11 @@ public class AppStorageArchive {
 
         private final boolean archiveDependencies;
 
-        public ArchiveContext(boolean archiveDependencies) {
+        ArchiveContext(boolean archiveDependencies) {
             this.archiveDependencies = archiveDependencies;
         }
 
-        public ArchiveContext(boolean archiveDependencies, Map<String, List<String>> outputBlackList, List<String> removeTs) {
+        ArchiveContext(boolean archiveDependencies, Map<String, List<String>> outputBlackList, List<String> removeTs) {
             this.archiveDependencies = archiveDependencies;
             this.outputBlackList.putAll(outputBlackList);
             this.removeTs.addAll(removeTs);
@@ -230,13 +230,17 @@ public class AppStorageArchive {
                     switch (metadata.getDataType()) {
                         case DOUBLE -> {
                             List<DoubleDataChunk> doubleChunks = storage.getDoubleTimeSeriesData(nodeInfo.getId(), Collections.singleton(metadata.getName()), version).get(metadata.getName());
-                            try (Writer writer = new OutputStreamWriter(new GZIPOutputStream(Files.newOutputStream(timeSeriesNameDir.resolve("chunks-" + version + ".json.gz"))), StandardCharsets.UTF_8)) {
+                            try (Writer writer = new OutputStreamWriter(new GZIPOutputStream(
+                                Files.newOutputStream(timeSeriesNameDir.resolve("chunks-" + version + ".json.gz"))),
+                                StandardCharsets.UTF_8)) {
                                 objectWriter.writeValue(writer, doubleChunks);
                             }
                         }
                         case STRING -> {
                             List<StringDataChunk> stringChunks = storage.getStringTimeSeriesData(nodeInfo.getId(), Collections.singleton(metadata.getName()), version).get(metadata.getName());
-                            try (Writer writer = new OutputStreamWriter(new GZIPOutputStream(Files.newOutputStream(timeSeriesNameDir.resolve("chunks-" + version + ".json.gz"))), StandardCharsets.UTF_8)) {
+                            try (Writer writer = new OutputStreamWriter(new GZIPOutputStream(
+                                Files.newOutputStream(timeSeriesNameDir.resolve("chunks-" + version + ".json.gz"))),
+                                StandardCharsets.UTF_8)) {
                                 objectWriter.writeValue(writer, stringChunks);
                             }
                         }
@@ -434,48 +438,50 @@ public class AppStorageArchive {
             Set<String> timeSeriesNames = new HashSet<>();
             int[] chunkCount = new int[1];
             try (Stream<Path> stream = Files.list(timeSeriesDir)) {
-                stream.forEach(timeSeriesNameDir -> {
-                    try {
-                        String timeSeriesName = URLDecoder.decode(timeSeriesNameDir.getFileName().toString(), StandardCharsets.UTF_8.name());
-                        timeSeriesName = timeSeriesName.substring(0, timeSeriesName.length() - TSEXTENSION.length());
-                        timeSeriesNames.add(timeSeriesName);
-                        TimeSeriesMetadata metadata;
-                        try (Reader reader = Files.newBufferedReader(timeSeriesNameDir.resolve("metadata.json"), StandardCharsets.UTF_8)) {
-                            metadata = mapper.readerFor(TimeSeriesMetadata.class).readValue(reader);
-                            storage.createTimeSeries(newNodeInfo.getId(), metadata);
-                        }
-                        try (DirectoryStream<Path> chunksStream = Files.newDirectoryStream(timeSeriesNameDir, "chunks-*.json.gz")) {
-                            for (Path chunksFile : chunksStream) {
-                                Matcher matcher = CHUNKS_PATTERN.matcher(chunksFile.getFileName().toString());
-                                if (!matcher.matches()) {
-                                    throw new AfsStorageException("Invalid chunks file pattern");
-                                }
-                                int version = Integer.parseInt(matcher.group(1));
-                                try (Reader reader = new InputStreamReader(new GZIPInputStream(Files.newInputStream(chunksFile)), StandardCharsets.UTF_8)) {
-                                    switch (metadata.getDataType()) {
-                                        case DOUBLE -> {
-                                            List<DoubleDataChunk> doubleChunks = mapper.readerFor(new TypeReference<List<DoubleDataChunk>>() {
-                                            }).readValue(reader);
-                                            chunkCount[0] += doubleChunks.size();
-                                            storage.addDoubleTimeSeriesData(newNodeInfo.getId(), version, timeSeriesName, doubleChunks);
-                                        }
-                                        case STRING -> {
-                                            List<StringDataChunk> stringChunks = mapper.readerFor(new TypeReference<List<StringDataChunk>>() {
-                                            }).readValue(reader);
-                                            chunkCount[0] += stringChunks.size();
-                                            storage.addStringTimeSeriesData(newNodeInfo.getId(), version, timeSeriesName, stringChunks);
-                                        }
-                                        default -> throw new AfsStorageException("Unsupported data type " + metadata.getDataType());
-                                    }
-                                }
-                            }
-                        }
-                    } catch (IOException e) {
-                        throw new UncheckedIOException(e);
-                    }
-                });
+                stream.forEach(timeSeriesNameDir -> readTimeSeries(newNodeInfo, timeSeriesNames, chunkCount, timeSeriesNameDir));
             }
             LOGGER.info("   {} time series read ({} chunks)", timeSeriesNames.size(), chunkCount[0]);
+        }
+    }
+
+    private void readTimeSeries(NodeInfo newNodeInfo, Set<String> timeSeriesNames, int[] chunkCount, Path timeSeriesNameDir) {
+        try {
+            String timeSeriesName = URLDecoder.decode(timeSeriesNameDir.getFileName().toString(), StandardCharsets.UTF_8);
+            timeSeriesName = timeSeriesName.substring(0, timeSeriesName.length() - TSEXTENSION.length());
+            timeSeriesNames.add(timeSeriesName);
+            TimeSeriesMetadata metadata;
+            try (Reader reader = Files.newBufferedReader(timeSeriesNameDir.resolve("metadata.json"), StandardCharsets.UTF_8)) {
+                metadata = mapper.readerFor(TimeSeriesMetadata.class).readValue(reader);
+                storage.createTimeSeries(newNodeInfo.getId(), metadata);
+            }
+            try (DirectoryStream<Path> chunksStream = Files.newDirectoryStream(timeSeriesNameDir, "chunks-*.json.gz")) {
+                for (Path chunksFile : chunksStream) {
+                    Matcher matcher = CHUNKS_PATTERN.matcher(chunksFile.getFileName().toString());
+                    if (!matcher.matches()) {
+                        throw new AfsStorageException("Invalid chunks file pattern");
+                    }
+                    int version = Integer.parseInt(matcher.group(1));
+                    try (Reader reader = new InputStreamReader(new GZIPInputStream(Files.newInputStream(chunksFile)), StandardCharsets.UTF_8)) {
+                        switch (metadata.getDataType()) {
+                            case DOUBLE -> {
+                                List<DoubleDataChunk> doubleChunks = mapper.readerFor(new TypeReference<List<DoubleDataChunk>>() {
+                                }).readValue(reader);
+                                chunkCount[0] += doubleChunks.size();
+                                storage.addDoubleTimeSeriesData(newNodeInfo.getId(), version, timeSeriesName, doubleChunks);
+                            }
+                            case STRING -> {
+                                List<StringDataChunk> stringChunks = mapper.readerFor(new TypeReference<List<StringDataChunk>>() {
+                                }).readValue(reader);
+                                chunkCount[0] += stringChunks.size();
+                                storage.addStringTimeSeriesData(newNodeInfo.getId(), version, timeSeriesName, stringChunks);
+                            }
+                            default -> throw new AfsStorageException("Unsupported data type " + metadata.getDataType());
+                        }
+                    }
+                }
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 

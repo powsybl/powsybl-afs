@@ -3,17 +3,18 @@
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * SPDX-License-Identifier: MPL-2.0
  */
 package com.powsybl.afs;
 
+import com.google.re2j.Matcher;
+import com.google.re2j.Pattern;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -60,6 +61,14 @@ public class OrderedDependencyManager {
                 .filter(dep -> !nodeIds.contains(dep.getId()))
                 .collect(Collectors.toList());
         setDependencies(name, nodes);
+    }
+
+    /**
+     *
+     * @param name
+     */
+    public void removeAllDependencies(String name) {
+        setDependencies(name, Collections.emptyList());
     }
 
     public void setDependencies(String name, List<ProjectNode> projectNodes) {

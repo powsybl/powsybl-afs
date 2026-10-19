@@ -9,7 +9,6 @@ package com.powsybl.afs.ws.utils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.json.JsonUtil;
-
 import jakarta.websocket.EncodeException;
 import jakarta.websocket.Encoder;
 import jakarta.websocket.EndpointConfig;

@@ -15,6 +15,8 @@ import org.mapdb.DataInput2;
 import org.mapdb.DataOutput2;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -28,7 +30,7 @@ class TimeSeriesIndexSerializerTest {
     @Test
     void regularIndexSerializationTest() throws IOException {
         // Initialize an index
-        RegularTimeSeriesIndex index = new RegularTimeSeriesIndex(1672531200000L, 1672617600000L, 3600000L);
+        RegularTimeSeriesIndex index = new RegularTimeSeriesIndex(Instant.ofEpochMilli(1672531200000L), Instant.ofEpochMilli(1672617600000L), Duration.ofMillis(3600000L));
 
         // Serialize the index
         DataOutput2 out = new DataOutput2();
@@ -42,9 +44,9 @@ class TimeSeriesIndexSerializerTest {
         // Checks
         assertInstanceOf(RegularTimeSeriesIndex.class, deserializedIndex);
         RegularTimeSeriesIndex deserializedRegularIndex = (RegularTimeSeriesIndex) deserializedIndex;
-        assertEquals(index.getStartTime(), deserializedRegularIndex.getStartTime());
-        assertEquals(index.getEndTime(), deserializedRegularIndex.getEndTime());
-        assertEquals(index.getSpacing(), deserializedRegularIndex.getSpacing());
+        assertEquals(index.getStartInstant(), deserializedRegularIndex.getStartInstant());
+        assertEquals(index.getEndInstant(), deserializedRegularIndex.getEndInstant());
+        assertEquals(index.getTimeStep(), deserializedRegularIndex.getTimeStep());
     }
 
     @Test

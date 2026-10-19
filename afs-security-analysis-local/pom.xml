@@ -15,7 +15,7 @@
     <parent>
         <groupId>com.powsybl</groupId>
         <artifactId>powsybl-afs</artifactId>
-        <version>6.6.0-SNAPSHOT</version>
+        <version>7.3.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>powsybl-afs-security-analysis-local</artifactId>
@@ -49,7 +49,7 @@
         <!-- Test dependencies -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
+            <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
