@@ -9,14 +9,20 @@ package com.powsybl.afs.local.storage;
 import com.google.common.collect.ImmutableList;
 import com.powsybl.afs.AfsException;
 import com.powsybl.afs.Folder;
-import com.powsybl.afs.storage.*;
+import com.powsybl.afs.storage.AbstractAppStorage;
+import com.powsybl.afs.storage.NodeDependency;
+import com.powsybl.afs.storage.NodeGenericMetadata;
+import com.powsybl.afs.storage.NodeInfo;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.timeseries.DoubleDataChunk;
 import com.powsybl.timeseries.StringDataChunk;
 import com.powsybl.timeseries.TimeSeriesMetadata;
 import com.powsybl.timeseries.TimeSeriesVersions;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -113,14 +119,14 @@ public class LocalAppStorage extends AbstractAppStorage {
 
     private Path nodeIdToPath(String nodeId) {
         Objects.requireNonNull(nodeId);
-            Path nodePath = rootDir.getFileSystem().getPath(URLDecoder.decode(nodeId, StandardCharsets.UTF_8));
-            checkPathTraversal(nodePath);
-            return nodePath;
+        Path nodePath = rootDir.getFileSystem().getPath(URLDecoder.decode(nodeId, StandardCharsets.UTF_8));
+        checkPathTraversal(nodePath);
+        return nodePath;
     }
 
     private String pathToNodeId(Path path) {
         Objects.requireNonNull(path);
-            return URLEncoder.encode(path.toString(), StandardCharsets.UTF_8);
+        return URLEncoder.encode(path.toString(), StandardCharsets.UTF_8);
     }
 
     @Override
@@ -134,13 +140,13 @@ public class LocalAppStorage extends AbstractAppStorage {
             throw new UncheckedIOException(e);
         }
         return new NodeInfo(pathToNodeId(rootDir),
-                            name,
-                            nodePseudoClass,
-                            "",
-                            attr.creationTime().toMillis(),
-                            attr.lastModifiedTime().toMillis(),
-                            DEFAULT_VERSION,
-                            new NodeGenericMetadata());
+                name,
+                nodePseudoClass,
+                "",
+                attr.creationTime().toMillis(),
+                attr.lastModifiedTime().toMillis(),
+                DEFAULT_VERSION,
+                new NodeGenericMetadata());
     }
 
     @Override
@@ -159,24 +165,24 @@ public class LocalAppStorage extends AbstractAppStorage {
         LocalFile file = scanFile(path, true);
         if (file != null) {
             return new NodeInfo(pathToNodeId(path),
-                                file.getName(),
-                                file.getPseudoClass(),
-                                file.getDescription(),
-                                attr.creationTime().toMillis(),
-                                attr.lastModifiedTime().toMillis(),
-                                DEFAULT_VERSION,
-                                file.getGenericMetadata());
+                    file.getName(),
+                    file.getPseudoClass(),
+                    file.getDescription(),
+                    attr.creationTime().toMillis(),
+                    attr.lastModifiedTime().toMillis(),
+                    DEFAULT_VERSION,
+                    file.getGenericMetadata());
         } else {
             LocalFolder folder = scanFolder(path, true);
             if (folder != null) {
                 return new NodeInfo(pathToNodeId(path),
-                                    folder.getName(),
-                                    Folder.PSEUDO_CLASS,
-                                    "",
-                                    attr.creationTime().toMillis(),
-                                    attr.lastModifiedTime().toMillis(),
-                                    DEFAULT_VERSION,
-                                    new NodeGenericMetadata());
+                        folder.getName(),
+                        Folder.PSEUDO_CLASS,
+                        "",
+                        attr.creationTime().toMillis(),
+                        attr.lastModifiedTime().toMillis(),
+                        DEFAULT_VERSION,
+                        new NodeGenericMetadata());
             } else {
                 throw new AfsException(FOLDER_IS_EMPTY);
             }
@@ -418,6 +424,7 @@ public class LocalAppStorage extends AbstractAppStorage {
 
     private void checkPathTraversal(Path path) {
         if (!path.normalize().startsWith(rootDir)) {
-            throw new UncheckedIOException(new IOException("Invalid path: " + path));        }
+            throw new UncheckedIOException(new IOException("Invalid path: " + path));
+        }
     }
 }

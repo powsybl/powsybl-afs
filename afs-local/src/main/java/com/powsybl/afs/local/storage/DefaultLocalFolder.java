@@ -32,8 +32,8 @@ public class DefaultLocalFolder implements LocalFolder {
         // We normalize paths to compare them efficiently
         this.dir = Objects.requireNonNull(dir).normalize();
         this.rootDir = Objects.requireNonNull(rootDir).normalize();
-        // Check consistence between rootDir and dir
-        if (!dir.startsWith(rootDir)) {
+        // Check consistence between normalized rootDir and dir
+        if (!this.dir.startsWith(this.rootDir)) {
             throw new IllegalArgumentException("Not a valid path: " + dir);
         }
         this.fileSystemName = Objects.requireNonNull(fileSystemName);
