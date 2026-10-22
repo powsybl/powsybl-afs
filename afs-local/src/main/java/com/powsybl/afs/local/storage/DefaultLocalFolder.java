@@ -29,8 +29,13 @@ public class DefaultLocalFolder implements LocalFolder {
     private final String fileSystemName;
 
     public DefaultLocalFolder(Path dir, Path rootDir, String fileSystemName) {
-        this.dir = Objects.requireNonNull(dir);
-        this.rootDir = Objects.requireNonNull(rootDir);
+        // We normalize paths to compare them efficiently
+        this.dir = Objects.requireNonNull(dir).normalize();
+        this.rootDir = Objects.requireNonNull(rootDir).normalize();
+        // Check consistence between rootDir and dir
+        if (!dir.startsWith(rootDir)) {
+            throw new IllegalArgumentException("Not a valid path: " + dir);
+        }
         this.fileSystemName = Objects.requireNonNull(fileSystemName);
     }
 
@@ -49,7 +54,12 @@ public class DefaultLocalFolder implements LocalFolder {
 
     @Override
     public Optional<Path> getChildPath(String name) {
-        return Optional.ofNullable(dir.resolve(name));
+        Path childPath = dir.resolve(name);
+        // Block path traversal (e.g. using  ".." in the name)
+        if (!childPath.normalize().startsWith(dir)) {
+            throw new IllegalArgumentException("Not a valid path: " + name);
+        }
+        return Optional.of(childPath);
     }
 
     @Override

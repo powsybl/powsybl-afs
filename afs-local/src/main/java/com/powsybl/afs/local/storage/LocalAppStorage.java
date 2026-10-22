@@ -10,7 +10,6 @@ import com.google.common.collect.ImmutableList;
 import com.powsybl.afs.AfsException;
 import com.powsybl.afs.Folder;
 import com.powsybl.afs.storage.*;
-import com.powsybl.commons.exceptions.UncheckedUnsupportedEncodingException;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.timeseries.DoubleDataChunk;
 import com.powsybl.timeseries.StringDataChunk;
@@ -52,7 +51,7 @@ public class LocalAppStorage extends AbstractAppStorage {
 
     public LocalAppStorage(Path rootDir, String fileSystemName, List<LocalFileScanner> fileScanners,
                            List<LocalFolderScanner> folderScanners, ComputationManager computationManager) {
-        this.rootDir = Objects.requireNonNull(rootDir);
+        this.rootDir = Objects.requireNonNull(rootDir).normalize();
         this.fileSystemName = Objects.requireNonNull(fileSystemName);
         this.fileScanners = Objects.requireNonNull(fileScanners);
         this.folderScanners = ImmutableList.<LocalFolderScanner>builder()
@@ -64,7 +63,8 @@ public class LocalAppStorage extends AbstractAppStorage {
 
     private LocalFile scanFile(Path path, boolean useCache) {
         LocalFile file = null;
-        if (Files.isReadable(path)) {
+        checkPathTraversal(path);
+        if (Files.isReadable(path) && Files.isRegularFile(path)) {
             if (useCache && fileCache.containsKey(path)) {
                 file = fileCache.get(path);
             } else {
@@ -82,6 +82,7 @@ public class LocalAppStorage extends AbstractAppStorage {
     }
 
     private LocalFolder scanFolder(Path path, boolean useCache) {
+        checkPathTraversal(path);
         LocalFolder folder = null;
         if (Files.isReadable(path)) {
             if (useCache && folderCache.containsKey(path)) {
@@ -112,20 +113,14 @@ public class LocalAppStorage extends AbstractAppStorage {
 
     private Path nodeIdToPath(String nodeId) {
         Objects.requireNonNull(nodeId);
-        try {
-            return rootDir.getFileSystem().getPath(URLDecoder.decode(nodeId, StandardCharsets.UTF_8.name()));
-        } catch (UnsupportedEncodingException e) {
-            throw new UncheckedUnsupportedEncodingException(e);
-        }
+            Path nodePath = rootDir.getFileSystem().getPath(URLDecoder.decode(nodeId, StandardCharsets.UTF_8));
+            checkPathTraversal(nodePath);
+            return nodePath;
     }
 
     private String pathToNodeId(Path path) {
         Objects.requireNonNull(path);
-        try {
-            return URLEncoder.encode(path.toString(), StandardCharsets.UTF_8.name());
-        } catch (UnsupportedEncodingException e) {
-            throw new UncheckedUnsupportedEncodingException(e);
-        }
+            return URLEncoder.encode(path.toString(), StandardCharsets.UTF_8);
     }
 
     @Override
@@ -419,5 +414,10 @@ public class LocalAppStorage extends AbstractAppStorage {
     @Override
     public void close() {
         // nothing to close
+    }
+
+    private void checkPathTraversal(Path path) {
+        if (!path.normalize().startsWith(rootDir)) {
+            throw new UncheckedIOException(new IOException("Invalid path: " + path));        }
     }
 }
