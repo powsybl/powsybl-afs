@@ -17,8 +17,12 @@ import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Valentin Berthault {@literal <valentin.berthault at rte-france.com>}
@@ -53,6 +57,27 @@ class UtilsTest {
 
         Utils.unzip(zipPath, rootDir.resolve("test"));
         assertTrue(Files.exists(rootDir.resolve("test")));
+    }
+
+    @Test
+    void unzipNotVulnerableToZipSlipTest() throws IOException {
+        // Given
+        // A zip file with entry with a name containing ../
+        Path zipPath = rootDir.resolve("file.zip");
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipPath))) {
+            // A malicious entry which name contains a parent directory reference
+            ZipEntry e = new ZipEntry("../malicious.txt");
+            zipOutputStream.putNextEntry(e);
+            zipOutputStream.write("Hello World !".getBytes());
+        }
+        // Given an output directory
+        Path outputDir = rootDir.resolve("output_dir");
+        // Unzipping the entry should throw an exception
+        assertThatThrownBy(() -> Utils.unzip(zipPath, outputDir))
+                .isInstanceOf(IOException.class)
+                .hasMessage("Archive entry '../malicious.txt' would extract outside of the working directory");
+        // The entry should not be unzipped
+        assertThat(outputDir.resolve("../malicious.txt")).doesNotExist();
     }
 
     @Test

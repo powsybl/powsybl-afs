@@ -94,7 +94,11 @@ public final class Utils {
             Files.createDirectory(nodeDir);
             ZipEntry entry = zis.getNextEntry();
             while (entry != null) {
-                Path outputEntryPath = nodeDir.resolve(entry.getName());
+                Path outputEntryPath = nodeDir.resolve(entry.getName()).normalize();
+                if (!outputEntryPath.startsWith(nodeDir.normalize())) {
+                    throw new IOException("Archive entry '" + entry.getName()
+                                          + "' would extract outside of the working directory");
+                }
                 if (entry.isDirectory() && !Files.exists(outputEntryPath)) {
                     Files.createDirectory(outputEntryPath);
                 } else if (!entry.isDirectory()) {
