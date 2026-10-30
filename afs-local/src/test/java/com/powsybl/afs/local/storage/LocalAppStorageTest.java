@@ -20,15 +20,15 @@ import com.powsybl.computation.ComputationManager;
 import com.powsybl.iidm.network.ImportConfig;
 import com.powsybl.iidm.network.ImportersLoaderList;
 import com.powsybl.iidm.network.Network;
-import com.powsybl.timeseries.DoubleDataChunk;
-import com.powsybl.timeseries.InfiniteTimeSeriesIndex;
-import com.powsybl.timeseries.StringDataChunk;
-import com.powsybl.timeseries.TimeSeriesDataType;
-import com.powsybl.timeseries.TimeSeriesMetadata;
+import com.powsybl.timeseries.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -38,11 +38,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.powsybl.afs.local.storage.LocalAppStorage.METHOD_NOT_IMPLEMENTED;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
 /**
@@ -67,6 +63,10 @@ class LocalAppStorageTest {
         Path path2 = rootDir.resolve("n2.tst");
         Files.createFile(path1);
         Files.createFile(path2);
+
+        Path outsideDir = fileSystem.getPath("/outside");
+        Files.createDirectories(outsideDir);
+        Files.createFile(outsideDir.resolve("o.tst"));
 
         // Create the LocalAppStorage
         ComputationManager computationManager = mock(ComputationManager.class);
@@ -124,9 +124,17 @@ class LocalAppStorageTest {
         Optional<NodeInfo> case2 = storage.getChildNode(rootNodeInfo.getId(), "n2.tst");
         assertTrue(case2.isPresent());
 
-        // Case 3 (not present)
-        Optional<NodeInfo> case3 = storage.getChildNode(rootNodeInfo.getId(), "n3.tst");
-        assertTrue(case3.isEmpty());
+        // Case 3 (name containing "../" but stays in root directory "/cases")
+        Optional<NodeInfo> case3 = storage.getChildNode(rootNodeInfo.getId(), "/cases/sub/../n2.tst");
+        assertTrue(case3.isPresent());
+
+        // Case 4 (absolute path)
+        Optional<NodeInfo> case4 = storage.getChildNode(rootNodeInfo.getId(), "/cases/n2.tst");
+        assertTrue(case4.isPresent());
+
+        // Case 5 (not present)
+        Optional<NodeInfo> case5 = storage.getChildNode(rootNodeInfo.getId(), "n3.tst");
+        assertTrue(case5.isEmpty());
     }
 
     @Test
@@ -295,5 +303,20 @@ class LocalAppStorageTest {
     void removeDependencyExceptionTest() {
         AfsException exception = assertThrows(AfsException.class, () -> storage.removeDependency("any", "any", "any"));
         assertEquals(METHOD_NOT_IMPLEMENTED, exception.getMessage());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"/outside/o.tst", "/cases/../outside/o.tst", "../outside/o.tst", "/outside", "/cases/../outside", "../outside", ".."})
+    void pathTraversalInNodeIdsIsRejectedTest(String path) {
+        String nodeId = URLEncoder.encode(path, StandardCharsets.UTF_8);
+        List.of(
+                        assertThrows(AfsException.class, () -> storage.getNodeInfo(nodeId)),
+                        assertThrows(AfsException.class, () -> storage.getChildNodes(nodeId)),
+                        assertThrows(AfsException.class, () -> storage.getChildNode(nodeId, "o.tst")),
+                        assertThrows(AfsException.class, () -> storage.getParentNode(nodeId)),
+                        assertThrows(AfsException.class, () -> storage.readBinaryData(nodeId, "o.tst")),
+                        assertThrows(AfsException.class, () -> storage.dataExists(nodeId, "o.tst")),
+                        assertThrows(AfsException.class, () -> storage.getDataNames(nodeId)))
+                .forEach(exception -> assertEquals("File '" + path + "' is not located inside the root directory '/cases'", exception.getMessage()));
     }
 }
