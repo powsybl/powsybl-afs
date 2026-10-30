@@ -9,15 +9,20 @@ package com.powsybl.afs.local.storage;
 import com.google.common.collect.ImmutableList;
 import com.powsybl.afs.AfsException;
 import com.powsybl.afs.Folder;
-import com.powsybl.afs.storage.*;
-import com.powsybl.commons.exceptions.UncheckedUnsupportedEncodingException;
+import com.powsybl.afs.storage.AbstractAppStorage;
+import com.powsybl.afs.storage.NodeDependency;
+import com.powsybl.afs.storage.NodeGenericMetadata;
+import com.powsybl.afs.storage.NodeInfo;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.timeseries.DoubleDataChunk;
 import com.powsybl.timeseries.StringDataChunk;
 import com.powsybl.timeseries.TimeSeriesMetadata;
 import com.powsybl.timeseries.TimeSeriesVersions;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -52,7 +57,9 @@ public class LocalAppStorage extends AbstractAppStorage {
 
     public LocalAppStorage(Path rootDir, String fileSystemName, List<LocalFileScanner> fileScanners,
                            List<LocalFolderScanner> folderScanners, ComputationManager computationManager) {
-        this.rootDir = Objects.requireNonNull(rootDir);
+        // Normalize rootDir to be able to compare it with Path.startsWith
+        this.rootDir = Objects.requireNonNull(rootDir)
+                .normalize();
         this.fileSystemName = Objects.requireNonNull(fileSystemName);
         this.fileScanners = Objects.requireNonNull(fileScanners);
         this.folderScanners = ImmutableList.<LocalFolderScanner>builder()
@@ -62,8 +69,9 @@ public class LocalAppStorage extends AbstractAppStorage {
         this.computationManager = Objects.requireNonNull(computationManager);
     }
 
-    private LocalFile scanFile(Path path, boolean useCache) {
+    private LocalFile scanFile(Path nodePath, boolean useCache) {
         LocalFile file = null;
+        Path path = sanitizePath(nodePath);
         if (Files.isReadable(path)) {
             if (useCache && fileCache.containsKey(path)) {
                 file = fileCache.get(path);
@@ -81,7 +89,8 @@ public class LocalAppStorage extends AbstractAppStorage {
         return file;
     }
 
-    private LocalFolder scanFolder(Path path, boolean useCache) {
+    private LocalFolder scanFolder(Path nodePath, boolean useCache) {
+        Path path = sanitizePath(nodePath);
         LocalFolder folder = null;
         if (Files.isReadable(path)) {
             if (useCache && folderCache.containsKey(path)) {
@@ -112,20 +121,13 @@ public class LocalAppStorage extends AbstractAppStorage {
 
     private Path nodeIdToPath(String nodeId) {
         Objects.requireNonNull(nodeId);
-        try {
-            return rootDir.getFileSystem().getPath(URLDecoder.decode(nodeId, StandardCharsets.UTF_8.name()));
-        } catch (UnsupportedEncodingException e) {
-            throw new UncheckedUnsupportedEncodingException(e);
-        }
+        Path nodePath = rootDir.getFileSystem().getPath(URLDecoder.decode(nodeId, StandardCharsets.UTF_8));
+        return sanitizePath(nodePath);
     }
 
     private String pathToNodeId(Path path) {
         Objects.requireNonNull(path);
-        try {
-            return URLEncoder.encode(path.toString(), StandardCharsets.UTF_8.name());
-        } catch (UnsupportedEncodingException e) {
-            throw new UncheckedUnsupportedEncodingException(e);
-        }
+        return URLEncoder.encode(path.toString(), StandardCharsets.UTF_8);
     }
 
     @Override
@@ -154,7 +156,8 @@ public class LocalAppStorage extends AbstractAppStorage {
         return getNodeInfo(path);
     }
 
-    private NodeInfo getNodeInfo(Path path) {
+    private NodeInfo getNodeInfo(Path nodePath) {
+        Path path = sanitizePath(nodePath);
         BasicFileAttributes attr;
         try {
             attr = Files.readAttributes(path, BasicFileAttributes.class);
@@ -164,24 +167,24 @@ public class LocalAppStorage extends AbstractAppStorage {
         LocalFile file = scanFile(path, true);
         if (file != null) {
             return new NodeInfo(pathToNodeId(path),
-                                file.getName(),
-                                file.getPseudoClass(),
-                                file.getDescription(),
-                                attr.creationTime().toMillis(),
-                                attr.lastModifiedTime().toMillis(),
-                                DEFAULT_VERSION,
-                                file.getGenericMetadata());
+                    file.getName(),
+                    file.getPseudoClass(),
+                    file.getDescription(),
+                    attr.creationTime().toMillis(),
+                    attr.lastModifiedTime().toMillis(),
+                    DEFAULT_VERSION,
+                    file.getGenericMetadata());
         } else {
             LocalFolder folder = scanFolder(path, true);
             if (folder != null) {
                 return new NodeInfo(pathToNodeId(path),
-                                    folder.getName(),
-                                    Folder.PSEUDO_CLASS,
-                                    "",
-                                    attr.creationTime().toMillis(),
-                                    attr.lastModifiedTime().toMillis(),
-                                    DEFAULT_VERSION,
-                                    new NodeGenericMetadata());
+                        folder.getName(),
+                        Folder.PSEUDO_CLASS,
+                        "",
+                        attr.creationTime().toMillis(),
+                        attr.lastModifiedTime().toMillis(),
+                        DEFAULT_VERSION,
+                        new NodeGenericMetadata());
             } else {
                 throw new AfsException(FOLDER_IS_EMPTY);
             }
@@ -218,6 +221,7 @@ public class LocalAppStorage extends AbstractAppStorage {
         LocalFolder folder = scanFolder(path, false);
         if (folder != null) {
             return folder.getChildPaths().stream()
+                    .map(this::sanitizePath)
                     .filter(this::isLocalNode)
                     .map(this::getNodeInfo)
                     .collect(Collectors.toList());
@@ -232,7 +236,7 @@ public class LocalAppStorage extends AbstractAppStorage {
         Objects.requireNonNull(name);
         LocalFolder folder = scanFolder(path, false);
         if (folder != null) {
-            Optional<Path> childPath = folder.getChildPath(name);
+            Optional<Path> childPath = folder.getChildPath(name).map(this::sanitizePath);
             if (childPath.isPresent() && isLocalNode(childPath.get())) {
                 return childPath.map(this::getNodeInfo);
             }
@@ -255,7 +259,10 @@ public class LocalAppStorage extends AbstractAppStorage {
                 throw new AfsException(FOLDER_IS_EMPTY);
             }
         }
-        return parentPath.map(this::getNodeInfo);
+        return parentPath
+                .map(Path::normalize)
+                .filter(parent -> parent.startsWith(rootDir)) // Check for path traversal
+                .map(this::getNodeInfo);
     }
 
     @Override
@@ -419,5 +426,16 @@ public class LocalAppStorage extends AbstractAppStorage {
     @Override
     public void close() {
         // nothing to close
+    }
+
+    /**
+     * Check that the path is located inside the root directory and return its normalized form.
+     */
+    private Path sanitizePath(Path path) {
+        Path normalizedPath = path.normalize();
+        if (!normalizedPath.startsWith(rootDir)) {
+            throw new AfsException("File '" + path + "' is not located inside the root directory '" + rootDir + "'");
+        }
+        return normalizedPath;
     }
 }

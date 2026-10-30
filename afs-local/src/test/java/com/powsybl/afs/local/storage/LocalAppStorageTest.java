@@ -20,15 +20,16 @@ import com.powsybl.computation.ComputationManager;
 import com.powsybl.iidm.network.ImportConfig;
 import com.powsybl.iidm.network.ImportersLoaderList;
 import com.powsybl.iidm.network.Network;
-import com.powsybl.timeseries.DoubleDataChunk;
-import com.powsybl.timeseries.InfiniteTimeSeriesIndex;
-import com.powsybl.timeseries.StringDataChunk;
-import com.powsybl.timeseries.TimeSeriesDataType;
-import com.powsybl.timeseries.TimeSeriesMetadata;
+import com.powsybl.timeseries.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
+import java.io.UncheckedIOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -38,11 +39,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.powsybl.afs.local.storage.LocalAppStorage.METHOD_NOT_IMPLEMENTED;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
 /**
@@ -68,11 +65,19 @@ class LocalAppStorageTest {
         Files.createFile(path1);
         Files.createFile(path2);
 
+        Path outsideDir = fileSystem.getPath("/outside");
+        Files.createDirectories(outsideDir);
+        Files.createFile(outsideDir.resolve("o.tst"));
+
+        Path siblingDir = fileSystem.getPath("/cases2");
+        Files.createDirectories(siblingDir);
+        Files.createFile(siblingDir.resolve("c.tst"));
+
         // Create the LocalAppStorage
         ComputationManager computationManager = mock(ComputationManager.class);
         Network network = mock(Network.class);
         List<LocalFileScanner> fileExtensions
-            = Collections.singletonList(new LocalCaseScanner(new ImportConfig(), new ImportersLoaderList(new TestImporter(network))));
+                = Collections.singletonList(new LocalCaseScanner(new ImportConfig(), new ImportersLoaderList(new TestImporter(network))));
         storage = new LocalAppStorage(rootDir, "mem", fileExtensions, Collections.emptyList(), computationManager);
     }
 
@@ -109,7 +114,7 @@ class LocalAppStorageTest {
 
         // Check the child nodes
         assertEquals(List.of("%2Fcases%2Fn.tst", "%2Fcases%2Fn2.tst"),
-            storage.getChildNodes(rootNodeInfo.getId()).stream().map(NodeInfo::getId).collect(Collectors.toList()));
+                storage.getChildNodes(rootNodeInfo.getId()).stream().map(NodeInfo::getId).collect(Collectors.toList()));
     }
 
     @Test
@@ -124,9 +129,17 @@ class LocalAppStorageTest {
         Optional<NodeInfo> case2 = storage.getChildNode(rootNodeInfo.getId(), "n2.tst");
         assertTrue(case2.isPresent());
 
-        // Case 3 (not present)
-        Optional<NodeInfo> case3 = storage.getChildNode(rootNodeInfo.getId(), "n3.tst");
-        assertTrue(case3.isEmpty());
+        // Case 3 (name containing "../" and "./" but stays in root directory "/cases")
+        Optional<NodeInfo> case3 = storage.getChildNode(rootNodeInfo.getId(), "../cases/./n2.tst");
+        assertTrue(case3.isPresent());
+
+        // Case 4 (absolute path)
+        Optional<NodeInfo> case4 = storage.getChildNode(rootNodeInfo.getId(), "/cases/n2.tst");
+        assertTrue(case4.isPresent());
+
+        // Case 5 (not present)
+        Optional<NodeInfo> case5 = storage.getChildNode(rootNodeInfo.getId(), "n3.tst");
+        assertTrue(case5.isEmpty());
     }
 
     @Test
@@ -134,6 +147,50 @@ class LocalAppStorageTest {
         NodeInfo rootNodeInfo = storage.createRootNodeIfNotExists("mem", Folder.PSEUDO_CLASS);
         NodeInfo case1 = storage.getChildNode(rootNodeInfo.getId(), "n.tst").orElseThrow(AssertionError::new);
         assertEquals("%2Fcases%2Fn.tst", case1.getId());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"/outside/o.tst", "/cases/../outside/o.tst", "../outside/o.tst", "/outside", "/cases/../outside", "../outside", ".."})
+    void pathTraversalInNodeIdsIsRejectedTest(String path) {
+        String nodeId = URLEncoder.encode(path, StandardCharsets.UTF_8);
+        List.of(
+                        assertThrows(AfsException.class, () -> storage.getNodeInfo(nodeId)),
+                        assertThrows(AfsException.class, () -> storage.getChildNodes(nodeId)),
+                        assertThrows(AfsException.class, () -> storage.getChildNode(nodeId, "o.tst")),
+                        assertThrows(AfsException.class, () -> storage.getParentNode(nodeId)),
+                        assertThrows(AfsException.class, () -> storage.readBinaryData(nodeId, "o.tst")),
+                        assertThrows(AfsException.class, () -> storage.dataExists(nodeId, "o.tst")),
+                        assertThrows(AfsException.class, () -> storage.getDataNames(nodeId)))
+                .forEach(exception -> assertEquals("File '" + path + "' is not located inside the root directory '/cases'", exception.getMessage()));
+    }
+
+    @Test
+    void symlinkFollowedByParentDirIsNotResolvedOutsideRootDirTest() throws Exception {
+        // /cases/link -> /target/dir, and /target/secret.tst is a sibling of the link target
+        Path targetDir = fileSystem.getPath("/target/dir");
+        Files.createDirectories(targetDir);
+        Files.createFile(targetDir.resolve("inside.tst"));
+        Files.createFile(fileSystem.getPath("/target/secret.tst"));
+        Files.createSymbolicLink(fileSystem.getPath("/cases/link"), targetDir);
+
+        // Following the symlink is allowed
+        String insideNodeId = URLEncoder.encode("/cases/link/inside.tst", StandardCharsets.UTF_8);
+        assertEquals("inside", storage.getNodeInfo(insideNodeId).getName());
+
+        // "/cases/link/../secret.tst" must be resolved as "/cases/secret.tst" (which does not exist), not "/target/secret.tst"
+        String secretNodeId = URLEncoder.encode("/cases/link/../secret.tst", StandardCharsets.UTF_8);
+        assertThrows(UncheckedIOException.class, () -> storage.getNodeInfo(secretNodeId));
+        AfsException exception = assertThrows(AfsException.class, () -> storage.getDataNames(secretNodeId));
+        assertEquals("File not found", exception.getMessage());
+
+        NodeInfo rootNodeInfo = storage.createRootNodeIfNotExists("mem", Folder.PSEUDO_CLASS);
+        assertTrue(storage.getChildNode(rootNodeInfo.getId(), "link/../secret.tst").isEmpty());
+
+        // Same for a folder: "/cases/link/.." is the root directory, not "/target"
+        String linkParentNodeId = URLEncoder.encode("/cases/link/..", StandardCharsets.UTF_8);
+        NodeInfo linkParentNodeInfo = storage.getNodeInfo(linkParentNodeId);
+        assertEquals(rootNodeInfo.getId(), linkParentNodeInfo.getId());
+        assertEquals("mem", linkParentNodeInfo.getName());
     }
 
     @Test
