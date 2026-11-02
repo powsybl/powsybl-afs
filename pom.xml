@@ -79,7 +79,7 @@
         <commonscodec.version>1.22.0</commonscodec.version>
         <ec.version>13.0.0</ec.version>
         <groovy.version>4.0.32</groovy.version>
-        <guava.version>33.6.0-jre</guava.version>
+        <guava.version>33.7.1-jre</guava.version>
         <jackson.version>2.21.7</jackson.version>
         <jakartaeeapi.version>11.0.0</jakartaeeapi.version>
         <jakartaenterprise.version>4.1.0</jakartaenterprise.version>
