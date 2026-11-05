@@ -38,7 +38,7 @@ public class DefaultLocalFolder implements LocalFolder {
                 .normalize();
         // Check dir is inside rootDir
         if (!this.dir.startsWith(this.rootDir)) {
-            throw new AfsException("directory '" + dir + "' is not located inside the root directory '" + rootDir + "'");
+            throw new AfsException("directory '" + dir + "' is not located inside the root directory '" + rootDir.getFileName() + "'");
         }
         this.fileSystemName = Objects.requireNonNull(fileSystemName);
     }
@@ -61,7 +61,7 @@ public class DefaultLocalFolder implements LocalFolder {
         Path childPath = dir.resolve(name).normalize();
         // Check path traversal (e.g. name containing  "../")
         if (!childPath.startsWith(dir) || childPath.equals(dir)) {
-            throw new AfsException("Child name '" + name + "' is not located inside the directory '" + dir + "'");
+            throw new AfsException("Child name '" + name + "' is not located inside the directory '" + dir.getFileName() + "'");
         }
         return Optional.of(childPath);
     }

@@ -55,7 +55,7 @@ class DefaultLocalFolderTest {
     void constructorRejectsDirOutsideRootDirTest(String dirPath) {
         Path dir = fileSystem.getPath(dirPath);
         AfsException exception = assertThrows(AfsException.class, () -> new DefaultLocalFolder(dir, rootDir, "mem"));
-        assertEquals("directory '" + dirPath + "' is not located inside the root directory '/cases'", exception.getMessage());
+        assertEquals("directory '" + dirPath + "' is not located inside the root directory 'cases'", exception.getMessage());
     }
 
     @ParameterizedTest
@@ -99,7 +99,7 @@ class DefaultLocalFolderTest {
     void getChildPathTraversalIsRejectedTest(String name) {
         DefaultLocalFolder sub = new DefaultLocalFolder(subDir, rootDir, "mem");
         AfsException exception = assertThrows(AfsException.class, () -> sub.getChildPath(name));
-        assertEquals("Child name '" + name + "' is not located inside the directory '/cases/sub'", exception.getMessage());
+        assertEquals("Child name '" + name + "' is not located inside the directory 'sub'", exception.getMessage());
     }
 
     @Test

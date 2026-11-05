@@ -430,7 +430,7 @@ public class LocalAppStorage extends AbstractAppStorage {
     private Path sanitizePath(Path path) {
         Path normalizedPath = path.normalize();
         if (!normalizedPath.startsWith(rootDir)) {
-            throw new AfsException("File '" + path + "' is not located inside the root directory '" + rootDir + "'");
+            throw new AfsException("File '" + path + "' is not located inside the root directory '" + rootDir.getFileName() + "'");
         }
         return normalizedPath;
     }

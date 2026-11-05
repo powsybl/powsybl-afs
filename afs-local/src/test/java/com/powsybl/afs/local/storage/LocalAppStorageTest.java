@@ -317,6 +317,6 @@ class LocalAppStorageTest {
                         assertThrows(AfsException.class, () -> storage.readBinaryData(nodeId, "o.tst")),
                         assertThrows(AfsException.class, () -> storage.dataExists(nodeId, "o.tst")),
                         assertThrows(AfsException.class, () -> storage.getDataNames(nodeId)))
-                .forEach(exception -> assertEquals("File '" + path + "' is not located inside the root directory '/cases'", exception.getMessage()));
+                .forEach(exception -> assertEquals("File '" + path + "' is not located inside the root directory 'cases'", exception.getMessage()));
     }
 }
