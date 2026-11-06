@@ -6,6 +6,8 @@
  */
 package com.powsybl.afs.local.storage;
 
+import com.powsybl.afs.AfsException;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.DirectoryStream;
@@ -29,8 +31,15 @@ public class DefaultLocalFolder implements LocalFolder {
     private final String fileSystemName;
 
     public DefaultLocalFolder(Path dir, Path rootDir, String fileSystemName) {
-        this.dir = Objects.requireNonNull(dir);
-        this.rootDir = Objects.requireNonNull(rootDir);
+        // Normalize paths to be able to compare them with startWith and equals
+        this.dir = Objects.requireNonNull(dir)
+                .normalize();
+        this.rootDir = Objects.requireNonNull(rootDir)
+                .normalize();
+        // Check dir is inside rootDir
+        if (!this.dir.startsWith(this.rootDir)) {
+            throw new AfsException("directory '" + dir + "' is not located inside the root directory '" + rootDir.getFileName() + "'");
+        }
         this.fileSystemName = Objects.requireNonNull(fileSystemName);
     }
 
@@ -49,7 +58,12 @@ public class DefaultLocalFolder implements LocalFolder {
 
     @Override
     public Optional<Path> getChildPath(String name) {
-        return Optional.ofNullable(dir.resolve(name));
+        Path childPath = dir.resolve(name).normalize();
+        // Check path traversal (e.g. name containing  "../")
+        if (!childPath.startsWith(dir) || childPath.equals(dir)) {
+            throw new AfsException("Child name '" + name + "' is not located inside the directory '" + dir.getFileName() + "'");
+        }
+        return Optional.of(childPath);
     }
 
     @Override
