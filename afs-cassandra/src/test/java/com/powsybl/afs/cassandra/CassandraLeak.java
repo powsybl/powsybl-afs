@@ -23,8 +23,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.selectFrom;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
