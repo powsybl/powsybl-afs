@@ -43,7 +43,6 @@
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-client</artifactId>
-            <version>${resteasy.version}</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -53,17 +52,14 @@
         <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-afs-ext-base</artifactId>
-            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>powsybl-afs-storage-api</artifactId>
-            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>powsybl-afs-ws-utils</artifactId>
-            <version>${project.version}</version>
         </dependency>
 
         <!-- Provided dependencies -->

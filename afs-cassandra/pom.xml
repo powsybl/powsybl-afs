@@ -39,7 +39,6 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>powsybl-afs-core</artifactId>
-            <version>${project.version}</version>
         </dependency>
 
         <!-- test dependencies -->

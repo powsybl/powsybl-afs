@@ -66,17 +66,14 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>powsybl-afs-core</artifactId>
-            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>powsybl-afs-ws-client-utils</artifactId>
-            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>powsybl-afs-ws-utils</artifactId>
-            <version>${project.version}</version>
         </dependency>
 
         <!-- Test dependencies -->
