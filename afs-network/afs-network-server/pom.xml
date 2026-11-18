@@ -65,12 +65,10 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>powsybl-afs-ext-base</artifactId>
-            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>powsybl-afs-ws-server-utils</artifactId>
-            <version>${project.version}</version>
         </dependency>
 
         <!-- Test dependencies -->
