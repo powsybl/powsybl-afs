@@ -58,7 +58,6 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>powsybl-afs-storage-api</artifactId>
-            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.powsybl</groupId>
@@ -103,7 +102,6 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>powsybl-afs-mapdb-storage</artifactId>
-            <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -119,7 +117,6 @@
         <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-tools-test</artifactId>
-            <version>${powsyblcore.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>

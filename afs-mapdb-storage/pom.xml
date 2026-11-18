@@ -47,7 +47,6 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>powsybl-afs-storage-api</artifactId>
-            <version>${project.version}</version>
         </dependency>
 
         <!-- Test dependencies -->
